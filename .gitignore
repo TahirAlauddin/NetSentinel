@@ -1,0 +1,23 @@
+# Envs
+*.env
+
+# IDEs
+.vscode
+.idea
+.cursor
+.cursorrules
+.cursorignore
+
+# OS
+.DS_Store   
+Thumbs.db
+
+# Logs
+logs
+
+# Python 
+__pycache__
+
+# Node
+node_modules
+
