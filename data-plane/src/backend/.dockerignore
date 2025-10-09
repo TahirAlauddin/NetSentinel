@@ -1,0 +1,36 @@
+# Python ignores
+__pycache__
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg-info
+
+# Virtualenvs
+venv
+.venv
+ENV/
+
+# Git
+.git
+.gitignore
+
+# Env files
+.env*
+!.env.example
+
+# DB and media
+*.sqlite3
+media
+static
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+
+# Docker
+Dockerfile*
+
