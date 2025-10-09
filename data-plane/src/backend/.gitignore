@@ -1,0 +1,15 @@
+# Virtual Environment
+venv
+
+# Database
+db.sqlite3
+
+# Media
+media
+
+# Static
+static
+
+# OS
+.DS_Store
+Thumbs.db
