@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "drf_yasg",
     "users",  # Our custom users app
+    "infrastructure",  # Infrastructure management app (locations, circuits)
 ]
 
 MIDDLEWARE = [
