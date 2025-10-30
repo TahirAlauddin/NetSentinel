@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "drf_yasg",
     "users",  # Our custom users app
+    "provisioning",  # Tenant provisioning app
 ]
 
 MIDDLEWARE = [
