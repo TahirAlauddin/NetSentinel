@@ -1,12 +1,47 @@
 from rest_framework import serializers
-from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.models import Group, Permission
 from .models import User
 
 
+class PermissionSerializer(serializers.ModelSerializer):
+    """Serializer for Permission."""
+    
+    content_type = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = Permission
+        fields = ["id", "name", "codename", "content_type"]
+        read_only_fields = ["id", "content_type"]
+
+
+class GroupSerializer(serializers.ModelSerializer):
+    """Serializer for Group."""
+
+    permissions_detail = PermissionSerializer(
+        source="permissions", many=True, read_only=True
+    )
+    permissions = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Permission.objects.all(), required=False
+    )
+    user_count = serializers.SerializerMethodField()
+
+    def get_user_count(self, obj):
+        return obj.user_set.count()
+
+    class Meta:
+        model = Group
+        fields = [
+            "id",
+            "name",
+            "permissions",
+            "permissions_detail",
+            "user_count",
+        ]
+        read_only_fields = ["id"]
+
+
 class UserSerializer(serializers.ModelSerializer):
-    """
-    Serializer for User model - used for user details and updates.
-    """
+    """Serializer for User."""
 
     class Meta:
         model = User
@@ -16,54 +51,47 @@ class UserSerializer(serializers.ModelSerializer):
             "email",
             "first_name",
             "last_name",
-            "phone_number",
-            "department",
-            "position",
-            "is_active",
             "is_staff",
             "is_superuser",
-            "created_at",
-            "updated_at",
+            "is_active",
+            "date_joined",
             "last_login",
         ]
         read_only_fields = [
             "id",
-            "is_staff",
-            "is_superuser",
-            "created_at",
-            "updated_at",
+            "date_joined",
             "last_login",
         ]
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
-    """
-    Serializer for creating new users via Djoser.
-    """
+    """Serializer for creating a new user."""
 
-    password = serializers.CharField(write_only=True, validators=[validate_password])
-    re_password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, required=True)
+    re_password = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = User
         fields = [
             "username",
             "email",
-            "first_name",
-            "last_name",
-            "phone_number",
-            "department",
-            "position",
             "password",
             "re_password",
+            "first_name",
+            "last_name",
         ]
 
     def validate(self, attrs):
         if attrs["password"] != attrs["re_password"]:
-            raise serializers.ValidationError("Passwords don't match.")
+            raise serializers.ValidationError(
+                {"password": "Password fields didn't match."}
+            )
         return attrs
 
     def create(self, validated_data):
         validated_data.pop("re_password")
-        user = User.objects.create_user(**validated_data)
+        password = validated_data.pop("password")
+        user = User.objects.create(**validated_data)
+        user.set_password(password)
+        user.save()
         return user

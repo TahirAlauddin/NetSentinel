@@ -1,7 +1,9 @@
-from rest_framework import status, permissions
+from rest_framework import status, permissions, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from django.contrib.auth.models import Group, Permission
 from .models import User
+from .serializers import GroupSerializer, PermissionSerializer
 
 
 @api_view(["GET"])
@@ -43,3 +45,55 @@ def user_stats_view(request):
     }
 
     return Response(stats)
+
+
+class GroupViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing groups.
+    Only superusers can manage groups.
+    """
+
+    queryset = Group.objects.prefetch_related("permissions").all()
+    serializer_class = GroupSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Only superusers can access groups
+        if not self.request.user.is_superuser:
+            return Group.objects.none()
+        return super().get_queryset()
+
+    def perform_create(self, serializer):
+        # Only superusers can create groups
+        if not self.request.user.is_superuser:
+            raise permissions.PermissionDenied("Only superusers can create groups.")
+        serializer.save()
+
+    def perform_update(self, serializer):
+        # Only superusers can update groups
+        if not self.request.user.is_superuser:
+            raise permissions.PermissionDenied("Only superusers can update groups.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        # Only superusers can delete groups
+        if not self.request.user.is_superuser:
+            raise permissions.PermissionDenied("Only superusers can delete groups.")
+        instance.delete()
+
+
+class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for listing permissions (read-only).
+    Only superusers can view permissions.
+    """
+
+    queryset = Permission.objects.select_related("content_type").all()
+    serializer_class = PermissionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Only superusers can access permissions
+        if not self.request.user.is_superuser:
+            return Permission.objects.none()
+        return super().get_queryset()
