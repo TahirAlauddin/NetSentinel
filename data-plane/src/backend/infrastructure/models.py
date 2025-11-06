@@ -84,3 +84,41 @@ class PointOfContact(models.Model):
 
     def __str__(self):
         return f"{self.circuit} - {self.get_contact_type_display()}: {self.name}"
+
+
+class Department(models.Model):
+    """
+    Department model representing organizational departments.
+    In the data-plane, all departments belong to the current tenant company.
+    """
+
+    name = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Department"
+        verbose_name_plural = "Departments"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class Category(models.Model):
+    """
+    Category model representing asset/service categories.
+    In the data-plane, all categories belong to the current tenant company.
+    """
+
+    name = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name

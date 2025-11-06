@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Location, Circuit, PointOfContact
+from .models import Location, Circuit, PointOfContact, Department, Category
 
 
 class PointOfContactSerializer(serializers.ModelSerializer):
@@ -70,3 +70,29 @@ class LocationSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
+class DepartmentSerializer(serializers.ModelSerializer):
+    """Serializer for Department."""
+
+    class Meta:
+        model = Department
+        fields = [
+            "id",
+            "name",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    """Serializer for Category."""
+
+    class Meta:
+        model = Category
+        fields = [
+            "id",
+            "name",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]

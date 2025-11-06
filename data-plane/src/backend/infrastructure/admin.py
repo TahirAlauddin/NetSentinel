@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Location, Circuit, PointOfContact
+from .models import Location, Circuit, PointOfContact, Department, Category
 
 
 @admin.register(Location)
@@ -31,3 +31,16 @@ class PointOfContactAdmin(admin.ModelAdmin):
     list_filter = ["contact_type", "created_at", "updated_at"]
     raw_id_fields = ["circuit"]
 
+
+@admin.register(Department)
+class DepartmentAdmin(admin.ModelAdmin):
+    list_display = ["name", "created_at", "updated_at"]
+    search_fields = ["name"]
+    list_filter = ["created_at", "updated_at"]
+
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ["name", "created_at", "updated_at"]
+    search_fields = ["name"]
+    list_filter = ["created_at", "updated_at"]

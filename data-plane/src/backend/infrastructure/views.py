@@ -1,12 +1,13 @@
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Location, Circuit, PointOfContact
+from .models import Location, Circuit, PointOfContact, Department, Category
 from .serializers import (
     LocationSerializer,
     CircuitSerializer,
     PointOfContactSerializer,
-
+    DepartmentSerializer,
+    CategorySerializer,
 )
 
 
@@ -54,3 +55,20 @@ class PointOfContactViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = PointOfContactSerializer
 
+
+class DepartmentViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing departments.
+    """
+
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing categories.
+    """
+
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
