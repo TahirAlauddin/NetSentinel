@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { serverApi } from "@/lib/server-api"
 import { UserRecord } from "@/types/users"
+import { GroupRecord, PermissionRecord } from "@/types/groups"
 
 export async function listUsers(): Promise<UserRecord[]> {
   const session = await getServerSession(authOptions)
@@ -67,4 +68,117 @@ export async function addUser(formData: FormData) {
   }
 
   return { success: true, message: 'User created successfully!' }
+}
+
+export async function listGroups(): Promise<GroupRecord[]> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.isSuperuser) {
+    throw new Error('Not authorized to list groups')
+  }
+
+  const response = await serverApi.get<GroupRecord[]>('/groups/')
+  
+  if (response.error) {
+    throw new Error(response.error)
+  }
+
+  const groups = response.data
+  
+  // Handle different response formats
+  if (Array.isArray(groups)) {
+    return groups
+  }
+  
+  // Handle paginated response
+  if (groups && typeof groups === 'object' && 'results' in groups && Array.isArray((groups as any).results)) {
+    return (groups as any).results
+  }
+  
+  console.warn('Unexpected groups data format:', groups)
+  return []
+}
+
+export async function listPermissions(): Promise<PermissionRecord[]> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.isSuperuser) {
+    throw new Error('Not authorized to list permissions')
+  }
+
+  const response = await serverApi.get<PermissionRecord[]>('/permissions/')
+  
+  if (response.error) {
+    throw new Error(response.error)
+  }
+
+  const permissions = response.data
+  
+  if (Array.isArray(permissions)) {
+    return permissions
+  }
+  
+  if (permissions && typeof permissions === 'object' && 'results' in permissions && Array.isArray((permissions as any).results)) {
+    return (permissions as any).results
+  }
+  
+  console.warn('Unexpected permissions data format:', permissions)
+  return []
+}
+
+export async function createGroup(name: string, permissionIds: number[]) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.isSuperuser) {
+    return { success: false, error: 'Not authorized to create groups' }
+  }
+
+  if (!name || !name.trim()) {
+    return { success: false, error: 'Group name is required' }
+  }
+
+  const response = await serverApi.post('/groups/', {
+    name: name.trim(),
+    permissions: permissionIds || [],
+  })
+
+  if (response.error) {
+    return { success: false, error: response.error || 'Failed to create group' }
+  }
+
+  return { success: true, message: 'Group created successfully!' }
+}
+
+export async function updateGroup(id: number, name: string, permissionIds: number[]) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.isSuperuser) {
+    return { success: false, error: 'Not authorized to update groups' }
+  }
+
+  if (!name || !name.trim()) {
+    return { success: false, error: 'Group name is required' }
+  }
+
+  const response = await serverApi.put(`/groups/${id}/`, {
+    name: name.trim(),
+    permissions: permissionIds || [],
+  })
+
+  if (response.error) {
+    return { success: false, error: response.error || 'Failed to update group' }
+  }
+
+  return { success: true, message: 'Group updated successfully!' }
+}
+
+export async function deleteGroup(id: number) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.isSuperuser) {
+    return { success: false, error: 'Not authorized to delete groups' }
+  }
+
+  const response = await serverApi.delete(`/groups/${id}/`)
+
+  if (response.error) {
+    return { success: false, error: response.error || 'Failed to delete group' }
+  }
+
+  return { success: true, message: 'Group deleted successfully!' }
 }

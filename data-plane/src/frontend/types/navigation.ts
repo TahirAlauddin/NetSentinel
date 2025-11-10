@@ -1,7 +1,7 @@
 import { LucideIcon } from "lucide-react"
 
 export interface SubmenuColumn {
-  title: string
+  title?: string
   links: string[]
 }
 
