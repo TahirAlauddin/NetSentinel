@@ -13,8 +13,18 @@ import {
   Pi as Api,
   LifeBuoy,
   Settings,
+  MapPin,
+  Network,
 } from "lucide-react"
 import { NavigationItem, SubmenuColumn } from "../types/navigation"
+
+export const settingsSubmenuItems = [
+  { title: "Overview", url: "/settings" },
+  { title: "Locations", url: "/settings/locations" },
+  { title: "Departments", url: "/settings/departments" },
+  { title: "Categories", url: "/settings/categories" },
+  { title: "Email Format", url: "/settings/email-format" },
+]
 
 export const submenuColumns: SubmenuColumn[] = [
   {
@@ -33,14 +43,15 @@ export const submenuColumns: SubmenuColumn[] = [
 
 export const navigationItems: NavigationItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  { label: "Site Surveys", icon: Map, href: "#" },
-  { label: "My Assets", icon: Boxes, href: "#" },
-  { label: "My Contracts", icon: FileText, href: "#" },
-  { label: "My Vendors/SaaS", icon: Building2, href: "#" },
+  { label: "Circuits", icon: Network, href: "/circuits" },
+  { label: "Site Surveys", icon: Map, href: "/site-surveys" },
+  { label: "Assets", icon: Boxes, href: "/assets" },
+  { label: "Contracts", icon: FileText, href: "/contracts" },
+  { label: "Vendors/SaaS", icon: Building2, href: "/vendors-saas" },
   { 
     label: "Telecom Expenses", 
     icon: CreditCard, 
-    href: "#", 
+    href: "/telecom-expenses", 
     hasSubmenu: true,
     submenuColumns: [
       {
@@ -60,15 +71,14 @@ export const navigationItems: NavigationItem[] = [
   { 
     label: "Monitoring", 
     icon: Activity, 
-    href: "#", 
-    active: true, 
+    href: "/monitoring", 
     hasSubmenu: true,
     submenuColumns: submenuColumns
   },
   { 
     label: "Notifications", 
     icon: Bell, 
-    href: "#", 
+    href: "/notifications", 
     hasSubmenu: true,
     submenuColumns: [
       {
@@ -88,7 +98,14 @@ export const navigationItems: NavigationItem[] = [
   { label: "VM Management", icon: Server, href: "#" },
   { label: "Phone Management", icon: Phone, href: "#" },
   { label: "API Management", icon: Api, href: "#" },
-  { label: "Settings", icon: Settings, href: "/settings" },
+  { label: "Settings", icon: Settings, href: "/settings",
+    hasSubmenu: true,
+    submenuColumns: [
+      {
+        links: settingsSubmenuItems.map(item => item.title),
+      },
+    ]
+  },
   { label: "Help Desk", icon: LifeBuoy, href: "#" },
 ]
 

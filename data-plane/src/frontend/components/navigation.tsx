@@ -1,16 +1,44 @@
+"use client"
+
 import { useCallback, useRef, useState, useEffect } from "react"
+import { usePathname } from "next/navigation"
 import { NavigationItemComponent } from "./navigation-item"
 import { NavigationItem } from "../types/navigation"
+import { settingsSubmenuItems } from "../constants/navigation"
 
 interface NavigationProps {
   items: NavigationItem[]
 }
 
 export function Navigation({ items }: NavigationProps) {
+  const pathname = usePathname()
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [isDesktop, setIsDesktop] = useState(false)
   const itemRefs = useRef<Record<string, HTMLElement | null>>({})
+
+  // Determine if a navigation item is active based on current pathname
+  const isItemActive = useCallback((item: NavigationItem): boolean => {
+    // Exact match
+    if (pathname === item.href) {
+      return true
+    }
+
+    // For Settings, check if current path matches any settings submenu item
+    if (item.label === "Settings" && item.href === "/settings") {
+      const settingsUrls = settingsSubmenuItems.map(subItem => subItem.url)
+      return settingsUrls.includes(pathname)
+    }
+
+    // Check if pathname starts with the item href (for nested routes)
+    if (item.href !== "#" && pathname.startsWith(item.href)) {
+      // Make sure it's not just a partial match (e.g., /dashboard shouldn't match /dashboard-something)
+      const nextChar = pathname[item.href.length]
+      return !nextChar || nextChar === "/"
+    }
+
+    return false
+  }, [pathname])
 
   // Check if we're on desktop (lg breakpoint and above)
   useEffect(() => {
@@ -70,11 +98,15 @@ export function Navigation({ items }: NavigationProps) {
         {items.map((item) => {
           const hasSubmenu = item.hasSubmenu || false
           const isExpanded = expandedItems.has(item.label) || hoveredItem === item.label
+          const isActive = isItemActive(item)
+          
+          // Create item with dynamic active state
+          const itemWithActive = { ...item, active: isActive }
           
           return (
             <div key={item.label}>
               <NavigationItemComponent
-                item={item}
+                item={itemWithActive}
                 isExpanded={isExpanded}
                 itemRef={setItemRef(item.label)}
                 onToggleSubmenu={toggleSubmenu}
