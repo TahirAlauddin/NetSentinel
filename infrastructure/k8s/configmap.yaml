@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: netsentinel-config
+  namespace: default
+data:
+  # Backend API URL - accessible via ingress at /api
+  # Change to https:// once TLS is configured
+  api-url: "http://23.176.128.39:8000/api/v1"
+  # NextAuth URL - frontend domain
+  # Change to https:// once TLS is configured
+  nextauth-url: "http://23.176.128.39"
+

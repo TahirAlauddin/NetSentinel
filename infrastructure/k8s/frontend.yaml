@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netsentinel-frontend
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: netsentinel-frontend
+  template:
+    metadata:
+      labels:
+        app: netsentinel-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: dockeramnexus/netsentinel-frontend:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NEXTAUTH_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: netsentinel-config
+                  key: nextauth-url
+            - name: NEXT_PUBLIC_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: netsentinel-config
+                  key: api-url
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: netsentinel-secrets
+                  key: nextauth-secret
+      imagePullSecrets:
+      - name: regcred
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netsentinel-frontend
+  annotations:
+    metallb.universe.tf/allow-shared-ip: "netsentinel-shared"
+spec:
+  selector:
+    app: netsentinel-frontend
+  ports:
+    - port: 80
+      targetPort: 3000
+  type: ClusterIP

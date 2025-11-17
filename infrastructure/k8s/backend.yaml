@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netsentinel-backend
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: netsentinel-backend
+  template:
+    metadata:
+      labels:
+        app: netsentinel-backend
+    spec:
+      containers:
+        - name: backend
+          image: dockeramnexus/netsentinel-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: SERVICE_NAME
+              value: "netsentinel-backend"
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: DJANGO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: django-secret
+                  key: django-secret-key
+            - name: DEBUG
+              value: "False"
+            - name: ALLOWED_HOSTS
+              value: "*"  # Configure appropriately for your environment
+            - name: CORS_ALLOWED_ORIGINS
+              value: "*"
+            # PostgreSQL connection settings
+            - name: POSTGRES_HOST
+              value: "postgres"  # Service name in Kubernetes
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: postgres-db
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: postgres-user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: postgres-password
+      imagePullSecrets:
+      - name: regcred
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netsentinel-backend
+  annotations:
+    metallb.universe.tf/allow-shared-ip: "netsentinel-shared"
+spec:
+  selector:
+    app: netsentinel-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+  type: ClusterIP
