@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-django-insecure-dev-key-change-in-production}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - K8S_IN_CLUSTER=false
+      - KUBECONFIG=${KUBECONFIG:-}
+      - K8S_NAMESPACE_PREFIX=tenant
+      - DATA_PLANE_BACKEND_IMAGE=${DATA_PLANE_BACKEND_IMAGE:-dockeramnexus/netsentinel-backend:latest}
+      - DATA_PLANE_FRONTEND_IMAGE=${DATA_PLANE_FRONTEND_IMAGE:-dockeramnexus/netsentinel-frontend:latest}
+    volumes:
+      - ./src/backend:/app
+      - backend_db:/app/db
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: python manage.py runserver 0.0.0.0:8000
+
+  celery-worker:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+    environment:
+      - DEBUG=True
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-django-insecure-dev-key-change-in-production}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - K8S_IN_CLUSTER=false
+      - KUBECONFIG=${KUBECONFIG:-}
+      - K8S_NAMESPACE_PREFIX=tenant
+      - DATA_PLANE_BACKEND_IMAGE=${DATA_PLANE_BACKEND_IMAGE:-dockeramnexus/netsentinel-backend:latest}
+      - DATA_PLANE_FRONTEND_IMAGE=${DATA_PLANE_FRONTEND_IMAGE:-dockeramnexus/netsentinel-frontend:latest}
+    volumes:
+      - ./src/backend:/app
+      - backend_db:/app/db
+      # Mount kubeconfig if provided
+      - ${KUBECONFIG:-/dev/null}:/root/.kube/config:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    command: celery -A core worker --loglevel=info
+
+volumes:
+  redis_data:
+  backend_db:
+
