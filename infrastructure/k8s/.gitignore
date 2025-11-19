@@ -1,0 +1,5 @@
+# Kubernetes secrets
+*.secret
+secrets.yaml
+values-*.yaml
+!values.yaml
