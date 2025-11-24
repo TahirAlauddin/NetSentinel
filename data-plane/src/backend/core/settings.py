@@ -255,3 +255,5 @@ else:
     ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+APPEND_SLASH = os.environ.get("APPEND_SLASH", "True").lower() == "true"
