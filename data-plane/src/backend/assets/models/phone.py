@@ -1,23 +1,37 @@
-"""
-Phone and phone system asset types with connection interface specifications.
-"""
-
 from django.db import models
-from . import Asset
+from assets.models import Asset
 
 
-class PhoneAsset(Asset):
+class PhoneDetails(models.Model):
     """
-    Abstract base for phone devices with connection interface and product identifiers.
+    Extension table for Phone category assets (VoIP, Desk Phone).
     """
 
-    # Hardware Details
+    asset = models.OneToOneField(
+        Asset,
+        on_delete=models.CASCADE,
+        related_name="phone_details",
+        primary_key=True,
+    )
     connection_interface = models.CharField(
         max_length=255,
         blank=True,
         null=True,
         help_text="Connection interface (e.g., VoIP, Analog, Digital, SIP)",
     )
+    phone_type = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Phone type (e.g., Desk Phone, VoIP Phone)",
+    )
+    extension = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Phone extension number",
+    )
+    # Additional tech specs
     serial_number = models.CharField(
         max_length=255,
         blank=True,
@@ -32,32 +46,10 @@ class PhoneAsset(Asset):
     )
 
     class Meta:
-        abstract = True
+        verbose_name = "Phone Details"
+        verbose_name_plural = "Phone Details"
+        db_table = "assets_phone_details"
 
+    def __str__(self):
+        return f"Phone Details for {self.asset}"
 
-class Phone(PhoneAsset):
-    """
-    Phone asset type (desk phones, cordless phones, etc.).
-    """
-
-    class Meta:
-        verbose_name = "Phone"
-        verbose_name_plural = "Phones"
-        db_table = "assets_phone"
-
-    def get_asset_type(self):
-        return "Phone"
-
-
-class PhoneSystem(PhoneAsset):
-    """
-    Phone System asset type (PBX, VoIP systems, etc.).
-    """
-
-    class Meta:
-        verbose_name = "Phone System"
-        verbose_name_plural = "Phone Systems"
-        db_table = "assets_phone_system"
-
-    def get_asset_type(self):
-        return "Phone System"
