@@ -1,9 +1,16 @@
 export interface LocationRecord {
   id: number
+  name: string
+  alias: string
+  address1: string
+  address2: string
   city: string
-  address: string
-  circuit_count?: number
-  created_at: string
-  updated_at: string
+  state: string
+  zip: string
+  phone: string
+  longitude: number
+  latitude: number
+  type_building: string
+  mpoe: string
+  dmarc: string
 }
-
