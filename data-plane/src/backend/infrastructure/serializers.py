@@ -1,5 +1,14 @@
 from rest_framework import serializers
-from .models import Location, Circuit, PointOfContact, Department, Category
+from .models import (
+    Location,
+    Circuit,
+    PointOfContact,
+    Department,
+    Category,
+    Contact,
+    CarrierContact,
+    UtilityContact,
+)
 
 
 class PointOfContactSerializer(serializers.ModelSerializer):
@@ -60,8 +69,19 @@ class LocationSerializer(serializers.ModelSerializer):
         model = Location
         fields = [
             "id",
+            "name",
+            "alias",
+            "address1",
+            "address2",
             "city",
-            "address",
+            "state",
+            "zip_code",
+            "phone",
+            "longitude",
+            "latitude",
+            "type_building",
+            "mpoe",
+            "dmarc",
             "circuits",
             "circuit_count",
             "created_at",
@@ -69,6 +89,30 @@ class LocationSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
+class AssetLocationSerializer(serializers.ModelSerializer):
+    """Serializer for Location."""
+
+    class Meta:
+        model = Location
+        fields = [
+            "id",
+            "name",
+            "alias",
+            "address1",
+            "address2",
+            "city",
+            "state",
+            "zip_code",
+            "phone",
+            "longitude",
+            "latitude",
+            "type_building",
+            "mpoe",
+            "dmarc",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
 
 class DepartmentSerializer(serializers.ModelSerializer):
     """Serializer for Department."""
@@ -92,6 +136,91 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class ContactSerializer(serializers.ModelSerializer):
+    """Serializer for Contact."""
+
+    class Meta:
+        model = Contact
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "job_title",
+            "business_phone",
+            "alternate_phone",
+            "mobile_phone",
+            "address1",
+            "address2",
+            "city",
+            "state",
+            "zip_code",
+            "country",
+            "contact_type",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class CarrierContactSerializer(serializers.ModelSerializer):
+    """Serializer for Carrier Contact."""
+
+    location_name = serializers.CharField(source="location.name", read_only=True)
+
+    class Meta:
+        model = CarrierContact
+        fields = [
+            "id",
+            "name",
+            "location",
+            "location_name",
+            "address1",
+            "address2",
+            "city",
+            "state",
+            "zip_code",
+            "customer_service_phone",
+            "technical_support_phone",
+            "sales_phone",
+            "billing_phone",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class UtilityContactSerializer(serializers.ModelSerializer):
+    """Serializer for Utility Contact."""
+
+    location_name = serializers.CharField(source="location.name", read_only=True)
+    utility_type_display = serializers.CharField(
+        source="get_utility_type_display", read_only=True
+    )
+
+    class Meta:
+        model = UtilityContact
+        fields = [
+            "id",
+            "name",
+            "location",
+            "location_name",
+            "address1",
+            "address2",
+            "city",
+            "state",
+            "zip_code",
+            "customer_service_phone",
+            "technical_support_phone",
+            "sales_phone",
+            "billing_phone",
+            "utility_type",
+            "utility_type_display",
             "created_at",
             "updated_at",
         ]

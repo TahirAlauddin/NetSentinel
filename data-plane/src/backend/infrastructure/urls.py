@@ -6,6 +6,9 @@ from .views import (
     PointOfContactViewSet,
     DepartmentViewSet,
     CategoryViewSet,
+    ContactViewSet,
+    CarrierContactViewSet,
+    UtilityContactViewSet,
 )
 
 router = DefaultRouter()
@@ -16,6 +19,9 @@ router.register(
 )
 router.register(r"departments", DepartmentViewSet, basename="department")
 router.register(r"categories", CategoryViewSet, basename="category")
+router.register(r"contacts", ContactViewSet, basename="contact")
+router.register(r"carrier-contacts", CarrierContactViewSet, basename="carrier-contact")
+router.register(r"utility-contacts", UtilityContactViewSet, basename="utility-contact")
 
 urlpatterns = [
     path("", include(router.urls)),

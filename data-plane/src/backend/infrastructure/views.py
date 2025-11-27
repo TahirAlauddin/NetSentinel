@@ -1,13 +1,25 @@
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Location, Circuit, PointOfContact, Department, Category
+from .models import (
+    Location,
+    Circuit,
+    PointOfContact,
+    Department,
+    Category,
+    Contact,
+    CarrierContact,
+    UtilityContact,
+)
 from .serializers import (
     LocationSerializer,
     CircuitSerializer,
     PointOfContactSerializer,
     DepartmentSerializer,
     CategorySerializer,
+    ContactSerializer,
+    CarrierContactSerializer,
+    UtilityContactSerializer,
 )
 
 
@@ -72,3 +84,31 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+
+
+class ContactViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing contacts.
+    """
+
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer
+
+
+class CarrierContactViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing carrier contacts.
+    """
+
+    queryset = CarrierContact.objects.select_related("location").all()
+    serializer_class = CarrierContactSerializer
+
+
+class UtilityContactViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing utility contacts.
+    """
+
+    queryset = UtilityContact.objects.select_related("location").all()
+    serializer_class = UtilityContactSerializer
+
