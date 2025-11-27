@@ -11,7 +11,23 @@ function LoginForm() {
   const [error, setError] = useState("")
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectUrl = searchParams.get('redirect') || "/dashboard"
+  // Use callbackUrl from NextAuth, fallback to redirect param, then default to dashboard
+  const callbackUrl = searchParams.get('callbackUrl')
+  const redirectParam = searchParams.get('redirect')
+  
+  // Extract pathname from callbackUrl if it's a full URL
+  let redirectUrl = "/dashboard"
+  if (callbackUrl) {
+    try {
+      const url = new URL(callbackUrl, window.location.origin)
+      redirectUrl = url.pathname + url.search
+    } catch {
+      // If it's not a full URL, use it as-is (it's already a path)
+      redirectUrl = callbackUrl
+    }
+  } else if (redirectParam) {
+    redirectUrl = redirectParam
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
