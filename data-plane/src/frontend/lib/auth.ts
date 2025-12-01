@@ -48,9 +48,25 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/a
 
 /**
  * Refresh the access token using the refresh token
+ * Returns token with error flag if refresh fails (backend unavailable, refresh token expired, etc.)
  */
 async function refreshAccessToken(token: any) {
+  // If no refresh token, mark as error
+  if (!token.refreshToken) {
+    console.warn('No refresh token available for refresh')
+    return {
+      ...token,
+      accessToken: undefined,
+      refreshToken: undefined,
+      error: 'RefreshAccessTokenError',
+    }
+  }
+
   try {
+    // Set a timeout for the fetch request to handle backend unavailability
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
     const response = await fetch(`${API_BASE_URL}/auth/jwt/refresh/`, {
       method: 'POST',
       headers: {
@@ -59,11 +75,27 @@ async function refreshAccessToken(token: any) {
       body: JSON.stringify({
         refresh: token.refreshToken,
       }),
+      signal: controller.signal,
     })
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
       console.error('Token refresh failed:', response.status, errorData)
+      
+      // If refresh token is invalid/expired (401 or 403), clear tokens
+      if (response.status === 401 || response.status === 403) {
+        return {
+          ...token,
+          accessToken: undefined,
+          refreshToken: undefined,
+          error: 'RefreshAccessTokenError',
+        }
+      }
+      
+      // For other errors (like 500), still mark as error but keep refresh token
+      // in case it's a temporary backend issue
       throw new Error(`Token refresh failed: ${response.status}`)
     }
 
@@ -75,12 +107,24 @@ async function refreshAccessToken(token: any) {
       accessToken: refreshedTokens.access,
       accessTokenExpires: Date.now() + 60 * 60 * 1000, // 1 hour from now
       refreshToken: refreshedTokens.refresh ?? token.refreshToken, // Fall back to old refresh token
+      error: undefined, // Clear any previous error
     }
-  } catch (error) {
-    console.error('Error refreshing access token:', error)
+  } catch (error: any) {
+    // Handle network errors, timeouts, and other fetch failures
+    if (error.name === 'AbortError') {
+      console.error('Token refresh timeout: Backend may be unavailable')
+    } else if (error.message?.includes('fetch')) {
+      console.error('Token refresh network error: Backend may be unavailable', error)
+    } else {
+      console.error('Error refreshing access token:', error)
+    }
 
+    // Return token with error flag - the session error handler will sign out the user
+    // We keep the refresh token in case it's a temporary network issue
+    // but clear the access token since it's definitely expired
     return {
       ...token,
+      accessToken: undefined,
       error: 'RefreshAccessTokenError',
     }
   }
@@ -160,7 +204,32 @@ export const authOptions = {
         token.isActive = user.isActive
         token.isSuperuser = user.isSuperuser
         token.accessTokenExpires = Date.now() + 60 * 60 * 1000 // 1 hour from now
+        token.error = undefined // Clear any previous errors
         return token
+      }
+
+      // If token already has an error, don't try to refresh again
+      // This prevents infinite refresh attempts when backend is down
+      if (token.error === 'RefreshAccessTokenError') {
+        return token
+      }
+
+      // If access token is missing, try to refresh if we have a refresh token
+      if (!token.accessToken && token.refreshToken) {
+        return await refreshAccessToken(token)
+      }
+
+      // If access token expiration is missing, treat as expired
+      if (!token.accessTokenExpires) {
+        if (token.refreshToken) {
+          return await refreshAccessToken(token)
+        } else {
+          // No refresh token and no expiration info - mark as error
+          return {
+            ...token,
+            error: 'RefreshAccessTokenError',
+          }
+        }
       }
 
       // Return previous token if the access token has not expired yet
@@ -168,7 +237,7 @@ export const authOptions = {
         return token
       }
 
-      // Access token has expired, try to update it
+      // Access token has expired, try to refresh it
       return await refreshAccessToken(token)
     },
     async session({ session, token }: { session: any; token: any }) {

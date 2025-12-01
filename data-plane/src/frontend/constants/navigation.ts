@@ -14,13 +14,13 @@ import {
   LifeBuoy,
   Settings,
   MapPin,
-  Network,
 } from "lucide-react"
 import { NavigationItem, SubmenuColumn } from "../types/navigation"
 
 export const settingsSubmenuItems = [
   { title: "Overview", url: "/settings" },
   { title: "Locations", url: "/settings/locations" },
+  { title: "Circuits", url: "/settings/circuits" },
   { title: "Departments", url: "/settings/departments" },
   { title: "Categories", url: "/settings/categories" },
   { title: "Email Format", url: "/settings/email-format" },
@@ -43,7 +43,6 @@ export const submenuColumns: SubmenuColumn[] = [
 
 export const navigationItems: NavigationItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  { label: "Circuits", icon: Network, href: "/circuits" },
   { label: "Site Surveys", icon: Map, href: "/site-surveys" },
   { label: "Assets", icon: Boxes, href: "/assets" },
   { label: "Contracts", icon: FileText, href: "/contracts" },
