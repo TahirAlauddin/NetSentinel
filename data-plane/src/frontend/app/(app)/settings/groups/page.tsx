@@ -1,14 +1,14 @@
 "use client";
 
-import { AppShell } from "@/components/app-shell";
-import { ProtectedRoute } from "@/components/protected-route";
-import { SettingsSidebar } from "@/components/settings-sidebar";
-import { SettingsHeader } from "@/components/settings-header";
+import { AppShell } from "@/components/layout/app-shell";
+import { ProtectedRoute } from "@/components/feedback/protected-route";
+import { SettingsSidebar } from "@/components/settings/settings-sidebar";
+import { SettingsHeader } from "@/components/settings/settings-header";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import GroupsList from "@/components/groups-list";
-import GroupForm from "@/components/group-form";
+import GroupsList from "@/components/groups/groups-list";
+import GroupForm from "@/components/groups/group-form";
 import { GroupRecord, PermissionRecord } from "@/types/groups";
 import {
   listGroups,

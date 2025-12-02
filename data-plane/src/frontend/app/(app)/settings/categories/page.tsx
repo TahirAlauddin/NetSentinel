@@ -1,10 +1,10 @@
 "use client";
 
-import { AppShell } from "@/components/app-shell";
-import { ProtectedRoute } from "@/components/protected-route";
-import { SettingsSidebar } from "@/components/settings-sidebar";
-import { SettingsNavTabs } from "@/components/settings-nav-tabs";
-import { SettingsHeader } from "@/components/settings-header";
+import { AppShell } from "@/components/layout/app-shell";
+import { ProtectedRoute } from "@/components/feedback/protected-route";
+import { SettingsSidebar } from "@/components/settings/settings-sidebar";
+import { SettingsNavTabs } from "@/components/settings/settings-nav-tabs";
+import { SettingsHeader } from "@/components/settings/settings-header";
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";

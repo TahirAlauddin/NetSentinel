@@ -1,8 +1,8 @@
-import { AppShell } from "@/components/app-shell"
-import { SettingsSidebar } from "@/components/settings-sidebar"
-import { SettingsNavTabs } from "@/components/settings-nav-tabs"
-import { SettingsHeader } from "@/components/settings-header"
-import { SettingsOverview } from "@/components/settings-overview"
+import { AppShell } from "@/components/layout/app-shell"
+import { SettingsSidebar } from "@/components/settings/settings-sidebar"
+import { SettingsNavTabs } from "@/components/settings/settings-nav-tabs"
+import { SettingsHeader } from "@/components/settings/settings-header"
+import { SettingsOverview } from "@/components/settings/settings-overview"
 
 export default async function SettingsPage() {
 
