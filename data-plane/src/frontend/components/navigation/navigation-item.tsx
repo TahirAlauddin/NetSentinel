@@ -1,8 +1,8 @@
 import Link from "next/link"
 import { ChevronDown, ChevronRight } from "lucide-react"
-import { NavigationItem } from "../types/navigation"
-import { brandConfig } from "../constants/navigation"
-import { Submenu } from "./submenu"
+import { NavigationItem } from "../../types/navigation"
+import { brandConfig } from "../../constants/navigation"
+import { Submenu } from "../submenu"
 import { useRef, useEffect, useState } from "react"
 
 interface NavigationItemProps {
