@@ -13,22 +13,8 @@ import {
   NotesDialog,
   AlertsDialog,
 } from "@/components/asset-dialogs";
-import {
-  AssetDetailHeader,
-  AssetDetailSidebar,
-  UsageStatusSection,
-  SystemDetailsSection,
-  SoftwareSection,
-  CostDepreciationSection,
-  WarrantyAcquisitionSection,
-  RelatedItemsSection,
-  CustomDetailsSection,
-  NotesSection,
-  AlertsSection,
-  SourcesSection,
-  HistorySection,
-  AutomationHistorySection,
-} from "./detail";
+import { AssetDetailHeader } from "./detail/AssetDetailHeader";
+import AssetDetailContent from "./detail/AssetDetailContent";
 
 interface AssetDetailProps {
   assetId: number;
@@ -120,68 +106,35 @@ export function AssetDetail({ assetId, onUpdate }: AssetDetailProps) {
   };
 
   return (
-    <div className="flex-1 overflow-auto bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        <AssetDetailHeader
-          asset={asset}
-          currentStatus={currentStatus}
-          onStatusChange={handleStatusChange}
-        />
+    <div className="flex flex-col bg-gray-50 h-[80vh] sticky top-16 overflow-hidden">
+      <AssetDetailHeader
+        asset={asset}
+        currentStatus={currentStatus}
+        onStatusChange={handleStatusChange}
+      />
 
-        <div className="flex relative">
-          <AssetDetailSidebar
-            activeSection={activeSection}
-            mobileSidebarOpen={mobileSidebarOpen}
-            onSectionClick={scrollToSection}
-            onMobileSidebarToggle={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-            onMobileSidebarClose={() => setMobileSidebarOpen(false)}
-          />
-
-          {/* Main Content */}
-          <div className="flex-1 p-4 md:p-8 space-y-6 md:space-y-8">
-            <UsageStatusSection
-              asset={asset}
-              currentStatus={currentStatus}
-              onStatusChange={handleStatusChange}
-              teammate={teammate}
-              location={location}
-              onTeammateClick={() => setTeammateDialogOpen(true)}
-              onLocationClick={() => setLocationDialogOpen(true)}
-            />
-
-            <SystemDetailsSection asset={asset} />
-
-            <SoftwareSection
-              software={software}
-              onAddSoftware={() => setSoftwareDialogOpen(true)}
-            />
-
-            <CostDepreciationSection
-              asset={asset}
-              onEdit={() => setCostDialogOpen(true)}
-            />
-
-            <WarrantyAcquisitionSection />
-
-            <RelatedItemsSection />
-
-            <CustomDetailsSection
-              customDetails={customDetails}
-              onAdd={() => setCustomDetailsDialogOpen(true)}
-            />
-
-            <NotesSection notes={notes} onAdd={() => setNotesDialogOpen(true)} />
-
-            <AlertsSection alerts={alerts} onAdd={() => setAlertsDialogOpen(true)} />
-
-            <SourcesSection asset={asset} />
-
-            <HistorySection asset={asset} />
-
-            <AutomationHistorySection />
-          </div>
-        </div>
-      </div>
+      <AssetDetailContent
+        asset={asset}
+        currentStatus={currentStatus}
+        activeSection={activeSection}
+        mobileSidebarOpen={mobileSidebarOpen}
+        teammate={teammate}
+        location={location}
+        software={software}
+        customDetails={customDetails}
+        notes={notes}
+        alerts={alerts}
+        scrollToSection={scrollToSection}
+        setMobileSidebarOpen={setMobileSidebarOpen}
+        setTeammateDialogOpen={setTeammateDialogOpen}
+        setLocationDialogOpen={setLocationDialogOpen}
+        setSoftwareDialogOpen={setSoftwareDialogOpen}
+        setCostDialogOpen={setCostDialogOpen}
+        setCustomDetailsDialogOpen={setCustomDetailsDialogOpen}
+        setNotesDialogOpen={setNotesDialogOpen}
+        setAlertsDialogOpen={setAlertsDialogOpen}
+        onStatusChange={handleStatusChange}
+      />
 
       {/* Dialogs */}
       <SetTeammateDialog
@@ -209,11 +162,18 @@ export function AssetDetail({ assetId, onUpdate }: AssetDetailProps) {
           setAsset(updatedAsset);
         }}
         currentValues={{
-          purchasePrice: (asset as any).costDepreciation?.purchasePrice || asset.purchase_price || undefined,
-          replacementCost: (asset as any).costDepreciation?.replacementCost || asset.replacement_cost || undefined,
-          salvageValue: (asset as any).costDepreciation?.salvageValue || asset.salvage_value || undefined,
-          usefulLife: (asset as any).costDepreciation?.usefulLife || asset.useful_life_years || undefined,
-          approachingEndOfLife: (asset as any).costDepreciation?.approachingEndOfLife || asset.approaching_eol_months || undefined,
+          purchasePrice:
+            (asset as any).costDepreciation?.purchasePrice || asset.purchase_price || undefined,
+          replacementCost:
+            (asset as any).costDepreciation?.replacementCost || asset.replacement_cost || undefined,
+          salvageValue:
+            (asset as any).costDepreciation?.salvageValue || asset.salvage_value || undefined,
+          usefulLife:
+            (asset as any).costDepreciation?.usefulLife || asset.useful_life_years || undefined,
+          approachingEndOfLife:
+            (asset as any).costDepreciation?.approachingEndOfLife ||
+            asset.approaching_eol_months ||
+            undefined,
           poNumber: (asset as any).costDepreciation?.poNumber || asset.po_number || undefined,
         }}
       />
