@@ -10,8 +10,10 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - nginx_logs:/var/log/nginx
     depends_on:
-      - backend
-      - frontend
+      backend:
+        condition: service_started
+      frontend:
+        condition: service_started
     networks:
       - netsentinel-network
     restart: unless-stopped
@@ -54,7 +56,6 @@ services:
     container_name: netsentinel-backend
     environment:
       - DEBUG=False
-      - SECRET_KEY=${SECRET_KEY}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-netsentinel}
@@ -62,7 +63,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
       - POSTGRES_PORT=5432
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost}
-      - DJANGO_SECRET_KEY=${SECRET_KEY}
+      - DJANGO_SECRET_KEY=${SECRET_KEY:-django-insecure-61q$vycgj%chx6%e#w7o(cv57dde0k!k!yhjwr1r@i&4z)ti-!}
     volumes:
       - backend_static:/app/staticfiles
       - backend_media:/app/media
@@ -92,9 +93,11 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost/api}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-change-this-secret-key-in-production}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost}
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_started
     networks:
       - netsentinel-network
     restart: unless-stopped
