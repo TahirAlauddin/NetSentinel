@@ -108,19 +108,12 @@ export class AssetsApiClient extends BaseApiClient {
     return this.get<T>(`/assets/attachments/${id}/`);
   }
 
-  /**
-   * Get all asset relations
-   */
-  async getAssetRelations<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
-    const queryString = this.buildQueryString(params);
-    return this.get<T>(`/assets/relations${queryString}`);
-  }
 
   /**
    * Get a specific asset relation by ID
    */
   async getAssetRelation<T = any>(id: number | string): Promise<BaseApiResponse<T>> {
-    return this.get<T>(`/assets/relations/${id}/`);
+    return this.get<T>(`/assets/${id}/relations/`);
   }
 
   /**

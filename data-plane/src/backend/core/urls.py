@@ -16,10 +16,14 @@ Including another URLconf
 """
 
 from django.contrib import admin
+from django.shortcuts import redirect
 from django.urls import path, include
+from django.views.generic import RedirectView
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from .health import health_check
+from .views import api_info_view
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -35,10 +39,16 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    path("", api_info_view, name="core_api_info"),
+    path("api/health/", health_check, name="health-check"),
     path("admin/", admin.site.urls),
-    path("api/v1/", include("users.urls")),
+    # API endpoints
+    path("api/v1/users/", include("users.urls")),
     path("api/v1/infrastructure/", include("infrastructure.urls")),
     path("api/v1/assets/", include("assets.urls")),
+    # Djoser endpoints for authentication and user management
+    path("api/v1/auth/", include("djoser.urls")),
+    path("api/v1/auth/", include("djoser.urls.jwt")),
     # API Documentation
     path(
         "swagger/",
@@ -55,4 +65,5 @@ urlpatterns = [
         schema_view.without_ui(cache_timeout=0),
         name="schema-json",
     ),
+    path("api/", RedirectView.as_view(pattern_name="core_api_info", permanent=False)),
 ]

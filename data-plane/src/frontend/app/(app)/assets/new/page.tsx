@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { AssetForm } from "@/components/pages/assets/form/AssetForm";
 import { LoadingState } from "@/components/feedback/loading-state";
+import { AppShell } from "@/components/layout/app-shell";
 
 /**
  * Main component with Suspense boundary for useSearchParams
@@ -10,7 +11,9 @@ import { LoadingState } from "@/components/feedback/loading-state";
 export default function NewAssetPage() {
   return (
     <Suspense fallback={<LoadingState message="Loading new asset page..." />}>
-      <AssetForm assetId={null} />
+      <AppShell>
+        <AssetForm assetId={null} mode="create" />
+      </AppShell>
     </Suspense>
   );
 }

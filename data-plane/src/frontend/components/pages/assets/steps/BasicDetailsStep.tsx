@@ -1,11 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 
 import { FormField, SelectField, VendorField } from "../form";
-import { Category } from "@/types/assets";
-import { listAssetCategories } from "@/app/(app)/assets/actions";
 
 import { IMPACT_LEVELS } from "@/constants/assets";
 import { useBasicDetailsStep } from "../hooks/useFormDataFetch";
@@ -16,14 +13,7 @@ import { useAssetForm } from "../form/AssetFormContext";
  */
 export function BasicDetailsStep() {
   const { formData, onInputChange } = useBasicDetailsStep();
-  const { fieldErrors } = useAssetForm();
-  const [categories, setCategories] = useState<Category[]>([]);
-  
-  useEffect(() => {
-    listAssetCategories().then((categories) => {
-      setCategories(categories);
-    });
-  }, []);
+  const { fieldErrors, categories } = useAssetForm();
 
   // Extract category ID properly - handle object, number, or string
   // This ensures the SelectField displays the correct value even when category is an object
@@ -38,6 +28,8 @@ export function BasicDetailsStep() {
   };
 
   // This is used to display the category name in the select field
+  console.log("categories", categories);
+
   const categoryOptions = categories.map((category) => ({
     value: category.id.toString(),
     label: category.name,

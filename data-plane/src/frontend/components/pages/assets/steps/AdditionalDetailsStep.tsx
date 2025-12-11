@@ -14,6 +14,8 @@ export function AdditionalDetailsStep() {
   const attachments = Array.isArray(formData.attachments) ? formData.attachments : []
   const images = Array.isArray(formData.images) ? formData.images : []
 
+  console.log("Related Items", formData.related_items);
+
   return (
     <div className="space-y-6 overflow-y-auto pr-4">
       <h2 className="text-xl font-semibold text-gray-900">Additional Details</h2>

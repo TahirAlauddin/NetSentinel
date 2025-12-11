@@ -55,7 +55,7 @@ export default function EditAssetPageComponent() {
             <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700">{error}</div>
           </div>
         )}
-        <AssetForm assetId={parseInt(assetId, 10)} />
+        <AssetForm assetId={parseInt(assetId, 10)} mode="edit" />
       </div>
     </AppShell>
   );

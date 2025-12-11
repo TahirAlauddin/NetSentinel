@@ -10,12 +10,9 @@ router.register(r"permissions", views.PermissionViewSet, basename="permission")
 
 urlpatterns = [
     # Public endpoints
-    path("", views.api_info_view, name="api_info"),
+    path("", views.api_info_view, name="users_api_info"),
     # Admin endpoints
     path("stats/", views.user_stats_view, name="user_stats"),
     # Groups and Permissions
     path("", include(router.urls)),
-    # Djoser endpoints for authentication and user management
-    path("auth/", include("djoser.urls")),
-    path("auth/", include("djoser.urls.jwt")),
 ]

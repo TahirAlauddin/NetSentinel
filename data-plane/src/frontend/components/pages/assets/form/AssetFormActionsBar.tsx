@@ -1,11 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { STEPS } from "@/constants/assets";
-import { validateStep } from "../utils";
+import { validateStepForCreate, validateStepForUpdate } from "../utils";
 import { useAssetForm } from "./AssetFormContext";
 
 interface ActionsBarProps {
@@ -28,10 +28,24 @@ const ActionsBar = ({ isSubmitting: externalIsSubmitting }: ActionsBarProps) => 
     handleSave,
     isSubmitting: contextIsSubmitting,
     fieldErrors,
+    mode,
   } = useAssetForm();
   const router = useRouter();
   // Use external isSubmitting if provided, otherwise use context
   const isSubmitting = externalIsSubmitting ?? contextIsSubmitting;
+  
+  // Validate directly from formData without transforming (transformation only happens on submit)
+  // This prevents errors from being thrown when just checking button state
+  // The validation functions accept Partial<Asset> and handle missing fields gracefully
+  const [isValid, setIsValid] = useState(false);
+  
+  useEffect(() => {
+    if (mode === "create") {
+      setIsValid(validateStepForCreate(currentStep, formData).isValid);
+    } else {
+      setIsValid(validateStepForUpdate(currentStep, formData).isValid);
+    }
+  }, [currentStep, formData, mode]);
   
   // Check if current step has validation errors
   const hasErrors = fieldErrors && Object.keys(fieldErrors).length > 0;
@@ -56,9 +70,9 @@ const ActionsBar = ({ isSubmitting: externalIsSubmitting }: ActionsBarProps) => 
       {currentStep === STEPS.length - 1 ? (
         <Button
           onClick={handleSave}
-          disabled={!validateStep(currentStep, formData) || isSubmitting || hasErrors}
+          disabled={!isValid || isSubmitting || hasErrors}
           className={`flex-1 ${
-            validateStep(currentStep, formData) && !isSubmitting && !hasErrors
+            isValid && !isSubmitting && !hasErrors
               ? "bg-blue-600 hover:bg-blue-700 text-white"
               : "bg-gray-400 text-gray-600 cursor-not-allowed"
           }`}
@@ -68,9 +82,9 @@ const ActionsBar = ({ isSubmitting: externalIsSubmitting }: ActionsBarProps) => 
       ) : (
         <Button
           onClick={handleNext}
-          disabled={hasErrors}
+          disabled={hasErrors || !isValid}
           className={`flex-1 ${
-            !hasErrors && validateStep(currentStep, formData)
+            !hasErrors && isValid
               ? "bg-blue-600 hover:bg-blue-700 text-white"
               : "bg-gray-400 text-gray-600 cursor-not-allowed"
           }`}

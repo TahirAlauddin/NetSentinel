@@ -5,8 +5,14 @@ import { STEPS } from "@/constants/assets";
 import { Asset } from "@/types/assets";
 import { CalendarAlert } from "@/types/assets/fields";
 
-import { validateStep } from "../utils";
-import { updateAsset, createAsset } from "@/app/(app)/assets/actions";
+import { validateStepForCreate, validateStepForUpdate } from "../utils";
+import {
+  updateAsset,
+  createAsset,
+  uploadAssetImages,
+  uploadAssetAttachments,
+  setAssetRelations,
+} from "@/app/(app)/assets/actions";
 import { toast } from "sonner";
 import { transformToCreateDto, transformToUpdateDto } from "../utils/transform";
 import { transformToCalendarAlertCreateUpdateDto } from "../utils/transform";
@@ -16,9 +22,14 @@ import { CalendarAlertApiClient } from "@/lib/api-client/calendar-alert";
  *
  * @param assetId - The asset ID if editing, null if creating
  * @param formData - The current form data (passed as parameter to avoid context dependency)
+ * @param mode - The form mode: "create" for new assets, "edit" for editing existing assets
  * @returns Object containing all action handlers and current step
  */
-export function useFormActions(assetId: string | null, formData: Partial<Asset>) {
+export function useFormActions(
+  assetId: string | null,
+  formData: Partial<Asset>,
+  mode: "create" | "edit" = "create"
+) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -42,7 +53,15 @@ export function useFormActions(assetId: string | null, formData: Partial<Asset>)
    */
   const handleNext = useCallback(() => {
     const latestFormData = formDataRef.current;
-    const validation = validateStep(currentStep, latestFormData);
+    let validation;
+    
+    if (mode === "create") {
+      const dto = transformToCreateDto(latestFormData);
+      validation = validateStepForCreate(currentStep, dto);
+    } else {
+      const dto = transformToUpdateDto(latestFormData);
+      validation = validateStepForUpdate(currentStep, dto);
+    }
 
     if (!validation.isValid) {
       // Set field errors for display
@@ -58,7 +77,7 @@ export function useFormActions(assetId: string | null, formData: Partial<Asset>)
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     }
-  }, [currentStep]);
+  }, [currentStep, mode]);
 
   /**
    * Handle moving to the previous step
@@ -115,7 +134,15 @@ export function useFormActions(assetId: string | null, formData: Partial<Asset>)
    */
   const handleSave = useCallback(async () => {
     const latestFormData = formDataRef.current;
-    const validation = validateStep(currentStep, latestFormData);
+    let validation;
+    
+    if (mode === "create") {
+      const dto = transformToCreateDto(latestFormData);
+      validation = validateStepForCreate(currentStep, dto);
+    } else {
+      const dto = transformToUpdateDto(latestFormData);
+      validation = validateStepForUpdate(currentStep, dto);
+    }
 
     if (!validation.isValid) {
       toast.error(validation.error || "Please fill in all required fields");
@@ -124,22 +151,51 @@ export function useFormActions(assetId: string | null, formData: Partial<Asset>)
 
     try {
       setIsSubmitting(true);
-      const result = assetId
+      const result = mode === "edit" && assetId
         ? await updateAsset(parseInt(assetId, 10), transformToUpdateDto(latestFormData))
         : await createAsset(transformToCreateDto(latestFormData));
 
       if (result.success) {
         // If creating a new asset, create calendar alerts after asset creation
-        if (!assetId && result.data?.id) {
+        const savedAssetId = result.data?.id || (assetId ? parseInt(assetId, 10) : null);
+
+        if (mode === "create" && result.data?.id) {
           const calendarAlerts = Array.isArray(latestFormData.calendar_alerts)
             ? latestFormData.calendar_alerts
             : [];
           await createCalendarAlertsForNewAsset(result.data.id, calendarAlerts);
         }
 
+        // After base asset save, sync related_items, attachments, and images
+        if (savedAssetId) {
+          const relatedItems = Array.isArray(latestFormData.related_items)
+            ? latestFormData.related_items
+            : [];
+          const attachments = Array.isArray(latestFormData.attachments)
+            ? latestFormData.attachments
+            : [];
+          const images = Array.isArray(latestFormData.images) ? latestFormData.images : [];
+
+          // Fire sequentially to keep logic simple
+          const relResult = await setAssetRelations(savedAssetId, relatedItems as any[]);
+          if (!relResult.success && relResult.error) {
+            toast.error(`Failed to save related items: ${relResult.error}`);
+          }
+
+          const attachResult = await uploadAssetAttachments(savedAssetId, attachments as any[]);
+          if (!attachResult.success && attachResult.error) {
+            toast.error(`Failed to upload attachments: ${attachResult.error}`);
+          }
+
+          const imgResult = await uploadAssetImages(savedAssetId, images as any[]);
+          if (!imgResult.success && imgResult.error) {
+            toast.error(`Failed to upload images: ${imgResult.error}`);
+          }
+        }
+
         toast.success(
           result.message ||
-            (assetId ? "Asset updated successfully!" : "Asset created successfully!")
+            (mode === "edit" ? "Asset updated successfully!" : "Asset created successfully!")
         );
         router.push("/assets");
       } else {
@@ -152,7 +208,7 @@ export function useFormActions(assetId: string | null, formData: Partial<Asset>)
     } finally {
       setIsSubmitting(false);
     }
-  }, [currentStep, assetId, router, createCalendarAlertsForNewAsset]);
+  }, [currentStep, assetId, mode, router, createCalendarAlertsForNewAsset]);
 
   /**
    * Handle clicking on a step in the progress indicator

@@ -1,11 +1,37 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 from .models import *
 from .serializers import *
 
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def api_info_view(request):
+    return Response({
+        "message": "NetSentinel API is running!",
+        "version": "v1",
+        "endpoints": {
+            "tags": "/api/v1/assets/tags/",
+            "lifecycles": "/api/v1/assets/lifecycles/",
+            "vendors": "/api/v1/assets/vendors/",
+            "tech_specs": "/api/v1/assets/tech_specs/",
+            "categories": "/api/v1/assets/categories/",
+            "attachments": "/api/v1/assets/attachments/",
+            "relations": "/api/v1/assets/relations/",
+            "computer_details": "/api/v1/assets/computer_details/",
+            "network_details": "/api/v1/assets/network_details/",
+            "display_details": "/api/v1/assets/display_details/",
+            "phone_details": "/api/v1/assets/phone_details/",
+            "peripheral_details": "/api/v1/assets/peripheral_details/",
+            "basic_details": "/api/v1/assets/basic_details/",
+            "tech_specs": "/api/v1/assets/tech_specs/",
+            "calendar_alerts": "/api/v1/assets/calendar_alerts/",
+            "images": "/api/v1/assets/images/",
+        },
+    })
 
 class AssetTagViewSet(viewsets.ModelViewSet):
     """
@@ -259,6 +285,12 @@ class AssetRelationViewSet(viewsets.ModelViewSet):
     queryset = AssetRelation.objects.select_related("asset", "related_asset").all()
     serializer_class = AssetRelationSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Filter relations by the asset ID from the nested route."""
+        asset_id = self.kwargs.get("asset_pk")
+        queryset = AssetRelation.objects.select_related("asset", "related_asset").filter(asset_id=asset_id)
+        return queryset
 
 
 # Extension detail viewsets (read-only for now, can be extended if needed)

@@ -142,6 +142,8 @@ function applyCommonTransformations(data: any): any {
   delete transformed.created_at;
   delete transformed.updated_at;
   delete transformed.images;
+  delete transformed.attachments;
+  delete transformed.related_items;
   delete transformed.calendar_alerts;
 
   // Transform optional nullable ID fields
@@ -211,7 +213,7 @@ function applyCommonTransformations(data: any): any {
 // ============================================================================
 
 /**
- * Transforms AssetFormData to AssetCreateDto for creating a new asset.
+ * Transforms Asset to AssetCreateDto for creating a new asset.
  * Validates that required fields (name, category) are present.
  * Converts objects to IDs, handles string IDs, etc.
  */
@@ -237,7 +239,7 @@ export function transformToCreateDto(
 }
 
 /**
- * Transforms AssetFormData to AssetUpdateDto for updating an existing asset.
+ * Transforms Asset to AssetUpdateDto for updating an existing asset.
  * All fields are optional (PATCH semantics).
  * Converts objects to IDs, handles string IDs, etc.
  */

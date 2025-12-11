@@ -6,6 +6,7 @@ import { UserRecord } from "../users";
 import { Category, Vendor, Tag, CustomLifecycle, AssetImage, AssetAttachment, CalendarAlert } from "./fields";
 import { LocationRecord } from "../locations";
 import { DepartmentRecord } from "../departments";
+import { Asset } from "./asset";
 
 /**
  * BasicDetailsStepFormData - Form data for the Basic Details step
@@ -78,6 +79,8 @@ export interface AlertsStepFormData {
  * AdditionalDetailsStepFormData - Form data for the Additional Details step
  */
 export interface AdditionalDetailsStepFormData {
+  asset_id: number | string;
   images?: AssetImage[];
   attachments?: AssetAttachment[];
+  related_items?: Asset[];
 }

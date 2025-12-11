@@ -7,6 +7,7 @@ from .views import (
     AssetTechSpecsViewSet,
     CalendarAlertViewSet,
 )
+from .views import api_info_view
 
 router = DefaultRouter()
 router.register(r"tags", AssetTagViewSet, basename="asset-tag")
@@ -15,7 +16,6 @@ router.register(r"vendors", VendorViewSet, basename="vendor")
 router.register(r"tech-specs", TechSpecsViewSet, basename="tech-specs")
 router.register(r"categories", AssetCategoryViewSet, basename="asset-category")
 router.register(r"attachments", AssetAttachmentViewSet, basename="asset-attachment")
-router.register(r"relations", AssetRelationViewSet, basename="asset-relation")
 router.register(
     r"computer-details", ComputerDetailsViewSet, basename="computer-details"
 )
@@ -38,8 +38,10 @@ router.register(r"", AssetViewSet, basename="asset")
 assets_router = routers.NestedDefaultRouter(router, r"", lookup="asset")
 assets_router.register(r"images", AssetImageViewSet, basename="asset-images")
 assets_router.register(r"calendar-alerts", CalendarAlertViewSet, basename="calendar-alerts")
+assets_router.register(r"relations", AssetRelationViewSet, basename="asset-relation")
 
 urlpatterns = [
     path("", include(router.urls)),
     path("", include(assets_router.urls)),
+    path("", api_info_view, name="assets_api_info"),
 ]

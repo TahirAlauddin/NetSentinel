@@ -14,6 +14,8 @@ export { getWarrantyColor, formatWarrantyStatus, formatAssetStatus } from "./for
 export { filterAssets } from "./filter";
 export {
   validateStep,
+  validateStepForCreate,
+  validateStepForUpdate,
   isValidIPv4,
   isValidIPv6,
   isValidIPAddress,

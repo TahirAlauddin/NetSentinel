@@ -1,7 +1,10 @@
 "use client";
 
 import { createContext, useContext, ReactNode, useMemo } from "react";
-import { Asset } from "@/types/assets";
+import { Asset, Category, CustomLifecycle } from "@/types/assets";
+import { DepartmentRecord } from "@/types/departments";
+import { UserRecord } from "@/types/users";
+import { LocationRecord } from "@/types/locations";
 
 /**
  * AssetFormProviderProps - Props for the AssetFormProvider component
@@ -9,9 +12,16 @@ import { Asset } from "@/types/assets";
 interface AssetFormProviderProps {
   children: ReactNode;
   formData: Partial<Asset>;
+  locations: LocationRecord[];
+  departments: DepartmentRecord[];
+  categories: Category[];
+  customLifecycles: CustomLifecycle[];
+  users: UserRecord[];
   currentStep: number;
   isSubmitting: boolean;
   fieldErrors?: Record<string, string>;
+  mode: "create" | "edit";
+  relatedItems: Asset[]; // TODO: We'll need to allow asset relations with every entity
   onInputChange: (field: string, value: any) => void;
   handleNext: () => void;
   handlePrevious: () => void;
@@ -27,6 +37,13 @@ interface AssetFormContextValue {
   currentStep: number;
   isSubmitting: boolean;
   fieldErrors?: Record<string, string>;
+  mode: "create" | "edit";
+  locations: LocationRecord[];
+  departments: DepartmentRecord[];
+  categories: Category[];
+  customLifecycles: CustomLifecycle[];
+  users: UserRecord[];
+  relatedItems: Asset[]; // TODO: We'll need to allow asset relations with every entity
   updateField: (field: string, value: any) => void;
   handleNext: () => void;
   handlePrevious: () => void;
@@ -42,7 +59,13 @@ export const AssetFormContext = createContext<AssetFormContextValue | undefined>
  *
  * @param children - The children to render
  * @param formData - The form data
- * @param onInputChange - The function to update the form data
+ * @param locations - The locations
+ * @param departments - The departments
+ * @param categories - The categories
+ * @param customLifecycles - The custom lifecycles
+ * @param users - The users
+ * @param relatedItems - The related items
+* @param onInputChange - The function to update the form data
  * @param currentStep - The current step index
  * @param handleNext - Handler for moving to next step
  * @param handlePrevious - Handler for moving to previous step
@@ -53,6 +76,12 @@ export const AssetFormContext = createContext<AssetFormContextValue | undefined>
 export function AssetFormProvider({
   children,
   formData,
+  locations,
+  departments,
+  categories,
+  customLifecycles,
+  users,
+  relatedItems,
   onInputChange,
   currentStep,
   handleNext,
@@ -61,6 +90,7 @@ export function AssetFormProvider({
   handleStepClick,
   isSubmitting,
   fieldErrors,
+  mode,
 }: AssetFormProviderProps) {
   // Memoize context value to prevent unnecessary re-renders
   const value = useMemo(
@@ -74,6 +104,13 @@ export function AssetFormProvider({
       handleStepClick,
       isSubmitting,
       fieldErrors: fieldErrors || {},
+      mode,
+      locations,
+      departments,
+      categories,
+      customLifecycles,
+      users,
+      relatedItems,
     }),
     [
       formData,
@@ -85,6 +122,13 @@ export function AssetFormProvider({
       handleStepClick,
       isSubmitting,
       fieldErrors,
+      mode,
+      locations,
+      departments,
+      categories,
+      customLifecycles,
+      users,
+      relatedItems,
     ]
   );
 

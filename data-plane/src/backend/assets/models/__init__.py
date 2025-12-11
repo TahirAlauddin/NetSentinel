@@ -300,12 +300,6 @@ class Asset(models.Model):
         null=True,
         help_text="Date when asset was installed",
     )
-    related_items = models.ManyToManyField(
-        "self",
-        symmetrical=True,
-        blank=True,
-        help_text="Related assets",
-    )
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -384,9 +378,7 @@ class AssetAttachment(models.Model):
     """
 
     # Generic foreign key to work with Asset
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    asset = GenericForeignKey("content_type", "object_id")
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="attachments")
 
     file = models.FileField(upload_to="assets/attachments/")
     name = models.CharField(max_length=255, blank=True, null=True)
@@ -404,13 +396,9 @@ class AssetAttachment(models.Model):
         verbose_name = "Asset Attachment"
         verbose_name_plural = "Asset Attachments"
         ordering = ["-uploaded_at"]
-        indexes = [
-            models.Index(fields=["content_type", "object_id"]),
-        ]
 
     def __str__(self):
-        asset_str = str(self.asset) if self.asset else "Unknown Asset"
-        return f"{asset_str} - {self.name or self.file.name}"
+        return f"{self.asset.name} - {self.name or self.file.name}"
 
 
 class AssetRelation(models.Model):

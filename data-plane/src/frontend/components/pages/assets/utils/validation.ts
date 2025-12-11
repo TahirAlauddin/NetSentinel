@@ -2,7 +2,8 @@
  * Validation utilities for asset form fields
  */
 
-import { AssetFormData } from "@/types/assets"
+import { AssetCreateDto, AssetUpdateDto } from "@/types/assets/dto"
+import { Asset } from "@/types/assets"
 
 // ==================== Validation Functions ====================
 /**
@@ -133,36 +134,62 @@ export const isSelected = (value: any): boolean => {
 }
 
 
+// ==================== Shared Validation Helpers ====================
+
 /**
- * Validates a specific step and returns validation result with error messages
+ * Validates step 0 (Basic Details) - name and category
  */
-export const validateStep = (
+const validateBasicDetails = (
+  formData: AssetCreateDto | AssetUpdateDto | Partial<Asset>,
+  isCreate: boolean
+): Record<string, string> => {
+  const fieldErrors: Record<string, string> = {}
+
+  if (isCreate) {
+    // For create: name and category are required
+    if (!formData.name || (typeof formData.name === "string" && formData.name.trim() === "")) {
+      fieldErrors.name = "Asset name is required"
+    }
+    
+    // Validate category (required for create) - could be string ID, number ID, or object
+    if (!formData.category) {
+      fieldErrors.category = "Asset type (category) is required"
+    } else if (typeof formData.category === "string" && (formData.category as string).trim() === "") {
+      fieldErrors.category = "Asset type (category) is required"
+    } else if (typeof formData.category === "number" && formData.category === 0) {
+      fieldErrors.category = "Asset type (category) is required"
+    }
+  } else {
+    // For update: name and category are optional, but validate format if provided
+    if (formData.name !== undefined && formData.name !== null) {
+      if (typeof formData.name === "string" && formData.name.trim() === "") {
+        fieldErrors.name = "Asset name cannot be empty"
+      }
+    }
+    
+    // Validate category format if provided
+    if (formData.category !== undefined && formData.category !== null) {
+      if (typeof formData.category === "string" && (formData.category as string).trim() === "") {
+        fieldErrors.category = "Asset type (category) cannot be empty"
+      } else if (typeof formData.category === "number" && formData.category === 0) {
+        fieldErrors.category = "Asset type (category) cannot be zero"
+      }
+    }
+  }
+
+  return fieldErrors
+}
+
+/**
+ * Validates steps 1-6 (shared validation logic for both create and update)
+ */
+const validateCommonSteps = (
   stepIndex: number,
-  formData: AssetFormData
-): { isValid: boolean; error?: string; fieldErrors?: Record<string, string> } => {
+  formData: AssetCreateDto | AssetUpdateDto | Partial<Asset>
+): Record<string, string> => {
   const fieldErrors: Record<string, string> = {}
 
   switch (stepIndex) {
-    case 0: // Basic Details
-      // Validate name
-      if (!formData.name || (typeof formData.name === "string" && formData.name.trim() === "")) {
-        fieldErrors.name = "Asset name is required"
-      }
-      
-      // Validate category - could be string ID, number ID, or object
-      if (!formData.category) {
-        fieldErrors.category = "Asset type (category) is required"
-      } else if (typeof formData.category === "string" && (formData.category as string).trim() === "") {
-        fieldErrors.category = "Asset type (category) is required"
-      } else if (typeof formData.category === "number" && formData.category === 0) {
-        fieldErrors.category = "Asset type (category) is required"
-      }
-      
-      if (Object.keys(fieldErrors).length > 0) {
-        return { isValid: false, error: Object.values(fieldErrors)[0], fieldErrors }
-      }
-      return { isValid: true }
-
     case 1: // Tech Specs
       // Validate IP address if provided
       if (formData.ip_address && formData.ip_address.trim() !== "") {
@@ -177,11 +204,7 @@ export const validateStep = (
           fieldErrors.mac_address = "Please enter a valid MAC address (e.g., 00:1B:44:11:3A:B7)"
         }
       }
-
-      if (Object.keys(fieldErrors).length > 0) {
-        return { isValid: false, error: Object.values(fieldErrors)[0], fieldErrors }
-      }
-      return { isValid: true }
+      break
 
     case 2: // Location & Usage
       // Validate dates if provided 
@@ -196,12 +219,7 @@ export const validateStep = (
           fieldErrors.expected_checkin_date = "Please enter a valid date (YYYY-MM-DD)"
         }
       }
-
-      // used_by is a number (user ID), no validation needed
-      if (Object.keys(fieldErrors).length > 0) {
-        return { isValid: false, error: Object.values(fieldErrors)[0], fieldErrors }
-      }
-      return { isValid: true }
+      break
 
     case 3: // Cost Depreciation
       // Validate numeric fields if provided
@@ -237,11 +255,7 @@ export const validateStep = (
           fieldErrors.approaching_eol_months = "Please enter a valid positive number"
         }
       }
-
-      if (Object.keys(fieldErrors).length > 0) {
-        return { isValid: false, error: Object.values(fieldErrors)[0], fieldErrors }
-      }
-      return { isValid: true }
+      break
 
     case 4: // Warranty & Acquisition
       // Validate dates if provided
@@ -262,29 +276,100 @@ export const validateStep = (
           fieldErrors.installation_date = "Please enter a valid date (YYYY-MM-DD)"
         }
       }
-
-      if (Object.keys(fieldErrors).length > 0) {
-        return { isValid: false, error: Object.values(fieldErrors)[0], fieldErrors }
-      }
-      return { isValid: true }
+      break
 
     case 5: // Alerts
-      // All fields optional, no validation needed
-      return { isValid: true }
-
     case 6: // Additional Details
-      // All fields optional, no validation needed
-      return { isValid: true }
-
     default:
-      return { isValid: true }
+      // All fields optional, no validation needed
+      break
   }
+
+  return fieldErrors
 }
 
 /**
- * Legacy const for backward compatibility
- * @deprecated Use validateStep instead
+ * Helper to build validation result from field errors
  */
-export const isStepValid = (stepIndex: number, formData: AssetFormData): boolean => {
-  return validateStep(stepIndex, formData).isValid
+const buildValidationResult = (fieldErrors: Record<string, string>) => {
+  if (Object.keys(fieldErrors).length > 0) {
+    return { isValid: false, error: Object.values(fieldErrors)[0], fieldErrors }
+  }
+  return { isValid: true }
+}
+
+// ==================== Public Validation Functions ====================
+
+/**
+ * Validates a specific step for creating a new asset and returns validation result with error messages
+ * For create operations, name and category are required in step 0
+ * Accepts Partial<Asset> to allow validation without transformation
+ */
+export const validateStepForCreate = (
+  stepIndex: number,
+  formData: AssetCreateDto | Partial<Asset>
+): { isValid: boolean; error?: string; fieldErrors?: Record<string, string> } => {
+  if (stepIndex === 0) {
+    const fieldErrors = validateBasicDetails(formData, true)
+    return buildValidationResult(fieldErrors)
+  }
+
+  const fieldErrors = validateCommonSteps(stepIndex, formData)
+  return buildValidationResult(fieldErrors)
+}
+
+/**
+ * Validates a specific step for updating an existing asset and returns validation result with error messages
+ * For update operations, all fields are optional, but format validation is still performed if values are provided
+ * Accepts Partial<Asset> to allow validation without transformation
+ */
+export const validateStepForUpdate = (
+  stepIndex: number,
+  formData: AssetUpdateDto | Partial<Asset>
+): { isValid: boolean; error?: string; fieldErrors?: Record<string, string> } => {
+  if (stepIndex === 0) {
+    const fieldErrors = validateBasicDetails(formData, false)
+    return buildValidationResult(fieldErrors)
+  }
+
+  const fieldErrors = validateCommonSteps(stepIndex, formData)
+  return buildValidationResult(fieldErrors)
+}
+
+/**
+ * Legacy function for backward compatibility
+ * @deprecated Use validateStepForCreate or validateStepForUpdate instead
+ */
+export const validateStep = (
+  stepIndex: number,
+  formData: AssetUpdateDto | AssetCreateDto
+): { isValid: boolean; error?: string; fieldErrors?: Record<string, string> } => {
+  // Try to determine if it's a create or update DTO based on required fields
+  // If name and category are both present and non-empty, treat as create
+  const hasName = 
+    formData.name !== undefined && 
+    formData.name !== null && 
+    typeof formData.name === "string" && 
+    formData.name.trim() !== "";
+  
+  const category: any = formData.category;
+  let hasCategory = false;
+  if (category !== undefined && category !== null) {
+    if (typeof category === "number") {
+      hasCategory = category !== 0;
+    } else if (typeof category === "string") {
+      hasCategory = category.trim() !== "";
+    } else {
+      hasCategory = true; // Object or other valid type
+    }
+  }
+  
+  const hasRequiredCreateFields = hasName && hasCategory;
+  
+  // For backward compatibility, default to create validation if required fields are present
+  if (hasRequiredCreateFields) {
+    return validateStepForCreate(stepIndex, formData as AssetCreateDto);
+  } else {
+    return validateStepForUpdate(stepIndex, formData as AssetUpdateDto);
+  }
 }

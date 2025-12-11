@@ -6,7 +6,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
 import { Asset } from "@/types/assets";
-import { listAssets, deleteAsset } from "./actions";
+import { listAssets, deleteAsset } from "./actions/index";
 import { AssetTable } from "@/components/pages/assets/AssetTable";
 import { AssetMetricsDisplay } from "@/components/pages/assets/AssetMetrics";
 import { AssetChart } from "@/components/pages/assets/AssetChart";

@@ -329,8 +329,10 @@ export function useAdditionalDetailsStep() {
   const { formData, updateField } = useAssetForm()
   return {
     formData: {
+      asset_id: formData.id,
       images: formData.images,
       attachments: formData.attachments,
+      related_items: formData.related_items,
     } as AdditionalDetailsStepFormData,
     onInputChange: updateField,
   }

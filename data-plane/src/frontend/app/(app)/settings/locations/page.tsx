@@ -173,11 +173,11 @@ export default function LocationsPage() {
                                 {loc.city}
                               </h3>
                               <p className="text-xs text-muted-foreground mb-3">
-                                {loc.address}
+                                {loc.address1}
                               </p>
                               <div className="flex gap-6 text-xs">
                                 <span className="text-muted-foreground">
-                                  {loc.circuit_count || 0} circuits
+                                  {0} circuits
                                 </span>
                               </div>
                             </div>

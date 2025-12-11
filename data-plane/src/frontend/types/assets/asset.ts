@@ -60,6 +60,7 @@ export interface Asset {
     
     images: AssetImage[],
     attachments: AssetAttachment[],
+    related_items: Asset[],
 
     created_at: string,
     updated_at: string,
