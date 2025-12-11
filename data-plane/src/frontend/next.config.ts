@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Production optimizations
-  output: "standalone", // Optimize for Docker deployment
   compress: true, // Enable gzip compression
   poweredByHeader: false, // Remove X-Powered-By header for security
   reactStrictMode: true, // Enable React strict mode
