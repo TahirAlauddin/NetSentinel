@@ -9,7 +9,7 @@ export class UserApiClient extends BaseApiClient {
    */
   async getUsers<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/users/users${queryString}`);
+    return this.get<T>(`/users/users${queryString}/`);
   }
 
   /**

@@ -10,7 +10,7 @@ export class InfrastructureApiClient extends BaseApiClient {
 
   async getLocations<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/infrastructure/locations${queryString}`);
+    return this.get<T>(`/infrastructure/locations${queryString}/`);
   }
 
   /**
@@ -25,7 +25,7 @@ export class InfrastructureApiClient extends BaseApiClient {
    */
   async getCircuits<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/infrastructure/circuits${queryString}`);
+    return this.get<T>(`/infrastructure/circuits${queryString}/`);
   }
 
   /**
@@ -40,7 +40,7 @@ export class InfrastructureApiClient extends BaseApiClient {
    */
   async getPointsOfContact<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/infrastructure/points-of-contact${queryString}`);
+    return this.get<T>(`/infrastructure/points-of-contact${queryString}/`);
   }
 
   /**
@@ -55,7 +55,7 @@ export class InfrastructureApiClient extends BaseApiClient {
    */
   async getDepartments<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/infrastructure/departments${queryString}`);
+    return this.get<T>(`/infrastructure/departments${queryString}/`);
   }
 
   /**
@@ -70,7 +70,7 @@ export class InfrastructureApiClient extends BaseApiClient {
    */
   async getCategories<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/infrastructure/categories${queryString}`);
+    return this.get<T>(`/infrastructure/categories${queryString}/`);
   }
 
   /**
@@ -85,7 +85,7 @@ export class InfrastructureApiClient extends BaseApiClient {
    */
   async getContacts<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/infrastructure/contacts${queryString}`);
+    return this.get<T>(`/infrastructure/contacts${queryString}/`);
   }
 
   /**
@@ -100,7 +100,7 @@ export class InfrastructureApiClient extends BaseApiClient {
    */
   async getCarrierContacts<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/infrastructure/carrier-contacts${queryString}`);
+    return this.get<T>(`/infrastructure/carrier-contacts${queryString}/`);
   }
 
   /**
@@ -115,7 +115,7 @@ export class InfrastructureApiClient extends BaseApiClient {
    */
   async getUtilityContacts<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/infrastructure/utility-contacts${queryString}`);
+    return this.get<T>(`/infrastructure/utility-contacts${queryString}/`);
   }
 
   /**

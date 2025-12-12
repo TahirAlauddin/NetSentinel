@@ -8,7 +8,7 @@ export class AssetsApiClient extends BaseApiClient {
    */
   async getAssets<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/assets${queryString}`);
+    return this.get<T>(`/assets${queryString}/`);
   }
 
   /**
@@ -23,7 +23,7 @@ export class AssetsApiClient extends BaseApiClient {
    */
   async getAssetTags<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/assets/tags${queryString}`);
+    return this.get<T>(`/assets/tags${queryString}/`);
   }
 
   /**
@@ -38,7 +38,7 @@ export class AssetsApiClient extends BaseApiClient {
    */
   async getLifecycles<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/assets/lifecycles${queryString}`);
+    return this.get<T>(`/assets/lifecycles${queryString}/`);
   }
 
   /**
@@ -53,7 +53,7 @@ export class AssetsApiClient extends BaseApiClient {
    */
   async getVendors<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/assets/vendors${queryString}`);
+    return this.get<T>(`/assets/vendors${queryString}/`);
   }
 
   /**
@@ -68,7 +68,7 @@ export class AssetsApiClient extends BaseApiClient {
    */
   async getTechSpecs<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/assets/tech-specs${queryString}`);
+    return this.get<T>(`/assets/tech-specs${queryString}/`);
   }
 
   /**
@@ -83,7 +83,7 @@ export class AssetsApiClient extends BaseApiClient {
    */
   async getAssetCategories<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/assets/categories${queryString}`);
+    return this.get<T>(`/assets/categories${queryString}/`);
   }
 
   /**
@@ -98,7 +98,7 @@ export class AssetsApiClient extends BaseApiClient {
    */
   async getAssetAttachments<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/assets/attachments${queryString}`);
+    return this.get<T>(`/assets/attachments${queryString}/`);
   }
 
   /**
@@ -121,7 +121,7 @@ export class AssetsApiClient extends BaseApiClient {
    */
   async getComputerDetails<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/assets/computer-details${queryString}`);
+    return this.get<T>(`/assets/computer-details${queryString}/`);
   }
 
   /**
@@ -136,7 +136,7 @@ export class AssetsApiClient extends BaseApiClient {
    */
   async getNetworkDetails<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/assets/network-details${queryString}`);
+    return this.get<T>(`/assets/network-details${queryString}/`);
   }
 
   /**
@@ -151,7 +151,7 @@ export class AssetsApiClient extends BaseApiClient {
    */
   async getDisplayDetails<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/assets/display-details${queryString}`);
+    return this.get<T>(`/assets/display-details${queryString}/`);
   }
 
   /**
@@ -166,7 +166,7 @@ export class AssetsApiClient extends BaseApiClient {
    */
   async getPhoneDetails<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/assets/phone-details${queryString}`);
+    return this.get<T>(`/assets/phone-details${queryString}/`);
   }
 
   /**
@@ -181,7 +181,7 @@ export class AssetsApiClient extends BaseApiClient {
    */
   async getPeripheralDetails<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/assets/peripheral-details${queryString}`);
+    return this.get<T>(`/assets/peripheral-details${queryString}/`);
   }
 
   /**
@@ -196,7 +196,7 @@ export class AssetsApiClient extends BaseApiClient {
    */
   async getAssetBasicDetails<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/assets/basic-details${queryString}`);
+    return this.get<T>(`/assets/basic-details${queryString}/`);
   }
 
   /**
@@ -211,7 +211,7 @@ export class AssetsApiClient extends BaseApiClient {
    */
   async getAssetTechSpecs<T = any>(params?: Record<string, any>): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/assets/tech-specs${queryString}`);
+    return this.get<T>(`/assets/tech-specs${queryString}/`);
   }
 
   /**
@@ -230,7 +230,7 @@ export class AssetsApiClient extends BaseApiClient {
     params?: Record<string, any>
   ): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/assets/${assetId}/images${queryString}`);
+    return this.get<T>(`/assets/${assetId}/images${queryString}/`);
   }
 
   /**
