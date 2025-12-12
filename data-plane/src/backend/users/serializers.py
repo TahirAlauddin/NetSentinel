@@ -136,7 +136,6 @@ class AppPermissionGroupSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "granted_at"]
 
 
-
 class GroupWithAppPermissionsSerializer(GroupSerializer):
     """Extended Group serializer with app permissions."""
 

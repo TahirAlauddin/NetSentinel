@@ -44,8 +44,12 @@ declare module "next-auth/jwt" {
   }
 }
 
+// For client-side requests (browser) - uses NEXT_PUBLIC_API_URL
+// For server-side requests (container) - uses SERVER_API_URL (Docker service name)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
-
+const SERVER_API_BASE_URL = process.env.SERVER_API_URL || 'http://backend:8000/api/v1'
+console.log('[auth] API_BASE_URL (client):', API_BASE_URL)
+console.log('[auth] SERVER_API_BASE_URL (server):', SERVER_API_BASE_URL)
 /**
  * Refresh the access token using the refresh token
  * Returns token with error flag if refresh fails (backend unavailable, refresh token expired, etc.)
@@ -67,7 +71,9 @@ async function refreshAccessToken(token: any) {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
 
-    const response = await fetch(`${API_BASE_URL}/auth/jwt/refresh/`, {
+    // Use SERVER_API_BASE_URL for server-side token refresh
+    console.log('[refreshAccessToken] Using API URL:', SERVER_API_BASE_URL)
+    const response = await fetch(`${SERVER_API_BASE_URL}/auth/jwt/refresh/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -144,8 +150,9 @@ export const authOptions = {
         }
 
         try {
-          // Authenticate with backend
-          const response = await fetch(`${API_BASE_URL}/auth/jwt/create/`, {
+          // Authenticate with backend - use SERVER_API_BASE_URL for server-side requests
+          console.log('[auth.authorize] Using API URL:', SERVER_API_BASE_URL)
+          const response = await fetch(`${SERVER_API_BASE_URL}/auth/jwt/create/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -157,13 +164,22 @@ export const authOptions = {
           })
 
           if (!response.ok) {
+            const errorText = await response.text()
+            console.log('Response not ok', response.status, response.statusText)
+            console.log('Error response body:', errorText)
+            try {
+              const errorJson = JSON.parse(errorText)
+              console.log('Error response JSON:', errorJson)
+            } catch (e) {
+              console.log('Error response is not JSON')
+            }
             return null
           }
 
           const data = await response.json()
-
+          console.log('Data', data)
           // Get user details
-          const userResponse = await fetch(`${API_BASE_URL}/auth/users/me/`, {
+          const userResponse = await fetch(`${SERVER_API_BASE_URL}/auth/users/me/`, {
             headers: {
               'Authorization': `Bearer ${data.access}`,
               'Content-Type': 'application/json',

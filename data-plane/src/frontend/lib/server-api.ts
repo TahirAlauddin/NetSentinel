@@ -1,7 +1,9 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+// For server-side requests (runs in container), use Docker service name
+// For client-side requests (runs in browser), use NEXT_PUBLIC_API_URL
+const API_BASE_URL = process.env.SERVER_API_URL || 'http://backend:8000/api/v1'
 
 export interface ServerApiResponse<T = any> {
   data?: T
@@ -75,6 +77,7 @@ class ServerApiClient {
     }
 
     try {
+      console.log('[ServerApiClient.request] Making request to:', url)
       const response = await fetch(url, {
         ...fetchOptions,
         headers: {
@@ -82,6 +85,7 @@ class ServerApiClient {
           ...fetchOptions.headers,
         },
       })
+      console.log('[ServerApiClient.request] Response status:', response.status, 'ok:', response.ok)
 
       // If the request failed due to invalid/expired token, try to refresh
       if (response.status === 401 && requireAuth) {
@@ -151,7 +155,9 @@ class ServerApiClient {
         status: response.status,
       }
     } catch (error) {
-      console.error('API request error:', error)
+      console.error('[ServerApiClient.request] API request error:', error)
+      console.error('[ServerApiClient.request] Failed URL:', url)
+      console.error('[ServerApiClient.request] API_BASE_URL:', API_BASE_URL)
       return {
         error: error instanceof Error ? error.message : 'Network error',
         status: 0,

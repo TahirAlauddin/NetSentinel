@@ -12,12 +12,18 @@ COPY package.json package-lock.json* .npmrc* ./
 # Install all dependencies including devDependencies for build
 RUN npm ci --no-audit --no-fund
 
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ARG SERVER_API_URL
+ENV SERVER_API_URL=${SERVER_API_URL}
+ARG NEXTAUTH_URL
+ENV NEXTAUTH_URL=${NEXTAUTH_URL}
+ARG NEXTAUTH_SECRET
+ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+
 COPY . .
 RUN npm run build
 RUN npm prune --production
-
-ENV NODE_ENV=production
-
 RUN chown -R nextjs:nodejs /app
 
 USER nextjs

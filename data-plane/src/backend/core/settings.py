@@ -32,11 +32,26 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = (
-    os.environ.get("ALLOWED_HOSTS", "").split(",")
-    if os.environ.get("ALLOWED_HOSTS")
-    else []
-)
+# ALLOWED_HOSTS configuration
+# In Docker, we need to allow internal service names (backend, localhost, etc.)
+# as well as any external domains configured via environment variable
+allowed_hosts_list = []
+if os.environ.get("ALLOWED_HOSTS"):
+    allowed_hosts_list = [
+        host.strip()
+        for host in os.environ.get("ALLOWED_HOSTS", "").split(",")
+        if host.strip()
+    ]
+
+# Add Docker internal hostnames for service-to-service communication
+# These are safe because they're only accessible within the Docker network
+# Note: Django's ALLOWED_HOSTS doesn't include ports, just hostnames
+docker_hosts = ["backend", "localhost", "127.0.0.1"]
+for host in docker_hosts:
+    if host not in allowed_hosts_list:
+        allowed_hosts_list.append(host)
+
+ALLOWED_HOSTS = allowed_hosts_list
 
 
 # Application definition

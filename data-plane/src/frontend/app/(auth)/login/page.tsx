@@ -1,47 +1,46 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import Link from "next/link"
-import { signIn } from "next-auth/react"
-import { useState, Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import Image from "next/image";
+import { signIn } from "next-auth/react";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 function LoginForm() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
   // Use callbackUrl from NextAuth, fallback to redirect param, then default to dashboard
-  const callbackUrl = searchParams.get('callbackUrl')
-  const redirectParam = searchParams.get('redirect')
-  
+  const callbackUrl = searchParams.get("callbackUrl");
+  const redirectParam = searchParams.get("redirect");
+
   // Extract pathname from callbackUrl if it's a full URL
-  let redirectUrl = "/dashboard"
+  let redirectUrl = "/dashboard";
   if (callbackUrl) {
     try {
-      const url = new URL(callbackUrl, window.location.origin)
-      redirectUrl = url.pathname + url.search
+      const url = new URL(callbackUrl, window.location.origin);
+      redirectUrl = url.pathname + url.search;
     } catch {
       // If it's not a full URL, use it as-is (it's already a path)
-      redirectUrl = callbackUrl
+      redirectUrl = callbackUrl;
     }
   } else if (redirectParam) {
-    redirectUrl = redirectParam
+    redirectUrl = redirectParam;
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-    const formData = new FormData(e.currentTarget)
-    const username = formData.get("username") as string
-    const password = formData.get("password") as string
+    const formData = new FormData(e.currentTarget);
+    const username = formData.get("username") as string;
+    const password = formData.get("password") as string;
 
     if (!username || !password) {
-      setError("Please enter both username and password.")
-      setIsLoading(false)
-      return
+      setError("Please enter both username and password.");
+      setIsLoading(false);
+      return;
     }
 
     try {
@@ -49,19 +48,19 @@ function LoginForm() {
         username,
         password,
         redirect: false,
-      })
+      });
 
       if (result?.error) {
-        setError("Invalid username or password.")
+        setError("Invalid username or password.");
       } else {
-        router.push(redirectUrl)
+        router.push(redirectUrl);
       }
     } catch (error) {
-      setError("Server error. Please try again.")
+      setError("Server error. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
@@ -85,7 +84,9 @@ function LoginForm() {
         <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
           <div>
             <h1 className="text-2xl font-semibold">Sign in to NetSentinel</h1>
-            <p className="text-sm text-muted-foreground mt-1">Enter your credentials to continue.</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Enter your credentials to continue.
+            </p>
           </div>
 
           {/* Error message */}
@@ -107,7 +108,7 @@ function LoginForm() {
               className="h-10 rounded-md border border-input bg-background px-3"
               placeholder="Username"
             />
-            
+
             <label htmlFor="password" className="text-sm">
               Password
             </label>
@@ -128,22 +129,23 @@ function LoginForm() {
           >
             {isLoading ? "Signing In..." : "Sign In"}
           </button>
-
         </form>
       </div>
     </div>
-  )
+  );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-        <div className="ml-4 text-lg">Loading...</div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+          <div className="ml-4 text-lg">Loading...</div>
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
-  )
+  );
 }
