@@ -10,84 +10,41 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import AddLocationForm from "@/components/locations/add-location-form";
 import { LocationRecord } from "@/types/locations";
-import { api } from "@/lib/utils";
+import { InfrastructureApiClient } from "@/lib/api-client/infrastructure";
 import LocationMap from "@/components/locations/location-map";
-
-async function listLocations(): Promise<LocationRecord[]> {
-  const response = await api.get<
-    LocationRecord[] | { results: LocationRecord[] }
-  >("/infrastructure/locations/");
-  if (response.error || !response.data) {
-    throw new Error(response.error || "Failed to fetch locations");
-  }
-
-  const data = response.data;
-
-  // Handle paginated response (if the API returns { results: [...] })
-  if (
-    data &&
-    typeof data === "object" &&
-    "results" in data &&
-    Array.isArray((data as any).results)
-  ) {
-    return (data as any).results;
-  }
-
-  // Handle direct array response
-  if (Array.isArray(data)) {
-    return data;
-  }
-
-  // If no valid data format, return empty array
-  console.warn("Unexpected locations data format:", data);
-  return [];
-}
-
-async function createLocation(
-  city: string,
-  address: string
-): Promise<{ success: boolean; message?: string; error?: string }> {
-  const response = await api.post("/infrastructure/locations/", {
-    city,
-    address,
-  });
-
-  if (response.error || !response.data) {
-    return {
-      success: false,
-      error: response.error || "Failed to create location",
-    };
-  }
-
-  return {
-    success: true,
-    message: "Location created successfully",
-  };
-}
 
 export default function LocationsPage() {
   const { data: session } = useSession();
   const [locations, setLocations] = useState<LocationRecord[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const infrastructureApiClient = new InfrastructureApiClient();
 
   const handleAddLocation = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitting(true);
     const formData = new FormData(e.currentTarget);
-    const city = formData.get("city") as string;
-    const address = formData.get("address") as string;
 
     try {
-      const result = await createLocation(city, address);
+      const result = await infrastructureApiClient.createLocation({
+        name: formData.get("name") as string,
+        alias: formData.get("alias") as string,
+        address1: formData.get("address1") as string,
+        address2: formData.get("address2") as string,
+        city: formData.get("city") as string,
+        state: formData.get("state") as string,
+        zip_code: formData.get("zip_code") as string,
+        phone: formData.get("phone") as string,
+        longitude: parseFloat(formData.get("longitude") as string),
+        latitude: parseFloat(formData.get("latitude") as string),
+        type_building: formData.get("type_building") as string,
+        mpoe: formData.get("mpoe") as string,
+        dmarc: formData.get("dmarc") as string,
+      });
 
-      if (result.success) {
-        toast.success(result.message || "Location created successfully!");
-        // Refresh locations list after successful addition
-        const locationList = await listLocations();
-        setLocations(Array.isArray(locationList) ? locationList : []);
-        // Reset form
-        e.currentTarget.reset();
+      if (result.data && "id" in result.data) {
+        toast.success("Location created successfully!");
+        setLocations((prev) => [...prev, result.data]);
         setShowAddForm(false);
       } else {
         toast.error(result.error || "Failed to create location");
@@ -103,8 +60,8 @@ export default function LocationsPage() {
   useEffect(() => {
     async function fetchLocations() {
       try {
-        const locationList = await listLocations();
-        console.log("Fetched locations:", locationList);
+        const locationRawData = (await infrastructureApiClient.getLocations()).data;
+        const locationList = locationRawData.results;
         setLocations(Array.isArray(locationList) ? locationList : []);
       } catch (error) {
         console.error("Failed to fetch locations:", error);
@@ -147,9 +104,7 @@ export default function LocationsPage() {
                     {/* Add Location Form */}
                     {showAddForm && (
                       <div className="bg-card border border-border rounded-lg p-4">
-                        <h2 className="text-sm font-medium mb-4">
-                          Add New Location
-                        </h2>
+                        <h2 className="text-sm font-medium mb-4">Add New Location</h2>
                         <AddLocationForm
                           handleAddLocation={handleAddLocation}
                           submitting={submitting}
@@ -169,16 +124,10 @@ export default function LocationsPage() {
                               key={loc.id}
                               className="bg-card border border-border rounded-lg p-4 hover:shadow-sm"
                             >
-                              <h3 className="font-semibold text-sm mb-1">
-                                {loc.city}
-                              </h3>
-                              <p className="text-xs text-muted-foreground mb-3">
-                                {loc.address1}
-                              </p>
+                              <h3 className="font-semibold text-sm mb-1">{loc.city}</h3>
+                              <p className="text-xs text-muted-foreground mb-3">{loc.address1}</p>
                               <div className="flex gap-6 text-xs">
-                                <span className="text-muted-foreground">
-                                  {0} circuits
-                                </span>
+                                <span className="text-muted-foreground">{0} circuits</span>
                               </div>
                             </div>
                           ))
