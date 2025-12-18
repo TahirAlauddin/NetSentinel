@@ -24,7 +24,7 @@ interface RelatedItemFieldProps {
  */
 export function RelatedItemField({
   label,
-  value = [],
+  value,
   onChange,
   placeholder = "Search for an item to associate",
   optional,
