@@ -2,6 +2,7 @@
 // Infrastructure API Methods
 // ============================================================================
 
+import { LocationCreateDto } from "@/types/locations";
 import { BaseApiClient, BaseApiResponse } from "./index";
 
 
@@ -20,6 +21,12 @@ export class InfrastructureApiClient extends BaseApiClient {
     return this.get<T>(`/infrastructure/locations/${id}/`);
   }
 
+  async createLocation<T = any>(data: LocationCreateDto): Promise<BaseApiResponse<T>> {
+    return this.post<T>(`/infrastructure/locations/`, data);
+  }
+
+  /********************************************************************************************/
+
   /**
    * Get all circuits
    */
@@ -34,6 +41,8 @@ export class InfrastructureApiClient extends BaseApiClient {
   async getCircuit<T = any>(id: number | string): Promise<BaseApiResponse<T>> {
     return this.get<T>(`/infrastructure/circuits/${id}/`);
   }
+
+  /********************************************************************************************/
 
   /**
    * Get all points of contact
@@ -50,6 +59,8 @@ export class InfrastructureApiClient extends BaseApiClient {
     return this.get<T>(`/infrastructure/points-of-contact/${id}/`);
   }
 
+  /********************************************************************************************/
+
   /**
    * Get all departments
    */
@@ -65,6 +76,8 @@ export class InfrastructureApiClient extends BaseApiClient {
     return this.get<T>(`/infrastructure/departments/${id}/`);
   }
 
+  /********************************************************************************************/
+  
   /**
    * Get all categories (infrastructure categories)
    */
@@ -79,6 +92,8 @@ export class InfrastructureApiClient extends BaseApiClient {
   async getCategory<T = any>(id: number | string): Promise<BaseApiResponse<T>> {
     return this.get<T>(`/infrastructure/categories/${id}/`);
   }
+
+  /********************************************************************************************/
 
   /**
    * Get all contacts
@@ -95,6 +110,8 @@ export class InfrastructureApiClient extends BaseApiClient {
     return this.get<T>(`/infrastructure/contacts/${id}/`);
   }
 
+  /********************************************************************************************/
+
   /**
    * Get all carrier contacts
    */
@@ -109,6 +126,8 @@ export class InfrastructureApiClient extends BaseApiClient {
   async getCarrierContact<T = any>(id: number | string): Promise<BaseApiResponse<T>> {
     return this.get<T>(`/infrastructure/carrier-contacts/${id}/`);
   }
+  
+  /********************************************************************************************/
 
   /**
    * Get all utility contacts

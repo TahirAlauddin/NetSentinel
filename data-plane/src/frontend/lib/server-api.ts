@@ -1,25 +1,33 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { BaseApiClientCore } from "./api-client/base"
+import type { ServerApiResponse, ServerApiRequestOptions } from "../types/api-client"
 
 // For server-side requests (runs in container), use Docker service name
 // For client-side requests (runs in browser), use NEXT_PUBLIC_API_URL
 const API_BASE_URL = process.env.SERVER_API_URL || 'http://backend:8000/api/v1'
 
-export interface ServerApiResponse<T = any> {
-  data?: T
-  error?: string
-  status: number
-}
+/**
+ * Server-side API client
+ * Handles authentication using getServerSession for server-side requests
+ * Note: Does not sign out users on auth failure (server-side has no user session to sign out)
+ */
+class ServerApiClient extends BaseApiClientCore {
+  protected getApiBaseUrl(): string {
+    return API_BASE_URL
+  }
 
-export interface ServerApiRequestOptions extends RequestInit {
-  requireAuth?: boolean
-}
+  protected async getSession(): Promise<{ accessToken?: string; refreshToken?: string } | null> {
+    const session = await getServerSession(authOptions)
+    if (!session) return null
 
-class ServerApiClient {
-  /**
-   * Refresh the access token using the refresh token
-   */
-  private async refreshAccessToken(refreshToken: string): Promise<string | null> {
+    return {
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+    }
+  }
+
+  protected async refreshToken(refreshToken: string): Promise<string | null> {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/jwt/refresh/`, {
         method: 'POST',
@@ -47,132 +55,41 @@ class ServerApiClient {
   /**
    * Make an authenticated API request with automatic token refresh
    */
-  async request<T = any>(
+  async request<T = unknown>(
     endpoint: string,
     options: ServerApiRequestOptions = {}
   ): Promise<ServerApiResponse<T>> {
-    const {
-      requireAuth = true,
-      ...fetchOptions
-    } = options
-
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`
-
-    // If authentication is required, get the session and add auth headers
-    if (requireAuth) {
-      const session = await getServerSession(authOptions)
-      
-      if (!session?.accessToken) {
-        return {
-          error: 'No access token available',
-          status: 401,
-        }
-      }
-
-      // Add authorization header
-      fetchOptions.headers = {
-        ...fetchOptions.headers,
-        'Authorization': `Bearer ${session.accessToken}`,
-      }
+    // Convert ServerApiRequestOptions to BaseApiRequestOptions
+    const baseOptions = {
+      ...options,
+      skipRefresh: false, // Server-side always attempts refresh
     }
 
-    try {
-      console.log('[ServerApiClient.request] Making request to:', url)
-      const response = await fetch(url, {
-        ...fetchOptions,
-        headers: {
-          'Content-Type': 'application/json',
-          ...fetchOptions.headers,
-        },
-      })
-      console.log('[ServerApiClient.request] Response status:', response.status, 'ok:', response.ok)
+    const result = await this.executeRequest<T>(endpoint, baseOptions)
 
-      // If the request failed due to invalid/expired token, try to refresh
-      if (response.status === 401 && requireAuth) {
-        console.log('Access token expired, attempting refresh...')
-        
-        const session = await getServerSession(authOptions)
-        if (!session?.refreshToken) {
-          return {
-            error: 'No refresh token available',
-            status: 401,
-          }
-        }
-        
-        const newAccessToken = await this.refreshAccessToken(session.refreshToken)
-        
-        if (newAccessToken) {
-          // Retry the original request with the new token
-          const retryResponse = await fetch(url, {
-            ...fetchOptions,
-            headers: {
-              ...fetchOptions.headers,
-              'Authorization': `Bearer ${newAccessToken}`,
-            },
-          })
-
-          if (retryResponse.ok) {
-            const data = await retryResponse.json()
-            return {
-              data,
-              status: retryResponse.status,
-            }
-          }
-        }
-
-        // If refresh failed or retry failed, return the original error
-        return {
-          error: 'Authentication failed',
-          status: 401,
-        }
-      }
-
-      if (!response.ok) {
-        let errorMessage = 'Request failed'
-        try {
-          const errorData = await response.json()
-          errorMessage = errorData.detail || errorData.message || errorMessage
-        } catch {
-          errorMessage = `Request failed with status ${response.status}`
-        }
-
-        return {
-          error: errorMessage,
-          status: response.status,
-        }
-      }
-
-      // Handle empty responses (like 204 No Content)
-      if (response.status === 204) {
-        return {
-          status: response.status,
-        }
-      }
-
-      const data = await response.json()
-      return {
-        data,
-        status: response.status,
-      }
-    } catch (error) {
-      console.error('[ServerApiClient.request] API request error:', error)
-      console.error('[ServerApiClient.request] Failed URL:', url)
-      console.error('[ServerApiClient.request] API_BASE_URL:', API_BASE_URL)
-      return {
-        error: error instanceof Error ? error.message : 'Network error',
-        status: 0,
-      }
+    // Convert BaseApiResponse to ServerApiResponse (remove errorData)
+    return {
+      data: result.data,
+      error: result.error,
+      status: result.status,
     }
   }
 
   /**
    * Convenience methods for common HTTP methods
    */
-  async get<T = any>(endpoint: string, options?: Omit<ServerApiRequestOptions, 'method'>): Promise<ServerApiResponse<T>> {
+  async get<T = unknown>(
+    endpoint: string,
+    options?: Omit<ServerApiRequestOptions, 'method'>
+  ): Promise<ServerApiResponse<T>> {
     return this.request<T>(endpoint, { ...options, method: 'GET' })
   }
 
-  async post<T = any>(endpoint: string, data?: any, options?: Omit<ServerApiRequestOptions, 'method' | 'body'>): Promise<ServerApiResponse<T>> {
+  async post<T = unknown>(
+    endpoint: string,
+    data?: unknown,
+    options?: Omit<ServerApiRequestOptions, 'method' | 'body'>
+  ): Promise<ServerApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
@@ -180,7 +97,11 @@ class ServerApiClient {
     })
   }
 
-  async put<T = any>(endpoint: string, data?: any, options?: Omit<ServerApiRequestOptions, 'method' | 'body'>): Promise<ServerApiResponse<T>> {
+  async put<T = unknown>(
+    endpoint: string,
+    data?: unknown,
+    options?: Omit<ServerApiRequestOptions, 'method' | 'body'>
+  ): Promise<ServerApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
@@ -188,7 +109,11 @@ class ServerApiClient {
     })
   }
 
-  async patch<T = any>(endpoint: string, data?: any, options?: Omit<ServerApiRequestOptions, 'method' | 'body'>): Promise<ServerApiResponse<T>> {
+  async patch<T = unknown>(
+    endpoint: string,
+    data?: unknown,
+    options?: Omit<ServerApiRequestOptions, 'method' | 'body'>
+  ): Promise<ServerApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PATCH',
@@ -196,7 +121,10 @@ class ServerApiClient {
     })
   }
 
-  async delete<T = any>(endpoint: string, options?: Omit<ServerApiRequestOptions, 'method'>): Promise<ServerApiResponse<T>> {
+  async delete<T = unknown>(
+    endpoint: string,
+    options?: Omit<ServerApiRequestOptions, 'method'>
+  ): Promise<ServerApiResponse<T>> {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' })
   }
 }
@@ -206,3 +134,6 @@ export const serverApi = new ServerApiClient()
 
 // Export the class for testing purposes
 export { ServerApiClient }
+
+// Re-export types for backward compatibility
+export type { ServerApiResponse, ServerApiRequestOptions }
