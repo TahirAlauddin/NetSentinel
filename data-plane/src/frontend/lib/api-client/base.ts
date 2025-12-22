@@ -34,6 +34,10 @@ export abstract class BaseApiClientCore {
    */
   protected parseErrorResponse(errorData: unknown, status: number): string {
     const parsed = parseApiError(errorData);
+    // If we got the default message (invalid error data), use status code version
+    if (parsed.message === 'Request failed' && (!errorData || typeof errorData !== 'object')) {
+      return `Request failed with status ${status}`;
+    }
     return parsed.message || `Request failed with status ${status}`;
   }
 
