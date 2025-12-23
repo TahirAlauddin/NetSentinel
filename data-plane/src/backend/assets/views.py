@@ -7,31 +7,35 @@ from django.db.models import Q
 from .models import *
 from .serializers import *
 
+
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
 def api_info_view(request):
-    return Response({
-        "message": "NetSentinel API is running!",
-        "version": "v1",
-        "endpoints": {
-            "tags": "/api/v1/assets/tags/",
-            "lifecycles": "/api/v1/assets/lifecycles/",
-            "vendors": "/api/v1/assets/vendors/",
-            "tech_specs": "/api/v1/assets/tech_specs/",
-            "categories": "/api/v1/assets/categories/",
-            "attachments": "/api/v1/assets/attachments/",
-            "relations": "/api/v1/assets/relations/",
-            "computer_details": "/api/v1/assets/computer_details/",
-            "network_details": "/api/v1/assets/network_details/",
-            "display_details": "/api/v1/assets/display_details/",
-            "phone_details": "/api/v1/assets/phone_details/",
-            "peripheral_details": "/api/v1/assets/peripheral_details/",
-            "basic_details": "/api/v1/assets/basic_details/",
-            "tech_specs": "/api/v1/assets/tech_specs/",
-            "calendar_alerts": "/api/v1/assets/calendar_alerts/",
-            "images": "/api/v1/assets/images/",
-        },
-    })
+    return Response(
+        {
+            "message": "NetSentinel API is running!",
+            "version": "v1",
+            "endpoints": {
+                "tags": "/api/v1/assets/tags/",
+                "lifecycles": "/api/v1/assets/lifecycles/",
+                "vendors": "/api/v1/assets/vendors/",
+                "tech_specs": "/api/v1/assets/tech_specs/",
+                "categories": "/api/v1/assets/categories/",
+                "attachments": "/api/v1/assets/attachments/",
+                "relations": "/api/v1/assets/relations/",
+                "computer_details": "/api/v1/assets/computer_details/",
+                "network_details": "/api/v1/assets/network_details/",
+                "display_details": "/api/v1/assets/display_details/",
+                "phone_details": "/api/v1/assets/phone_details/",
+                "peripheral_details": "/api/v1/assets/peripheral_details/",
+                "basic_details": "/api/v1/assets/basic_details/",
+                "tech_specs": "/api/v1/assets/tech_specs/",
+                "calendar_alerts": "/api/v1/assets/calendar_alerts/",
+                "images": "/api/v1/assets/images/",
+            },
+        }
+    )
+
 
 class AssetTagViewSet(viewsets.ModelViewSet):
     """
@@ -162,7 +166,8 @@ class AssetViewSet(viewsets.ModelViewSet):
     def attachments(self, request, pk=None):
         """Get all attachments for an asset."""
         asset = self.get_object()
-        attachments = asset.get_attachments()
+        # Use direct ForeignKey relationship instead of GenericForeignKey
+        attachments = asset.attachments.all()
         serializer = AssetAttachmentSerializer(attachments, many=True)
         return Response(serializer.data)
 
@@ -289,7 +294,9 @@ class AssetRelationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Filter relations by the asset ID from the nested route."""
         asset_id = self.kwargs.get("asset_pk")
-        queryset = AssetRelation.objects.select_related("asset", "related_asset").filter(asset_id=asset_id)
+        queryset = AssetRelation.objects.select_related(
+            "asset", "related_asset"
+        ).filter(asset_id=asset_id)
         return queryset
 
 
@@ -402,6 +409,7 @@ class AssetImageViewSet(viewsets.ModelViewSet):
         asset_id = self.kwargs.get("asset_pk")
         serializer.save(asset_id=asset_id)
 
+
 class CalendarAlertViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing calendar alerts.
@@ -423,7 +431,9 @@ class CalendarAlertViewSet(viewsets.ModelViewSet):
         Filter alerts by the asset ID from the nested route.
         """
         asset_id = self.kwargs.get("asset_pk")
-        queryset = CalendarAlert.objects.select_related("asset", "assigned_to").filter(asset_id=asset_id)
+        queryset = CalendarAlert.objects.select_related("asset", "assigned_to").filter(
+            asset_id=asset_id
+        )
         return queryset
 
     def perform_create(self, serializer):
@@ -431,4 +441,4 @@ class CalendarAlertViewSet(viewsets.ModelViewSet):
         Set the asset when creating a new alert.
         """
         asset_id = self.kwargs.get("asset_pk")
-        serializer.save(asset_id=asset_id)  
+        serializer.save(asset_id=asset_id)

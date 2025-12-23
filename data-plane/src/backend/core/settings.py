@@ -311,3 +311,6 @@ else:
     # Development settings
     CSRF_COOKIE_SECURE = False
     SESSION_COOKIE_SECURE = False
+
+# Fix drf-yasg deprecation warning
+SWAGGER_USE_COMPAT_RENDERERS = False
