@@ -4,6 +4,7 @@ interface FormFieldProps {
   label: string;
   required?: boolean;
   optional?: boolean;
+  id?: string;
   children?: React.ReactNode;
   className?: string;
   error?: string;
@@ -15,12 +16,14 @@ interface FormFieldProps {
  * @param label - The label for the field
  * @param required - Whether the field is required
  * @param optional - Whether the field is optional
+ * @param name - The name of the field
  * @param children - The children of the field
  * @param className - The class name for the field
  * @param error - The error message for the field
  * @returns The form field component
  */
 export function FormField({
+  id,
   label,
   required,
   optional,
@@ -30,7 +33,7 @@ export function FormField({
 }: FormFieldProps) {
   return (
     <div className={className}>
-      <label className="block text-sm font-medium text-gray-900 mb-2">
+      <label htmlFor={id ?? ""} className="block text-sm font-medium text-gray-900 mb-2">
         {label}
         {required && <span className="text-red-600"> *</span>}
         {optional && <span className="text-gray-500 text-xs"> (optional)</span>}

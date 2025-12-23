@@ -58,6 +58,7 @@ export function AssetDetail({ assetId, onUpdate }: AssetDetailProps) {
 
         if (response.error) {
           console.error("Error loading asset:", response.error);
+          setLoading(false);
           return;
         }
 
