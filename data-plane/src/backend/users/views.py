@@ -1,6 +1,7 @@
 from rest_framework import status, permissions, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 from django.contrib.auth.models import Group, Permission
 from .models import User
 from .serializers import GroupSerializer, PermissionSerializer
@@ -53,7 +54,7 @@ class GroupViewSet(viewsets.ModelViewSet):
     Only superusers can manage groups.
     """
 
-    queryset = Group.objects.prefetch_related("permissions").all()
+    queryset = Group.objects.prefetch_related("permissions").order_by("name")
     serializer_class = GroupSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -66,19 +67,19 @@ class GroupViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Only superusers can create groups
         if not self.request.user.is_superuser:
-            raise permissions.PermissionDenied("Only superusers can create groups.")
+            raise PermissionDenied("Only superusers can create groups.")
         serializer.save()
 
     def perform_update(self, serializer):
         # Only superusers can update groups
         if not self.request.user.is_superuser:
-            raise permissions.PermissionDenied("Only superusers can update groups.")
+            raise PermissionDenied("Only superusers can update groups.")
         serializer.save()
 
     def perform_destroy(self, instance):
         # Only superusers can delete groups
         if not self.request.user.is_superuser:
-            raise permissions.PermissionDenied("Only superusers can delete groups.")
+            raise PermissionDenied("Only superusers can delete groups.")
         instance.delete()
 
 

@@ -139,25 +139,39 @@ class AppPermissionGroupSerializer(serializers.ModelSerializer):
 class GroupWithAppPermissionsSerializer(GroupSerializer):
     """Extended Group serializer with app permissions."""
 
-    app_permissions_detail = AppPermissionSerializer(
-        source="app_permissions", many=True, read_only=True
-    )
-    app_permissions = serializers.PrimaryKeyRelatedField(
+    app_permissions_detail = serializers.SerializerMethodField()
+    app_permissions = serializers.SerializerMethodField()
+
+    # Write-only field for creating/updating
+    app_permissions_write = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=AppPermission.objects.filter(is_active=True),
         required=False,
         write_only=True,
     )
 
+    def get_app_permissions(self, obj):
+        """Get app permission IDs through the AppPermissionGroup relationship."""
+        app_permission_groups = obj.app_permissions.select_related("permission").all()
+        return [apg.permission.id for apg in app_permission_groups]
+
+    def get_app_permissions_detail(self, obj):
+        """Get app permissions through the AppPermissionGroup relationship."""
+        app_permission_groups = obj.app_permissions.select_related("permission").all()
+        permissions = [apg.permission for apg in app_permission_groups]
+        return AppPermissionSerializer(permissions, many=True).data
+
     class Meta(GroupSerializer.Meta):
         fields = GroupSerializer.Meta.fields + [
             "app_permissions",
             "app_permissions_detail",
+            "app_permissions_write",
         ]
 
     def update(self, instance, validated_data):
         """Update group app permissions."""
-        app_permissions = validated_data.pop("app_permissions", None)
+        # app_permissions_write is the write-only field name
+        app_permissions = validated_data.pop("app_permissions_write", None)
         group = super().update(instance, validated_data)
 
         if app_permissions is not None:
@@ -175,7 +189,8 @@ class GroupWithAppPermissionsSerializer(GroupSerializer):
 
     def create(self, validated_data):
         """Create group with app permissions."""
-        app_permissions = validated_data.pop("app_permissions", [])
+        # app_permissions_write is the write-only field name
+        app_permissions = validated_data.pop("app_permissions_write", [])
         group = super().create(validated_data)
 
         # Add app permissions
