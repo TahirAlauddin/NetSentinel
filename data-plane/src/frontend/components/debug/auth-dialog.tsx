@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { apiConfig, authConfig, appConfig } from "@/lib/config";
 
 const AuthDialog = () => {
   return function DebugPopup({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -7,17 +8,17 @@ const AuthDialog = () => {
 
     const envVars = {
       NEXT_PUBLIC_API_URL:
-        process.env.NEXT_PUBLIC_API_URL || "Not set (default: http://localhost:8000/api/v1)",
-      NEXTAUTH_URL: process.env.NEXTAUTH_URL || "Not set",
-      NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ? "***SET***" : "Not set",
-      NODE_ENV: process.env.NODE_ENV || "Not set",
+        apiConfig.clientBaseUrl || "Not set (default: http://localhost:8000/api/v1)",
+      NEXTAUTH_URL: authConfig.url || "Not set",
+      NEXTAUTH_SECRET: authConfig.secret ? "***SET***" : "Not set",
+      NODE_ENV: appConfig.nodeEnv || "Not set",
     };
 
     const testBackendConnection = async () => {
       setIsTesting(true);
       setTestResults(null);
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+      const apiUrl = apiConfig.clientBaseUrl;
       const results: any = {
         timestamp: new Date().toISOString(),
         apiUrl,

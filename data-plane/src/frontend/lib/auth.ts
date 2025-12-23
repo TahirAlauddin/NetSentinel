@@ -2,6 +2,7 @@ import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import type { Session, User } from "next-auth"
 import type { JWT } from "next-auth/jwt"
+import { apiConfig, authConfig } from "@/lib/config"
 
 // Extend NextAuth types
 declare module "next-auth" {
@@ -47,12 +48,7 @@ declare module "next-auth/jwt" {
   }
 }
 
-// For client-side requests (browser) - uses NEXT_PUBLIC_API_URL
-// For server-side requests (container) - uses SERVER_API_URL (Docker service name)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
-const SERVER_API_BASE_URL = process.env.SERVER_API_URL || 'http://backend:8000/api/v1'
-console.log('[auth] API_BASE_URL (client):', API_BASE_URL)
-console.log('[auth] SERVER_API_BASE_URL (server):', SERVER_API_BASE_URL)
+// API URLs are now centralized in lib/config.ts
 /**
  * Refresh the access token using the refresh token
  * Returns token with error flag if refresh fails (backend unavailable, refresh token expired, etc.)
@@ -74,9 +70,9 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
 
-    // Use SERVER_API_BASE_URL for server-side token refresh
-    console.log('[refreshAccessToken] Using API URL:', SERVER_API_BASE_URL)
-    const response = await fetch(`${SERVER_API_BASE_URL}/auth/jwt/refresh/`, {
+    // Use server-side API URL for token refresh
+    console.log('[refreshAccessToken] Using API URL:', apiConfig.serverBaseUrl)
+    const response = await fetch(`${apiConfig.serverBaseUrl}/auth/jwt/refresh/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -154,9 +150,9 @@ export const authOptions = {
         }
 
         try {
-          // Authenticate with backend - use SERVER_API_BASE_URL for server-side requests
-          console.log('[auth.authorize] Using API URL:', SERVER_API_BASE_URL)
-          const response = await fetch(`${SERVER_API_BASE_URL}/auth/jwt/create/`, {
+          // Authenticate with backend - use server-side API URL
+          console.log('[auth.authorize] Using API URL:', apiConfig.serverBaseUrl)
+          const response = await fetch(`${apiConfig.serverBaseUrl}/auth/jwt/create/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -183,7 +179,7 @@ export const authOptions = {
           const data = await response.json()
           console.log('Data', data)
           // Get user details
-          const userResponse = await fetch(`${SERVER_API_BASE_URL}/auth/users/me/`, {
+          const userResponse = await fetch(`${apiConfig.serverBaseUrl}/auth/users/me/`, {
             headers: {
               'Authorization': `Bearer ${data.access}`,
               'Content-Type': 'application/json',
@@ -285,9 +281,9 @@ export const authOptions = {
   session: {
     strategy: 'jwt' as const,
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: authConfig.secret,
   // Set the base URL for NextAuth in production
-  url: process.env.NEXTAUTH_URL,
+  url: authConfig.url,
 }
 
 export default NextAuth(authOptions)

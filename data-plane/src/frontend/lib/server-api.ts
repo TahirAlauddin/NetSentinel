@@ -2,10 +2,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { BaseApiClientCore } from "./api-client/base"
 import type { ServerApiResponse, ServerApiRequestOptions } from "../types/api-client"
-
-// For server-side requests (runs in container), use Docker service name
-// For client-side requests (runs in browser), use NEXT_PUBLIC_API_URL
-const API_BASE_URL = process.env.SERVER_API_URL || 'http://backend:8000/api/v1'
+import { apiConfig } from "@/lib/config"
 
 /**
  * Server-side API client
@@ -13,8 +10,9 @@ const API_BASE_URL = process.env.SERVER_API_URL || 'http://backend:8000/api/v1'
  * Note: Does not sign out users on auth failure (server-side has no user session to sign out)
  */
 class ServerApiClient extends BaseApiClientCore {
+  
   protected getApiBaseUrl(): string {
-    return API_BASE_URL
+    return apiConfig.serverBaseUrl
   }
 
   protected async getSession(): Promise<{ accessToken?: string; refreshToken?: string } | null> {
@@ -29,7 +27,7 @@ class ServerApiClient extends BaseApiClientCore {
 
   protected async refreshToken(refreshToken: string): Promise<string | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/jwt/refresh/`, {
+      const response = await fetch(`${this.getApiBaseUrl()}/auth/jwt/refresh/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

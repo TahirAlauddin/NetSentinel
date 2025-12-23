@@ -2,8 +2,7 @@ import { getSession, signOut } from "next-auth/react";
 import { BaseApiClientCore } from "./base";
 import type { BaseApiResponse, BaseApiRequestOptions } from "../../types/api-client";
 import type { JWT } from "next-auth/jwt";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+import { apiConfig } from "@/lib/config";
 
 
 /**
@@ -15,7 +14,7 @@ class BaseApiClient extends BaseApiClientCore {
   private refreshPromise: Promise<string | null> | null = null;
 
   protected getApiBaseUrl(): string {
-    return API_BASE_URL;
+    return apiConfig.clientBaseUrl;
   }
 
   protected async getSession(): Promise<JWT | null> {
@@ -59,7 +58,7 @@ class BaseApiClient extends BaseApiClientCore {
         return null;
       }
 
-      const response = await fetch(`${API_BASE_URL}/auth/jwt/refresh/`, {
+      const response = await fetch(`${this.getApiBaseUrl()}/auth/jwt/refresh/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
