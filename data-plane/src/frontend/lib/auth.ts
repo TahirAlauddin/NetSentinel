@@ -1,5 +1,7 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
+import type { Session, User } from "next-auth"
+import type { JWT } from "next-auth/jwt"
 
 // Extend NextAuth types
 declare module "next-auth" {
@@ -41,6 +43,7 @@ declare module "next-auth/jwt" {
     isActive?: boolean
     isSuperuser?: boolean
     accessTokenExpires?: number
+    error?: string
   }
 }
 
@@ -54,7 +57,7 @@ console.log('[auth] SERVER_API_BASE_URL (server):', SERVER_API_BASE_URL)
  * Refresh the access token using the refresh token
  * Returns token with error flag if refresh fails (backend unavailable, refresh token expired, etc.)
  */
-async function refreshAccessToken(token: any) {
+async function refreshAccessToken(token: JWT): Promise<JWT> {
   // If no refresh token, mark as error
   if (!token.refreshToken) {
     console.warn('No refresh token available for refresh')
@@ -115,14 +118,15 @@ async function refreshAccessToken(token: any) {
       refreshToken: refreshedTokens.refresh ?? token.refreshToken, // Fall back to old refresh token
       error: undefined, // Clear any previous error
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Handle network errors, timeouts, and other fetch failures
-    if (error.name === 'AbortError') {
+    const err = error instanceof Error ? error : new Error(String(error))
+    if (err.name === 'AbortError') {
       console.error('Token refresh timeout: Backend may be unavailable')
-    } else if (error.message?.includes('fetch')) {
-      console.error('Token refresh network error: Backend may be unavailable', error)
+    } else if (err.message?.includes('fetch')) {
+      console.error('Token refresh network error: Backend may be unavailable', err)
     } else {
-      console.error('Error refreshing access token:', error)
+      console.error('Error refreshing access token:', err)
     }
 
     // Return token with error flag - the session error handler will sign out the user
@@ -210,7 +214,7 @@ export const authOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }: { token: any; user: any }) {
+    async jwt({ token, user }: { token: JWT; user?: User }) {
       // Initial sign in
       if (user) {
         token.accessToken = user.accessToken
@@ -256,7 +260,7 @@ export const authOptions = {
       // Access token has expired, try to refresh it
       return await refreshAccessToken(token)
     },
-    async session({ session, token }: { session: any; token: any }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       // If there's an error refreshing the token, return the session with error flag
       if (token.error === 'RefreshAccessTokenError') {
         return {
