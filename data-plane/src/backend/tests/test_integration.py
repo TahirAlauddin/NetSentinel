@@ -18,6 +18,7 @@ from assets.models import (
 )
 from infrastructure.models import Location, Circuit, Department, PointOfContact
 from users.models import User, AppPermission, AppPermissionGroup
+from django.contrib.auth.models import Group
 
 
 @pytest.mark.integration
@@ -256,14 +257,15 @@ class TestUserPermissionIntegration:
 
     def test_user_group_permission(self, user):
         """Test that users can have permissions through groups."""
+        
         permission = AppPermission.objects.create(
             codename="view_assets",
             name="View Assets",
             category="assets",
         )
-        group = AppPermissionGroup.objects.create(name="Asset Viewers")
-        group.permissions.add(permission)
-        user.app_permission_groups.add(group)
+        django_group = Group.objects.create(name="Asset Viewers")
+        AppPermissionGroup.objects.create(group=django_group, permission=permission)
+        user.groups.add(django_group)
 
         assert user.has_app_permission("view_assets") is True
 
@@ -283,18 +285,22 @@ class TestUserPermissionIntegration:
 
     def test_group_deletion_removes_permissions_from_users(self, user):
         """Test that deleting a group removes its permissions from users."""
+        from django.contrib.auth.models import Group
+        
         permission = AppPermission.objects.create(
             codename="view_assets",
             name="View Assets",
             category="assets",
         )
-        group = AppPermissionGroup.objects.create(name="Asset Viewers")
-        group.permissions.add(permission)
-        user.app_permission_groups.add(group)
+        django_group = Group.objects.create(name="Asset Viewers")
+        app_permission_group = AppPermissionGroup.objects.create(
+            group=django_group, permission=permission
+        )
+        user.groups.add(django_group)
 
-        group.delete()
+        django_group.delete()
 
-        assert not user.app_permission_groups.filter(id=group.id).exists()
+        assert not user.groups.filter(id=django_group.id).exists()
         # User should no longer have the permission through the group
         user.refresh_from_db()
         assert user.has_app_permission("view_assets") is False
@@ -651,11 +657,12 @@ class TestCascadeDeletions:
         computer_details = ComputerDetails.objects.create(
             asset=asset,
             cpu="Intel i7",
-            ram_gb=16,
+            ram="16GB",
         )
 
-        computer_details_id = computer_details.id
+        asset_id = asset.id
         asset.delete()
 
-        assert not ComputerDetails.objects.filter(id=computer_details_id).exists()
+        # ComputerDetails uses asset as primary key, so check if it exists for the deleted asset
+        assert not ComputerDetails.objects.filter(asset_id=asset_id).exists()
 

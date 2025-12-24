@@ -3,7 +3,9 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 from django.db.models import Q
+from django.db import IntegrityError
 from .models import *
 from .serializers import *
 
@@ -136,7 +138,11 @@ class AssetViewSet(viewsets.ModelViewSet):
         # Filter by category
         category = self.request.query_params.get("category", None)
         if category:
-            queryset = queryset.filter(category_id=category)
+            try:
+                queryset = queryset.filter(category_id=int(category))
+            except (ValueError, TypeError):
+                # Invalid category ID, return empty queryset
+                queryset = queryset.none()
 
         # Filter by status
         status_filter = self.request.query_params.get("status", None)
@@ -146,12 +152,20 @@ class AssetViewSet(viewsets.ModelViewSet):
         # Filter by vendor
         vendor = self.request.query_params.get("vendor", None)
         if vendor:
-            queryset = queryset.filter(vendor_id=vendor)
+            try:
+                queryset = queryset.filter(vendor_id=int(vendor))
+            except (ValueError, TypeError):
+                # Invalid vendor ID, return empty queryset
+                queryset = queryset.none()
 
         # Filter by location
         location = self.request.query_params.get("location", None)
         if location:
-            queryset = queryset.filter(location_id=location)
+            try:
+                queryset = queryset.filter(location_id=int(location))
+            except (ValueError, TypeError):
+                # Invalid location ID, return empty queryset
+                queryset = queryset.none()
 
         # Search by name or asset_tag
         search = self.request.query_params.get("search", None)
@@ -161,6 +175,24 @@ class AssetViewSet(viewsets.ModelViewSet):
             )
 
         return queryset
+
+    def perform_destroy(self, instance):
+        """Check permissions before deleting an asset."""
+        # Check if user is superuser or staff, or if they own the asset
+        user = self.request.user
+        if not (user.is_superuser or user.is_staff):
+            # Allow if user is assigned to, uses, OR manages this asset
+            # Deny only if user has NONE of these relationships
+            is_owner = (
+                instance.assigned_to == user
+                or instance.used_by == user
+                or instance.managed_by == user
+            )
+            if not is_owner:
+                raise PermissionDenied(
+                    "You do not have permission to delete this asset."
+                )
+        instance.delete()
 
     @action(detail=True, methods=["get"])
     def attachments(self, request, pk=None):
@@ -285,6 +317,7 @@ class AssetAttachmentViewSet(viewsets.ModelViewSet):
 class AssetRelationViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing asset relations.
+    Can be used both as a direct route and as a nested route.
     """
 
     queryset = AssetRelation.objects.select_related("asset", "related_asset").all()
@@ -292,12 +325,36 @@ class AssetRelationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """Filter relations by the asset ID from the nested route."""
+        """Filter relations by the asset ID from the nested route if present."""
         asset_id = self.kwargs.get("asset_pk")
-        queryset = AssetRelation.objects.select_related(
-            "asset", "related_asset"
-        ).filter(asset_id=asset_id)
+        if asset_id:
+            queryset = AssetRelation.objects.select_related(
+                "asset", "related_asset"
+            ).filter(asset_id=asset_id)
+        else:
+            queryset = AssetRelation.objects.select_related(
+                "asset", "related_asset"
+            ).all()
         return queryset
+
+    def create(self, request, *args, **kwargs):
+        """Handle duplicate relation creation."""
+        try:
+            return super().create(request, *args, **kwargs)
+        except IntegrityError:
+            return Response(
+                {"error": "This relation already exists."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+class AssetRelationDirectViewSet(AssetRelationViewSet):
+    """
+    Direct route viewset for asset relations (not nested under assets).
+    This allows creating relations via /api/v1/assets/relations/ without needing an asset_pk.
+    """
+
+    pass
 
 
 # Extension detail viewsets (read-only for now, can be extended if needed)

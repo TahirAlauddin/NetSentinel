@@ -1,11 +1,12 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_nested import routers
-from .views import *
+from .views import * 
 from .views import (
     AssetBasicDetailsViewSet,
     AssetTechSpecsViewSet,
     CalendarAlertViewSet,
+    AssetRelationDirectViewSet,
 )
 from .views import api_info_view
 
@@ -32,6 +33,7 @@ router.register(
 )
 router.register(r"tech-specs", AssetTechSpecsViewSet, basename="asset-tech-specs")
 
+router.register(r"relations", AssetRelationDirectViewSet, basename="asset-relation-direct")
 router.register(r"", AssetViewSet, basename="asset")
 
 # Nested router for images under assets
