@@ -1,30 +1,38 @@
 services:
   backend:
-    image: ${DOCKER_HUB_USERNAME}/netsentinel-backend:latest
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+    container_name: netsentinel-backend
     ports:
       - "8000:8000"
-    environment:
-      - DEBUG=False
-      - SECRET_KEY=${SECRET_KEY:-django-insecure-changeme-in-production}
-      - DATABASE_URL=sqlite:///db.sqlite3
-      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    env_file:
+      - .env.local
     volumes:
-      - backend_db:/app
+      - ./src/backend:/app
+      - backend_db:/app/data
     networks:
       - netsentinel-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
       interval: 30s
       timeout: 10s
       retries: 3
 
   frontend:
-    image: ${DOCKER_HUB_USERNAME}/netsentinel-frontend:latest
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+        SERVER_API_URL: ${SERVER_API_URL:-http://backend:8000/api/v1}
+        NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-local-secret-key}
+    container_name: netsentinel-frontend
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    env_file:
+      - .env.local
     depends_on:
       backend:
         condition: service_healthy
