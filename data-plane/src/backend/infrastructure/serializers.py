@@ -89,6 +89,7 @@ class LocationSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
+
 class AssetLocationSerializer(serializers.ModelSerializer):
     """Serializer for Location."""
 
@@ -113,6 +114,7 @@ class AssetLocationSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
 
 class DepartmentSerializer(serializers.ModelSerializer):
     """Serializer for Department."""
@@ -180,11 +182,6 @@ class CarrierContactSerializer(serializers.ModelSerializer):
             "name",
             "location",
             "location_name",
-            "address1",
-            "address2",
-            "city",
-            "state",
-            "zip_code",
             "customer_service_phone",
             "technical_support_phone",
             "sales_phone",

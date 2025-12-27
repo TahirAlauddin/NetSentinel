@@ -126,6 +126,27 @@ export class InfrastructureApiClient extends BaseApiClient {
   async getCarrierContact<T = any>(id: number | string): Promise<BaseApiResponse<T>> {
     return this.get<T>(`/infrastructure/carrier-contacts/${id}/`);
   }
+
+  /**
+   * Create a new carrier contact
+   */
+  async createCarrierContact<T = any>(data: any): Promise<BaseApiResponse<T>> {
+    return this.post<T>(`/infrastructure/carrier-contacts/`, data);
+  }
+
+  /**
+   * Update a carrier contact by ID
+   */
+  async updateCarrierContact<T = any>(id: number | string, data: any): Promise<BaseApiResponse<T>> {
+    return this.put<T>(`/infrastructure/carrier-contacts/${id}/`, data);
+  }
+
+  /**
+   * Delete a carrier contact by ID
+   */
+  async deleteCarrierContact<T = any>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/infrastructure/carrier-contacts/${id}/`);
+  }
   
   /********************************************************************************************/
 

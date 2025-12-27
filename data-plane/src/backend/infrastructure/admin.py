@@ -93,7 +93,6 @@ class CarrierContactAdmin(admin.ModelAdmin):
     list_display = [
         "name",
         "location",
-        "city",
         "customer_service_phone",
         "created_at",
     ]

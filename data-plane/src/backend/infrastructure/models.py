@@ -182,11 +182,6 @@ class CarrierContact(models.Model):
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, related_name="carrier_contacts"
     )
-    address1 = models.CharField(max_length=255, blank=True, null=True)
-    address2 = models.CharField(max_length=255, blank=True, null=True)
-    city = models.CharField(max_length=100, blank=True, null=True)
-    state = models.CharField(max_length=100, blank=True, null=True)
-    zip_code = models.CharField(max_length=20, blank=True, null=True)
     customer_service_phone = models.CharField(max_length=20, blank=True, null=True)
     technical_support_phone = models.CharField(max_length=20, blank=True, null=True)
     sales_phone = models.CharField(max_length=20, blank=True, null=True)

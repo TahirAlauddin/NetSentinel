@@ -111,4 +111,3 @@ class UtilityContactViewSet(viewsets.ModelViewSet):
 
     queryset = UtilityContact.objects.select_related("location").all()
     serializer_class = UtilityContactSerializer
-
