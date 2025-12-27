@@ -48,11 +48,15 @@ export const navigationItems: NavigationItem[] = [
   { label: "Contracts", icon: FileText, href: "/contracts" },
   { label: "Vendors/SaaS", icon: Building2, href: "/vendors-saas" },
   { 
-    label: "Telecom Expenses", 
+    label: "Telecom Expense Management", 
     icon: CreditCard, 
-    href: "/telecom-expenses", 
+    href: "/telecom-management",
     hasSubmenu: true,
     submenuColumns: [
+      {
+        title: "Management",
+        links: ["Providers", "Data Circuits"],
+      },
       {
         title: "Expense Categories",
         links: ["Voice Services", "Data Services", "Internet Services", "Mobile Services", "Equipment Costs", "Service Fees"],
@@ -60,10 +64,6 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Reports",
         links: ["Monthly Reports", "Quarterly Analysis", "Cost Breakdown", "Vendor Comparison", "Usage Reports", "Budget Tracking"],
-      },
-      {
-        title: "Management",
-        links: ["Invoice Processing", "Contract Management", "Vendor Relations", "Cost Optimization"],
       },
     ]
   },

@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "users",  # Our custom users app
     "infrastructure",  # Infrastructure management app (locations, categories etc.)
     "assets",  # Assets management app (assets)
+    "telecom",  # Telecom management app (providers, data circuits)
 ]
 
 MIDDLEWARE = [

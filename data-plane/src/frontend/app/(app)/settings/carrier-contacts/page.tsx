@@ -5,13 +5,13 @@ import { ProtectedRoute } from "@/components/feedback/protected-route";
 import { SettingsSidebar } from "@/components/settings/settings-sidebar";
 import { SettingsNavTabs } from "@/components/settings/settings-nav-tabs";
 import { SettingsHeader } from "@/components/settings/settings-header";
-import { useSession } from "next-auth/react";
-import { useEffect, useState, useRef } from "react";
-import { toast } from "sonner";
-import { Trash2, Edit2, Plus } from "lucide-react";
 import { CarrierContactRecord, CarrierContactCreateDto } from "@/types/carrier-contacts";
 import { InfrastructureApiClient } from "@/lib/api-client/infrastructure";
 import { LocationRecord } from "@/types/locations";
+import { useSession } from "next-auth/react";
+import { useEffect, useState, useRef } from "react";
+import { Trash2, Edit2, Plus } from "lucide-react";
+import { toast } from "sonner";
 
 async function listCarrierContacts(): Promise<CarrierContactRecord[]> {
   const apiClient = new InfrastructureApiClient();
