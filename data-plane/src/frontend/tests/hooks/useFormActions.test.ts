@@ -1,5 +1,5 @@
 /**
- * Hook tests for components/pages/assets/hooks/useFormActions.ts
+ * Hook tests for components/apps/assets/hooks/useFormActions.ts
  * 
  * This is a placeholder test file for the useFormActions hook.
  * Implement comprehensive tests for:
@@ -10,7 +10,7 @@
  */
 
 import { renderHook, act } from '@testing-library/react'
-// import { useFormActions } from '@/components/pages/assets/hooks/useFormActions'
+// import { useFormActions } from '@/components/apps/assets/hooks/useFormActions'
 
 describe('useFormActions', () => {
   it('should initialize form state', () => {

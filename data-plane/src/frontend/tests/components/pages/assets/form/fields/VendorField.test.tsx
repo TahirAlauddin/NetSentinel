@@ -15,7 +15,7 @@
 
 import { render, screen, waitFor, act } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
-import { VendorField } from '@/components/pages/assets/form/fields/VendorField'
+import { VendorField } from '@/components/apps/assets/shared/form/fields/VendorField'
 import { listVendors, createVendor } from '@/app/(app)/assets/actions'
 
 // Mock the vendor actions

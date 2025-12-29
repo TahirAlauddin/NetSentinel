@@ -1,0 +1,1 @@
+export { NewAssetPage } from "./NewAssetPage";

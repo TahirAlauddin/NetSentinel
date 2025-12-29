@@ -10,8 +10,8 @@ export type { SetTeammateDialogProps } from "./SetTeammateDialog"
 export { SetLocationDialog } from "./SetLocationDialog"
 export type { SetLocationDialogProps } from "./SetLocationDialog"
 
-export { AddSoftwareDialog } from "./AddSoftwareDialog"
-export type { AddSoftwareDialogProps } from "./AddSoftwareDialog"
+export { SoftwareDialog } from "./SoftwareDialog"
+export type { SoftwareDialogProps } from "./SoftwareDialog"
 
 export { CostDepreciationDialog } from "./CostDepreciationDialog"
 export type { CostDepreciationDialogProps } from "./CostDepreciationDialog"

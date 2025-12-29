@@ -75,18 +75,18 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       // Default error UI
       return (
         <div className="flex min-h-screen items-center justify-center p-4">
-          <Card className="w-full max-w-md">
+          <Card className="w-full max-w-4xl">
             <CardHeader>
               <CardTitle className="text-destructive">Something went wrong</CardTitle>
               <CardDescription>
                 An unexpected error occurred. Please try again or contact support if the problem persists.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 min-h-[500px] flex flex-col">
               {process.env.NODE_ENV === "development" && this.state.error && (
-                <div className="rounded-md bg-muted p-4">
+                <div className="rounded-md bg-muted p-4 flex flex-col flex-1 min-h-0">
                   <p className="text-sm font-semibold mb-2">Error Details (Development Only):</p>
-                  <pre className="text-xs overflow-auto">
+                  <pre className="text-xs overflow-auto flex-1 w-full whitespace-pre-wrap break-words min-h-0">
                     {this.state.error.toString()}
                     {this.state.error.stack && `\n\n${this.state.error.stack}`}
                   </pre>

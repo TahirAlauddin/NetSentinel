@@ -15,7 +15,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Package } from "lucide-react"
 
-export interface AddSoftwareDialogProps {
+export interface SoftwareDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSave: (data: {
@@ -27,7 +27,7 @@ export interface AddSoftwareDialogProps {
   }) => void
 }
 
-export function AddSoftwareDialog({ open, onOpenChange, onSave }: AddSoftwareDialogProps) {
+export function SoftwareDialog({ open, onOpenChange, onSave }: SoftwareDialogProps) {
   const [formData, setFormData] = useState({
     name: "",
     version: "",

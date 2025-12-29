@@ -10,7 +10,7 @@
 
 import { render, screen } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
-import { AssetMetricsDisplay } from '@/components/pages/assets/AssetMetrics'
+import { AssetMetricsDisplay } from '@/components/apps/assets/AssetMetrics'
 import { AssetMetrics } from '@/types/assets'
 
 describe('AssetMetricsDisplay', () => {

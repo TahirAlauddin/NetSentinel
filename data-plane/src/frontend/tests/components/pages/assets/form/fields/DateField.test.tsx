@@ -12,7 +12,7 @@
  */
 
 import { render, screen, fireEvent } from '@/tests/__utils__/test-utils'
-import { DateField } from '@/components/pages/assets/form/fields/DateField'
+import { DateField } from '@/components/apps/assets/shared/form/fields/DateField'
 
 describe('DateField', () => {
   // Mock function to track onChange callback invocations

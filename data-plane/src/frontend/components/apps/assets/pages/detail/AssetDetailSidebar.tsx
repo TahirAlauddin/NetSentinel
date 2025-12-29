@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu, X } from "lucide-react";
-import { SECTIONS } from "../constants/asset-detail";
+import { SECTIONS } from "../../constants/asset-detail";
 
 interface AssetDetailSidebarProps {
   activeSection: string;

@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { SubmenuColumn } from "../types/navigation"
-import { settingsSubmenuItems } from "../constants/navigation"
 
 interface SubmenuProps {
   columns: SubmenuColumn[]
@@ -16,14 +15,6 @@ export function Submenu({ columns, isVisible, onClose, top = 0 }: SubmenuProps) 
 
   // If there's only one category, spread items horizontally
   const isSingleCategory = columns.length === 1
-  
-  // Check if this is the Settings submenu by comparing links with settingsSubmenuItems
-  const isSettingsSubmenu = isSingleCategory && 
-    columns[0].links.length === settingsSubmenuItems.length &&
-    columns[0].links.every(link => settingsSubmenuItems.some(item => item.title === link))
-  
-  // Create a map of title to URL for Settings submenu
-  const settingsLinkMap = new Map(settingsSubmenuItems.map(item => [item.title, item.url]))
 
   return (
     <div
@@ -45,33 +36,17 @@ export function Submenu({ columns, isVisible, onClose, top = 0 }: SubmenuProps) 
             <div className="mb-4 font-medium text-[oklch(0.85_0_0)]">{columns[0].title}</div>
           )}
           <ul className="flex flex-wrap gap-6">
-            {columns[0].links.map((link) => {
-              const href = isSettingsSubmenu ? settingsLinkMap.get(link) || "#" : "#"
-              return (
-                <li key={link} style={{ flexBasis: 'calc(25% - 1.125rem)', minWidth: 0 }}>
-                  {isSettingsSubmenu ? (
-                    <Link 
-                      className="hover:underline cursor-pointer block" 
-                      href={href}
-                      onClick={onClose}
-                    >
-                      {link}
-                    </Link>
-                  ) : (
-                    <a 
-                      className="hover:underline cursor-pointer block" 
-                      href={href}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        // Handle link click here
-                      }}
-                    >
-                      {link}
-                    </a>
-                  )}
-                </li>
-              )
-            })}
+            {columns[0].links.map((link) => (
+              <li key={link.href} style={{ flexBasis: 'calc(25% - 1.125rem)', minWidth: 0 }}>
+                <Link 
+                  className="hover:underline cursor-pointer block" 
+                  href={link.href}
+                  onClick={onClose}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
       ) : (
@@ -83,33 +58,17 @@ export function Submenu({ columns, isVisible, onClose, top = 0 }: SubmenuProps) 
                 <div className="mb-3 font-medium text-[oklch(0.85_0_0)]">{col.title}</div>
               )}
               <ul className="space-y-2">
-                {col.links.map((link) => {
-                  const href = isSettingsSubmenu ? settingsLinkMap.get(link) || "#" : "#"
-                  return (
-                    <li key={link}>
-                      {isSettingsSubmenu ? (
-                        <Link 
-                          className="hover:underline cursor-pointer" 
-                          href={href}
-                          onClick={onClose}
-                        >
-                          {link}
-                        </Link>
-                      ) : (
-                        <a 
-                          className="hover:underline cursor-pointer" 
-                          href={href}
-                          onClick={(e) => {
-                            e.preventDefault()
-                            // Handle link click here
-                          }}
-                        >
-                          {link}
-                        </a>
-                      )}
-                    </li>
-                  )
-                })}
+                {col.links.map((link) => (
+                  <li key={link.href}>
+                    <Link 
+                      className="hover:underline cursor-pointer" 
+                      href={link.href}
+                      onClick={onClose}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
           ))}

@@ -16,7 +16,7 @@ import {
   isSelected,
   validateStepForCreate,
   validateStepForUpdate,
-} from "@/components/pages/assets/utils/validation";
+} from "@/components/apps/assets/utils/validation";
 import { mockAssetCategory } from "@/tests/__fixtures__/api-responses";
 import { AssetCreateDto, AssetUpdateDto } from "@/types/assets/dto";
 

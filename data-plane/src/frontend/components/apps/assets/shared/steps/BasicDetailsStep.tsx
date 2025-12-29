@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { FormField, SelectField, VendorField } from "../form";
 
 import { IMPACT_LEVELS } from "@/constants/assets";
-import { useBasicDetailsStep } from "../hooks/useFormDataFetch";
+import { useBasicDetailsStep } from "../../hooks/useFormDataFetch";
 import { useAssetForm } from "../form/AssetFormContext";
 
 /**

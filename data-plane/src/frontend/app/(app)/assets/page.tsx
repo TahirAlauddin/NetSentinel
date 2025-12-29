@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
 import { Asset } from "@/types/assets";
 import { listAssets, deleteAsset } from "./actions/index";
-import { AssetTable } from "@/components/pages/assets/AssetTable";
-import { AssetMetricsDisplay } from "@/components/pages/assets/AssetMetrics";
-import { AssetChart } from "@/components/pages/assets/AssetChart";
-import { calculateAssetMetrics, filterAssets } from "@/components/pages/assets/utils";
+import { AssetTable } from "@/components/apps/assets/AssetTable";
+import { AssetMetricsDisplay } from "@/components/apps/assets/AssetMetrics";
+import { AssetChart } from "@/components/apps/assets/AssetChart";
+import { calculateAssetMetrics, filterAssets } from "@/components/apps/assets/utils";
 
 /**
  * AssetsPage component - Main page for asset management
