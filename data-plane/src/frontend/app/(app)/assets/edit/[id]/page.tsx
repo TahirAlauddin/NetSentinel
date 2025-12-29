@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { toast } from "sonner";
 
-import { AssetForm } from "@/components/pages/assets/form/AssetForm";
+import { AssetForm } from "@/components/apps/assets/form/AssetForm";
 import { LoadingState } from "@/components/feedback/loading-state";
 
 /**

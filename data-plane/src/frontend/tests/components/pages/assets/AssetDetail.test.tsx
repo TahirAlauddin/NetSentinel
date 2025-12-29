@@ -13,7 +13,7 @@
  */
 
 import { render, screen, waitFor } from '@/tests/__utils__/test-utils'
-import { AssetDetail } from '@/components/pages/assets/AssetDetail'
+import { AssetDetail } from '@/components/apps/assets/AssetDetail'
 import { AssetsApiClient } from '@/lib/api-client/asset'
 import { mockAsset } from '@/tests/__fixtures__/api-responses'
 

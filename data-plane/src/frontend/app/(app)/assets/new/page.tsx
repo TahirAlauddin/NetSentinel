@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { AssetForm } from "@/components/pages/assets/form/AssetForm";
+import { AssetForm } from "@/components/apps/assets/form/AssetForm";
 import { LoadingState } from "@/components/feedback/loading-state";
 import { AppShell } from "@/components/layout/app-shell";
 

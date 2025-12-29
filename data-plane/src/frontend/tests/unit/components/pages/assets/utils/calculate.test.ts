@@ -6,7 +6,7 @@ import {
   calculateWarrantyStatus,
   calculateAssetMetrics,
   calculateCategoryDistribution,
-} from "@/components/pages/assets/utils/calculate";
+} from "@/components/apps/assets/utils/calculate";
 import { Asset } from "@/types/assets";
 import { mockAsset, mockAssetCategory } from "@/tests/__fixtures__/api-responses";
 

@@ -6,7 +6,7 @@ import {
   getWarrantyColor,
   formatWarrantyStatus,
   formatAssetStatus,
-} from "@/components/pages/assets/utils/format";
+} from "@/components/apps/assets/utils/format";
 import { WarrantyStatus } from "@/types/assets";
 
 describe('Asset Format Utils', () => {

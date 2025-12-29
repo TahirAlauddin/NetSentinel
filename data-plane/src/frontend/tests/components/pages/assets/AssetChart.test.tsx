@@ -10,7 +10,7 @@
  */
 
 import { render, screen } from '@/tests/__utils__/test-utils'
-import { AssetChart } from '@/components/pages/assets/AssetChart'
+import { AssetChart } from '@/components/apps/assets/AssetChart'
 import { mockAsset, mockAssetCategory } from '@/tests/__fixtures__/api-responses'
 import { Asset } from '@/types/assets'
 

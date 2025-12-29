@@ -7,12 +7,12 @@ import { STATUS_OPTIONS } from "@/constants/assets";
 import {
   SetTeammateDialog,
   SetLocationDialog,
-  AddSoftwareDialog,
+  SoftwareDialog,
   CostDepreciationDialog,
   CustomDetailsDialog,
   NotesDialog,
   AlertsDialog,
-} from "@/components/asset-dialogs";
+} from "@/components/apps/assets/dialogs";
 import { AssetDetailHeader } from "./detail/AssetDetailHeader";
 import AssetDetailContent from "./detail/AssetDetailContent";
 
@@ -148,7 +148,7 @@ export function AssetDetail({ assetId, onUpdate }: AssetDetailProps) {
         onOpenChange={setLocationDialogOpen}
         onSave={setLocation}
       />
-      <AddSoftwareDialog
+      <SoftwareDialog
         open={softwareDialogOpen}
         onOpenChange={setSoftwareDialogOpen}
         onSave={(data) => setSoftware([...software, data])}
