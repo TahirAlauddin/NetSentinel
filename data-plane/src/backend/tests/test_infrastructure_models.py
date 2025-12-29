@@ -478,15 +478,11 @@ class TestCarrierContactModel:
         carrier_contact = CarrierContact.objects.create(
             name="Test Carrier",
             location=location,
-            address1="456 Carrier St",
-            city="Carrier City",
             customer_service_phone="555-1000",
             technical_support_phone="555-2000",
             sales_phone="555-3000",
             billing_phone="555-4000",
         )
-        assert carrier_contact.address1 == "456 Carrier St"
-        assert carrier_contact.city == "Carrier City"
         assert carrier_contact.customer_service_phone == "555-1000"
         assert carrier_contact.technical_support_phone == "555-2000"
         assert carrier_contact.sales_phone == "555-3000"
