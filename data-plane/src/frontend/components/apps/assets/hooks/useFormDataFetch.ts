@@ -229,7 +229,7 @@ Hooks for getting props in each step of the form.
 */
 //////////////////////////////////////////////////////////////////////////
 
-import { useAssetForm } from "../form/AssetFormContext"
+import { useAssetForm } from "../shared/form/AssetFormContext"
 import {
   BasicDetailsStepFormData,
   TechSpecsStepFormData,

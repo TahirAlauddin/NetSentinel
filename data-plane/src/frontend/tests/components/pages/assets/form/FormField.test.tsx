@@ -12,7 +12,7 @@
  */
 
 import { render, screen } from '@/tests/__utils__/test-utils'
-import { FormField } from '@/components/apps/assets/form/FormField'
+import { FormField } from '@/components/apps/assets/shared/form/FormField'
 
 describe('FormField', () => {
   /**

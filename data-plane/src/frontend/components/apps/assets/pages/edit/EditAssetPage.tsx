@@ -1,36 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useParams, useRouter } from "next/navigation";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { toast } from "sonner";
 
-import { AssetForm } from "./shared/form/AssetForm";
+import { AssetForm } from "@/components/apps/assets/shared/form/AssetForm";
+import { LoadingState } from "@/components/feedback/loading-state";
 
 /**
- * AssetFormPage - Page for creating and editing assets
- * Supports both create and edit modes via URL search params
+ * Main component with Suspense boundary for useSearchParams
  */
-const AssetFormPage = ({ assetId }: { assetId?: number }) => {
-  // const searchParams = useSearchParams();
-  // const assetId = searchParams.get("id");
-
-  const [loading, setLoading] = useState(!!assetId);
+export function EditAssetPage() {
+  const params = useParams();
+  const router = useRouter();
+  const { id: assetId } = params as { id: string };
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // ==================== Data Loading ====================
 
   useEffect(() => {
     const loadAsset = async () => {
-      if (!assetId) {
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
         setError(null);
 
+        const assetIdNum = parseInt(assetId, 10);
+        if (isNaN(assetIdNum)) {
+          // Redirect to not found
+          router.push("/404");
+        }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to load asset";
         setError(errorMessage);
@@ -45,17 +44,7 @@ const AssetFormPage = ({ assetId }: { assetId?: number }) => {
   }, [assetId]);
 
   if (loading) {
-    return (
-      <AppShell>
-        <div className="flex-1 overflow-auto bg-gray-50">
-          <div className="max-w-7xl mx-auto p-8">
-            <div className="text-center py-12">
-              <div className="text-gray-500">Loading asset data...</div>
-            </div>
-          </div>
-        </div>
-      </AppShell>
-    );
+    return <LoadingState message="Loading asset data..." />;
   }
 
   return (
@@ -66,11 +55,9 @@ const AssetFormPage = ({ assetId }: { assetId?: number }) => {
             <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700">{error}</div>
           </div>
         )}
-        <AssetForm />
+        <AssetForm assetId={parseInt(assetId, 10)} mode="edit" />
       </div>
     </AppShell>
   );
 }
 
-
-export default AssetFormPage;

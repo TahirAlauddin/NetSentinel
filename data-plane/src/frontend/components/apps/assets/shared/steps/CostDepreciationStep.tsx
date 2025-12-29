@@ -4,7 +4,7 @@ import { ExternalLink, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormField, CurrencyField } from "../form";
 import { Input } from "@/components/ui/input";
-import { useFormLifecyclesFetch, useCostDepreciationStep } from "../hooks/useFormDataFetch";
+import { useFormLifecyclesFetch, useCostDepreciationStep } from "../../hooks/useFormDataFetch";
 import { useAssetForm } from "../form/AssetFormContext";
 
 /**

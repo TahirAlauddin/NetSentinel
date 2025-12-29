@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { STEPS } from "@/constants/assets";
-import { validateStepForCreate, validateStepForUpdate } from "../utils";
+import { validateStepForCreate, validateStepForUpdate } from "../../utils";
 import { useAssetForm } from "./AssetFormContext";
 
 interface ActionsBarProps {

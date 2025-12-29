@@ -8,7 +8,7 @@ import {
   useFormLocationsFetch,
   useFormPeopleFetch,
   useLocationAndUsageStep,
-} from "../hooks/useFormDataFetch";
+} from "../../hooks/useFormDataFetch";
 import { DepartmentRecord } from "@/types/departments";
 
 const LocationAndUsageStep = () => {

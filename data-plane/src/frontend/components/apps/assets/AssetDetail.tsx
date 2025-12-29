@@ -12,9 +12,9 @@ import {
   CustomDetailsDialog,
   NotesDialog,
   AlertsDialog,
-} from "@/components/apps/assets/dialogs";
-import { AssetDetailHeader } from "./detail/AssetDetailHeader";
-import AssetDetailContent from "./detail/AssetDetailContent";
+} from "@/components/apps/assets/pages/detail/dialogs";
+import { AssetDetailHeader } from "./pages/detail/AssetDetailHeader";
+import AssetDetailContent from "./pages/detail/AssetDetailContent";
 
 interface AssetDetailProps {
   assetId: number;

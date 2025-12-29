@@ -18,7 +18,7 @@
 
 import { render, screen, fireEvent } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
-import { SelectField } from '@/components/apps/assets/form/fields/SelectField'
+import { SelectField } from '@/components/apps/assets/shared/form/fields/SelectField'
 
 describe('SelectField', () => {
   // Mock function to track onChange callback invocations

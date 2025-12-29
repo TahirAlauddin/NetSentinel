@@ -1,12 +1,12 @@
 "use client";
 
-import { useAlertsStep } from "../hooks/useFormDataFetch";
-import { useFormPeopleFetch } from "../hooks/useFormDataFetch";
+import { useAlertsStep } from "../../hooks/useFormDataFetch";
+import { useFormPeopleFetch } from "../../hooks/useFormDataFetch";
 import { CalendarAlert } from "@/types/assets/fields";
-import { useCalendarAlerts } from "../hooks/useCalendarAlerts";
-import { CalendarAlertCard } from "../alerts/CalendarAlertCard";
-import { EmptyAlertsState } from "../alerts/EmptyAlertsState";
-import { AddAlertButton } from "../alerts/AddAlertButton";
+import { useCalendarAlerts } from "../../hooks/useCalendarAlerts";
+import { CalendarAlertCard } from "./alerts/CalendarAlertCard";
+import { EmptyAlertsState } from "./alerts/EmptyAlertsState";
+import { AddAlertButton } from "./alerts/AddAlertButton";
 
 /**
  * Alerts step component

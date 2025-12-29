@@ -12,7 +12,7 @@ import AssetFormHeader from "./AssetFormHeader";
 import AssetFormTip from "./AssetFormTip";
 import AssetFormSteps from "./AssetFormSteps";
 import { AssetFormProvider } from "./AssetFormContext";
-import { useFormActions } from "../hooks/useFormActions";
+import { useFormActions } from "../../hooks/useFormActions";
 import { LocationRecord } from "@/types/locations";
 import { UserRecord } from "@/types/users";
 import { DepartmentRecord } from "@/types/departments";

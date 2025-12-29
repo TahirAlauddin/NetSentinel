@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { FormField, TagField } from "../form";
-import { useTechSpecsStep } from "../hooks/useFormDataFetch";
+import { useTechSpecsStep } from "../../hooks/useFormDataFetch";
 import { useAssetForm } from "../form/AssetFormContext";
 
 /**

@@ -1,7 +1,7 @@
 "use client"
 
 import { DateField } from "../form"
-import { useWarrantyAcquisitionStep } from "../hooks/useFormDataFetch";
+import { useWarrantyAcquisitionStep } from "../../hooks/useFormDataFetch";
 import { useAssetForm } from "../form/AssetFormContext";
 
 /**

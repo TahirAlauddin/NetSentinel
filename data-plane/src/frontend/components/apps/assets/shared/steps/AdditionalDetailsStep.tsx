@@ -1,7 +1,7 @@
 "use client"
 
 import { RelatedItemField } from "../form"
-import { useAdditionalDetailsStep } from "../hooks/useFormDataFetch";
+import { useAdditionalDetailsStep } from "../../hooks/useFormDataFetch";
 import { ImageUploadField } from "@/components/common/upload/ImageUploadField"
 import { AttachmentsUploadField } from "@/components/common/upload/AttachmentsUploadField"
 
