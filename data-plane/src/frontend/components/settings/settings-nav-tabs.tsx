@@ -12,6 +12,7 @@ export function SettingsNavTabs() {
     { href: "/settings/circuits", label: "Circuits" },
     { href: "/settings/departments", label: "Departments" },
     { href: "/settings/categories", label: "Categories" },
+    { href: "/settings/carrier-contacts", label: "Carrier Contacts" },
     { href: "/settings/email-format", label: "Email Format" },
   ];
 
