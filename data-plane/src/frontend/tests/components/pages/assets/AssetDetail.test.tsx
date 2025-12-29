@@ -23,12 +23,12 @@ jest.mock('@/lib/api-client/asset', () => ({
 }))
 
 // Mock asset dialogs
-jest.mock('@/components/asset-dialogs', () => ({
+jest.mock('@/components/apps/assets/pages/detail/dialogs', () => ({
   SetTeammateDialog: ({ open, onOpenChange, onSave }: any) => 
     open ? <div data-testid="teammate-dialog">Teammate Dialog</div> : null,
   SetLocationDialog: ({ open, onOpenChange, onSave }: any) => 
     open ? <div data-testid="location-dialog">Location Dialog</div> : null,
-  AddSoftwareDialog: ({ open, onOpenChange, onSave }: any) => 
+  SoftwareDialog: ({ open, onOpenChange, onSave }: any) => 
     open ? <div data-testid="software-dialog">Software Dialog</div> : null,
   CostDepreciationDialog: ({ open, onOpenChange, onSave }: any) => 
     open ? <div data-testid="cost-dialog">Cost Dialog</div> : null,

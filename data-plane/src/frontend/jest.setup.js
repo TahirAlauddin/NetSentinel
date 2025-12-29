@@ -48,7 +48,7 @@ jest.mock('@/lib/api-client/user', () => {
 })
 
 // Mock form hooks - using shared mocks from __mocks__ folder
-jest.mock('@/components/pages/assets/hooks/useFormActions', () => {
+jest.mock('@/components/apps/assets/hooks/useFormActions', () => {
   const { useFormActions } = require('./tests/__mocks__/useFormActions')
   return { useFormActions }
 })
