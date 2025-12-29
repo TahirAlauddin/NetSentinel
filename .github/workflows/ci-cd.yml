@@ -48,27 +48,28 @@ jobs:
 
       - name: Run frontend tests
         working-directory: data-plane/src/frontend
-        run: npm run test:ci
+        run: npm run test
 
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-    environment: Staging
+  # Disable deployment to staging for now
+  # deploy-staging:
+  #   name: Deploy to Staging
+  #   runs-on: ubuntu-latest
+  #   needs: test
+  #   if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+  #   environment: Staging
     
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Deploy to staging server
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          script: |
-            cd /path/to/netsentinel/data-plane
-            git pull origin main
-            docker-compose -f docker-compose.stag.yml up -d --build
+  #     - name: Deploy to staging server
+  #       uses: appleboy/ssh-action@v1.0.0
+  #       with:
+  #         host: ${{ secrets.SSH_HOST }}
+  #         username: ${{ secrets.SSH_USER }}
+  #         password: ${{ secrets.SSH_PASSWORD }}
+  #         script: |
+  #           cd /path/to/netsentinel/data-plane
+  #           git pull origin main
+  #           docker-compose -f docker-compose.stag.yml up -d --build
 
