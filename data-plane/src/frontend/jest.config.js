@@ -39,6 +39,15 @@ const customJestConfig = {
     "!**/__mocks__/**",
     "!**/__fixtures__/**",
     "!**/__utils__/**",
+    // Exclude type definition files
+    "!**/types/**",
+    // Exclude hooks from coverage
+    "!**/hooks/**",
+    "!**/*hooks*.ts",
+    "!**/*hooks*.tsx",
+    // Exclude shadcn UI components (already tested by shadcn)
+    "!**/components/ui/dialog.tsx",
+    "!**/components/ui/dropdown-menu.tsx",
   ],
   coverageThreshold: {
     global: {

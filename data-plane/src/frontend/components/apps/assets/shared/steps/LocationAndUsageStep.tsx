@@ -28,12 +28,13 @@ const LocationAndUsageStep = () => {
       <h2 className="text-xl font-semibold text-gray-900">Location & Usage</h2>
 
       <div>
-        <label className="block text-sm font-medium text-gray-900 mb-2">
+        <label htmlFor="in_current_state_since" className="block text-sm font-medium text-gray-900 mb-2">
           In current state since
         </label>
         <div className="relative">
           <Calendar className="absolute left-3 top-3 w-4 h-4 text-gray-400 pointer-events-none" />
           <Input
+            id="in_current_state_since"
             type="date"
             value={formData.in_current_state_since || ""}
             onChange={(e) => onInputChange("in_current_state_since", e.target.value)}
@@ -43,12 +44,13 @@ const LocationAndUsageStep = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-900 mb-2">
+        <label htmlFor="expected_checkin_date" className="block text-sm font-medium text-gray-900 mb-2">
           Expected check-in date <span className="text-gray-500 text-xs">(optional)</span>
         </label>
         <div className="relative">
           <Calendar className="absolute left-3 top-3 w-4 h-4 text-gray-400 pointer-events-none" />
           <Input
+            id="expected_checkin_date"
             type="date"
             value={formData.expected_checkin_date || ""}
             onChange={(e) => onInputChange("expected_checkin_date", e.target.value)}
@@ -58,11 +60,12 @@ const LocationAndUsageStep = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-900 mb-2">
+        <label htmlFor="used_by" className="block text-sm font-medium text-gray-900 mb-2">
           Used by <span className="text-gray-500 text-xs">(optional)</span>
         </label>
         <div className="relative">
           <select
+            id="used_by"
             value={formData.used_by?.id.toString() || ""}
             onChange={(e) => {
               const selectedId = e.target.value;
@@ -95,11 +98,12 @@ const LocationAndUsageStep = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-900 mb-2">
+        <label htmlFor="managed_by" className="block text-sm font-medium text-gray-900 mb-2">
           Managed by <span className="text-gray-500 text-xs">(optional)</span>
         </label>
         <div className="relative">
           <select
+            id="managed_by"
             value={formData.managed_by?.id.toString() || ""}
             onChange={(e) => {
               const selectedId = e.target.value;
@@ -132,11 +136,12 @@ const LocationAndUsageStep = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-900 mb-2">
+        <label htmlFor="location" className="block text-sm font-medium text-gray-900 mb-2">
           Location <span className="text-gray-500 text-xs">(optional)</span>
         </label>
         <div className="relative">
           <select
+            id="location"
             value={formData.location?.id.toString() || ""}
             onChange={(e) => {
               const selectedId = e.target.value;
@@ -179,11 +184,12 @@ const LocationAndUsageStep = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-900 mb-2">
+        <label htmlFor="departments" className="block text-sm font-medium text-gray-900 mb-2">
           Departments <span className="text-gray-500 text-xs">(optional)</span>
         </label>
         <div className="relative">
           <select
+            id="departments"
             multiple
             value={
               Array.isArray(formData.departments)
