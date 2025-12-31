@@ -2,7 +2,7 @@
  * Tests for components/debug/auth-dialog.tsx
  */
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AuthDialog from "@/components/debug/auth-dialog";
 
@@ -69,7 +69,10 @@ describe("AuthDialog", () => {
     render(<DebugPopup isOpen={true} onClose={mockOnClose} />);
 
     const testButton = screen.getByRole("button", { name: /Test Backend Connection/i });
-    await userEvent.click(testButton);
+    
+    await act(async () => {
+      await userEvent.click(testButton);
+    });
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalled();
@@ -83,7 +86,10 @@ describe("AuthDialog", () => {
     render(<DebugPopup isOpen={true} onClose={mockOnClose} />);
 
     const testButton = screen.getByRole("button", { name: /Test Backend Connection/i });
-    await userEvent.click(testButton);
+    
+    await act(async () => {
+      await userEvent.click(testButton);
+    });
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalled();

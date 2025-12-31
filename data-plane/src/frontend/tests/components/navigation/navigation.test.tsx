@@ -9,7 +9,7 @@
  * - Mobile toggle behavior
  */
 
-import { render, screen, waitFor } from '@/tests/__utils__/test-utils'
+import { render, screen, waitFor, act } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
 import { Navigation } from '@/components/navigation/navigation'
 import { NavigationItem } from '@/types/navigation'
@@ -126,7 +126,9 @@ describe('Navigation', () => {
     const toggleButton = screen.getByTestId('toggle-Assets')
     expect(screen.queryByTestId('expanded-Assets')).not.toBeInTheDocument()
 
-    await user.click(toggleButton)
+    await act(async () => {
+      await user.click(toggleButton)
+    })
 
     await waitFor(() => {
       expect(screen.getByTestId('expanded-Assets')).toBeInTheDocument()
@@ -145,7 +147,10 @@ describe('Navigation', () => {
     render(<Navigation items={mockItems} />)
 
     const toggleButton = screen.getByTestId('toggle-Assets')
-    await user.hover(toggleButton)
+    
+    await act(async () => {
+      await user.hover(toggleButton)
+    })
 
     await waitFor(() => {
       expect(screen.getByTestId('expanded-Assets')).toBeInTheDocument()
@@ -163,7 +168,10 @@ describe('Navigation', () => {
       configurable: true,
       value: 800,
     })
-    window.dispatchEvent(new Event('resize'))
+    
+    await act(async () => {
+      window.dispatchEvent(new Event('resize'))
+    })
 
     await waitFor(() => {
       // Component should handle resize

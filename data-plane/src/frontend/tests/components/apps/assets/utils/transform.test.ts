@@ -29,9 +29,9 @@ describe('transform', () => {
 
       expect(result.name).toBe('Test Asset')
       expect(result.category).toBe(1)
-      expect(result.id).toBeUndefined()
-      expect(result.created_at).toBeUndefined()
-      expect(result.updated_at).toBeUndefined()
+      expect(result).not.toHaveProperty('id')
+      expect(result).not.toHaveProperty('created_at')
+      expect(result).not.toHaveProperty('updated_at')
     })
 
     it('should throw error when name is missing', () => {
@@ -103,13 +103,13 @@ describe('transform', () => {
 
       const result = transformToCreateDto(asset)
 
-      expect(result.id).toBeUndefined()
-      expect(result.created_at).toBeUndefined()
-      expect(result.updated_at).toBeUndefined()
-      expect(result.images).toBeUndefined()
-      expect(result.attachments).toBeUndefined()
-      expect(result.related_items).toBeUndefined()
-      expect(result.calendar_alerts).toBeUndefined()
+      expect(result).not.toHaveProperty('id')
+      expect(result).not.toHaveProperty('created_at')
+      expect(result).not.toHaveProperty('updated_at')
+      expect(result).not.toHaveProperty('images')
+      expect(result).not.toHaveProperty('attachments')
+      expect(result).not.toHaveProperty('related_items')
+      expect(result).not.toHaveProperty('calendar_alerts')
     })
 
     it('should convert empty strings to null for optional fields', () => {
@@ -228,7 +228,7 @@ describe('transform', () => {
       const result = transformToUpdateDto(asset)
 
       expect(result.name).toBe('Updated Asset')
-      expect(result.id).toBeUndefined()
+      expect(result).not.toHaveProperty('id')
     })
 
     it('should allow optional category for updates', () => {
@@ -268,9 +268,9 @@ describe('transform', () => {
 
       const result = transformToUpdateDto(asset)
 
-      expect(result.id).toBeUndefined()
-      expect(result.created_at).toBeUndefined()
-      expect(result.updated_at).toBeUndefined()
+      expect(result).not.toHaveProperty('id')
+      expect(result).not.toHaveProperty('created_at')
+      expect(result).not.toHaveProperty('updated_at')
     })
 
     it('should convert empty strings to null', () => {
