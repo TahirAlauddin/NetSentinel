@@ -94,7 +94,8 @@ describe("AuthDialog", () => {
     const DebugPopup = AuthDialog();
     render(<DebugPopup isOpen={true} onClose={mockOnClose} />);
 
-    const closeButton = screen.getByRole("button", { name: /Close/i });
+    // The close button uses "×" character, not "Close" text
+    const closeButton = screen.getByText("×");
     await userEvent.click(closeButton);
 
     expect(mockOnClose).toHaveBeenCalled();

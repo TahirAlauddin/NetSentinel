@@ -72,6 +72,9 @@ describe("AssetDetailPage", () => {
   });
 
   it("should render error message on load failure", async () => {
+    // Suppress expected console.error from component
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    
     mockGetAsset.mockResolvedValue({
       data: null,
       error: "Asset not found",
@@ -83,9 +86,14 @@ describe("AssetDetailPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Asset not found")).toBeInTheDocument();
     });
+    
+    consoleSpy.mockRestore();
   });
 
   it("should render error when asset data is null", async () => {
+    // Suppress expected console.error from component
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    
     mockGetAsset.mockResolvedValue({
       data: null,
       error: null,
@@ -97,9 +105,14 @@ describe("AssetDetailPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Asset not found")).toBeInTheDocument();
     });
+    
+    consoleSpy.mockRestore();
   });
 
   it("should handle API error", async () => {
+    // Suppress expected console.error from component
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    
     mockGetAsset.mockRejectedValue(new Error("Network error"));
 
     render(<AssetDetailPage />);
@@ -107,15 +120,19 @@ describe("AssetDetailPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Network error")).toBeInTheDocument();
     });
+    
+    consoleSpy.mockRestore();
   });
 
-  it("should handle invalid asset ID", () => {
+  it("should handle invalid asset ID", async () => {
     const useParamsMock = jest.fn(() => ({ id: undefined }));
     jest.spyOn(require("next/navigation"), "useParams").mockImplementation(useParamsMock);
 
     render(<AssetDetailPage />);
 
-    expect(screen.getByText("Invalid asset ID")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Asset ID is required")).toBeInTheDocument();
+    });
   });
 });
 

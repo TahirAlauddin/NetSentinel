@@ -2,7 +2,7 @@
  * Tests for app/(auth)/login/page.tsx
  */
 
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import LoginPage from "@/app/(auth)/login/page";
 import { signIn } from "next-auth/react";
@@ -110,7 +110,10 @@ describe("LoginPage", () => {
 
     await userEvent.type(usernameInput, "testuser");
     await userEvent.type(passwordInput, "password123");
-    await userEvent.click(submitButton);
+    
+    await act(async () => {
+      await userEvent.click(submitButton);
+    });
 
     await waitFor(() => {
       expect(mockSignIn).toHaveBeenCalledWith("credentials", {
@@ -137,10 +140,18 @@ describe("LoginPage", () => {
 
     await userEvent.type(usernameInput, "testuser");
     await userEvent.type(passwordInput, "wrongpassword");
-    await userEvent.click(submitButton);
+    
+    await act(async () => {
+      await userEvent.click(submitButton);
+    });
 
     await waitFor(() => {
       expect(screen.getByText("Invalid username or password.")).toBeInTheDocument();
+    });
+    
+    // Wait for loading state to complete
+    await waitFor(() => {
+      expect(submitButton).not.toBeDisabled();
     });
   });
 
@@ -155,7 +166,10 @@ describe("LoginPage", () => {
 
     await userEvent.type(usernameInput, "testuser");
     await userEvent.type(passwordInput, "password123");
-    await userEvent.click(submitButton);
+    
+    await act(async () => {
+      await userEvent.click(submitButton);
+    });
 
     await waitFor(() => {
       expect(mockRouterPush).toHaveBeenCalledWith("/dashboard");
@@ -180,7 +194,10 @@ describe("LoginPage", () => {
 
     await userEvent.type(usernameInput, "testuser");
     await userEvent.type(passwordInput, "password123");
-    await userEvent.click(submitButton);
+    
+    await act(async () => {
+      await userEvent.click(submitButton);
+    });
 
     await waitFor(() => {
       expect(mockRouterPush).toHaveBeenCalledWith("/assets");
@@ -200,7 +217,10 @@ describe("LoginPage", () => {
 
     await userEvent.type(usernameInput, "testuser");
     await userEvent.type(passwordInput, "password123");
-    await userEvent.click(submitButton);
+    
+    await act(async () => {
+      await userEvent.click(submitButton);
+    });
 
     await waitFor(() => {
       expect(screen.getByText("Signing In...")).toBeInTheDocument();
@@ -219,10 +239,18 @@ describe("LoginPage", () => {
 
     await userEvent.type(usernameInput, "testuser");
     await userEvent.type(passwordInput, "password123");
-    await userEvent.click(submitButton);
+    
+    await act(async () => {
+      await userEvent.click(submitButton);
+    });
 
     await waitFor(() => {
       expect(screen.getByText("Server error. Please try again.")).toBeInTheDocument();
+    }, { timeout: 3000 });
+    
+    // Wait for loading state to complete
+    await waitFor(() => {
+      expect(submitButton).not.toBeDisabled();
     });
   });
 });

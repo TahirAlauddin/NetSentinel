@@ -2,6 +2,26 @@
  * Tests for app/(app)/assets/actions/index.ts
  */
 
+// Mock next-auth before any imports that depend on it
+jest.mock("next-auth", () => ({
+  getServerSession: jest.fn(),
+  default: jest.fn((options: any) => ({
+    handlers: {
+      GET: jest.fn(),
+      POST: jest.fn(),
+    },
+    auth: jest.fn(),
+    signIn: jest.fn(),
+    signOut: jest.fn(),
+  })),
+}));
+
+// Mock auth config
+jest.mock("@/lib/auth", () => ({
+  authOptions: {},
+  default: jest.fn(),
+}));
+
 import {
   listAssets,
   getAsset,

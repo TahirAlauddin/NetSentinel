@@ -55,7 +55,8 @@ describe("NotesDialog", () => {
       />
     );
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    expect(screen.getByText("Add Note")).toBeInTheDocument();
+    // Check for the dialog title specifically (there's also a button with "Add Note")
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Add Note");
   });
 
   it("should render note textarea", () => {

@@ -167,8 +167,7 @@ describe("error-handler", () => {
         status: 422,
         error: "Validation failed",
         errorData: {
-          message: "Field errors",
-          fieldErrors: { name: ["Required"] },
+          name: ["Required"],
         },
         data: null,
       };
@@ -183,6 +182,7 @@ describe("error-handler", () => {
       const response: BaseApiResponse<unknown> = {
         error: "Unknown error",
         data: null,
+        status: 0,
       };
 
       const result = handleApiError(response);
@@ -251,6 +251,7 @@ describe("error-handler", () => {
     it("should log error with context", () => {
       const consoleSpy = jest.spyOn(console, "error").mockImplementation();
       const originalEnv = process.env.NODE_ENV;
+      // @ts-expect-error - NODE_ENV is readonly but we need to mock it for testing
       process.env.NODE_ENV = "development";
 
       const error = new Error("Test error");
@@ -259,6 +260,7 @@ describe("error-handler", () => {
       expect(consoleSpy).toHaveBeenCalled();
 
       consoleSpy.mockRestore();
+      // @ts-expect-error - NODE_ENV is readonly but we need to restore it
       process.env.NODE_ENV = originalEnv;
     });
   });
@@ -305,6 +307,7 @@ describe("error-handler", () => {
     it("should log error in development", () => {
       const consoleSpy = jest.spyOn(console, "error").mockImplementation();
       const originalEnv = process.env.NODE_ENV;
+      // @ts-expect-error - NODE_ENV is readonly but we need to mock it for testing
       process.env.NODE_ENV = "development";
 
       const error: AppError = {
@@ -325,12 +328,14 @@ describe("error-handler", () => {
       );
 
       consoleSpy.mockRestore();
+      // @ts-expect-error - NODE_ENV is readonly but we need to restore it
       process.env.NODE_ENV = originalEnv;
     });
 
     it("should not log in production", () => {
       const consoleSpy = jest.spyOn(console, "error").mockImplementation();
       const originalEnv = process.env.NODE_ENV;
+      // @ts-expect-error - NODE_ENV is readonly but we need to mock it for testing
       process.env.NODE_ENV = "production";
 
       const error: AppError = {
@@ -345,6 +350,7 @@ describe("error-handler", () => {
       expect(consoleSpy).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
+      // @ts-expect-error - NODE_ENV is readonly but we need to restore it
       process.env.NODE_ENV = originalEnv;
     });
   });

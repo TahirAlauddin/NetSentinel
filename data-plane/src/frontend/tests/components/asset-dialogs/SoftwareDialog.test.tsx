@@ -133,10 +133,19 @@ describe("SoftwareDialog", () => {
     const versionInput = screen.getByLabelText(/Version/i);
 
     await userEvent.type(nameInput, "Microsoft Office");
+    await waitFor(() => {
+      expect(nameInput).toHaveValue("Microsoft Office");
+    });
+
     await userEvent.type(versionInput, "2021");
+    await waitFor(() => {
+      expect(versionInput).toHaveValue("2021");
+    });
 
     const saveButton = screen.getByRole("button", { name: /Add Software/i });
-    expect(saveButton).not.toBeDisabled();
+    await waitFor(() => {
+      expect(saveButton).not.toBeDisabled();
+    });
   });
 
   it("should call onSave with form data when save button is clicked", async () => {
@@ -148,10 +157,30 @@ describe("SoftwareDialog", () => {
       />
     );
 
-    await userEvent.type(screen.getByLabelText(/Software Name/i), "Microsoft Office");
-    await userEvent.type(screen.getByLabelText(/Version/i), "2021");
-    await userEvent.type(screen.getByLabelText(/License Key/i), "ABC123");
-    await userEvent.type(screen.getByLabelText(/Installed Date/i), "2024-01-01");
+    const nameInput = screen.getByLabelText(/Software Name/i);
+    const versionInput = screen.getByLabelText(/Version/i);
+    const licenseKeyInput = screen.getByLabelText(/License Key/i);
+    const installedDateInput = screen.getByLabelText(/Installed Date/i);
+
+    await userEvent.type(nameInput, "Microsoft Office");
+    await waitFor(() => {
+      expect(nameInput).toHaveValue("Microsoft Office");
+    });
+
+    await userEvent.type(versionInput, "2021");
+    await waitFor(() => {
+      expect(versionInput).toHaveValue("2021");
+    });
+
+    await userEvent.type(licenseKeyInput, "ABC123");
+    await waitFor(() => {
+      expect(licenseKeyInput).toHaveValue("ABC123");
+    });
+
+    await userEvent.type(installedDateInput, "2024-01-01");
+    await waitFor(() => {
+      expect(installedDateInput).toHaveValue("2024-01-01");
+    });
 
     const saveButton = screen.getByRole("button", { name: /Add Software/i });
     await userEvent.click(saveButton);
@@ -176,14 +205,32 @@ describe("SoftwareDialog", () => {
       />
     );
 
-    await userEvent.type(screen.getByLabelText(/Software Name/i), "Microsoft Office");
-    await userEvent.type(screen.getByLabelText(/Version/i), "2021");
+    const nameInput = screen.getByLabelText(/Software Name/i);
+    const versionInput = screen.getByLabelText(/Version/i);
+
+    await userEvent.type(nameInput, "Microsoft Office");
+    await waitFor(() => {
+      expect(nameInput).toHaveValue("Microsoft Office");
+    });
+
+    await userEvent.type(versionInput, "2021");
+    await waitFor(() => {
+      expect(versionInput).toHaveValue("2021");
+    });
 
     const saveButton = screen.getByRole("button", { name: /Add Software/i });
     await userEvent.click(saveButton);
 
+    // Wait for all state updates to complete - check that form is reset and dialog closes
+    await waitFor(() => {
+      expect(mockOnSave).toHaveBeenCalled();
+    });
+
     await waitFor(() => {
       expect(mockOnOpenChange).toHaveBeenCalledWith(false);
+      // Verify form is reset by checking inputs are empty
+      expect(nameInput).toHaveValue("");
+      expect(versionInput).toHaveValue("");
     });
   });
 

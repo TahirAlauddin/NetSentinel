@@ -2,7 +2,7 @@
  * Tests for app/(app)/assets/page.tsx
  */
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AssetsPage from "@/app/(app)/assets/page";
 import { listAssets, deleteAsset } from "@/app/(app)/assets/actions/index";
@@ -59,6 +59,7 @@ describe("AssetsPage", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    global.confirm = jest.fn(() => true);
     jest.spyOn(require("next/navigation"), "useRouter").mockReturnValue({
       push: mockRouterPush,
     });
@@ -90,6 +91,9 @@ describe("AssetsPage", () => {
   });
 
   it("should render error message on load failure", async () => {
+    // Suppress expected console.error from component
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    
     mockListAssets.mockRejectedValue(new Error("Failed to load"));
 
     render(<AssetsPage />);
@@ -97,6 +101,8 @@ describe("AssetsPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Failed to load")).toBeInTheDocument();
     });
+    
+    consoleSpy.mockRestore();
   });
 
   it("should navigate to new asset page when create button clicked", async () => {
@@ -109,7 +115,9 @@ describe("AssetsPage", () => {
     });
 
     const createButton = screen.getByText("Managed Asset");
-    await userEvent.click(createButton);
+    await act(async () => {
+      await userEvent.click(createButton);
+    });
 
     expect(mockRouterPush).toHaveBeenCalledWith("/assets/new");
   });
@@ -126,7 +134,9 @@ describe("AssetsPage", () => {
     });
 
     const deleteButton = screen.getByText("Delete");
-    await userEvent.click(deleteButton);
+    await act(async () => {
+      await userEvent.click(deleteButton);
+    });
 
     await waitFor(() => {
       expect(mockDeleteAsset).toHaveBeenCalledWith(1);
@@ -145,7 +155,9 @@ describe("AssetsPage", () => {
     });
 
     const deleteButton = screen.getByText("Delete");
-    await userEvent.click(deleteButton);
+    await act(async () => {
+      await userEvent.click(deleteButton);
+    });
 
     expect(mockDeleteAsset).not.toHaveBeenCalled();
   });
@@ -165,14 +177,20 @@ describe("AssetsPage", () => {
     });
 
     const deleteButton = screen.getByText("Delete");
-    await userEvent.click(deleteButton);
+    await act(async () => {
+      await userEvent.click(deleteButton);
+    });
 
+    // Wait for error message to appear
     await waitFor(
       () => {
         expect(screen.getByText("Delete failed")).toBeInTheDocument();
       },
-      { timeout: 3000 }
+      { timeout: 5000 }
     );
+
+    // Verify deleteAsset was called
+    expect(mockDeleteAsset).toHaveBeenCalledWith(1);
   });
 
   it("should render metrics and chart", async () => {

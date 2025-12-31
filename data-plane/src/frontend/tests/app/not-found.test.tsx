@@ -15,7 +15,8 @@ jest.mock("next/link", () => {
 describe("NotFound", () => {
   it("should render 404 heading", () => {
     render(<NotFound />);
-    expect(screen.getByText("404")).toBeInTheDocument();
+    // There are multiple "404" elements (breadcrumb and heading), so check for the main h1
+    expect(screen.getByRole("heading", { name: "404" })).toBeInTheDocument();
   });
 
   it("should render page not found message", () => {

@@ -3,20 +3,26 @@
  */
 
 import { CalendarAlertApiClient } from "@/lib/api-client/calendar-alert";
-import { BaseApiClient } from "@/lib/api-client";
 
 // Create shared mocks
 const mockPost = jest.fn();
 const mockPatch = jest.fn();
 const mockDelete = jest.fn();
 
-// Mock the base client
-jest.mock("@/lib/api-client", () => ({
-  BaseApiClient: jest.fn().mockImplementation(() => ({
-    post: mockPost,
-    patch: mockPatch,
-    delete: mockDelete,
-  })),
+// Mock next-auth/react to avoid auth issues in tests
+jest.mock("next-auth/react", () => ({
+  getSession: jest.fn().mockResolvedValue({
+    accessToken: "mock-token",
+    refreshToken: "mock-refresh-token",
+  }),
+  signOut: jest.fn(),
+}));
+
+// Mock the config
+jest.mock("@/lib/config", () => ({
+  apiConfig: {
+    clientBaseUrl: "http://localhost:8000/api/v1",
+  },
 }));
 
 describe("CalendarAlertApiClient", () => {
@@ -25,6 +31,11 @@ describe("CalendarAlertApiClient", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     client = new CalendarAlertApiClient();
+    
+    // Replace methods on the instance directly
+    (client as any).post = mockPost;
+    (client as any).patch = mockPatch;
+    (client as any).delete = mockDelete;
   });
 
   describe("createCalendarAlert", () => {

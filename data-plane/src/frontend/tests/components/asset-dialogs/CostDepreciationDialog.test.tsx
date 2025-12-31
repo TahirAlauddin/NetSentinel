@@ -70,7 +70,7 @@ describe("CostDepreciationDialog", () => {
     expect(screen.getByLabelText(/Replacement Cost/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Salvage Value/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Useful Life/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Approaching End of Life/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Approaching End-of-Life/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/PO Number/i)).toBeInTheDocument();
   });
 
@@ -90,8 +90,13 @@ describe("CostDepreciationDialog", () => {
       />
     );
 
-    expect(screen.getByLabelText(/Purchase Price/i)).toHaveValue("1000");
-    expect(screen.getByLabelText(/Replacement Cost/i)).toHaveValue("1200");
+    // Number inputs return string values, but toHaveValue accepts both
+    const purchasePriceInput = screen.getByLabelText(/Purchase Price/i) as HTMLInputElement;
+    expect(purchasePriceInput.value).toBe("1000");
+    
+    const replacementCostInput = screen.getByLabelText(/Replacement Cost/i) as HTMLInputElement;
+    expect(replacementCostInput.value).toBe("1200");
+    
     expect(screen.getByLabelText(/PO Number/i)).toHaveValue("PO-123");
   });
 

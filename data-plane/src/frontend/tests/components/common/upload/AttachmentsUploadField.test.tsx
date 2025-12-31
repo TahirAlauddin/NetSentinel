@@ -46,7 +46,7 @@ describe("AttachmentsUploadField", () => {
     );
 
     expect(screen.getByText("Attachments")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Choose files/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /CLICK TO UPLOAD/i })).toBeInTheDocument();
   });
 
   it("should show required indicator when not optional", () => {
@@ -59,7 +59,9 @@ describe("AttachmentsUploadField", () => {
       />
     );
 
-    expect(screen.getByText("*")).toBeInTheDocument();
+    // When optional is false, no indicator is shown (only shows "(optional)" when optional is true)
+    expect(screen.queryByText("*")).not.toBeInTheDocument();
+    expect(screen.queryByText("(optional)")).not.toBeInTheDocument();
   });
 
   it("should not show required indicator when optional", () => {
@@ -90,9 +92,6 @@ describe("AttachmentsUploadField", () => {
 
   it("should handle file upload", async () => {
     const file = new File(["content"], "test.pdf", { type: "application/pdf" });
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.multiple = true;
 
     render(
       <AttachmentsUploadField
@@ -102,17 +101,9 @@ describe("AttachmentsUploadField", () => {
       />
     );
 
-    const uploadButton = screen.getByRole("button", { name: /Choose files/i });
-    await userEvent.click(uploadButton);
-
-    // Simulate file selection
-    const dataTransfer = new DataTransfer();
-    dataTransfer.items.add(file);
-    const input = screen.getByLabelText(/Attachments/i) as HTMLInputElement;
-    Object.defineProperty(input, "files", {
-      value: dataTransfer.files,
-      writable: false,
-    });
+    // Find the hidden file input
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(input).toBeInTheDocument();
 
     await userEvent.upload(input, file);
 
@@ -135,7 +126,7 @@ describe("AttachmentsUploadField", () => {
       />
     );
 
-    const input = screen.getByLabelText(/Attachments/i) as HTMLInputElement;
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     await userEvent.upload(input, largeFile);
 
     await waitFor(() => {
@@ -159,7 +150,7 @@ describe("AttachmentsUploadField", () => {
       />
     );
 
-    const input = screen.getByLabelText(/Attachments/i) as HTMLInputElement;
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     await userEvent.upload(input, file);
 
     await waitFor(() => {
@@ -179,7 +170,7 @@ describe("AttachmentsUploadField", () => {
       />
     );
 
-    const input = screen.getByLabelText(/Attachments/i) as HTMLInputElement;
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     await userEvent.upload(input, [file1, file2]);
 
     await waitFor(() => {

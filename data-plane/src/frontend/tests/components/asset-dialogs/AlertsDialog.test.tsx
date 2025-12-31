@@ -87,7 +87,8 @@ describe("AlertsDialog", () => {
       />
     );
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    expect(screen.getByText("Add Alert")).toBeInTheDocument();
+    // Check for the dialog title specifically (there's also a button with "Add Alert")
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Add Alert");
   });
 
   it("should render all form fields", () => {
@@ -98,7 +99,14 @@ describe("AlertsDialog", () => {
         onSave={mockOnSave}
       />
     );
-    expect(screen.getByLabelText(/Alert Type/i)).toBeInTheDocument();
+    // "Alert Type" appears in both label and placeholder, so find label by htmlFor attribute
+    const alertTypeLabel = screen.getByText((content, element) => {
+      return element?.tagName.toLowerCase() === "label" && 
+             /Alert Type/i.test(content || "") &&
+             element.getAttribute("for") === "alert-type";
+    });
+    expect(alertTypeLabel).toBeInTheDocument();
+    
     expect(screen.getByLabelText(/Message/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Trigger Date/i)).toBeInTheDocument();
   });
