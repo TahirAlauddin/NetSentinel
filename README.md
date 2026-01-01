@@ -23,6 +23,7 @@ NetSentinel provides a SaaS ITSM solution where each tenant (company) gets:
 - **[Provisioning Guide](docs/provisioning-guide.md)** - Tenant provisioning process
 
 ### Development
+- **[Coding Standards](data-plane/CODING_STANDARDS.md)** - ⭐ **ESSENTIAL** - Coding standards and conventions
 - **[Data Plane Development](data-plane/docs/DEVELOPMENT.md)** - Backend and frontend development guides
 - **[API Documentation](data-plane/docs/API_DOCUMENTATION.md)** - Complete API reference
 - **[Testing Guide](data-plane/docs/TESTING.md)** - Testing strategies and procedures
