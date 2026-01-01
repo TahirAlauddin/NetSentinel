@@ -7,10 +7,10 @@ import { STEPS } from "@/constants/assets";
 import { Asset, CustomLifecycle } from "@/types/assets";
 
 import { AssetFormStepsProgress } from "./AssetFormStepsProgress";
-import ActionsBar from "./AssetFormActionsBar";
-import AssetFormHeader from "./AssetFormHeader";
-import AssetFormTip from "./AssetFormTip";
-import AssetFormSteps from "./AssetFormSteps";
+import { ActionsBar } from "./AssetFormActionsBar";
+import { AssetFormHeader } from "./AssetFormHeader";
+import { AssetFormTip } from "./AssetFormTip";
+import { AssetFormSteps } from "./AssetFormSteps";
 import { AssetFormProvider } from "./AssetFormContext";
 import { useFormActions } from "../../hooks/useFormActions";
 import { LocationRecord } from "@/types/locations";

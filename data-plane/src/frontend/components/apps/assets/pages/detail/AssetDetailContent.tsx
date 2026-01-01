@@ -43,7 +43,7 @@ interface AssetDetailContentProps {
 /**
  * AssetDetailContent component - Displays the main content area with sidebar and scrollable sections
  */
-const AssetDetailContent = ({
+export function AssetDetailContent({
   asset,
   currentStatus,
   activeSection,
@@ -64,7 +64,7 @@ const AssetDetailContent = ({
   setNotesDialogOpen,
   setAlertsDialogOpen,
   onStatusChange,
-}: AssetDetailContentProps) => {
+}: AssetDetailContentProps) {
 
   return (
     <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -117,5 +117,4 @@ const AssetDetailContent = ({
       </main>
     </div>
   );
-};
-export default AssetDetailContent;
+}

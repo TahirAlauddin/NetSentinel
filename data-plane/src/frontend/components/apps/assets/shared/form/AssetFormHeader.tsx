@@ -2,7 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 
-const AssetFormHeader = () => {
+export function AssetFormHeader() {
   const router = useRouter();
   return (
     <div className="mb-6 lg:mb-8">
@@ -31,6 +31,4 @@ const AssetFormHeader = () => {
       </div>
     </div>
   );
-};
-
-export default AssetFormHeader;
+}

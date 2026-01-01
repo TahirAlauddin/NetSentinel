@@ -2,7 +2,7 @@
 
 import { BasicDetailsStep } from "../steps/BasicDetailsStep"
 import { TechSpecsStep } from "../steps/TechSpecsStep"
-import LocationAndUsageStep from "../steps/LocationAndUsageStep"
+import { LocationAndUsageStep } from "../steps/LocationAndUsageStep"
 import { CostDepreciationStep } from "../steps/CostDepreciationStep"
 import { WarrantyAcquisitionStep } from "../steps/WarrantyAcquisitionStep"
 import { AlertsStep } from "../steps/AlertsStep"
@@ -17,7 +17,7 @@ import { useAssetForm } from "./AssetFormContext"
  * 
  * @returns The appropriate step component
  */
-const AssetFormSteps = () => {
+export function AssetFormSteps() {
   const { currentStep } = useAssetForm();
   switch (currentStep) {
     case 0:
@@ -43,5 +43,3 @@ const AssetFormSteps = () => {
       )
   }
 }
-
-export default AssetFormSteps;

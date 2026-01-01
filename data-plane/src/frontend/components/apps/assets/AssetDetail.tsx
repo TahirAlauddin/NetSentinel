@@ -14,7 +14,7 @@ import {
   AlertsDialog,
 } from "@/components/apps/assets/pages/detail/dialogs";
 import { AssetDetailHeader } from "./pages/detail/AssetDetailHeader";
-import AssetDetailContent from "./pages/detail/AssetDetailContent";
+import { AssetDetailContent } from "./pages/detail/AssetDetailContent";
 
 interface AssetDetailProps {
   assetId: number;

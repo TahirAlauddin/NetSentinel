@@ -7,7 +7,7 @@
  */
 
 import { render, screen } from '@/tests/__utils__/test-utils'
-import AssetFormHeader from '@/components/apps/assets/shared/form/AssetFormHeader'
+import { AssetFormHeader } from '@/components/apps/assets/shared/form/AssetFormHeader'
 
 describe('AssetFormHeader', () => {
   it('should render header with title', () => {

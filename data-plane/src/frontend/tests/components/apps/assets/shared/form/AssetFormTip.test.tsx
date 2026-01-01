@@ -7,7 +7,7 @@
  */
 
 import { render, screen } from '@/tests/__utils__/test-utils'
-import AssetFormTip from '@/components/apps/assets/shared/form/AssetFormTip'
+import { AssetFormTip } from '@/components/apps/assets/shared/form/AssetFormTip'
 
 describe('AssetFormTip', () => {
   it('should render tip message', () => {

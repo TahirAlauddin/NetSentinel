@@ -11,7 +11,7 @@
 
 import { render, screen } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
-import LocationAndUsageStep from '@/components/apps/assets/shared/steps/LocationAndUsageStep'
+import { LocationAndUsageStep } from '@/components/apps/assets/shared/steps/LocationAndUsageStep'
 
 // Mock next/navigation
 jest.mock('next/navigation', () => ({

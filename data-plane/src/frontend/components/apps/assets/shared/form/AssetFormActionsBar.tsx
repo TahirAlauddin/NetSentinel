@@ -19,7 +19,7 @@ interface ActionsBarProps {
  * @param isSubmitting - Whether the form is currently being submitted (optional, falls back to context)
  * @returns
  */
-const ActionsBar = ({ isSubmitting: externalIsSubmitting }: ActionsBarProps) => {
+export function ActionsBar({ isSubmitting: externalIsSubmitting }: ActionsBarProps) {
   const {
     formData,
     currentStep,
@@ -94,6 +94,4 @@ const ActionsBar = ({ isSubmitting: externalIsSubmitting }: ActionsBarProps) => 
       )}
     </div>
   );
-};
-
-export default ActionsBar;
+}
