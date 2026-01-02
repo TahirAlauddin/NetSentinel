@@ -54,7 +54,7 @@ jobs:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/development')
     environment: Staging
     
     steps:
