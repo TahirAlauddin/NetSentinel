@@ -7,25 +7,40 @@ import UserList from '@/components/users-list'
 
 const mockUsers = [
   {
-    id: 1,
+    id: '1',
     username: 'johndoe',
     email: 'john@example.com',
+    first_name: 'John',
+    last_name: 'Doe',
     is_superuser: true,
     is_staff: true,
+    is_active: true,
+    date_joined: '2024-01-01T00:00:00Z',
+    last_login: '2024-01-01T00:00:00Z',
   },
   {
-    id: 2,
+    id: '2',
     username: 'janedoe',
     email: 'jane@example.com',
+    first_name: 'Jane',
+    last_name: 'Doe',
     is_superuser: false,
     is_staff: true,
+    is_active: true,
+    date_joined: '2024-01-01T00:00:00Z',
+    last_login: '2024-01-01T00:00:00Z',
   },
   {
-    id: 3,
+    id: '3',
     username: 'regularuser',
     email: 'user@example.com',
+    first_name: 'Regular',
+    last_name: 'User',
     is_superuser: false,
     is_staff: false,
+    is_active: true,
+    date_joined: '2024-01-01T00:00:00Z',
+    last_login: '2024-01-01T00:00:00Z',
   },
 ]
 
@@ -88,7 +103,7 @@ describe('UserList', () => {
   })
 
   it('should show "Failed to load users" when users is not an array', () => {
-    render(<UserList users={null as any} />)
+    render(<UserList users={null as unknown as typeof mockUsers} />)
     expect(screen.getByText('Failed to load users')).toBeInTheDocument()
   })
 

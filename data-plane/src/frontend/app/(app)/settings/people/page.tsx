@@ -49,7 +49,6 @@ export default function PeoplePage() {
     async function fetchUsers() {
       try {
         const userList = await listUsers();
-        console.log("Fetched users:", userList);
         setUsers(Array.isArray(userList) ? userList : []);
       } catch (error) {
         console.error("Failed to fetch users:", error);

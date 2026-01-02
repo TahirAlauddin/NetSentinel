@@ -111,7 +111,7 @@ export function useFormActions(
       const results = await Promise.allSettled(
         validAlerts.map(async (alert) => {
           const transformedAlert = transformToCalendarAlertCreateUpdateDto(alert);
-          return apiClient.createCalendarAlert(newAssetId, transformedAlert);
+          return apiClient.createCalendarAlert({assetId: newAssetId, alert: transformedAlert});
         })
       );
 
@@ -177,17 +177,17 @@ export function useFormActions(
           const images = Array.isArray(latestFormData.images) ? latestFormData.images : [];
 
           // Fire sequentially to keep logic simple
-          const relResult = await setAssetRelations(savedAssetId, relatedItems as any[]);
+          const relResult = await setAssetRelations(savedAssetId, relatedItems as Asset[]);
           if (!relResult.success && relResult.error) {
             toast.error(`Failed to save related items: ${relResult.error}`);
           }
 
-          const attachResult = await uploadAssetAttachments(savedAssetId, attachments as any[]);
+          const attachResult = await uploadAssetAttachments(savedAssetId, attachments as Asset["attachments"]);
           if (!attachResult.success && attachResult.error) {
             toast.error(`Failed to upload attachments: ${attachResult.error}`);
           }
 
-          const imgResult = await uploadAssetImages(savedAssetId, images as any[]);
+          const imgResult = await uploadAssetImages(savedAssetId, images as Asset["images"]);
           if (!imgResult.success && imgResult.error) {
             toast.error(`Failed to upload images: ${imgResult.error}`);
           }

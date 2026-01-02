@@ -18,7 +18,6 @@ import {
   validateStepForUpdate,
 } from "@/components/apps/assets/utils/validation";
 import { mockAssetCategory } from "@/tests/__fixtures__/api-responses";
-import { AssetCreateDto, AssetUpdateDto } from "@/types/assets/dto";
 
 describe('Asset Validation Utils', () => {
   describe('isValidIPv4', () => {
@@ -354,6 +353,7 @@ describe('Asset Validation Utils', () => {
 
     it('should validate category format if provided in step 0 - empty string', () => {
       const result = validateStepForUpdate(0, {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         category: "" as any,
       });
       
@@ -372,6 +372,7 @@ describe('Asset Validation Utils', () => {
 
     it('should pass validation with valid category object in step 0', () => {
       const result = validateStepForUpdate(0, {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         category: mockAssetCategory as any,
       });
       

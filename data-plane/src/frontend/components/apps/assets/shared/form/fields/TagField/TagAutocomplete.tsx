@@ -15,7 +15,7 @@ interface TagAutocompleteProps {
  */
 export function TagAutocomplete({
   tags,
-  inputValue,
+  inputValue: _inputValue,
   onSelect,
   onClose,
 }: TagAutocompleteProps) {

@@ -37,7 +37,7 @@ describe('TagPill', () => {
 
   it('should not render when tagId is invalid', () => {
     const { container } = render(
-      <TagPill tagId={undefined as any} tagName="Test Tag" index={0} onRemove={mockOnRemove} />
+      <TagPill tagId={undefined as unknown as number} tagName="Test Tag" index={0} onRemove={mockOnRemove} />
     )
 
     expect(container.firstChild).toBeNull()

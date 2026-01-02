@@ -8,15 +8,16 @@
  * - Response parsing
  */
 
-import { mockApiSuccess, mockApiError, mockUnauthorized, resetFetchMock } from '../__utils__/api-mock-helpers'
-import { mockFetch } from '../__mocks__/fetch'
+// TODO: Uncomment when implementing tests
+// import { mockApiSuccess, mockApiError, mockUnauthorized, resetFetchMock } from '../__utils__/api-mock-helpers'
+// import { mockFetch } from '../__mocks__/fetch'
 
 // Import your API client here
 // import { apiClient } from '@/lib/api-client'
 
 describe('API Client Integration', () => {
   beforeEach(() => {
-    resetFetchMock()
+    // resetFetchMock() // TODO: Uncomment when implementing tests
   })
 
   it('should make successful GET request', async () => {

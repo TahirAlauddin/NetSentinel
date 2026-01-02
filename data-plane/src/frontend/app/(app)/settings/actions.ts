@@ -26,8 +26,8 @@ export async function listUsers(): Promise<UserRecord[]> {
   }
   
   // Handle paginated response (if the API returns { results: [...] })
-  if (users && typeof users === 'object' && 'results' in users && Array.isArray((users as any).results)) {
-    return (users as any).results
+  if (users && typeof users === 'object' && 'results' in users && Array.isArray((users as { results: UserRecord[] }).results)) {
+    return (users as { results: UserRecord[] }).results
   }
   
   // If no valid data format, return empty array
@@ -90,8 +90,8 @@ export async function listGroups(): Promise<GroupRecord[]> {
   }
   
   // Handle paginated response
-  if (groups && typeof groups === 'object' && 'results' in groups && Array.isArray((groups as any).results)) {
-    return (groups as any).results
+  if (groups && typeof groups === 'object' && 'results' in groups && Array.isArray((groups as { results: GroupRecord[] }).results)) {
+    return (groups as { results: GroupRecord[] }).results
   }
   
   console.warn('Unexpected groups data format:', groups)
@@ -116,8 +116,8 @@ export async function listPermissions(): Promise<PermissionRecord[]> {
     return permissions
   }
   
-  if (permissions && typeof permissions === 'object' && 'results' in permissions && Array.isArray((permissions as any).results)) {
-    return (permissions as any).results
+  if (permissions && typeof permissions === 'object' && 'results' in permissions && Array.isArray((permissions as { results: PermissionRecord[] }).results)) {
+    return (permissions as { results: PermissionRecord[] }).results
   }
   
   console.warn('Unexpected permissions data format:', permissions)

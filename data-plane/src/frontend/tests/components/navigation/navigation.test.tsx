@@ -1,6 +1,6 @@
 /**
  * Component tests for components/navigation/navigation.tsx
- * 
+ *
  * Tests cover:
  * - Navigation rendering
  * - Active item detection
@@ -9,19 +9,34 @@
  * - Mobile toggle behavior
  */
 
-import { render, screen, waitFor, act } from '@/tests/__utils__/test-utils'
-import userEvent from '@testing-library/user-event'
-import { Navigation } from '@/components/navigation/navigation'
-import { NavigationItem } from '@/types/navigation'
+import { render, screen, waitFor, act } from "@/tests/__utils__/test-utils";
+import userEvent from "@testing-library/user-event";
+import { Navigation } from "@/components/navigation/navigation";
+import { NavigationItem } from "@/types/navigation";
+import { Home, Package } from "lucide-react";
+import { usePathname } from "next/navigation";
 
+interface NavigationItemComponentProps {
+  item: NavigationItem;
+  isExpanded: boolean;
+  onToggleSubmenu: (label: string) => void;
+  onItemHover: (label: string) => void;
+  onItemLeave: () => void;
+}
 // Mock next/navigation
-jest.mock('next/navigation', () => ({
+jest.mock("next/navigation", () => ({
   usePathname: jest.fn(),
-}))
+}));
 
 // Mock navigation-item component
-jest.mock('@/components/navigation/navigation-item', () => ({
-  NavigationItemComponent: ({ item, isExpanded, onToggleSubmenu, onItemHover, onItemLeave }: any) => (
+jest.mock("@/components/navigation/navigation-item", () => ({
+  NavigationItemComponent: ({
+    item,
+    isExpanded,
+    onToggleSubmenu,
+    onItemHover,
+    onItemLeave,
+  }: NavigationItemComponentProps) => (
     <div data-testid={`nav-item-${item.label}`}>
       <button
         onClick={() => onToggleSubmenu(item.label)}
@@ -34,199 +49,198 @@ jest.mock('@/components/navigation/navigation-item', () => ({
       </button>
     </div>
   ),
-}))
+}));
 
-describe('Navigation', () => {
-  const mockUsePathname = require('next/navigation').usePathname
+describe("Navigation", () => {
+  const mockUsePathname = jest.mocked(usePathname);
 
   const mockItems: NavigationItem[] = [
     {
-      label: 'Dashboard',
-      href: '/dashboard',
-      icon: 'dashboard',
+      label: "Dashboard",
+      href: "/dashboard",
+      icon: Home,
     },
     {
-      label: 'Assets',
-      href: '/assets',
-      icon: 'assets',
+      label: "Assets",
+      href: "/assets",
+      icon: Package,
       hasSubmenu: true,
       submenuColumns: [
         {
           links: [
-            { label: 'All Assets', href: '/assets/all' },
-            { label: 'Categories', href: '/assets/categories' },
+            { label: "All Assets", href: "/assets/all" },
+            { label: "Categories", href: "/assets/categories" },
           ],
         },
       ],
     },
-  ]
+  ];
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    jest.clearAllMocks();
     // Mock window.innerWidth for desktop detection
-    Object.defineProperty(window, 'innerWidth', {
+    Object.defineProperty(window, "innerWidth", {
       writable: true,
       configurable: true,
       value: 1024,
-    })
-  })
+    });
+  });
 
-  it('should render navigation items', () => {
-    mockUsePathname.mockReturnValue('/dashboard')
+  it("should render navigation items", () => {
+    mockUsePathname.mockReturnValue("/dashboard");
 
-    render(<Navigation items={mockItems} />)
+    render(<Navigation items={mockItems} />);
 
-    expect(screen.getByTestId('nav-item-Dashboard')).toBeInTheDocument()
-    expect(screen.getByTestId('nav-item-Assets')).toBeInTheDocument()
-  })
+    expect(screen.getByTestId("nav-item-Dashboard")).toBeInTheDocument();
+    expect(screen.getByTestId("nav-item-Assets")).toBeInTheDocument();
+  });
 
-  it('should mark item as active when pathname matches exactly', () => {
-    mockUsePathname.mockReturnValue('/dashboard')
+  it("should mark item as active when pathname matches exactly", () => {
+    mockUsePathname.mockReturnValue("/dashboard");
 
-    render(<Navigation items={mockItems} />)
+    render(<Navigation items={mockItems} />);
 
-    const dashboardItem = screen.getByTestId('nav-item-Dashboard')
-    expect(dashboardItem).toBeInTheDocument()
-  })
+    const dashboardItem = screen.getByTestId("nav-item-Dashboard");
+    expect(dashboardItem).toBeInTheDocument();
+  });
 
-  it('should mark item as active when pathname matches submenu item', () => {
-    mockUsePathname.mockReturnValue('/assets/all')
+  it("should mark item as active when pathname matches submenu item", () => {
+    mockUsePathname.mockReturnValue("/assets/all");
 
-    render(<Navigation items={mockItems} />)
+    render(<Navigation items={mockItems} />);
 
-    const assetsItem = screen.getByTestId('nav-item-Assets')
-    expect(assetsItem).toBeInTheDocument()
-  })
+    const assetsItem = screen.getByTestId("nav-item-Assets");
+    expect(assetsItem).toBeInTheDocument();
+  });
 
-  it('should mark item as active when pathname starts with item href', () => {
-    mockUsePathname.mockReturnValue('/assets/123')
+  it("should mark item as active when pathname starts with item href", () => {
+    mockUsePathname.mockReturnValue("/assets/123");
 
-    render(<Navigation items={mockItems} />)
+    render(<Navigation items={mockItems} />);
 
-    const assetsItem = screen.getByTestId('nav-item-Assets')
-    expect(assetsItem).toBeInTheDocument()
-  })
+    const assetsItem = screen.getByTestId("nav-item-Assets");
+    expect(assetsItem).toBeInTheDocument();
+  });
 
-  it('should not mark item as active for partial matches', () => {
-    mockUsePathname.mockReturnValue('/dashboard-something')
+  it("should not mark item as active for partial matches", () => {
+    mockUsePathname.mockReturnValue("/dashboard-something");
 
-    render(<Navigation items={mockItems} />)
+    render(<Navigation items={mockItems} />);
 
     // Dashboard should not be active for /dashboard-something
-    const dashboardItem = screen.getByTestId('nav-item-Dashboard')
-    expect(dashboardItem).toBeInTheDocument()
-  })
+    const dashboardItem = screen.getByTestId("nav-item-Dashboard");
+    expect(dashboardItem).toBeInTheDocument();
+  });
 
-  it('should toggle submenu on click', async () => {
-    const user = userEvent.setup()
-    mockUsePathname.mockReturnValue('/dashboard')
+  it("should toggle submenu on click", async () => {
+    const user = userEvent.setup();
+    mockUsePathname.mockReturnValue("/dashboard");
 
-    render(<Navigation items={mockItems} />)
+    render(<Navigation items={mockItems} />);
 
-    const toggleButton = screen.getByTestId('toggle-Assets')
-    expect(screen.queryByTestId('expanded-Assets')).not.toBeInTheDocument()
+    const toggleButton = screen.getByTestId("toggle-Assets");
+    expect(screen.queryByTestId("expanded-Assets")).not.toBeInTheDocument();
 
     await act(async () => {
-      await user.click(toggleButton)
-    })
+      await user.click(toggleButton);
+    });
 
     await waitFor(() => {
-      expect(screen.getByTestId('expanded-Assets')).toBeInTheDocument()
-    })
-  })
+      expect(screen.getByTestId("expanded-Assets")).toBeInTheDocument();
+    });
+  });
 
-  it('should expand submenu on hover when desktop', async () => {
-    const user = userEvent.setup()
-    mockUsePathname.mockReturnValue('/dashboard')
-    Object.defineProperty(window, 'innerWidth', {
+  it("should expand submenu on hover when desktop", async () => {
+    const user = userEvent.setup();
+    mockUsePathname.mockReturnValue("/dashboard");
+    Object.defineProperty(window, "innerWidth", {
       writable: true,
       configurable: true,
       value: 1024,
-    })
+    });
 
-    render(<Navigation items={mockItems} />)
+    render(<Navigation items={mockItems} />);
 
-    const toggleButton = screen.getByTestId('toggle-Assets')
-    
+    const toggleButton = screen.getByTestId("toggle-Assets");
+
     await act(async () => {
-      await user.hover(toggleButton)
-    })
+      await user.hover(toggleButton);
+    });
 
     await waitFor(() => {
-      expect(screen.getByTestId('expanded-Assets')).toBeInTheDocument()
-    })
-  })
+      expect(screen.getByTestId("expanded-Assets")).toBeInTheDocument();
+    });
+  });
 
-  it('should handle resize events', async () => {
-    mockUsePathname.mockReturnValue('/dashboard')
+  it("should handle resize events", async () => {
+    mockUsePathname.mockReturnValue("/dashboard");
 
-    render(<Navigation items={mockItems} />)
+    render(<Navigation items={mockItems} />);
 
     // Simulate resize to mobile
-    Object.defineProperty(window, 'innerWidth', {
+    Object.defineProperty(window, "innerWidth", {
       writable: true,
       configurable: true,
       value: 800,
-    })
-    
+    });
+
     await act(async () => {
-      window.dispatchEvent(new Event('resize'))
-    })
+      window.dispatchEvent(new Event("resize"));
+    });
 
     await waitFor(() => {
       // Component should handle resize
-      expect(screen.getByTestId('nav-item-Dashboard')).toBeInTheDocument()
-    })
-  })
+      expect(screen.getByTestId("nav-item-Dashboard")).toBeInTheDocument();
+    });
+  });
 
-  it('should handle multiple items with submenus', () => {
+  it("should handle multiple items with submenus", () => {
     const itemsWithMultipleSubmenus: NavigationItem[] = [
       {
-        label: 'Item 1',
-        href: '/item1',
-        icon: 'icon1',
+        label: "Item 1",
+        href: "/item1",
+        icon: Home,
         hasSubmenu: true,
         submenuColumns: [
           {
-            links: [{ label: 'Sub 1', href: '/item1/sub1' }],
+            links: [{ label: "Sub 1", href: "/item1/sub1" }],
           },
         ],
       },
       {
-        label: 'Item 2',
-        href: '/item2',
-        icon: 'icon2',
+        label: "Item 2",
+        href: "/item2",
+        icon: Package,
         hasSubmenu: true,
         submenuColumns: [
           {
-            links: [{ label: 'Sub 2', href: '/item2/sub2' }],
+            links: [{ label: "Sub 2", href: "/item2/sub2" }],
           },
         ],
       },
-    ]
+    ];
 
-    mockUsePathname.mockReturnValue('/dashboard')
+    mockUsePathname.mockReturnValue("/dashboard");
 
-    render(<Navigation items={itemsWithMultipleSubmenus} />)
+    render(<Navigation items={itemsWithMultipleSubmenus} />);
 
-    expect(screen.getByTestId('nav-item-Item 1')).toBeInTheDocument()
-    expect(screen.getByTestId('nav-item-Item 2')).toBeInTheDocument()
-  })
+    expect(screen.getByTestId("nav-item-Item 1")).toBeInTheDocument();
+    expect(screen.getByTestId("nav-item-Item 2")).toBeInTheDocument();
+  });
 
-  it('should handle items without submenus', () => {
+  it("should handle items without submenus", () => {
     const simpleItems: NavigationItem[] = [
       {
-        label: 'Simple',
-        href: '/simple',
-        icon: 'icon',
+        label: "Simple",
+        href: "/simple",
+        icon: Home,
       },
-    ]
+    ];
 
-    mockUsePathname.mockReturnValue('/simple')
+    mockUsePathname.mockReturnValue("/simple");
 
-    render(<Navigation items={simpleItems} />)
+    render(<Navigation items={simpleItems} />);
 
-    expect(screen.getByTestId('nav-item-Simple')).toBeInTheDocument()
-  })
-})
-
+    expect(screen.getByTestId("nav-item-Simple")).toBeInTheDocument();
+  });
+});

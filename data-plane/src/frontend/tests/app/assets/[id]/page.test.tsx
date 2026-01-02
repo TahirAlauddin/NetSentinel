@@ -5,6 +5,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import AssetDetailPage from "@/app/(app)/assets/[id]/page";
 import { AssetsApiClient } from "@/lib/api-client/asset";
+import { useParams } from "next/navigation";
 
 // Mock dependencies
 jest.mock("@/lib/api-client/asset", () => ({
@@ -12,7 +13,7 @@ jest.mock("@/lib/api-client/asset", () => ({
 }));
 
 jest.mock("next/navigation", () => ({
-  useParams: () => ({ id: "1" }),
+  useParams: jest.fn(() => ({ id: "1" })),
 }));
 
 jest.mock("@/components/layout/app-shell", () => ({
@@ -43,7 +44,7 @@ describe("AssetDetailPage", () => {
       () =>
         ({
           getAsset: mockGetAsset,
-        } as any)
+        } as unknown as InstanceType<typeof AssetsApiClient>)
     );
   });
 
@@ -125,8 +126,7 @@ describe("AssetDetailPage", () => {
   });
 
   it("should handle invalid asset ID", async () => {
-    const useParamsMock = jest.fn(() => ({ id: undefined }));
-    jest.spyOn(require("next/navigation"), "useParams").mockImplementation(useParamsMock);
+    jest.mocked(useParams).mockReturnValue({ id: undefined });
 
     render(<AssetDetailPage />);
 

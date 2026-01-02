@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useSession, signOut } from "next-auth/react"
-import { Menu, X } from "lucide-react"
+import { Menu } from "lucide-react"
 
 export function Topbar({ onMenuToggle }: { onMenuToggle: () => void }) {
   const [now, setNow] = useState<string>("")

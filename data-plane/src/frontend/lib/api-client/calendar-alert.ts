@@ -10,7 +10,7 @@ export class CalendarAlertApiClient extends BaseApiClient {
    * @param alert - The calendar alert to create
    * @returns The created calendar alert
    */
-  async createCalendarAlert<T = any>(assetId: number | string, alert: CalendarAlertCreateUpdateDto): Promise<BaseApiResponse<T>> {
+  async createCalendarAlert<T = unknown>({assetId, alert}: {assetId: number | string; alert: CalendarAlertCreateUpdateDto}): Promise<BaseApiResponse<T>> {
     return this.post<T>(`/assets/${assetId}/calendar-alerts/`, alert)
   }
 
@@ -19,7 +19,7 @@ export class CalendarAlertApiClient extends BaseApiClient {
    * @param alert - The calendar alert to update
    * @returns The updated calendar alert
    */
-  async updateCalendarAlert<T = any>(assetId: number | string, alert: CalendarAlertCreateUpdateDto): Promise<BaseApiResponse<T>> {
+  async updateCalendarAlert<T = unknown>({assetId, alert}: {assetId: number | string; alert: CalendarAlertCreateUpdateDto}): Promise<BaseApiResponse<T>> {
     return this.patch<T>(`/assets/${assetId}/calendar-alerts/${alert.id}/`, alert)
   }
 
@@ -28,7 +28,7 @@ export class CalendarAlertApiClient extends BaseApiClient {
    * @param alert - The calendar alert to delete
    * @returns The deleted calendar alert
    */
-  async deleteCalendarAlert<T = any>(assetId: number | string, alert: CalendarAlertCreateUpdateDto): Promise<BaseApiResponse<T>> {
+  async deleteCalendarAlert<T = unknown>({assetId, alert}: {assetId: number | string; alert: CalendarAlertCreateUpdateDto}): Promise<BaseApiResponse<T>> {
     return this.delete<T>(`/assets/${assetId}/calendar-alerts/${alert.id}/`)
   }
 }

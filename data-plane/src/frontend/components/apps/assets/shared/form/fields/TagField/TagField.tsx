@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, KeyboardEvent, useState, useEffect } from "react";
+import { useRef, KeyboardEvent, useState, useEffect, useMemo } from "react";
 
 import { MAX_TAGS_PER_ASSET } from "@/constants/assets";
 
@@ -36,7 +36,7 @@ export function TagField({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [manuallyClosed, setManuallyClosed] = useState(false);
 
   const {
     inputValue,
@@ -47,6 +47,15 @@ export function TagField({
     handleRemoveTag,
     handleSelectTag,
   } = useTagInput({ value, onChange });
+
+  // Derive base autocomplete visibility from filtered tags and input value
+  const shouldShowAutocomplete = useMemo(
+    () => filteredTags.length > 0 && inputValue.trim().length > 0,
+    [filteredTags, inputValue]
+  );
+
+  // Combine derived value with manual override
+  const showAutocomplete = shouldShowAutocomplete && !manuallyClosed;
 
   // Handle key press
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -59,33 +68,28 @@ export function TagField({
         // Create new tag
         handleAddTag(inputValue);
       }
-      setShowAutocomplete(false);
+      setManuallyClosed(true);
     } else if (e.key === "Escape") {
-      setShowAutocomplete(false);
+      setManuallyClosed(true);
     } else if (e.key === "Backspace" && inputValue === "" && value.length > 0) {
       // Remove last tag when backspace is pressed on empty input
       handleRemoveTag(value[value.length - 1].id);
     } else if (e.key === "ArrowDown" && filteredTags.length > 0) {
       e.preventDefault();
-      setShowAutocomplete(true);
+      setManuallyClosed(false);
     }
   };
 
-  // Show autocomplete when there are filtered tags
-  useEffect(() => {
-    setShowAutocomplete(filteredTags.length > 0 && inputValue.trim().length > 0);
-  }, [filteredTags, inputValue]);
-
   // Close autocomplete when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setShowAutocomplete(false);
-      }
-    };
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          containerRef.current &&
+          !containerRef.current.contains(event.target as Node)
+        ) {
+          setManuallyClosed(true);
+        }
+      };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
@@ -117,12 +121,12 @@ export function TagField({
               value={inputValue}
               onChange={(e) => {
                 setInputValue(e.target.value);
-                setShowAutocomplete(true);
+                setManuallyClosed(false);
               }}
               onKeyDown={handleKeyDown}
               onFocus={() => {
                 if (filteredTags.length > 0 && inputValue.trim().length > 0) {
-                  setShowAutocomplete(true);
+                  setManuallyClosed(false);
                 }
               }}
               placeholder={value.length === 0 ? placeholder : ""}
@@ -145,7 +149,7 @@ export function TagField({
             tags={filteredTags}
             inputValue={inputValue}
             onSelect={handleSelectTag}
-            onClose={() => setShowAutocomplete(false)}
+            onClose={() => setManuallyClosed(true)}
           />
         )}
       </div>

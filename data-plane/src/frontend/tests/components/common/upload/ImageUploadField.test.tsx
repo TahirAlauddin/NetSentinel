@@ -15,9 +15,9 @@ jest.mock("sonner", () => ({
 }));
 
 jest.mock("@/components/common/upload/ImagePreviewList", () => ({
-  ImagePreviewList: ({ images, onRemove }: any) => (
+  ImagePreviewList: ({ images, onRemove }: { images: File[]; onRemove?: (index: number) => void }) => (
     <div data-testid="image-preview-list">
-      {images.map((img: any, i: number) => (
+      {images.map((img: File, i: number) => (
         <div key={i} data-testid={`image-${i}`}>
           {img instanceof File ? img.name : "image"}
           {onRemove && <button onClick={() => onRemove(i)}>Remove</button>}

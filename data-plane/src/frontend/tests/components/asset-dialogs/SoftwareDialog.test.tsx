@@ -29,7 +29,7 @@ jest.mock("@/components/ui/dialog", () => ({
 
 // Mock select component
 jest.mock("@/components/ui/select", () => ({
-  Select: ({ children, value, onValueChange }: any) => (
+  Select: ({ children, value }: { children: React.ReactNode; value?: string }) => (
     <div data-testid="select" data-value={value}>
       {children}
     </div>
@@ -47,9 +47,9 @@ jest.mock("@/components/ui/select", () => ({
     <button
       data-testid={`select-item-${value}`}
       onClick={() => {
-        const select = document.querySelector('[data-testid="select"]');
-        if (select && (select as any).onValueChange) {
-          (select as any).onValueChange(value);
+        const select = document.querySelector('[data-testid="select"]') as HTMLElement & { onValueChange?: (value: string) => void };
+        if (select?.onValueChange) {
+          select.onValueChange(value);
         }
       }}
     >

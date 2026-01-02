@@ -9,9 +9,10 @@
  * - onClose callback handling
  */
 
-import { render, screen } from '@/tests/__utils__/test-utils'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Sidebar } from '@/components/layout/sidebar'
+import { NavigationItem } from '@/types/navigation'
 
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
@@ -34,7 +35,7 @@ jest.mock('@/components/layout/brand-header', () => ({
 
 // Mock Navigation component
 jest.mock('@/components/navigation/navigation', () => ({
-  Navigation: ({ items }: { items: any[] }) => (
+  Navigation: ({ items }: { items: NavigationItem[] }) => (
     <nav data-testid="navigation">
       <div data-testid="navigation-items-count">{items.length} items</div>
     </nav>
@@ -48,7 +49,6 @@ jest.mock('@/constants/navigation', () => ({
     { label: 'Assets', icon: 'AssetsIcon', href: '/assets' },
   ],
 }))
-
 describe('Sidebar', () => {
   beforeEach(() => {
     jest.clearAllMocks()

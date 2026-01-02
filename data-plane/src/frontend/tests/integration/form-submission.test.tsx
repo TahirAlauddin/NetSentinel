@@ -9,9 +9,10 @@
  * - Success/error handling
  */
 
-import { render, screen, waitFor } from '@/tests/__utils__/test-utils'
-import userEvent from '@testing-library/user-event'
-import { mockApiSuccess, mockApiError } from '../__utils__/api-mock-helpers'
+// TODO: Uncomment when implementing tests
+// import { render, screen, waitFor } from '@/tests/__utils__/test-utils'
+// import userEvent from '@testing-library/user-event'
+// import { mockApiSuccess, mockApiError } from '../__utils__/api-mock-helpers'
 
 describe('Form Submission Integration', () => {
   it('should submit form successfully', async () => {

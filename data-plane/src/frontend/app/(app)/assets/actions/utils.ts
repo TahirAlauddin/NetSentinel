@@ -11,7 +11,7 @@ export class AssetActionUtils {
    * Ensures user is authenticated
    * @throws Error if not authenticated
    */
-  static ensureAuthenticated(session: any): void {
+  static ensureAuthenticated(session: { accessToken?: string } | null): void {
     if (!session?.accessToken) {
       throw new Error("Not authenticated");
     }
@@ -27,8 +27,8 @@ export class AssetActionUtils {
       return data;
     }
 
-    if (typeof data === "object" && "results" in data && Array.isArray((data as any).results)) {
-      return (data as any).results;
+    if (typeof data === "object" && "results" in data && Array.isArray((data as { results: T[] }).results)) {
+      return (data as { results: T[] }).results;
     }
 
     console.warn("Unexpected data format:", data);

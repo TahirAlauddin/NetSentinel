@@ -50,7 +50,6 @@ export function EditCompany({ onCancel, initialData }: EditCompanyProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
     // TODO: Save to backend
     // After successful save, call onCancel to close the form
   };
@@ -116,7 +115,7 @@ export function EditCompany({ onCancel, initialData }: EditCompanyProps) {
             placeholder="contact@example.com"
           />
           <p className="text-xs text-muted-foreground mt-1">
-            We'll notify this contact on major account changes.
+            We&apos;ll notify this contact on major account changes.
           </p>
         </div>
 

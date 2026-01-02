@@ -156,26 +156,19 @@ export function AssetDetail({ assetId, onUpdate }: AssetDetailProps) {
       <CostDepreciationDialog
         open={costDialogOpen}
         onOpenChange={setCostDialogOpen}
-        onSave={(data) => {
+        onSave={(_data) => {
           // TODO: Update asset with cost depreciation data
           // This needs to be mapped to the correct Asset fields
           const updatedAsset = { ...asset };
           setAsset(updatedAsset);
         }}
         currentValues={{
-          purchasePrice:
-            (asset as any).costDepreciation?.purchasePrice || asset.purchase_price || undefined,
-          replacementCost:
-            (asset as any).costDepreciation?.replacementCost || asset.replacement_cost || undefined,
-          salvageValue:
-            (asset as any).costDepreciation?.salvageValue || asset.salvage_value || undefined,
-          usefulLife:
-            (asset as any).costDepreciation?.usefulLife || asset.useful_life_years || undefined,
-          approachingEndOfLife:
-            (asset as any).costDepreciation?.approachingEndOfLife ||
-            asset.approaching_eol_months ||
-            undefined,
-          poNumber: (asset as any).costDepreciation?.poNumber || asset.po_number || undefined,
+          purchasePrice: asset.purchase_price ? Number.parseFloat(asset.purchase_price) : undefined,
+          replacementCost: asset.replacement_cost ? Number.parseFloat(asset.replacement_cost) : undefined,
+          salvageValue: asset.salvage_value ? Number.parseFloat(asset.salvage_value) : undefined,
+          usefulLife: asset.useful_life_years ?? undefined,
+          approachingEndOfLife: asset.approaching_eol_months ?? undefined,
+          poNumber: asset.po_number ?? undefined,
         }}
       />
       <CustomDetailsDialog

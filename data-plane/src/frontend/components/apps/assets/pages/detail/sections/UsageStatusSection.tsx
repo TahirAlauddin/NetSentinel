@@ -24,7 +24,7 @@ interface UsageStatusSectionProps {
 }
 
 export function UsageStatusSection({
-  asset,
+  asset: _asset,
   currentStatus,
   onStatusChange,
   teammate,

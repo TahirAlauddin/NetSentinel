@@ -7,6 +7,7 @@ import { FormField, SelectField, VendorField } from "../form";
 import { IMPACT_LEVELS } from "@/constants/assets";
 import { useBasicDetailsStep } from "../../hooks/useFormDataFetch";
 import { useAssetForm } from "../form/AssetFormContext";
+import { Category } from "@/types/assets";
 
 /**
  * Basic Details step component
@@ -17,7 +18,7 @@ export function BasicDetailsStep() {
 
   // Extract category ID properly - handle object, number, or string
   // This ensures the SelectField displays the correct value even when category is an object
-  const getCategoryValue = (category: any): string => {
+  const getCategoryValue = (category: Category | number | string | null): string => {
     if (!category) return "";
     if (typeof category === "string") return category;
     if (typeof category === "number") return category.toString();
@@ -26,9 +27,6 @@ export function BasicDetailsStep() {
     }
     return "";
   };
-
-  // This is used to display the category name in the select field
-  console.log("categories", categories);
 
   const categoryOptions = categories.map((category) => ({
     value: category.id.toString(),

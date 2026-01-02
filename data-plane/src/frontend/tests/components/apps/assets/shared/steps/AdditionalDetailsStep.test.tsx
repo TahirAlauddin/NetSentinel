@@ -10,6 +10,7 @@
 
 import { render, screen, fireEvent } from '@/tests/__utils__/test-utils'
 import { AdditionalDetailsStep } from '@/components/apps/assets/shared/steps/AdditionalDetailsStep'
+import * as useFormDataFetch from '@/components/apps/assets/hooks/useFormDataFetch'
 
 // Mock hooks
 jest.mock('@/components/apps/assets/hooks/useFormDataFetch', () => ({
@@ -18,7 +19,7 @@ jest.mock('@/components/apps/assets/hooks/useFormDataFetch', () => ({
 
 // Mock form components
 jest.mock('@/components/apps/assets/shared/form', () => ({
-  RelatedItemField: ({ label, value, onChange }: any) => (
+  RelatedItemField: ({ label, value, onChange }: { label: string; value: unknown; onChange: (value: unknown) => void }) => (
     <div data-testid="related-items-field">
       <label>{label}</label>
       <input
@@ -32,7 +33,7 @@ jest.mock('@/components/apps/assets/shared/form', () => ({
 
 // Mock upload components
 jest.mock('@/components/common/upload/ImageUploadField', () => ({
-  ImageUploadField: ({ label, value, onChange }: any) => (
+  ImageUploadField: ({ label, value, onChange }: { label: string; value: unknown; onChange: (value: unknown) => void }) => (
     <div data-testid="image-upload-field">
       <label>{label}</label>
       <input
@@ -45,7 +46,7 @@ jest.mock('@/components/common/upload/ImageUploadField', () => ({
 }))
 
 jest.mock('@/components/common/upload/AttachmentsUploadField', () => ({
-  AttachmentsUploadField: ({ label, value, onChange }: any) => (
+  AttachmentsUploadField: ({ label, value, onChange }: { label: string; value: unknown; onChange: (value: unknown) => void }) => (
     <div data-testid="attachments-upload-field">
       <label>{label}</label>
       <input
@@ -59,7 +60,7 @@ jest.mock('@/components/common/upload/AttachmentsUploadField', () => ({
 
 describe('AdditionalDetailsStep', () => {
   const mockOnInputChange = jest.fn()
-  const mockUseAdditionalDetailsStep = require('@/components/apps/assets/hooks/useFormDataFetch').useAdditionalDetailsStep
+  const mockUseAdditionalDetailsStep = jest.mocked(useFormDataFetch.useAdditionalDetailsStep)
 
   beforeEach(() => {
     jest.clearAllMocks()

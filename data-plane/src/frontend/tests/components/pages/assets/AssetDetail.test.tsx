@@ -24,19 +24,19 @@ jest.mock('@/lib/api-client/asset', () => ({
 
 // Mock asset dialogs
 jest.mock('@/components/apps/assets/pages/detail/dialogs', () => ({
-  SetTeammateDialog: ({ open, onOpenChange, onSave }: any) => 
+  SetTeammateDialog: ({ open }: { open: boolean }) => 
     open ? <div data-testid="teammate-dialog">Teammate Dialog</div> : null,
-  SetLocationDialog: ({ open, onOpenChange, onSave }: any) => 
+  SetLocationDialog: ({ open }: { open: boolean }) => 
     open ? <div data-testid="location-dialog">Location Dialog</div> : null,
-  SoftwareDialog: ({ open, onOpenChange, onSave }: any) => 
+  SoftwareDialog: ({ open }: { open: boolean }) => 
     open ? <div data-testid="software-dialog">Software Dialog</div> : null,
-  CostDepreciationDialog: ({ open, onOpenChange, onSave }: any) => 
+  CostDepreciationDialog: ({ open }: { open: boolean }) => 
     open ? <div data-testid="cost-dialog">Cost Dialog</div> : null,
-  CustomDetailsDialog: ({ open, onOpenChange, onSave }: any) => 
+  CustomDetailsDialog: ({ open }: { open: boolean }) => 
     open ? <div data-testid="custom-details-dialog">Custom Details Dialog</div> : null,
-  NotesDialog: ({ open, onOpenChange, onSave }: any) => 
+  NotesDialog: ({ open }: { open: boolean }) => 
     open ? <div data-testid="notes-dialog">Notes Dialog</div> : null,
-  AlertsDialog: ({ open, onOpenChange, onSave }: any) => 
+  AlertsDialog: ({ open }: { open: boolean }) => 
     open ? <div data-testid="alerts-dialog">Alerts Dialog</div> : null,
 }))
 

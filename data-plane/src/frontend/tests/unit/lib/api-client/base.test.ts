@@ -7,20 +7,25 @@
 
 import { BaseApiClientCore } from '@/lib/api-client/base'
 
+interface TestSession {
+  accessToken?: string
+  refreshToken?: string
+}
+
 // Concrete implementation for testing
 class TestApiClient extends BaseApiClientCore {
   private baseUrl = 'http://localhost:8000/api'
-  private session: any = null
+  private session: TestSession | null = null
 
   protected getApiBaseUrl(): string {
     return this.baseUrl
   }
 
-  protected async getSession(): Promise<any> {
+  protected async getSession(): Promise<TestSession | null> {
     return this.session
   }
 
-  protected async refreshToken(refreshToken: string): Promise<string | null> {
+  protected async refreshToken(_refreshToken: string): Promise<string | null> {
     return 'new-access-token'
   }
 

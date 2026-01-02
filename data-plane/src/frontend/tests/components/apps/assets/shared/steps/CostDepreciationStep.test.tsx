@@ -12,12 +12,13 @@
 import { render, screen } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
 import { CostDepreciationStep } from '@/components/apps/assets/shared/steps/CostDepreciationStep'
+import { useRouter } from 'next/navigation'
+import * as useFormDataFetch from '@/components/apps/assets/hooks/useFormDataFetch'
+import * as useAssetForm from '@/components/apps/assets/shared/form/AssetFormContext'
 
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(() => ({
-    push: jest.fn(),
-  })),
+  useRouter: jest.fn(),
 }))
 
 // Mock hooks
@@ -32,20 +33,20 @@ jest.mock('@/components/apps/assets/shared/form/AssetFormContext', () => ({
 
 // Mock form components
 jest.mock('@/components/apps/assets/shared/form', () => ({
-  FormField: ({ label, children, error }: any) => (
+  FormField: ({ label, children, error }: { label: string; children: React.ReactNode; error?: string }) => (
     <div data-testid={`form-field-${label}`}>
       <label>{label}</label>
       {error && <span data-testid={`error-${label}`}>{error}</span>}
       {children}
     </div>
   ),
-  CurrencyField: ({ label, value, onChange, error }: any) => (
+  CurrencyField: ({ label, value, onChange, error }: { label: string; value: string | null; onChange: (value: string) => void; error?: string }) => (
     <div data-testid={`currency-field-${label}`}>
       <label>{label}</label>
       {error && <span data-testid={`error-${label}`}>{error}</span>}
       <input
         data-testid={`currency-input-${label}`}
-        value={value}
+        value={value || ''}
         onChange={(e) => onChange(e.target.value)}
       />
     </div>
@@ -54,9 +55,10 @@ jest.mock('@/components/apps/assets/shared/form', () => ({
 
 describe('CostDepreciationStep', () => {
   const mockOnInputChange = jest.fn()
-  const mockUseCostDepreciationStep = require('@/components/apps/assets/hooks/useFormDataFetch').useCostDepreciationStep
-  const mockUseFormLifecyclesFetch = require('@/components/apps/assets/hooks/useFormDataFetch').useFormLifecyclesFetch
-  const mockUseAssetForm = require('@/components/apps/assets/shared/form/AssetFormContext').useAssetForm
+  const mockUseCostDepreciationStep = jest.mocked(useFormDataFetch.useCostDepreciationStep)
+  const mockUseFormLifecyclesFetch = jest.mocked(useFormDataFetch.useFormLifecyclesFetch)
+  const mockUseAssetForm = jest.mocked(useAssetForm.useAssetForm)
+  const mockUseRouter = jest.mocked(useRouter)
 
   const mockLifecycles = [
     { id: 1, name: 'Standard Lifecycle' },
@@ -246,9 +248,9 @@ describe('CostDepreciationStep', () => {
   it('should navigate to settings when customize button clicked', async () => {
     const user = userEvent.setup()
     const mockPush = jest.fn()
-    require('next/navigation').useRouter.mockReturnValue({
+    mockUseRouter.mockReturnValue({
       push: mockPush,
-    })
+    } as ReturnType<typeof useRouter>)
 
     render(<CostDepreciationStep />)
 

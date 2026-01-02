@@ -9,14 +9,16 @@ import { Home } from 'lucide-react'
 
 // Mock next/link
 jest.mock('next/link', () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => (
+  const MockLink = ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
   )
+  MockLink.displayName = 'MockLink'
+  return MockLink
 })
 
 // Mock Submenu component
 jest.mock('@/components/submenu', () => ({
-  Submenu: ({ columns, isVisible }: { columns: any; isVisible: boolean }) =>
+  Submenu: ({ columns: _columns, isVisible }: { columns: unknown; isVisible: boolean }) =>
     isVisible ? <div data-testid="submenu">Submenu</div> : null,
 }))
 

@@ -12,16 +12,15 @@ jest.mock("next-auth/react", () => ({
   signIn: jest.fn(),
 }));
 
+const push = jest.fn();
+const getSearchParam = jest.fn().mockReturnValue(null);
+
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: jest.fn(),
+    push,
   }),
   useSearchParams: () => ({
-    get: jest.fn((key: string) => {
-      if (key === "callbackUrl") return null;
-      if (key === "redirect") return null;
-      return null;
-    }),
+    get: getSearchParam,
   }),
 }));
 
@@ -34,13 +33,10 @@ jest.mock("next/image", () => ({
 
 describe("LoginPage", () => {
   const mockSignIn = signIn as jest.MockedFunction<typeof signIn>;
-  const mockRouterPush = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(require("next/navigation"), "useRouter").mockReturnValue({
-      push: mockRouterPush,
-    });
+    getSearchParam.mockReturnValue(null);
   });
 
   it("should render login form", () => {
@@ -172,16 +168,14 @@ describe("LoginPage", () => {
     });
 
     await waitFor(() => {
-      expect(mockRouterPush).toHaveBeenCalledWith("/dashboard");
+      expect(push).toHaveBeenCalledWith("/dashboard");
     });
   });
 
   it("should handle callbackUrl from search params", async () => {
-    jest.spyOn(require("next/navigation"), "useSearchParams").mockReturnValue({
-      get: jest.fn((key: string) => {
-        if (key === "callbackUrl") return "/assets";
-        return null;
-      }),
+    getSearchParam.mockImplementation((key: string) => {
+      if (key === "callbackUrl") return "/assets";
+      return null;
     });
 
     mockSignIn.mockResolvedValue({ error: null, ok: true, status: 200, url: null });
@@ -200,7 +194,7 @@ describe("LoginPage", () => {
     });
 
     await waitFor(() => {
-      expect(mockRouterPush).toHaveBeenCalledWith("/assets");
+      expect(push).toHaveBeenCalledWith("/assets");
     });
   });
 

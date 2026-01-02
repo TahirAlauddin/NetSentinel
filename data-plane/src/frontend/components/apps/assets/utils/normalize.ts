@@ -1,5 +1,5 @@
 import { Vendor } from "@/types/assets";
-
+import { Tag } from "@/types/assets";
 // ==================== Normalization Functions ====================
 
 /**
@@ -19,14 +19,14 @@ export const normalizeVendor = (vendor: Vendor | number | string | null): Vendor
  * @param tags - The tags data to normalize
  * @returns The normalized tags data
  */
-export const normalizeTags = (tags: any[]): number[] => {
+export const normalizeTags = (tags: Tag[]): number[] => {
   return tags
-    .map((tag: any) => {
+    .map((tag: Tag) => {
       if (typeof tag === "number") return tag;
       if (typeof tag === "object" && tag !== null && "id" in tag) {
         return tag.id;
       }
       return null;
     })
-    .filter((id: any): id is number => typeof id === "number");
+    .filter((id: number | null): id is number => id !== null);
 };

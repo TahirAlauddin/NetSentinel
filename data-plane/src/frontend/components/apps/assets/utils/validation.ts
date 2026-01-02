@@ -135,7 +135,7 @@ export const isNotEmpty = (value: string | null | undefined): boolean => {
 /**
  * Validates that a value is selected (for required selects)
  */
-export const isSelected = (value: any): boolean => {
+export const isSelected = (value: string | number | object | null | undefined): boolean => {
   if (value === null || value === undefined) return false;
   if (typeof value === "string") return value.trim() !== "";
   if (typeof value === "number") return value !== 0;
@@ -362,15 +362,18 @@ export const validateStep = (
     typeof formData.name === "string" && 
     formData.name.trim() !== "";
   
-  const category: any = formData.category;
+  const category = formData.category;
   let hasCategory = false;
   if (category !== undefined && category !== null) {
     if (typeof category === "number") {
       hasCategory = category !== 0;
     } else if (typeof category === "string") {
-      hasCategory = category.trim() !== "";
+      const categoryStr: string = category;
+      hasCategory = categoryStr.trim() !== "";
+    } else if (typeof category === "object" && "id" in category) {
+      hasCategory = true; // Category object
     } else {
-      hasCategory = true; // Object or other valid type
+      hasCategory = true; // Other valid type
     }
   }
   

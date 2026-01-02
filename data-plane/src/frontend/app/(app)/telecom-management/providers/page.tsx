@@ -29,9 +29,9 @@ async function listProviders(): Promise<ProviderRecord[]> {
     data &&
     typeof data === "object" &&
     "results" in data &&
-    Array.isArray((data as any).results)
+    Array.isArray((data as { results: ProviderRecord[] }).results)
   ) {
-    return (data as any).results;
+    return (data as { results: ProviderRecord[] }).results;
   }
 
   if (Array.isArray(data)) {

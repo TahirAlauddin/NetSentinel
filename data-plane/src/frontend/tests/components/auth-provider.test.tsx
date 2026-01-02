@@ -8,7 +8,8 @@
  * - Authentication state
  */
 
-import { render, screen } from '@/tests/__utils__/test-utils'
+// TODO: Uncomment when implementing tests
+// import { render, screen } from '@/tests/__utils__/test-utils'
 
 describe('AuthProvider', () => {
   it('should render children', () => {

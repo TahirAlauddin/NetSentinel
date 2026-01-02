@@ -115,7 +115,7 @@ export abstract class BaseApiClientCore {
     endpoint: string,
     options: BaseApiRequestOptions = {}
   ): Promise<BaseApiResponse<T>> {
-    const { requireAuth = true, skipRefresh = false, ...fetchOptions } = options;
+    const { requireAuth = true, skipRefresh: _skipRefresh = false, ...fetchOptions } = options;
 
     const url = this.buildUrl(endpoint);
 

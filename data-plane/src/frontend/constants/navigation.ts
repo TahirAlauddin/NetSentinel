@@ -13,7 +13,6 @@ import {
   Pi as Api,
   LifeBuoy,
   Settings,
-  MapPin,
 } from "lucide-react";
 import { NavigationItem, SubmenuColumn } from "../types/navigation";
 

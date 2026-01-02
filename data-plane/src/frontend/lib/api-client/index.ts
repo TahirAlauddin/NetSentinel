@@ -27,7 +27,7 @@ class BaseApiClient extends BaseApiClientCore {
     };
   }
 
-  protected async refreshToken(refreshToken: string): Promise<string | null> {
+  protected async refreshToken(_refreshToken: string): Promise<string | null> {
     // Prevent multiple simultaneous refresh attempts
     if (this.isRefreshing && this.refreshPromise) {
       return this.refreshPromise;

@@ -1,18 +1,20 @@
 "use client"
 
 import { useSession, signIn, signOut } from "next-auth/react"
-import { useState, useEffect } from "react"
-import { apiClient } from "@/lib/api-client"
+import { useState, useMemo } from "react"
+import { UserApiClient } from "@/lib/api-client/user"
 
 export function RefreshTokenTest() {
   const { data: session, status } = useSession()
   const [testResults, setTestResults] = useState<string[]>([])
   const [isTesting, setIsTesting] = useState(false)
+  
+  // Initialize UserApiClient once using useMemo
+  const userApiClient = useMemo(() => new UserApiClient(), [])
 
   const addResult = (message: string) => {
     const timestamp = new Date().toLocaleTimeString()
     setTestResults(prev => [...prev, `[${timestamp}] ${message}`])
-    console.log(message)
   }
 
   const clearResults = () => setTestResults([])
@@ -26,7 +28,7 @@ export function RefreshTokenTest() {
     try {
       addResult("🌐 Making API call...")
       
-      const response = await apiClient.get('/auth/users/me/')
+      const response = await userApiClient.getCurrentUser()
       
       if (response.data) {
         addResult(`✅ API call successful! User: ${response.data.username}`)
@@ -52,11 +54,9 @@ export function RefreshTokenTest() {
     setIsTesting(false)
   }
 
-  useEffect(() => {
-    if (session?.error === 'RefreshAccessTokenError') {
-      addResult("⚠️ Session error detected: RefreshAccessTokenError")
-    }
-  }, [session])
+  if (session?.error === 'RefreshAccessTokenError') {
+    addResult("⚠️ Session error detected: RefreshAccessTokenError")
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
@@ -130,12 +130,12 @@ export function RefreshTokenTest() {
       <div className="border rounded-lg p-4 bg-yellow-50">
         <h3 className="text-lg font-semibold mb-2">Test Instructions:</h3>
         <ol className="list-decimal list-inside space-y-1 text-sm">
-          <li>Click "Login" to authenticate with NextAuth</li>
-          <li>Click "Test API Call" to make authenticated requests</li>
+          <li>Click &quot;Login&quot; to authenticate with NextAuth</li>
+          <li>Click &quot;Test API Call&quot; to make authenticated requests</li>
           <li>Wait 30+ seconds for the access token to expire</li>
-          <li>Click "Test API Call" again to trigger automatic refresh</li>
+          <li>Click &quot;Test API Call&quot; again to trigger automatic refresh</li>
           <li>Watch the console logs for refresh token activity</li>
-          <li>Use "Test Multiple Calls" to simulate real usage patterns</li>
+          <li>Use &quot;Test Multiple Calls&quot; to simulate real usage patterns</li>
         </ol>
       </div>
     </div>

@@ -14,7 +14,7 @@ import { SettingsOverview } from '@/components/settings/settings-overview'
 
 // Mock EditCompany component
 jest.mock('@/components/edit-company', () => ({
-  EditCompany: ({ onCancel, initialData }: { onCancel: () => void; initialData: any }) => (
+  EditCompany: ({ onCancel, initialData }: { onCancel: () => void; initialData: unknown }) => (
     <div data-testid="edit-company">
       <button onClick={onCancel} data-testid="cancel-button">Cancel</button>
       <div data-testid="initial-data">{JSON.stringify(initialData)}</div>

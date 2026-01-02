@@ -27,9 +27,9 @@ async function listDepartments(): Promise<DepartmentRecord[]> {
     data &&
     typeof data === "object" &&
     "results" in data &&
-    Array.isArray((data as any).results)
+    Array.isArray((data as { results: DepartmentRecord[] }).results)
   ) {
-    return (data as any).results;
+    return (data as { results: DepartmentRecord[] }).results;
   }
 
   // Handle direct array response

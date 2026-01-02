@@ -15,42 +15,42 @@ export const api = {
   /**
    * Make a GET request
    */
-  async get<T = any>(endpoint: string, options?: { requireAuth?: boolean }): Promise<BaseApiResponse<T>> {
+  async get<T = unknown>(endpoint: string, options?: { requireAuth?: boolean }): Promise<BaseApiResponse<T>> {
     return apiClient.get<T>(endpoint, options)
   },
 
   /**
    * Make a POST request
    */
-  async post<T = any>(endpoint: string, data?: any, options?: { requireAuth?: boolean }): Promise<BaseApiResponse<T>> {
+  async post<T = unknown>(endpoint: string, data?: unknown, options?: { requireAuth?: boolean }): Promise<BaseApiResponse<T>> {
     return apiClient.post<T>(endpoint, data, options)
   },
 
   /**
    * Make a PUT request
    */
-  async put<T = any>(endpoint: string, data?: any, options?: { requireAuth?: boolean }): Promise<BaseApiResponse<T>> {
+  async put<T = unknown>(endpoint: string, data?: unknown, options?: { requireAuth?: boolean }): Promise<BaseApiResponse<T>> {
     return apiClient.put<T>(endpoint, data, options)
   },
 
   /**
    * Make a PATCH request
    */
-  async patch<T = any>(endpoint: string, data?: any, options?: { requireAuth?: boolean }): Promise<BaseApiResponse<T>> {
+  async patch<T = unknown>(endpoint: string, data?: unknown, options?: { requireAuth?: boolean }): Promise<BaseApiResponse<T>> {
     return apiClient.patch<T>(endpoint, data, options)
   },
 
   /**
    * Make a DELETE request
    */
-  async delete<T = any>(endpoint: string, options?: { requireAuth?: boolean }): Promise<BaseApiResponse<T>> {
+  async delete<T = unknown>(endpoint: string, options?: { requireAuth?: boolean }): Promise<BaseApiResponse<T>> {
     return apiClient.delete<T>(endpoint, options)
   },
 
   /**
    * Make a custom request with full control over options
    */
-  async request<T = any>(endpoint: string, options?: any): Promise<BaseApiResponse<T>> {
+  async request<T = unknown>(endpoint: string, options?: RequestInit): Promise<BaseApiResponse<T>> {
     return apiClient.request<T>(endpoint, options)
   },
 }

@@ -1,8 +1,9 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { CalendarAlert } from "@/types/assets/fields";
 import { CalendarAlertApiClient } from "@/lib/api-client/calendar-alert";
 import { transformToCalendarAlertCreateUpdateDto } from "../utils/transform";
+import { UserRecord } from "@/types/users";
 
 interface UseCalendarAlertsProps {
   alerts: CalendarAlert[];
@@ -19,7 +20,7 @@ export function useCalendarAlerts({
   assetId,
   onAlertsChange,
 }: UseCalendarAlertsProps) {
-  const apiClient = new CalendarAlertApiClient();
+  const apiClient = useMemo(() => new CalendarAlertApiClient(), []);
 
   /**
    * Get current alerts array, ensuring it's always an array
@@ -73,7 +74,7 @@ export function useCalendarAlerts({
 
       try {
         const transformedAlert = transformToCalendarAlertCreateUpdateDto(alert);
-        const result = await apiClient.deleteCalendarAlert(assetId, transformedAlert);
+        const result = await apiClient.deleteCalendarAlert({assetId, alert: transformedAlert});
 
         if (result.status === 204) {
           toast.success("Calendar alert deleted successfully");
@@ -131,7 +132,7 @@ export function useCalendarAlerts({
    * Update alert assigned user
    */
   const updateAlertUser = useCallback(
-    (index: number, userId: string, users: any[]) => {
+    (index: number, userId: string, users: UserRecord[]) => {
       const selectedUser = userId ? users.find((person) => person.id.toString() === userId) : null;
       updateAlertField(index, "assigned_to", selectedUser || null);
     },
@@ -167,7 +168,7 @@ export function useCalendarAlerts({
 
         // Update existing alert
         if (alert.id && typeof alert.id === "number") {
-          const result = await apiClient.updateCalendarAlert(assetId, transformedAlert);
+          const result = await apiClient.updateCalendarAlert({assetId, alert: transformedAlert});
           if (result.data) {
             toast.success("Calendar alert updated successfully");
           } else {
@@ -176,12 +177,12 @@ export function useCalendarAlerts({
         }
         // Create new alert
         else if (alert.id && typeof alert.id === "string" && alert.id.startsWith("temp-")) {
-          const result = await apiClient.createCalendarAlert(assetId, transformedAlert);
+          const result = await apiClient.createCalendarAlert({assetId, alert: transformedAlert});
           if (result.data) {
             toast.success("Calendar alert created successfully");
             // Update the alert with the server response ID if available
             const updatedAlerts = currentAlerts.map((a, i) =>
-              i === index ? { ...a, id: result.data?.id || a.id } : a
+              i === index ? { ...a, id: (result.data as CalendarAlert)?.id || a.id } : a
             );
             updateAlerts(updatedAlerts);
           } else {
@@ -214,7 +215,7 @@ export function useCalendarAlerts({
       const results = await Promise.allSettled(
         validAlerts.map(async (alert) => {
           const transformedAlert = transformToCalendarAlertCreateUpdateDto(alert);
-          return apiClient.createCalendarAlert(newAssetId, transformedAlert);
+          return apiClient.createCalendarAlert({assetId: newAssetId, alert: transformedAlert});
         })
       );
 

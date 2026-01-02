@@ -36,7 +36,7 @@ describe('LocationsList', () => {
       alias: 'Loc2',
       city: 'Los Angeles',
       address1: '456 Oak Ave',
-      address2: null,
+      address2: '',
       state: 'CA',
       zip_code: '90001',
       phone: '987-654-3210',
@@ -87,7 +87,7 @@ describe('LocationsList', () => {
   })
 
   it('should show error message when locations is not an array', () => {
-    render(<LocationsList locations={null as any} />)
+    render(<LocationsList locations={null as unknown as LocationRecord[]} />)
 
     expect(screen.getByText('Failed to load locations')).toBeInTheDocument()
   })

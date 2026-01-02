@@ -13,6 +13,8 @@
 import { render, screen } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
 import { BasicDetailsStep } from '@/components/apps/assets/shared/steps/BasicDetailsStep'
+import * as useFormDataFetch from '@/components/apps/assets/hooks/useFormDataFetch'
+import * as useAssetForm from '@/components/apps/assets/shared/form/AssetFormContext'
 
 // Mock hooks
 jest.mock('@/components/apps/assets/hooks/useFormDataFetch', () => ({
@@ -25,24 +27,24 @@ jest.mock('@/components/apps/assets/shared/form/AssetFormContext', () => ({
 
 // Mock form components
 jest.mock('@/components/apps/assets/shared/form', () => ({
-  FormField: ({ label, children, error }: any) => (
+  FormField: ({ label, children, error }: { label: string; children: React.ReactNode; error?: string }) => (
     <div data-testid={`form-field-${label}`}>
       <label>{label}</label>
       {error && <span data-testid={`error-${label}`}>{error}</span>}
       {children}
     </div>
   ),
-  SelectField: ({ label, value, onChange, options, placeholder, error }: any) => (
+  SelectField: ({ label, value, onChange, options, placeholder, error }: { label: string; value: string | number | null; onChange: (value: string) => void; options: Array<{ value: string | number; label: string }>; placeholder?: string; error?: string }) => (
     <div data-testid={`select-field-${label}`}>
       <label>{label}</label>
       {error && <span data-testid={`error-${label}`}>{error}</span>}
       <select
         data-testid={`select-${label}`}
-        value={value}
+        value={value || ''}
         onChange={(e) => onChange(e.target.value)}
       >
         {placeholder && <option value="">{placeholder}</option>}
-        {options.map((opt: any) => (
+        {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
           </option>
@@ -50,7 +52,7 @@ jest.mock('@/components/apps/assets/shared/form', () => ({
       </select>
     </div>
   ),
-  VendorField: ({ label, value, onChange, error }: any) => (
+  VendorField: ({ label, value, onChange, error }: { label: string; value: string | number | null; onChange: (value: string) => void; error?: string }) => (
     <div data-testid={`vendor-field-${label}`}>
       <label>{label}</label>
       {error && <span data-testid={`error-${label}`}>{error}</span>}
@@ -65,8 +67,8 @@ jest.mock('@/components/apps/assets/shared/form', () => ({
 
 describe('BasicDetailsStep', () => {
   const mockOnInputChange = jest.fn()
-  const mockUseBasicDetailsStep = require('@/components/apps/assets/hooks/useFormDataFetch').useBasicDetailsStep
-  const mockUseAssetForm = require('@/components/apps/assets/shared/form/AssetFormContext').useAssetForm
+  const mockUseBasicDetailsStep = jest.mocked(useFormDataFetch.useBasicDetailsStep)
+  const mockUseAssetForm = jest.mocked(useAssetForm.useAssetForm)
 
   const mockCategories = [
     { id: 1, name: 'Laptop' },

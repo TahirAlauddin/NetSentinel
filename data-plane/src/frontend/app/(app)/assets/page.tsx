@@ -26,7 +26,7 @@ export default function AssetsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+  const [_editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
 
@@ -36,22 +36,17 @@ export default function AssetsPage() {
    * Load assets from the API
    */
   const loadAssets = async () => {
-    console.log("[AssetsPage.loadAssets] Starting to load assets");
     try {
       setLoading(true);
       setError(null);
-      console.log("[AssetsPage.loadAssets] Calling listAssets()");
       const data = await listAssets();
-      console.log("[AssetsPage.loadAssets] Received", data?.length || 0, "assets");
       setAssets(data);
-      console.log("[AssetsPage.loadAssets] Assets state updated");
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to load assets";
       console.error("[AssetsPage.loadAssets] Error loading assets:", err);
       setError(errorMessage);
     } finally {
       setLoading(false);
-      console.log("[AssetsPage.loadAssets] Loading complete");
     }
   };
 
