@@ -130,7 +130,7 @@ describe('ErrorBoundary', () => {
     
     // Create a component that can be controlled externally
     let shouldThrow = true
-    const TestComponent = ({ key }: { key?: string }) => {
+    const TestComponent = () => {
       if (shouldThrow) {
         throw new Error('Test error')
       }

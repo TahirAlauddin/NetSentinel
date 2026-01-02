@@ -1,13 +1,3 @@
-import { UserRecord } from "@/types/users";
-import { LocationRecord } from "@/types/locations";
-import { DepartmentRecord } from "@/types/departments";
-import {
-  ComputerDetails,
-  NetworkDetails,
-  DisplayDetails,
-  PhoneDetails,
-  PeripheralDetails,
-} from "./extensions";
 
 /**
  * Asset types and interfaces for the NetSentinel application

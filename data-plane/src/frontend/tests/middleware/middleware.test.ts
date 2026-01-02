@@ -13,13 +13,16 @@ import { NextRequest, NextResponse } from "next/server";
 jest.mock("next/server", () => {
   // Define mocks inside the factory function to avoid hoisting issues
   const mockNextFn = jest.fn(() => ({ type: "next" }));
-  const mockRedirectFn = jest.fn((url: URL | string, init?: ResponseInit) => ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const mockRedirectFn = jest.fn((url: URL | string, _init?: ResponseInit) => ({
     type: "redirect",
     url: url instanceof URL ? url.toString() : url,
   }));
 
   // Store references globally so tests can access them
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (global as any).__mockNext = mockNextFn;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (global as any).__mockRedirect = mockRedirectFn;
 
   // Mock NextResponse without requiring the actual module (avoids Request polyfill issues)
@@ -27,6 +30,7 @@ jest.mock("next/server", () => {
     NextResponse: {
       next: mockNextFn,
       redirect: (url: URL | string, init?: ResponseInit) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return mockRedirectFn(url, init) as any;
       },
     },
@@ -38,16 +42,20 @@ jest.mock("next/server", () => {
 jest.mock('next-auth/middleware', () => {
   // Define authState inside the factory to avoid hoisting issues
   const authState = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     authorizedCallback: null as ((params: { token: any; req: any }) => boolean) | null,
   };
   
   // Store on global so tests can access it if needed
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (global as any).__authState = authState;
   
   return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     withAuth: jest.fn((fn: any, options: any) => {
       authState.authorizedCallback = options.callbacks.authorized;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return async (req: any) => {
         const pathname = req.nextUrl.pathname;
         const authRoutes = ['/login', '/register'];
@@ -83,6 +91,7 @@ describe("Middleware", () => {
   const createMockRequest = (
     pathname: string,
     searchParams: Record<string, string> = {},
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     token: any = null
   ): NextRequest => {
     const url = new URL(`http://localhost:3000${pathname}`);
@@ -94,22 +103,29 @@ describe("Middleware", () => {
       nextUrl: url,
       url: url.toString(),
       nextauth: { token },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
     return req as NextRequest;
   };
 
   // Get references to the mocked functions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getMockNext = () => (global as any).__mockNext as jest.Mock;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getMockRedirect = () => (global as any).__mockRedirect as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
     // Clear the global mocks
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((global as any).__mockNext) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global as any).__mockNext.mockClear();
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((global as any).__mockRedirect) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global as any).__mockRedirect.mockClear();
     }
   });

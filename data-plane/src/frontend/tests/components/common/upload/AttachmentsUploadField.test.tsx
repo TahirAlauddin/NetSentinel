@@ -15,9 +15,9 @@ jest.mock("sonner", () => ({
 }));
 
 jest.mock("@/components/common/upload/AttachmentList", () => ({
-  AttachmentList: ({ attachments, onRemove }: any) => (
+  AttachmentList: ({ attachments, onRemove }: { attachments: File[]; onRemove?: (index: number) => void }) => (
     <div data-testid="attachment-list">
-      {attachments.map((att: any, i: number) => (
+      {attachments.map((att: File, i: number) => (
         <div key={i} data-testid={`attachment-${i}`}>
           {att instanceof File ? att.name : "attachment"}
           {onRemove && (

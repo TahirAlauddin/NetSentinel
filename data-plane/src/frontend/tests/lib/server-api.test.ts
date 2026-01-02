@@ -4,7 +4,6 @@
 
 import { ServerApiClient, serverApi } from "@/lib/server-api";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 
 // Mock next-auth
 jest.mock("next-auth", () => ({
@@ -12,9 +11,7 @@ jest.mock("next-auth", () => ({
 }));
 
 // Mock auth config
-jest.mock("@/lib/auth", () => ({
-  authOptions: {},
-}));
+jest.mock("@/lib/auth", () => ({}));
 
 // Don't mock the base client - we'll spy on methods on the instance instead
 
@@ -41,12 +38,13 @@ describe("ServerApiClient", () => {
     mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
 
     // Spy on the protected executeRequest method
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockExecuteRequest = jest.spyOn(client as any, "executeRequest");
   });
 
   describe("getApiBaseUrl", () => {
     it("should return server base URL", () => {
-      const url = (client as any).getApiBaseUrl();
+      const url = (client as unknown as { getApiBaseUrl(): string }).getApiBaseUrl();
       expect(url).toBe("http://localhost:8000/api/v1");
     });
   });
@@ -62,9 +60,9 @@ describe("ServerApiClient", () => {
         },
       };
 
-      mockGetServerSession.mockResolvedValue(mockSession as any);
+      mockGetServerSession.mockResolvedValue(mockSession as Parameters<typeof getServerSession>[1]);
 
-      const session = await (client as any).getSession();
+      const session = await (client as unknown as { getSession(): Promise<{ accessToken: string; refreshToken: string } | null> }).getSession();
 
       expect(session).toEqual({
         accessToken: "access-token",
@@ -75,7 +73,8 @@ describe("ServerApiClient", () => {
     it("should return null when no session", async () => {
       mockGetServerSession.mockResolvedValue(null);
 
-      const session = await (client as any).getSession();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const session = await (client as unknown as { getSession(): Promise<{ accessToken: string; refreshToken: string } | null> }).getSession();
 
       expect(session).toBeNull();
     });
@@ -88,7 +87,8 @@ describe("ServerApiClient", () => {
         json: async () => ({ access: "new-access-token" }),
       } as Response);
 
-      const newToken = await (client as any).refreshToken("refresh-token");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newToken = await (client as unknown as { refreshToken(token: string): Promise<string | null> }).refreshToken("refresh-token");
 
       expect(newToken).toBe("new-access-token");
       expect(mockFetch).toHaveBeenCalledWith(
@@ -110,7 +110,8 @@ describe("ServerApiClient", () => {
         json: async () => ({}),
       } as Response);
 
-      const newToken = await (client as any).refreshToken("refresh-token");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newToken = await (client as unknown as { refreshToken(token: string): Promise<string | null> }).refreshToken("refresh-token");
 
       expect(newToken).toBeNull();
     });
@@ -118,7 +119,8 @@ describe("ServerApiClient", () => {
     it("should return null on error", async () => {
       mockFetch.mockRejectedValue(new Error("Network error"));
 
-      const newToken = await (client as any).refreshToken("refresh-token");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newToken = await (client as unknown as { refreshToken(token: string): Promise<string | null> }).refreshToken("refresh-token");
 
       expect(newToken).toBeNull();
     });
@@ -212,8 +214,8 @@ describe("ServerApiClient", () => {
     it("should export a singleton instance", () => {
       // The singleton is created when the module loads, so we check it's the right type
       expect(serverApi).toBeDefined();
-      expect(typeof (serverApi as any).getApiBaseUrl).toBe("function");
-      expect(typeof (serverApi as any).getSession).toBe("function");
+      expect(typeof (serverApi as unknown as { getApiBaseUrl(): string }).getApiBaseUrl).toBe("function");
+      expect(typeof (serverApi as unknown as { getSession(): Promise<unknown> }).getSession).toBe("function");
     });
   });
 });

@@ -16,7 +16,7 @@
  * are tested in FormField.test.tsx since SelectField uses FormField internally.
  */
 
-import { render, screen, fireEvent } from '@/tests/__utils__/test-utils'
+import { render, screen } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
 import { SelectField } from '@/components/apps/assets/shared/form/fields/SelectField'
 

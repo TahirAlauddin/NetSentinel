@@ -12,7 +12,7 @@ jest.mock("@/lib/utils", () => ({
   api: {
     get: jest.fn(),
   },
-  cn: (...inputs: any[]) => inputs.filter(Boolean).join(" "),
+  cn: (...inputs: (string | boolean | undefined | null)[]) => inputs.filter(Boolean).join(" "),
 }));
 
 jest.mock("@/components/ui/dialog", () => ({

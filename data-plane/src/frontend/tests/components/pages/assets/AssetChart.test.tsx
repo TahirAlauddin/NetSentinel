@@ -13,12 +13,25 @@ import { render, screen } from '@/tests/__utils__/test-utils'
 import { AssetChart } from '@/components/apps/assets/AssetChart'
 import { mockAsset, mockAssetCategory } from '@/tests/__fixtures__/api-responses'
 import { Asset } from '@/types/assets'
+import { Category } from '@/types/assets/fields'
+
+interface ResponsiveContainerProps {
+  children: React.ReactNode
+}
+
+interface PieChartProps {
+  children: React.ReactNode
+}
+
+interface PieProps {
+  children: React.ReactNode
+}
 
 // Mock recharts to avoid rendering issues in tests
 jest.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: any) => <div data-testid="responsive-container">{children}</div>,
-  PieChart: ({ children }: any) => <div data-testid="pie-chart">{children}</div>,
-  Pie: ({ children }: any) => <div data-testid="pie">{children}</div>,
+  ResponsiveContainer: ({ children }: ResponsiveContainerProps) => <div data-testid="responsive-container">{children}</div>,
+  PieChart: ({ children }: PieChartProps) => <div data-testid="pie-chart">{children}</div>,
+  Pie: ({ children }: PieProps) => <div data-testid="pie">{children}</div>,
   Cell: () => <div data-testid="cell" />,
   Tooltip: () => <div data-testid="tooltip" />,
 }))
@@ -80,10 +93,10 @@ describe('AssetChart', () => {
    */
   it('should display Uncategorized for assets without category', () => {
     const assets: Asset[] = [
-      { ...mockAsset, id: 1, category: null as any },
+      { ...mockAsset, id: 1, category: null as unknown as Category },
     ]
 
-    render(<AssetChart assets={assets} totalAssets={1} />)
+    render(<AssetChart assets={assets as unknown as Asset[]} totalAssets={1} />)
 
     expect(screen.getByText('Uncategorized')).toBeInTheDocument()
   })

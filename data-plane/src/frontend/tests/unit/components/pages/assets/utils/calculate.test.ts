@@ -144,7 +144,9 @@ describe('Asset Calculate Utils', () => {
     it('should handle assets with null category as "Uncategorized"', () => {
       const assets: Asset[] = [
         { ...mockAsset, id: 1, category: mockAssetCategory },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         { ...mockAsset, id: 2, category: null as any },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         { ...mockAsset, id: 3, category: null as any },
       ];
 
@@ -156,6 +158,7 @@ describe('Asset Calculate Utils', () => {
     });
 
     it('should handle assets with category without name', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const categoryWithoutName = { ...mockAssetCategory, name: undefined as any };
       const assets: Asset[] = [
         { ...mockAsset, id: 1, category: categoryWithoutName },

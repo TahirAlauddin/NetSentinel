@@ -10,10 +10,10 @@
  * - Add Asset button navigation
  */
 
-import { render, screen, fireEvent } from '@/tests/__utils__/test-utils'
+import { render, screen } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
 import { AssetTable } from '@/components/apps/assets/AssetTable'
-import { mockAsset, mockAssetCategory, mockLocation } from '@/tests/__fixtures__/api-responses'
+import { mockAsset } from '@/tests/__fixtures__/api-responses'
 import { Asset } from '@/types/assets'
 import { useRouter } from 'next/navigation'
 

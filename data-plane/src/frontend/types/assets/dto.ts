@@ -77,9 +77,7 @@ export interface AssetCreateDto extends BaseAssetDto {
  * DTO for updating an existing asset
  * All fields are optional (PATCH operation)
  */
-export interface AssetUpdateDto extends BaseAssetDto {
-  // All fields inherited from BaseAssetDto are already optional
-}
+export type AssetUpdateDto = BaseAssetDto
 
 
 export interface CalendarAlertCreateUpdateDto {

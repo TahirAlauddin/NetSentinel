@@ -52,5 +52,5 @@ export interface DataCircuitCreateDto {
   notes?: string | null;
 }
 
-export interface DataCircuitUpdateDto extends DataCircuitCreateDto {}
+export type DataCircuitUpdateDto = DataCircuitCreateDto
 

@@ -34,5 +34,5 @@ export interface ProviderCreateDto {
   notes?: string | null;
 }
 
-export interface ProviderUpdateDto extends ProviderCreateDto {}
+export type ProviderUpdateDto = ProviderCreateDto
 

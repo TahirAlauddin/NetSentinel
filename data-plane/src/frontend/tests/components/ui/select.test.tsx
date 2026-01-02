@@ -3,7 +3,8 @@
  */
 
 import { render, screen } from '@/tests/__utils__/test-utils'
-import userEvent from '@testing-library/user-event'
+// TODO: Uncomment when implementing tests
+// import userEvent from '@testing-library/user-event'
 import {
   Select,
   SelectContent,

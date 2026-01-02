@@ -25,8 +25,8 @@ describe("extractData", () => {
   });
 
   it("should handle null results property", () => {
-    const data: any = { results: null };
-    expect(extractData(data)).toEqual([]);
+    const data: { results: null } = { results: null };
+    expect(extractData(data as unknown as { results: unknown[] })).toEqual([]);
   });
 });
 

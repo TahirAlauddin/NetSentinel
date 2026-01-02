@@ -20,5 +20,5 @@ export interface CarrierContactCreateDto {
   billing_phone?: string | null;
 }
 
-export interface CarrierContactUpdateDto extends CarrierContactCreateDto {}
+export type CarrierContactUpdateDto = CarrierContactCreateDto
 

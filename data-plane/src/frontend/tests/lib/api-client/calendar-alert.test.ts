@@ -32,10 +32,10 @@ describe("CalendarAlertApiClient", () => {
     jest.clearAllMocks();
     client = new CalendarAlertApiClient();
     
-    // Replace methods on the instance directly
-    (client as any).post = mockPost;
-    (client as any).patch = mockPatch;
-    (client as any).delete = mockDelete;
+    // Replace methods on the instance directly for testing
+    (client as unknown as { post: typeof mockPost; patch: typeof mockPatch; delete: typeof mockDelete }).post = mockPost;
+    (client as unknown as { post: typeof mockPost; patch: typeof mockPatch; delete: typeof mockDelete }).patch = mockPatch;
+    (client as unknown as { post: typeof mockPost; patch: typeof mockPatch; delete: typeof mockDelete }).delete = mockDelete;
   });
 
   describe("createCalendarAlert", () => {
