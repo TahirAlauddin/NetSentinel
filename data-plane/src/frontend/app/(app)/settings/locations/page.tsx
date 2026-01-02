@@ -42,9 +42,9 @@ export default function LocationsPage() {
         dmarc: formData.get("dmarc") as string,
       });
 
-      if (result.data && "id" in result.data) {
+      if (result.data && typeof result.data === "object" && result.data !== null && "id" in result.data) {
         toast.success("Location created successfully!");
-        setLocations((prev) => [...prev, result.data]);
+        setLocations((prev) => [...prev, result.data as LocationRecord]);
         setShowAddForm(false);
       } else {
         toast.error(result.error || "Failed to create location");
@@ -60,9 +60,17 @@ export default function LocationsPage() {
   useEffect(() => {
     async function fetchLocations() {
       try {
-        const locationRawData = (await infrastructureApiClient.getLocations()).data;
-        const locationList = locationRawData.results;
-        setLocations(Array.isArray(locationList) ? locationList : []);
+        const response = await infrastructureApiClient.getLocations<LocationRecord[] | { results: LocationRecord[] }>();
+        const locationRawData: LocationRecord[] | { results: LocationRecord[] } | undefined = response.data;
+        
+        // Helper to extract data from either array or paginated response
+        const extractResults = <T,>(data: T[] | { results: T[] } | undefined): T[] => {
+          if (!data) return [];
+          return Array.isArray(data) ? data : (data as { results: T[] }).results || [];
+        };
+        
+        const locationList = extractResults(locationRawData);
+        setLocations(locationList);
       } catch (error) {
         console.error("Failed to fetch locations:", error);
         // Silently fail - data will show when available

@@ -123,9 +123,9 @@ async function listLocations(): Promise<LocationRecord[]> {
     data &&
     typeof data === "object" &&
     "results" in data &&
-    Array.isArray((data as { results: DataCircuitRecord[] }).results)
+    Array.isArray((data as { results: LocationRecord[] }).results)
   ) {
-    return (data as { results: DataCircuitRecord[] }).results;
+    return (data as { results: LocationRecord[] }).results;
   }
 
   if (Array.isArray(data)) {
@@ -156,9 +156,9 @@ async function listProviders(): Promise<ProviderRecord[]> {
     data &&
     typeof data === "object" &&
     "results" in data &&
-    Array.isArray((data as { results: DataCircuitRecord[] }).results)
+    Array.isArray((data as { results: ProviderRecord[] }).results)
   ) {
-    return (data as { results: DataCircuitRecord[] }).results;
+    return (data as { results: ProviderRecord[] }).results;
   }
 
   if (Array.isArray(data)) {
