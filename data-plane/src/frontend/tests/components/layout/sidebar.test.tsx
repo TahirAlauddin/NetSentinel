@@ -9,9 +9,46 @@
  * - onClose callback handling
  */
 
-// TODO: Uncomment when implementing tests
-// import { render, screen } from '@/tests/__utils__/test-utils'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { Sidebar } from '@/components/layout/sidebar'
+import { NavigationItem } from '@/types/navigation'
 
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  usePathname: jest.fn(() => '/dashboard'),
+}))
+
+// Mock BrandHeader component
+jest.mock('@/components/layout/brand-header', () => ({
+  BrandHeader: ({ onClose }: { onClose?: () => void }) => (
+    <div data-testid="brand-header">
+      <span>Brand Header</span>
+      {onClose && (
+        <button onClick={onClose} data-testid="brand-close-button">
+          Close
+        </button>
+      )}
+    </div>
+  ),
+}))
+
+// Mock Navigation component
+jest.mock('@/components/navigation/navigation', () => ({
+  Navigation: ({ items }: { items: NavigationItem[] }) => (
+    <nav data-testid="navigation">
+      <div data-testid="navigation-items-count">{items.length} items</div>
+    </nav>
+  ),
+}))
+
+// Mock navigationItems
+jest.mock('@/constants/navigation', () => ({
+  navigationItems: [
+    { label: 'Dashboard', icon: 'DashboardIcon', href: '/dashboard' },
+    { label: 'Assets', icon: 'AssetsIcon', href: '/assets' },
+  ],
+}))
 describe('Sidebar', () => {
   beforeEach(() => {
     jest.clearAllMocks()
