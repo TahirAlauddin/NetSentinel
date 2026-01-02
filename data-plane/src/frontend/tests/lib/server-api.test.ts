@@ -73,7 +73,6 @@ describe("ServerApiClient", () => {
     it("should return null when no session", async () => {
       mockGetServerSession.mockResolvedValue(null);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const session = await (client as unknown as { getSession(): Promise<{ accessToken: string; refreshToken: string } | null> }).getSession();
 
       expect(session).toBeNull();
@@ -87,7 +86,6 @@ describe("ServerApiClient", () => {
         json: async () => ({ access: "new-access-token" }),
       } as Response);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const newToken = await (client as unknown as { refreshToken(token: string): Promise<string | null> }).refreshToken("refresh-token");
 
       expect(newToken).toBe("new-access-token");
@@ -110,7 +108,6 @@ describe("ServerApiClient", () => {
         json: async () => ({}),
       } as Response);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const newToken = await (client as unknown as { refreshToken(token: string): Promise<string | null> }).refreshToken("refresh-token");
 
       expect(newToken).toBeNull();
@@ -119,7 +116,6 @@ describe("ServerApiClient", () => {
     it("should return null on error", async () => {
       mockFetch.mockRejectedValue(new Error("Network error"));
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const newToken = await (client as unknown as { refreshToken(token: string): Promise<string | null> }).refreshToken("refresh-token");
 
       expect(newToken).toBeNull();

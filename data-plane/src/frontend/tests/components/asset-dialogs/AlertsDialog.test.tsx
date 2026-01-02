@@ -2,7 +2,7 @@
  * Tests for components/asset-dialogs/AlertsDialog.tsx
  */
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AlertsDialog } from "@/components/apps/assets/pages/detail/dialogs/AlertsDialog";
 
@@ -29,7 +29,7 @@ jest.mock("@/components/ui/dialog", () => ({
 
 // Mock select component
 jest.mock("@/components/ui/select", () => ({
-  Select: ({ children, value, onValueChange }: any) => (
+  Select: ({ children, value, onValueChange }: { children: React.ReactNode; value: string; onValueChange: (value: string) => void }) => (
     <div data-testid="select" data-value={value}>
       {children}
     </div>
@@ -48,9 +48,9 @@ jest.mock("@/components/ui/select", () => ({
       data-testid={`select-item-${value}`}
       onClick={() => {
         // Find parent Select and call onValueChange
-        const select = document.querySelector('[data-testid="select"]');
-        if (select) {
-          (select as any).onValueChange?.(value);
+        const select = document.querySelector('[data-testid="select"]') as HTMLElement & { onValueChange?: (value: string) => void };
+        if (select?.onValueChange) {
+          select.onValueChange(value);
         }
       }}
     >
@@ -139,7 +139,7 @@ describe("AlertsDialog", () => {
     const selectTrigger = screen.getByTestId("select-trigger");
     await userEvent.click(selectTrigger);
 
-    const saveButton = screen.getByRole("button", { name: /Add Alert/i });
+    const _saveButton = screen.getByRole("button", { name: /Add Alert/i });
     // Note: This test may need adjustment based on how Select component works
   });
 

@@ -9,7 +9,7 @@
  * - Remove and confirm actions
  */
 
-import { render, screen, waitFor } from '@/tests/__utils__/test-utils'
+import { render, screen } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
 import { CalendarAlertCard } from '@/components/apps/assets/shared/steps/alerts/CalendarAlertCard'
 import { CalendarAlert } from '@/types/assets/fields'

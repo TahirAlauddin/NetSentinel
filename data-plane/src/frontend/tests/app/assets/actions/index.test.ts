@@ -5,7 +5,7 @@
 // Mock next-auth before any imports that depend on it
 jest.mock("next-auth", () => ({
   getServerSession: jest.fn(),
-  default: jest.fn((options: any) => ({
+  default: jest.fn((_options: unknown) => ({
     handlers: {
       GET: jest.fn(),
       POST: jest.fn(),
@@ -91,7 +91,7 @@ describe("Asset Actions Index", () => {
       const mockResult = { success: true, data: { id: 1, ...mockData } };
       (AssetActions.create as jest.Mock).mockResolvedValue(mockResult);
 
-      const result = await createAsset(mockData as any);
+      const result = await createAsset(mockData);
 
       expect(AssetActions.create).toHaveBeenCalledWith(mockData);
       expect(result).toEqual(mockResult);
@@ -102,7 +102,7 @@ describe("Asset Actions Index", () => {
       const mockResult = { success: true, data: { id: 1, ...mockData } };
       (AssetActions.update as jest.Mock).mockResolvedValue(mockResult);
 
-      const result = await updateAsset(1, mockData as any);
+      const result = await updateAsset(1, mockData);
 
       expect(AssetActions.update).toHaveBeenCalledWith(1, mockData);
       expect(result).toEqual(mockResult);
@@ -130,7 +130,7 @@ describe("Asset Actions Index", () => {
 
     it("getAssetBasicDetails should call AssetActions.getBasicDetails", async () => {
       const mockDetails = { name: "Asset", category: 1 };
-      (AssetActions.getBasicDetails as jest.Mock).mockResolvedValue(mockDetails as any);
+      (AssetActions.getBasicDetails as jest.Mock).mockResolvedValue(mockDetails);
 
       const result = await getAssetBasicDetails(1);
 

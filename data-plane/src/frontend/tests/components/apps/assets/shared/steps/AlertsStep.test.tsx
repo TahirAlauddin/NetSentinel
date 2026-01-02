@@ -8,9 +8,11 @@
  * - Add alert functionality
  */
 
-import { render, screen, waitFor } from '@/tests/__utils__/test-utils'
+import { render, screen } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
 import { AlertsStep } from '@/components/apps/assets/shared/steps/AlertsStep'
+import * as useFormDataFetch from '@/components/apps/assets/hooks/useFormDataFetch'
+import * as useCalendarAlerts from '@/components/apps/assets/hooks/useCalendarAlerts'
 
 // Mock hooks
 jest.mock('@/components/apps/assets/hooks/useFormDataFetch', () => ({
@@ -22,9 +24,11 @@ jest.mock('@/components/apps/assets/hooks/useCalendarAlerts', () => ({
   useCalendarAlerts: jest.fn(),
 }))
 
+import { CalendarAlert } from '@/types/assets/fields'
+
 // Mock alert components
 jest.mock('@/components/apps/assets/shared/steps/alerts/CalendarAlertCard', () => ({
-  CalendarAlertCard: ({ alert, index }: any) => (
+  CalendarAlertCard: ({ alert, index }: { alert: CalendarAlert; index: number }) => (
     <div data-testid={`alert-card-${index}`}>
       <span>{alert.message || 'No message'}</span>
     </div>
@@ -32,7 +36,7 @@ jest.mock('@/components/apps/assets/shared/steps/alerts/CalendarAlertCard', () =
 }))
 
 jest.mock('@/components/apps/assets/shared/steps/alerts/EmptyAlertsState', () => ({
-  EmptyAlertsState: ({ onAddAlert }: any) => (
+  EmptyAlertsState: ({ onAddAlert }: { onAddAlert: () => void }) => (
     <div data-testid="empty-alerts-state">
       <button onClick={onAddAlert} data-testid="add-alert-button">
         Add Alert
@@ -42,7 +46,7 @@ jest.mock('@/components/apps/assets/shared/steps/alerts/EmptyAlertsState', () =>
 }))
 
 jest.mock('@/components/apps/assets/shared/steps/alerts/AddAlertButton', () => ({
-  AddAlertButton: ({ onAddAlert }: any) => (
+  AddAlertButton: ({ onAddAlert }: { onAddAlert: () => void }) => (
     <button onClick={onAddAlert} data-testid="add-alert-button-existing">
       Add Alert
     </button>
@@ -58,9 +62,9 @@ describe('AlertsStep', () => {
   const mockUpdateAlertUser = jest.fn()
   const mockConfirmAlert = jest.fn()
 
-  const mockUseAlertsStep = require('@/components/apps/assets/hooks/useFormDataFetch').useAlertsStep
-  const mockUseFormPeopleFetch = require('@/components/apps/assets/hooks/useFormDataFetch').useFormPeopleFetch
-  const mockUseCalendarAlerts = require('@/components/apps/assets/hooks/useCalendarAlerts').useCalendarAlerts
+  const mockUseAlertsStep = jest.mocked(useFormDataFetch.useAlertsStep)
+  const mockUseFormPeopleFetch = jest.mocked(useFormDataFetch.useFormPeopleFetch)
+  const mockUseCalendarAlerts = jest.mocked(useCalendarAlerts.useCalendarAlerts)
 
   const mockPeople = [
     { id: '1', first_name: 'Test', last_name: 'User', email: 'test@example.com', username: 'testuser', is_staff: false, is_active: true, is_superuser: false, date_joined: '2024-01-01', last_login: '2024-01-01' },

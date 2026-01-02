@@ -313,7 +313,7 @@ describe('LocationAndUsageStep', () => {
     const mockPush = jest.fn()
     jest.mocked(useRouter).mockReturnValue({
       push: mockPush,
-    } as any)
+    } as ReturnType<typeof useRouter>)
 
     render(<LocationAndUsageStep />)
 
@@ -328,7 +328,7 @@ describe('LocationAndUsageStep', () => {
     const mockPush = jest.fn()
     jest.mocked(useRouter).mockReturnValue({
       push: mockPush,
-    } as any)
+    } as ReturnType<typeof useRouter>)
 
     render(<LocationAndUsageStep />)
 

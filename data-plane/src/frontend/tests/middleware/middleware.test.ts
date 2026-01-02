@@ -13,7 +13,6 @@ import { NextRequest, NextResponse } from "next/server";
 jest.mock("next/server", () => {
   // Define mocks inside the factory function to avoid hoisting issues
   const mockNextFn = jest.fn(() => ({ type: "next" }));
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const mockRedirectFn = jest.fn((url: URL | string, _init?: ResponseInit) => ({
     type: "redirect",
     url: url instanceof URL ? url.toString() : url,

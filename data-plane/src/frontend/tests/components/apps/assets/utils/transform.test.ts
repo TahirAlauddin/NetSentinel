@@ -15,7 +15,7 @@ import {
   transformToUpdateDto,
   transformToCalendarAlertCreateUpdateDto,
 } from '@/components/apps/assets/utils/transform'
-import { Asset, CalendarAlert } from '@/types/assets'
+import { CalendarAlert } from '@/types/assets'
 
 describe('transform', () => {
   describe('transformToCreateDto', () => {

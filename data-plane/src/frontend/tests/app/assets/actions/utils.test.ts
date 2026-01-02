@@ -4,7 +4,6 @@
 
 import { AssetActionUtils } from "@/app/(app)/assets/actions/utils";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { serverApi } from "@/lib/server-api";
 
 // Mock dependencies
@@ -12,9 +11,7 @@ jest.mock("next-auth", () => ({
   getServerSession: jest.fn(),
 }));
 
-jest.mock("@/lib/auth", () => ({
-  authOptions: {},
-}));
+jest.mock("@/lib/auth", () => ({}));
 
 jest.mock("@/lib/server-api", () => ({
   serverApi: {
@@ -43,7 +40,7 @@ describe("AssetActionUtils", () => {
 
     it("should throw error when accessToken is missing", () => {
       expect(() =>
-        AssetActionUtils.ensureAuthenticated({ user: {} } as any)
+        AssetActionUtils.ensureAuthenticated({ user: {} } as { user: Record<string, unknown> })
       ).toThrow("Not authenticated");
     });
 
@@ -51,7 +48,7 @@ describe("AssetActionUtils", () => {
       expect(() =>
         AssetActionUtils.ensureAuthenticated({
           accessToken: "token",
-        } as any)
+        } as { accessToken: string })
       ).not.toThrow();
     });
   });
@@ -133,7 +130,7 @@ describe("AssetActionUtils", () => {
     it("should return existing tag ID when tag exists", async () => {
       mockGetServerSession.mockResolvedValue({
         accessToken: "token",
-      } as any);
+      } as { accessToken: string });
       mockServerApiGet.mockResolvedValue({
         data: [{ id: 1, name: "Test Tag" }],
         error: null,
@@ -147,7 +144,7 @@ describe("AssetActionUtils", () => {
     it("should create new tag when tag doesn't exist", async () => {
       mockGetServerSession.mockResolvedValue({
         accessToken: "token",
-      } as any);
+      } as { accessToken: string });
       mockServerApiGet.mockResolvedValue({
         data: [],
         error: null,
@@ -169,7 +166,7 @@ describe("AssetActionUtils", () => {
     it("should handle case-insensitive tag matching", async () => {
       mockGetServerSession.mockResolvedValue({
         accessToken: "token",
-      } as any);
+      } as { accessToken: string });
       mockServerApiGet.mockResolvedValue({
         data: [{ id: 1, name: "test tag" }],
         error: null,
@@ -183,7 +180,7 @@ describe("AssetActionUtils", () => {
     it("should return null on creation failure", async () => {
       mockGetServerSession.mockResolvedValue({
         accessToken: "token",
-      } as any);
+      } as { accessToken: string });
       mockServerApiGet.mockResolvedValue({
         data: [],
         error: null,
@@ -204,7 +201,7 @@ describe("AssetActionUtils", () => {
     it("should handle errors gracefully", async () => {
       mockGetServerSession.mockResolvedValue({
         accessToken: "token",
-      } as any);
+      } as { accessToken: string });
       mockServerApiGet.mockRejectedValue(new Error("Network error"));
 
       const consoleSpy = jest.spyOn(console, "error").mockImplementation();

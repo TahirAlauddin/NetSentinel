@@ -6,6 +6,7 @@ import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AssetsPage from "@/app/(app)/assets/page";
 import { listAssets, deleteAsset } from "@/app/(app)/assets/actions/index";
+import { useRouter } from "next/navigation";
 
 // Mock dependencies
 jest.mock("@/app/(app)/assets/actions/index", () => ({
@@ -14,9 +15,7 @@ jest.mock("@/app/(app)/assets/actions/index", () => ({
 }));
 
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-  }),
+  useRouter: jest.fn(),
 }));
 
 jest.mock("@/components/layout/app-shell", () => ({
@@ -25,10 +24,13 @@ jest.mock("@/components/layout/app-shell", () => ({
   ),
 }));
 
+import { Asset } from "@/types/assets";
+import { AssetTableProps } from "@/components/apps/assets/AssetTable";
+
 jest.mock("@/components/apps/assets/AssetTable", () => ({
-  AssetTable: ({ assets, onEditClick, onDeleteClick }: any) => (
+  AssetTable: ({ assets, onEditClick, onDeleteClick }: AssetTableProps) => (
     <div data-testid="asset-table">
-      {assets.map((asset: any) => (
+      {assets.map((asset: Asset) => (
         <div key={asset.id} data-testid={`asset-${asset.id}`}>
           {asset.name}
           <button onClick={() => onEditClick(asset)}>Edit</button>
@@ -39,8 +41,10 @@ jest.mock("@/components/apps/assets/AssetTable", () => ({
   ),
 }));
 
+import { AssetMetrics } from "@/types/assets";
+
 jest.mock("@/components/apps/assets/AssetMetrics", () => ({
-  AssetMetricsDisplay: ({ metrics }: any) => (
+  AssetMetricsDisplay: ({ metrics }: { metrics: AssetMetrics }) => (
     <div data-testid="asset-metrics">{JSON.stringify(metrics)}</div>
   ),
 }));
@@ -56,13 +60,14 @@ describe("AssetsPage", () => {
   const mockListAssets = listAssets as jest.MockedFunction<typeof listAssets>;
   const mockDeleteAsset = deleteAsset as jest.MockedFunction<typeof deleteAsset>;
   const mockRouterPush = jest.fn();
+  const mockUseRouter = jest.mocked(useRouter);
 
   beforeEach(() => {
     jest.clearAllMocks();
     global.confirm = jest.fn(() => true);
-    jest.spyOn(require("next/navigation"), "useRouter").mockReturnValue({
+    mockUseRouter.mockReturnValue({
       push: mockRouterPush,
-    });
+    } as ReturnType<typeof useRouter>);
   });
 
   it("should render loading state initially", () => {
@@ -78,7 +83,7 @@ describe("AssetsPage", () => {
       { id: 2, name: "Asset 2", status: "retired" },
     ];
 
-    mockListAssets.mockResolvedValue(mockAssets as any);
+    mockListAssets.mockResolvedValue(mockAssets);
 
     render(<AssetsPage />);
 
@@ -124,7 +129,7 @@ describe("AssetsPage", () => {
 
   it("should handle asset deletion", async () => {
     const mockAssets = [{ id: 1, name: "Asset 1", status: "active" }];
-    mockListAssets.mockResolvedValue(mockAssets as any);
+    mockListAssets.mockResolvedValue(mockAssets);
     mockDeleteAsset.mockResolvedValue({ success: true });
 
     render(<AssetsPage />);
@@ -145,7 +150,7 @@ describe("AssetsPage", () => {
 
   it("should not delete asset if user cancels", async () => {
     const mockAssets = [{ id: 1, name: "Asset 1", status: "active" }];
-    mockListAssets.mockResolvedValue(mockAssets as any);
+    mockListAssets.mockResolvedValue(mockAssets);
     global.confirm = jest.fn(() => false);
 
     render(<AssetsPage />);
@@ -164,7 +169,7 @@ describe("AssetsPage", () => {
 
   it("should display error on delete failure", async () => {
     const mockAssets = [{ id: 1, name: "Asset 1", status: "active" }];
-    mockListAssets.mockResolvedValue(mockAssets as any);
+    mockListAssets.mockResolvedValue(mockAssets);
     mockDeleteAsset.mockResolvedValue({
       success: false,
       error: "Delete failed",

@@ -126,10 +126,10 @@ describe('parse', () => {
 
   describe('parseDepartments', () => {
     it('should return empty array for non-array input', () => {
-      expect(parseDepartments(null as any)).toEqual([])
-      expect(parseDepartments(undefined as any)).toEqual([])
-      expect(parseDepartments('string' as any)).toEqual([])
-      expect(parseDepartments({} as any)).toEqual([])
+      expect(parseDepartments(null as unknown as number[])).toEqual([])
+      expect(parseDepartments(undefined as unknown as number[])).toEqual([])
+      expect(parseDepartments('string' as unknown as number[])).toEqual([])
+      expect(parseDepartments({} as unknown as number[])).toEqual([])
     })
 
     it('should parse array of numbers', () => {
@@ -141,7 +141,7 @@ describe('parse', () => {
     })
 
     it('should filter out invalid IDs', () => {
-      expect(parseDepartments([1, 'abc', 3, null, undefined] as any)).toEqual([1, 3])
+      expect(parseDepartments([1, 'abc', 3, null, undefined] as unknown as number[])).toEqual([1, 3])
     })
 
     it('should handle empty array', () => {

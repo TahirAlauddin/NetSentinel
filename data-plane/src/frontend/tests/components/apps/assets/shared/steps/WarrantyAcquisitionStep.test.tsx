@@ -11,6 +11,8 @@
 import { render, screen } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
 import { WarrantyAcquisitionStep } from '@/components/apps/assets/shared/steps/WarrantyAcquisitionStep'
+import * as useFormDataFetch from '@/components/apps/assets/hooks/useFormDataFetch'
+import * as useAssetForm from '@/components/apps/assets/shared/form/AssetFormContext'
 
 // Mock hooks
 jest.mock('@/components/apps/assets/hooks/useFormDataFetch', () => ({
@@ -23,7 +25,7 @@ jest.mock('@/components/apps/assets/shared/form/AssetFormContext', () => ({
 
 // Mock form components
 jest.mock('@/components/apps/assets/shared/form', () => ({
-  DateField: ({ label, value, onChange, error }: any) => (
+  DateField: ({ label, value, onChange, error }: { label: string; value: string | null; onChange: (value: string) => void; error?: string }) => (
     <div data-testid={`date-field-${label}`}>
       <label>{label}</label>
       {error && <span data-testid={`error-${label}`}>{error}</span>}
@@ -39,8 +41,8 @@ jest.mock('@/components/apps/assets/shared/form', () => ({
 
 describe('WarrantyAcquisitionStep', () => {
   const mockOnInputChange = jest.fn()
-  const mockUseWarrantyAcquisitionStep = require('@/components/apps/assets/hooks/useFormDataFetch').useWarrantyAcquisitionStep
-  const mockUseAssetForm = require('@/components/apps/assets/shared/form/AssetFormContext').useAssetForm
+  const mockUseWarrantyAcquisitionStep = jest.mocked(useFormDataFetch.useWarrantyAcquisitionStep)
+  const mockUseAssetForm = jest.mocked(useAssetForm.useAssetForm)
 
   beforeEach(() => {
     jest.clearAllMocks()

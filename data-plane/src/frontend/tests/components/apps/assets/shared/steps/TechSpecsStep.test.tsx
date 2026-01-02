@@ -13,6 +13,8 @@
 import { render, screen, fireEvent } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
 import { TechSpecsStep } from '@/components/apps/assets/shared/steps/TechSpecsStep'
+import * as useFormDataFetch from '@/components/apps/assets/hooks/useFormDataFetch'
+import * as useAssetForm from '@/components/apps/assets/shared/form/AssetFormContext'
 
 // Mock hooks
 jest.mock('@/components/apps/assets/hooks/useFormDataFetch', () => ({
@@ -25,14 +27,14 @@ jest.mock('@/components/apps/assets/shared/form/AssetFormContext', () => ({
 
 // Mock form components
 jest.mock('@/components/apps/assets/shared/form', () => ({
-  FormField: ({ label, children, error }: any) => (
+  FormField: ({ label, children, error }: { label: string; children: React.ReactNode; error?: string }) => (
     <div data-testid={`form-field-${label}`}>
       <label>{label}</label>
       {error && <span data-testid={`error-${label}`}>{error}</span>}
       {children}
     </div>
   ),
-  TagField: ({ label, value, onChange }: any) => (
+  TagField: ({ label, value, onChange }: { label: string; value: unknown; onChange: (value: unknown) => void }) => (
     <div data-testid={`tag-field-${label}`}>
       <label>{label}</label>
       <input
@@ -46,8 +48,8 @@ jest.mock('@/components/apps/assets/shared/form', () => ({
 
 describe('TechSpecsStep', () => {
   const mockOnInputChange = jest.fn()
-  const mockUseTechSpecsStep = require('@/components/apps/assets/hooks/useFormDataFetch').useTechSpecsStep
-  const mockUseAssetForm = require('@/components/apps/assets/shared/form/AssetFormContext').useAssetForm
+  const mockUseTechSpecsStep = jest.mocked(useFormDataFetch.useTechSpecsStep)
+  const mockUseAssetForm = jest.mocked(useAssetForm.useAssetForm)
 
   beforeEach(() => {
     jest.clearAllMocks()
