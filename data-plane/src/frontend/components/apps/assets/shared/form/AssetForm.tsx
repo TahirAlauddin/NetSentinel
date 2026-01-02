@@ -41,7 +41,7 @@ export function AssetForm({ assetId, mode }: AssetFormProps) {
   const [customLifecycles, setCustomLifecycles] = useState<CustomLifecycle[]>([]);
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [relatedItems, setRelatedItems] = useState<Asset[]>([]);
+  const [relatedItems] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,19 +70,24 @@ export function AssetForm({ assetId, mode }: AssetFormProps) {
         // Fetch reference data (locations, departments, categories, etc.)
         const [locationsRes, departmentsRes, categoriesRes, customLifecyclesRes, usersRes] =
           await Promise.all([
-            apiClients.infrastructure.getLocations(),
-            apiClients.infrastructure.getDepartments(),
-            apiClients.assets.getAssetCategories(),
-            apiClients.assets.getLifecycles(),
-            apiClients.assets.getAssetRelation(assetId || ""),
-            apiClients.user.getUsers(),
+            apiClients.infrastructure.getLocations<LocationRecord[] | { results: LocationRecord[] }>(),
+            apiClients.infrastructure.getDepartments<DepartmentRecord[] | { results: DepartmentRecord[] }>(),
+            apiClients.assets.getAssetCategories<Category[] | { results: Category[] }>(),
+            apiClients.assets.getLifecycles<CustomLifecycle[] | { results: CustomLifecycle[] }>(),
+            apiClients.user.getUsers<UserRecord[] | { results: UserRecord[] }>(),
           ]);
 
-        setLocations(locationsRes.data?.results || []);
-        setDepartments(departmentsRes.data?.results || []);
-        setCategories(categoriesRes.data?.results || []);
-        setCustomLifecycles(customLifecyclesRes.data?.results || []);
-        setUsers(usersRes.data?.results || []);
+        // Helper to extract data from either array or paginated response
+        const extractResults = <T,>(data: T[] | { results: T[] } | undefined): T[] => {
+          if (!data) return [];
+          return Array.isArray(data) ? data : (data as { results: T[] }).results || [];
+        };
+
+        setLocations(extractResults(locationsRes.data));
+        setDepartments(extractResults(departmentsRes.data));
+        setCategories(extractResults(categoriesRes.data));
+        setCustomLifecycles(extractResults(customLifecyclesRes.data));
+        setUsers(extractResults(usersRes.data));
 
         // If editing, fetch the asset data
         if (assetId && formMode === "edit") {
@@ -128,7 +133,7 @@ export function AssetForm({ assetId, mode }: AssetFormProps) {
 
   // Enhanced handleInputChange that clears field errors when field changes
   const handleInputChangeWithErrorClear = useCallback(
-    (field: string, value: any) => {
+    (field: string, value: string | number | null | undefined | object) => {
       // Clear error for this field when user starts typing
       clearFieldError(field);
       // Update the field value using functional form to avoid stale closure

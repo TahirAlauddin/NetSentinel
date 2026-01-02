@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -41,7 +41,7 @@ export function EditAssetPage() {
     };
 
     loadAsset();
-  }, [assetId]);
+  }, [assetId, router]);
 
   if (loading) {
     return <LoadingState message="Loading asset data..." />;

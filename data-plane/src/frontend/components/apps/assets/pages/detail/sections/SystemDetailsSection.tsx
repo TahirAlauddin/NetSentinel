@@ -13,9 +13,9 @@ export function SystemDetailsSection({ asset }: SystemDetailsSectionProps) {
   // TODO: Map asset fields to systemDetails structure
   // Currently asset doesn't have systemDetails, need to map from computer_details, etc.
   const systemDetails = {
-    processor: (asset as any).systemDetails?.processor || (asset as any).computer_details?.processor || "---",
-    memory: (asset as any).systemDetails?.memory || (asset as any).computer_details?.memory || "---",
-    hardDrive: (asset as any).systemDetails?.hardDrive || (asset as any).computer_details?.hard_drive || "---",
+    processor: asset.computer_details?.processor || "---",
+    memory: asset.computer_details?.memory || "---",
+    hardDrive: asset.computer_details?.hard_drive || "---",
     serialNumber: asset.serial_number || "---",
     productModelNumber: asset.product_number || asset.model || "---",
     ipAddress: asset.ip_address || "---",

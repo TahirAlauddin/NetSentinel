@@ -362,15 +362,18 @@ export const validateStep = (
     typeof formData.name === "string" && 
     formData.name.trim() !== "";
   
-  const category: any = formData.category;
+  const category = formData.category;
   let hasCategory = false;
   if (category !== undefined && category !== null) {
     if (typeof category === "number") {
       hasCategory = category !== 0;
     } else if (typeof category === "string") {
-      hasCategory = category.trim() !== "";
+      const categoryStr: string = category;
+      hasCategory = categoryStr.trim() !== "";
+    } else if (typeof category === "object" && "id" in category) {
+      hasCategory = true; // Category object
     } else {
-      hasCategory = true; // Object or other valid type
+      hasCategory = true; // Other valid type
     }
   }
   

@@ -22,7 +22,7 @@ interface AssetFormProviderProps {
   fieldErrors?: Record<string, string>;
   mode: "create" | "edit";
   relatedItems: Asset[]; // TODO: We'll need to allow asset relations with every entity
-  onInputChange: (field: string, value: any) => void;
+  onInputChange: (field: string, value: string | number | null | undefined | object) => void;
   handleNext: () => void;
   handlePrevious: () => void;
   handleSave: () => Promise<void>;
@@ -44,7 +44,7 @@ interface AssetFormContextValue {
   customLifecycles: CustomLifecycle[];
   users: UserRecord[];
   relatedItems: Asset[]; // TODO: We'll need to allow asset relations with every entity
-  updateField: (field: string, value: any) => void;
+  updateField: (field: string, value: string | number | null | undefined | object) => void;
   handleNext: () => void;
   handlePrevious: () => void;
   handleSave: () => Promise<void>;
