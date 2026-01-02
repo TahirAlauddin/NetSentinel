@@ -11,7 +11,7 @@ import {
 } from "../../hooks/useFormDataFetch";
 import { DepartmentRecord } from "@/types/departments";
 
-export function LocationAndUsageStep() {
+export const LocationAndUsageStep = () => {
   const router = useRouter();
   const { formData, onInputChange } = useLocationAndUsageStep();
   const { people, loading, error } = useFormPeopleFetch();
@@ -262,4 +262,5 @@ export function LocationAndUsageStep() {
       </div>
     </div>
   );
-}
+};
+

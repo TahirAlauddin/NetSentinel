@@ -12,6 +12,8 @@
 import { render, screen } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
 import { LocationAndUsageStep } from '@/components/apps/assets/shared/steps/LocationAndUsageStep'
+import * as useFormDataFetch from '@/components/apps/assets/hooks/useFormDataFetch'
+import { useRouter } from 'next/navigation'
 
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
@@ -30,24 +32,76 @@ jest.mock('@/components/apps/assets/hooks/useFormDataFetch', () => ({
 
 describe('LocationAndUsageStep', () => {
   const mockOnInputChange = jest.fn()
-  const mockUseLocationAndUsageStep = require('@/components/apps/assets/hooks/useFormDataFetch').useLocationAndUsageStep
-  const mockUseFormPeopleFetch = require('@/components/apps/assets/hooks/useFormDataFetch').useFormPeopleFetch
-  const mockUseFormLocationsFetch = require('@/components/apps/assets/hooks/useFormDataFetch').useFormLocationsFetch
-  const mockUseFormDepartmentsFetch = require('@/components/apps/assets/hooks/useFormDataFetch').useFormDepartmentsFetch
+  const mockUseLocationAndUsageStep = jest.mocked(useFormDataFetch.useLocationAndUsageStep)
+  const mockUseFormPeopleFetch = jest.mocked(useFormDataFetch.useFormPeopleFetch)
+  const mockUseFormLocationsFetch = jest.mocked(useFormDataFetch.useFormLocationsFetch)
+  const mockUseFormDepartmentsFetch = jest.mocked(useFormDataFetch.useFormDepartmentsFetch)
 
   const mockPeople = [
-    { id: 1, first_name: 'John', last_name: 'Doe', email: 'john@example.com' },
-    { id: 2, first_name: 'Jane', last_name: 'Smith', email: 'jane@example.com' },
+    {
+      id: '1',
+      username: 'johndoe',
+      email: 'john@example.com',
+      first_name: 'John',
+      last_name: 'Doe',
+      is_staff: false,
+      is_superuser: false,
+      is_active: true,
+      date_joined: '2024-01-01T00:00:00Z',
+      last_login: '2024-01-01T00:00:00Z',
+    },
+    {
+      id: '2',
+      username: 'janesmith',
+      email: 'jane@example.com',
+      first_name: 'Jane',
+      last_name: 'Smith',
+      is_staff: false,
+      is_superuser: false,
+      is_active: true,
+      date_joined: '2024-01-01T00:00:00Z',
+      last_login: '2024-01-01T00:00:00Z',
+    },
   ]
 
   const mockLocations = [
-    { id: 1, city: 'New York', address1: '123 Main St' },
-    { id: 2, city: 'Los Angeles', address1: '456 Oak Ave' },
+    {
+      id: 1,
+      name: 'New York Office',
+      alias: 'ny-office',
+      address1: '123 Main St',
+      address2: '',
+      city: 'New York',
+      state: 'NY',
+      zip_code: '10001',
+      phone: '555-0100',
+      longitude: -74.006,
+      latitude: 40.7128,
+      type_building: 'Office',
+      mpoe: 'MPOE-001',
+      dmarc: 'DMARC-001',
+    },
+    {
+      id: 2,
+      name: 'Los Angeles Office',
+      alias: 'la-office',
+      address1: '456 Oak Ave',
+      address2: '',
+      city: 'Los Angeles',
+      state: 'CA',
+      zip_code: '90001',
+      phone: '555-0200',
+      longitude: -118.2437,
+      latitude: 34.0522,
+      type_building: 'Office',
+      mpoe: 'MPOE-002',
+      dmarc: 'DMARC-002',
+    },
   ]
 
   const mockDepartments = [
-    { id: 1, name: 'IT' },
-    { id: 2, name: 'HR' },
+    { id: 1, name: 'IT', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+    { id: 2, name: 'HR', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
   ]
 
   beforeEach(() => {
@@ -57,9 +111,9 @@ describe('LocationAndUsageStep', () => {
       formData: {
         in_current_state_since: '',
         expected_checkin_date: '',
-        used_by: null,
-        managed_by: null,
-        location: null,
+        used_by: undefined,
+        managed_by: undefined,
+        location: undefined,
         departments: [],
       },
       onInputChange: mockOnInputChange,
@@ -175,8 +229,8 @@ describe('LocationAndUsageStep', () => {
         in_current_state_since: '',
         expected_checkin_date: '',
         used_by: mockPeople[0],
-        managed_by: null,
-        location: null,
+        managed_by: undefined,
+        location: undefined,
         departments: [],
       },
       onInputChange: mockOnInputChange,
@@ -201,9 +255,9 @@ describe('LocationAndUsageStep', () => {
       formData: {
         in_current_state_since: '',
         expected_checkin_date: '',
-        used_by: null,
-        managed_by: null,
-        location: null,
+        used_by: undefined,
+        managed_by: undefined,
+        location: undefined,
         departments: [mockDepartments[0]],
       },
       onInputChange: mockOnInputChange,
@@ -224,9 +278,9 @@ describe('LocationAndUsageStep', () => {
       formData: {
         in_current_state_since: '',
         expected_checkin_date: '',
-        used_by: null,
-        managed_by: null,
-        location: null,
+        used_by: undefined,
+        managed_by: undefined,
+        location: undefined,
         departments: [mockDepartments[0]],
       },
       onInputChange: mockOnInputChange,
@@ -257,9 +311,9 @@ describe('LocationAndUsageStep', () => {
   it('should navigate to locations settings', async () => {
     const user = userEvent.setup()
     const mockPush = jest.fn()
-    require('next/navigation').useRouter.mockReturnValue({
+    jest.mocked(useRouter).mockReturnValue({
       push: mockPush,
-    })
+    } as any)
 
     render(<LocationAndUsageStep />)
 
@@ -272,9 +326,9 @@ describe('LocationAndUsageStep', () => {
   it('should navigate to departments settings', async () => {
     const user = userEvent.setup()
     const mockPush = jest.fn()
-    require('next/navigation').useRouter.mockReturnValue({
+    jest.mocked(useRouter).mockReturnValue({
       push: mockPush,
-    })
+    } as any)
 
     render(<LocationAndUsageStep />)
 

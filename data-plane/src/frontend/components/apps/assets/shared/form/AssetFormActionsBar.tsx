@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ interface ActionsBarProps {
  * @param isSubmitting - Whether the form is currently being submitted (optional, falls back to context)
  * @returns
  */
-export function ActionsBar({ isSubmitting: externalIsSubmitting }: ActionsBarProps) {
+export const ActionsBar = ({ isSubmitting: externalIsSubmitting }: ActionsBarProps) => {
   const {
     formData,
     currentStep,
@@ -37,13 +37,11 @@ export function ActionsBar({ isSubmitting: externalIsSubmitting }: ActionsBarPro
   // Validate directly from formData without transforming (transformation only happens on submit)
   // This prevents errors from being thrown when just checking button state
   // The validation functions accept Partial<Asset> and handle missing fields gracefully
-  const [isValid, setIsValid] = useState(false);
-  
-  useEffect(() => {
+  const isValid = useMemo(() => {
     if (mode === "create") {
-      setIsValid(validateStepForCreate(currentStep, formData).isValid);
+      return validateStepForCreate(currentStep, formData).isValid;
     } else {
-      setIsValid(validateStepForUpdate(currentStep, formData).isValid);
+      return validateStepForUpdate(currentStep, formData).isValid;
     }
   }, [currentStep, formData, mode]);
   
@@ -94,4 +92,4 @@ export function ActionsBar({ isSubmitting: externalIsSubmitting }: ActionsBarPro
       )}
     </div>
   );
-}
+};

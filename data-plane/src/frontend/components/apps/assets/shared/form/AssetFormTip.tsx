@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import React from "react";
 
-export function AssetFormTip() {
+export const AssetFormTip = () => {
   return (
     <div className="hidden xl:block w-64 flex-shrink-0">
       <div className="sticky top-4">
@@ -29,4 +29,4 @@ export function AssetFormTip() {
       </div>
     </div>
   );
-}
+};
