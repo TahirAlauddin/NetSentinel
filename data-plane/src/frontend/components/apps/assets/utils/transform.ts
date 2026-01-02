@@ -14,7 +14,7 @@ import { CalendarAlert } from "@/types/assets/fields";
  * - Number -> returns as-is
  * - null/undefined -> returns as-is
  */
-function extractId(value: any): number | null | undefined {
+function extractId(value: unknown): number | null | undefined {
   if (value === undefined || value === null) {
     return value;
   }
@@ -49,7 +49,7 @@ function extractId(value: any): number | null | undefined {
  * Throws an error if the value cannot be converted to a valid ID.
  */
 function transformRequiredIdField(
-  value: any,
+  value: unknown,
   fieldName: string
 ): number {
   if (value === undefined || value === null) {
@@ -69,7 +69,7 @@ function transformRequiredIdField(
  * Preserves undefined for partial updates, converts null/empty to null.
  */
 function transformOptionalIdField(
-  value: any,
+  value: unknown,
   preserveUndefined: boolean = false
 ): number | null | undefined {
   if (value === undefined) {
@@ -87,7 +87,7 @@ function transformOptionalIdField(
  * Transforms an array of IDs from various formats.
  * Filters out null/undefined values.
  */
-function transformIdArray(value: any): number[] {
+function transformIdArray(value: unknown): number[] {
   if (value === undefined || value === null) {
     return [];
   }
@@ -97,7 +97,7 @@ function transformIdArray(value: any): number[] {
   }
   
   return value
-    .map((item: any) => extractId(item))
+    .map((item: unknown) => extractId(item))
     .filter((id: number | null | undefined): id is number => id !== null && id !== undefined);
 }
 
@@ -105,7 +105,7 @@ function transformIdArray(value: any): number[] {
  * Converts empty strings to null for specified fields.
  */
 function convertEmptyStringsToNull(
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   fields: string[]
 ): void {
   for (const field of fields) {
@@ -118,7 +118,7 @@ function convertEmptyStringsToNull(
 /**
  * Removes undefined values from an object.
  */
-function removeUndefinedValues(data: Record<string, any>): void {
+function removeUndefinedValues(data: Record<string, unknown>): void {
   Object.keys(data).forEach((key) => {
     if (data[key] === undefined) {
       delete data[key];
@@ -134,8 +134,11 @@ function removeUndefinedValues(data: Record<string, any>): void {
  * Shared transformation logic for both create and update.
  * Removes read-only fields and transforms ID fields.
  */
-function applyCommonTransformations(data: any): any {
-  const transformed: any = { ...data };
+function applyCommonTransformations(data: unknown): Record<string, unknown> {
+  if (typeof data !== "object" || data === null) {
+    throw new Error("Data must be an object");
+  }
+  const transformed: Record<string, unknown> = { ...(data as Record<string, unknown>) };
 
   // Remove read-only fields that shouldn't be sent
   delete transformed.id;
@@ -235,7 +238,7 @@ export function transformToCreateDto(
   // Remove undefined values to avoid sending them
   removeUndefinedValues(transformed);
 
-  return transformed as AssetCreateDto;
+  return transformed as unknown as AssetCreateDto;
 }
 
 /**
@@ -246,7 +249,7 @@ export function transformToCreateDto(
 export function transformToUpdateDto(
   data: AssetUpdateDto | Asset | Partial<Asset>
 ): AssetUpdateDto {
-  const transformed = applyCommonTransformations(data);
+  const transformed = applyCommonTransformations(data) as Record<string, unknown>;
 
   // Transform category if provided (optional for updates)
   if (transformed.category !== undefined && transformed.category !== null) {
@@ -256,7 +259,7 @@ export function transformToUpdateDto(
   // Remove undefined values to avoid sending them (PATCH semantics)
   removeUndefinedValues(transformed);
 
-  return transformed as AssetUpdateDto;
+  return transformed as unknown as AssetUpdateDto;
 }
 
 

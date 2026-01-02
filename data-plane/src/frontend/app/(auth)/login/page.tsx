@@ -55,7 +55,7 @@ function LoginForm() {
       } else {
         router.push(redirectUrl);
       }
-    } catch (error) {
+    } catch {
       setError("Server error. Please try again.");
     } finally {
       setIsLoading(false);

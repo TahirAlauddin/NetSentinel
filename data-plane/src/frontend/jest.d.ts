@@ -20,8 +20,8 @@ declare global {
       toHaveAccessibleDescription(description: string | RegExp): R
       toHaveAccessibleName(name: string | RegExp): R
       toHaveFocus(): R
-      toHaveFormValues(values: Record<string, any>): R
-      toHaveStyle(css: string | Record<string, any>): R
+      toHaveFormValues(values: Record<string, unknown>): R
+      toHaveStyle(css: string | Record<string, unknown>): R
       toBePartiallyChecked(): R
       toHaveDisplayValue(value: string | RegExp | (string | RegExp)[]): R
       toHaveErrorMessage(message: string | RegExp): R

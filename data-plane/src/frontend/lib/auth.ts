@@ -71,7 +71,6 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
 
     // Use server-side API URL for token refresh
-    console.log('[refreshAccessToken] Using API URL:', apiConfig.serverBaseUrl)
     const response = await fetch(`${apiConfig.serverBaseUrl}/auth/jwt/refresh/`, {
       method: 'POST',
       headers: {
@@ -105,7 +104,6 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     }
 
     const refreshedTokens = await response.json()
-    console.log('Token refresh successful')
 
     return {
       ...token,
@@ -151,7 +149,7 @@ export const authOptions = {
 
         try {
           // Authenticate with backend - use server-side API URL
-          console.log('[auth.authorize] Using API URL:', apiConfig.serverBaseUrl)
+          // console.log('[auth.authorize] Using API URL:', apiConfig.serverBaseUrl)
           const response = await fetch(`${apiConfig.serverBaseUrl}/auth/jwt/create/`, {
             method: 'POST',
             headers: {
@@ -165,19 +163,19 @@ export const authOptions = {
 
           if (!response.ok) {
             const errorText = await response.text()
-            console.log('Response not ok', response.status, response.statusText)
-            console.log('Error response body:', errorText)
+            // console.log('Response not ok', response.status, response.statusText)
+            // console.log('Error response body:', errorText)
             try {
-              const errorJson = JSON.parse(errorText)
-              console.log('Error response JSON:', errorJson)
-            } catch (e) {
-              console.log('Error response is not JSON')
+              const _errorJson = JSON.parse(errorText)
+              // console.log('Error response JSON:', _errorJson)
+            } catch (_e) {
+              // console.log('Error response is not JSON')
             }
             return null
           }
 
           const data = await response.json()
-          console.log('Data', data)
+          // console.log('Data', data)
           // Get user details
           const userResponse = await fetch(`${apiConfig.serverBaseUrl}/auth/users/me/`, {
             headers: {
@@ -203,7 +201,7 @@ export const authOptions = {
             isActive: userData.is_active,
             isSuperuser: userData.is_superuser,
           }
-        } catch (error) {
+        } catch (_error) {
           return null
         }
       }

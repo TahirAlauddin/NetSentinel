@@ -1,7 +1,7 @@
 // ==================== Constants ====================
 
 import { WarrantyStatus } from "@/types/assets";
-import { AlertTriangle, CheckCircle2, Circle, CircleArrowRight, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CircleArrowRight, XCircle } from "lucide-react";
 
 /**
  * Warranty status color mapping
