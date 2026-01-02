@@ -18,7 +18,6 @@ export class VendorActions {
     const response = await serverApi.get<Vendor[] | { results: Vendor[] }>("/assets/vendors/");
 
     if (response.error) {
-      console.error("[VendorActions.list] Error:", response.error);
       throw new Error(response.error);
     }
 
@@ -36,13 +35,11 @@ export class VendorActions {
   }): Promise<{ success: boolean; data?: Vendor; error?: string }> {
     const session = await getServerSession(authOptions);
     if (!session?.accessToken) {
-      console.error("[VendorActions.create] Not authenticated");
       return { success: false, error: "Not authenticated" };
     }
 
     const response = await serverApi.post<Vendor>("/assets/vendors/", data);
     if (response.error) {
-      console.error("[VendorActions.create] Error:", response.error);
       return { success: false, error: response.error };
     }
     return { success: true, data: response.data };
@@ -57,13 +54,11 @@ export class VendorActions {
   ): Promise<{ success: boolean; data?: Vendor; error?: string }> {
     const session = await getServerSession(authOptions);
     if (!session?.accessToken) {
-      console.error("[VendorActions.update] Not authenticated");
       return { success: false, error: "Not authenticated" };
     }
 
     const response = await serverApi.patch<Vendor>(`/assets/vendors/${id}/`, data);
     if (response.error) {
-      console.error("[VendorActions.update] Error:", response.error);
       return { success: false, error: response.error };
     }
     return { success: true, data: response.data };
@@ -75,13 +70,11 @@ export class VendorActions {
   static async delete(id: number): Promise<{ success: boolean; error?: string }> {
     const session = await getServerSession(authOptions);
     if (!session?.accessToken) {
-      console.error("[VendorActions.delete] Not authenticated");
       return { success: false, error: "Not authenticated" };
     }
 
     const response = await serverApi.delete(`/assets/vendors/${id}/`);
     if (response.error) {
-      console.error("[VendorActions.delete] Error:", response.error);
       return { success: false, error: response.error };
     }
     return { success: true };

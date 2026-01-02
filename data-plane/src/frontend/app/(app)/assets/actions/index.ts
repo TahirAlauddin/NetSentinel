@@ -14,12 +14,9 @@ import { Category } from "@/types/assets/fields";
 import { CustomLifecycle } from "@/types/assets/fields";
 import { AssetStats } from "@/types/assets";
 import { BasicDetailsStepFormData } from "@/types/assets/steps";
-import { AssetRelation } from "@/types/assets/relations";
-
 // ==================== Assets ====================
 
 export async function getAssetBasicDetails(id: number): Promise<BasicDetailsStepFormData> {
-  console.log("[listAssets/getAssetBasicDetails] Wrapper called - id:", id);
   return AssetActions.getBasicDetails(id);
 }
 
@@ -30,7 +27,6 @@ export async function listAssets(params?: {
   location?: number;
   search?: string;
 }): Promise<Asset[]> {
-  console.log("[listAssets] Wrapper called - params:", JSON.stringify(params));
   return AssetActions.list(params);
 }
 
