@@ -102,7 +102,6 @@ export function Navigation({ items }: NavigationProps) {
     <nav className="py-2">
       <ul className="flex flex-col">
         {items.map((item) => {
-          const hasSubmenu = item.hasSubmenu || false
           const isExpanded = expandedItems.has(item.label) || hoveredItem === item.label
           const isActive = isItemActive(item)
           

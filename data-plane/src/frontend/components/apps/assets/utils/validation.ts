@@ -135,7 +135,7 @@ export const isNotEmpty = (value: string | null | undefined): boolean => {
 /**
  * Validates that a value is selected (for required selects)
  */
-export const isSelected = (value: any): boolean => {
+export const isSelected = (value: string | number | object | null | undefined): boolean => {
   if (value === null || value === undefined) return false;
   if (typeof value === "string") return value.trim() !== "";
   if (typeof value === "number") return value !== 0;

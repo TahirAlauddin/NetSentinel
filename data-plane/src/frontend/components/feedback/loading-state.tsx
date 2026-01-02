@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/layout/app-shell";
 
 interface LoadingStateProps {
   message?: string;

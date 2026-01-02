@@ -1,9 +1,30 @@
 import React, { useState } from "react";
 import { apiConfig, authConfig, appConfig } from "@/lib/config";
 
+interface TestResult {
+  name: string;
+  url?: string;
+  status?: number;
+  statusText?: string;
+  responseTime?: string;
+  success: boolean;
+  headers?: Record<string, string>;
+  data?: unknown;
+  error?: string;
+  errorType?: string;
+  note?: string;
+  corsHeaders?: Record<string, string | null>;
+}
+
+interface TestResults {
+  timestamp: string;
+  apiUrl: string;
+  tests: TestResult[];
+}
+
 const AuthDialog = () => {
   return function DebugPopup({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-    const [testResults, setTestResults] = useState<any>(null);
+    const [testResults, setTestResults] = useState<TestResults | null>(null);
     const [isTesting, setIsTesting] = useState(false);
 
     const envVars = {
@@ -19,7 +40,7 @@ const AuthDialog = () => {
       setTestResults(null);
 
       const apiUrl = apiConfig.clientBaseUrl;
-      const results: any = {
+      const results: TestResults = {
         timestamp: new Date().toISOString(),
         apiUrl,
         tests: [],
@@ -54,16 +75,18 @@ const AuthDialog = () => {
           try {
             const data = await response.json();
             results.tests[results.tests.length - 1].data = data;
-          } catch (e) {
+          } catch {
             results.tests[results.tests.length - 1].data = "Could not parse JSON";
           }
         }
-      } catch (error: any) {
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Network error";
+        const errorType = error instanceof Error ? error.name : "Unknown";
         results.tests.push({
           name: "Health Check",
           success: false,
-          error: error.message || "Network error",
-          errorType: error.name,
+          error: errorMessage,
+          errorType,
         });
       }
 
@@ -92,12 +115,14 @@ const AuthDialog = () => {
           headers: Object.fromEntries(response.headers.entries()),
           note: response.status === 405 ? "Endpoint exists (405 expected for GET)" : "",
         });
-      } catch (error: any) {
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Network error";
+        const errorType = error instanceof Error ? error.name : "Unknown";
         results.tests.push({
           name: "Auth Endpoint Check",
           success: false,
-          error: error.message || "Network error",
-          errorType: error.name,
+          error: errorMessage,
+          errorType,
         });
       }
 
@@ -134,12 +159,14 @@ const AuthDialog = () => {
           success: !!corsHeaders["Access-Control-Allow-Origin"],
           corsHeaders,
         });
-      } catch (error: any) {
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Network error";
+        const errorType = error instanceof Error ? error.name : "Unknown";
         results.tests.push({
           name: "CORS Check",
           success: false,
-          error: error.message || "Network error",
-          errorType: error.name,
+          error: errorMessage,
+          errorType,
         });
       }
 
@@ -200,7 +227,7 @@ const AuthDialog = () => {
                   API URL: <span className="font-mono">{testResults.apiUrl}</span>
                 </div>
 
-                {testResults.tests.map((test: any, index: number) => (
+                {testResults.tests.map((test, index) => (
                   <div key={index} className="border rounded-md p-4">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-semibold">{test.name}</h4>
@@ -251,7 +278,7 @@ const AuthDialog = () => {
                       </div>
                     )}
 
-                    {test.data && (
+                    {test.data !== undefined && (
                       <details className="mt-2">
                         <summary className="text-sm font-semibold cursor-pointer">
                           Response Data
