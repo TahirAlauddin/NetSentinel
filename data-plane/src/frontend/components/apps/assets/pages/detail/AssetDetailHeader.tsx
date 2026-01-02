@@ -35,10 +35,10 @@ export function AssetDetailHeader({
   const router = useRouter();
 
   // TODO: Map asset.category to asset.type if needed
-  const assetType = (asset as any).type || asset.category?.name || "Asset";
+  const assetType = (asset as Asset & { type?: string }).type || asset.category?.name || "Asset";
 
   // TODO: Map asset.created_at to asset.createdAt if needed
-  const createdAt = (asset as any).createdAt || asset.created_at || "";
+  const createdAt = (asset as Asset & { createdAt?: string }).createdAt || asset.created_at || "";
 
   return (
     <header className="bg-white border-b px-4 md:px-8 py-4 shrink-0 z-20">

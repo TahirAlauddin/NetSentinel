@@ -6,7 +6,7 @@ import { SettingsSidebar } from "@/components/settings/settings-sidebar";
 import { SettingsNavTabs } from "@/components/settings/settings-nav-tabs";
 import { SettingsHeader } from "@/components/settings/settings-header";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
 import AddLocationForm from "@/components/locations/add-location-form";
 import { LocationRecord } from "@/types/locations";
@@ -18,7 +18,7 @@ export default function LocationsPage() {
   const [locations, setLocations] = useState<LocationRecord[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
-  const infrastructureApiClient = new InfrastructureApiClient();
+  const infrastructureApiClient = useMemo(() => new InfrastructureApiClient(), []);
 
   const handleAddLocation = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -72,7 +72,7 @@ export default function LocationsPage() {
 
     // Fetch in background - don't block rendering
     fetchLocations();
-  }, [session]);
+  }, [session, infrastructureApiClient]);
 
   return (
     <ProtectedRoute>

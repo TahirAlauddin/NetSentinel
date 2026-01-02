@@ -35,9 +35,9 @@ async function listCarrierContacts(): Promise<CarrierContactRecord[]> {
     data &&
     typeof data === "object" &&
     "results" in data &&
-    Array.isArray((data as any).results)
+    Array.isArray((data as { results: CarrierContactRecord[] }).results)
   ) {
-    return (data as any).results;
+    return (data as { results: CarrierContactRecord[] }).results;
   }
 
   // Handle direct array response
@@ -128,9 +128,9 @@ async function listLocations(): Promise<LocationRecord[]> {
     data &&
     typeof data === "object" &&
     "results" in data &&
-    Array.isArray((data as any).results)
+    Array.isArray((data as { results: LocationRecord[] }).results)
   ) {
-    return (data as any).results;
+    return (data as { results: LocationRecord[] }).results;
   }
 
   // Handle direct array response
@@ -151,7 +151,6 @@ export default function CarrierContactsPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<CarrierContactRecord>>({});
   const addFormRef = useRef<HTMLFormElement>(null);
-  const infrastructureApiClient = new InfrastructureApiClient();
 
   const handleAddCarrierContact = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
