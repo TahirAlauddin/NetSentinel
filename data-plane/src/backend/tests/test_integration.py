@@ -3,18 +3,13 @@ Integration tests for cross-app relationships and complex workflows.
 """
 
 import pytest
-from django.db import transaction
-from assets.models import (
-    Asset,
-    AssetCategory,
-    AssetAttachment,
-    AssetRelation,
-    CalendarAlert,
-    ComputerDetails,
-)
-from infrastructure.models import Location, Circuit, PointOfContact
-from users.models import AppPermission, AppPermissionGroup
 from django.contrib.auth.models import Group
+from django.db import transaction
+
+from assets.models import (Asset, AssetAttachment, AssetCategory,
+                           AssetRelation, CalendarAlert, ComputerDetails)
+from infrastructure.models import Circuit, Location, PointOfContact
+from users.models import AppPermission, AppPermissionGroup
 
 
 @pytest.mark.integration

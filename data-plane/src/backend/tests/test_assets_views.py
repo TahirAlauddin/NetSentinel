@@ -2,17 +2,13 @@
 Tests for Assets API views.
 """
 
+from datetime import date, timedelta
+
 import pytest
 from rest_framework import status
-from datetime import date, timedelta
-from assets.models import (
-    TechSpecs,
-    AssetCategory,
-    Asset,
-    AssetAttachment,
-    AssetRelation,
-    ComputerDetails,
-)
+
+from assets.models import (Asset, AssetAttachment, AssetCategory,
+                           AssetRelation, ComputerDetails, TechSpecs)
 
 
 @pytest.mark.api

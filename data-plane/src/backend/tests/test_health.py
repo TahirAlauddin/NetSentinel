@@ -3,8 +3,8 @@ Tests for health check endpoint.
 """
 
 import pytest
-from django.test import Client
 from django.db import connection
+from django.test import Client
 
 
 @pytest.mark.unit

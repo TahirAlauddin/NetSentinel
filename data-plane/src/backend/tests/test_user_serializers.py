@@ -4,16 +4,13 @@ Tests for User serializers.
 
 import pytest
 from django.contrib.auth.models import Group, Permission
+
 from users.models import AppPermission, AppPermissionGroup
-from users.serializers import (
-    UserSerializer,
-    UserCreateSerializer,
-    GroupSerializer,
-    PermissionSerializer,
-    AppPermissionSerializer,
-    AppPermissionGroupSerializer,
-    GroupWithAppPermissionsSerializer,
-)
+from users.serializers import (AppPermissionGroupSerializer,
+                               AppPermissionSerializer, GroupSerializer,
+                               GroupWithAppPermissionsSerializer,
+                               PermissionSerializer, UserCreateSerializer,
+                               UserSerializer)
 
 
 @pytest.mark.django_db

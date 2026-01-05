@@ -2,33 +2,21 @@
 Tests for Asset serializers.
 """
 
-import pytest
 from datetime import date, timedelta
-from assets.models import (
-    AssetTag,
-    CustomLifecycle,
-    Vendor,
-    TechSpecs,
-    AssetCategory,
-    Asset,
-    AssetAttachment,
-    AssetRelation,
-    ComputerDetails,
-    CalendarAlert,
-)
-from assets.serializers import (
-    AssetTagSerializer,
-    VendorSerializer,
-    CustomLifecycleSerializer,
-    TechSpecsSerializer,
-    AssetCategorySerializer,
-    AssetSerializer,
-    AssetAttachmentSerializer,
-    AssetRelationSerializer,
-    ComputerDetailsSerializer,
-    CalendarAlertSerializer,
-)
-from infrastructure.models import Location, Department
+
+import pytest
+
+from assets.models import (Asset, AssetAttachment, AssetCategory,
+                           AssetRelation, AssetTag, CalendarAlert,
+                           ComputerDetails, CustomLifecycle, TechSpecs, Vendor)
+from assets.serializers import (AssetAttachmentSerializer,
+                                AssetCategorySerializer,
+                                AssetRelationSerializer, AssetSerializer,
+                                AssetTagSerializer, CalendarAlertSerializer,
+                                ComputerDetailsSerializer,
+                                CustomLifecycleSerializer, TechSpecsSerializer,
+                                VendorSerializer)
+from infrastructure.models import Department, Location
 
 
 @pytest.mark.django_db

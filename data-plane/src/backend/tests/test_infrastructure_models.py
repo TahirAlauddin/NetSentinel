@@ -5,16 +5,10 @@ Tests for Infrastructure models.
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
-from infrastructure.models import (
-    Location,
-    Circuit,
-    PointOfContact,
-    Department,
-    Category,
-    Contact,
-    CarrierContact,
-    UtilityContact,
-)
+
+from infrastructure.models import (CarrierContact, Category, Circuit, Contact,
+                                   Department, Location, PointOfContact,
+                                   UtilityContact)
 
 
 @pytest.mark.django_db

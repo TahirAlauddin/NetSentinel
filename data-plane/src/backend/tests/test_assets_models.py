@@ -2,24 +2,17 @@
 Tests for Asset models.
 """
 
+from datetime import date, timedelta
+
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
-from datetime import date, timedelta
-from assets.models import (
-    AssetTag,
-    CustomLifecycle,
-    Vendor,
-    TechSpecs,
-    AssetCategory,
-    Asset,
-    AssetAttachment,
-    AssetRelation,
-    CalendarAlert,
-    ComputerDetails,
-    NetworkDetails,
-)
-from infrastructure.models import Location, Department
+
+from assets.models import (Asset, AssetAttachment, AssetCategory,
+                           AssetRelation, AssetTag, CalendarAlert,
+                           ComputerDetails, CustomLifecycle, NetworkDetails,
+                           TechSpecs, Vendor)
+from infrastructure.models import Department, Location
 
 
 @pytest.mark.django_db

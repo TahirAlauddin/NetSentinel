@@ -3,9 +3,9 @@ Tests for URL routing and endpoint accessibility.
 """
 
 import pytest
-from rest_framework import status
-from django.urls import reverse, resolve
 from django.test import Client
+from django.urls import resolve, reverse
+from rest_framework import status
 
 
 @pytest.mark.unit

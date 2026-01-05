@@ -3,8 +3,9 @@ Tests for permission system (AppPermissions and ViewSet permissions).
 """
 
 import pytest
-from rest_framework import status
 from django.contrib.auth.models import Group
+from rest_framework import status
+
 from users.models import AppPermission, AppPermissionGroup
 
 

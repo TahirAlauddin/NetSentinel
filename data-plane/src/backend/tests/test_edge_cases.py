@@ -5,20 +5,10 @@ Edge cases and error handling tests.
 import pytest
 from django.core.exceptions import ValidationError
 from rest_framework import status
-from assets.models import (
-    Asset,
-    AssetCategory,
-    AssetTag,
-    Vendor,
-    AssetRelation,
-)
-from infrastructure.models import (
-    Location,
-    Circuit,
-    Department,
-    Category,
-    PointOfContact,
-)
+
+from assets.models import Asset, AssetCategory, AssetRelation, AssetTag, Vendor
+from infrastructure.models import (Category, Circuit, Department, Location,
+                                   PointOfContact)
 
 
 @pytest.mark.api
