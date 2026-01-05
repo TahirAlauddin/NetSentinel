@@ -6,8 +6,14 @@ import pytest
 from django.contrib.auth.models import Group
 from django.db import transaction
 
-from assets.models import (Asset, AssetAttachment, AssetCategory,
-                           AssetRelation, CalendarAlert, ComputerDetails)
+from assets.models import (
+    Asset,
+    AssetAttachment,
+    AssetCategory,
+    AssetRelation,
+    CalendarAlert,
+    ComputerDetails,
+)
 from infrastructure.models import Circuit, Location, PointOfContact
 from users.models import AppPermission, AppPermissionGroup
 

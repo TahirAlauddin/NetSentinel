@@ -5,9 +5,16 @@ Tests for Infrastructure API views.
 import pytest
 from rest_framework import status
 
-from infrastructure.models import (CarrierContact, Category, Circuit, Contact,
-                                   Department, Location, PointOfContact,
-                                   UtilityContact)
+from infrastructure.models import (
+    CarrierContact,
+    Category,
+    Circuit,
+    Contact,
+    Department,
+    Location,
+    PointOfContact,
+    UtilityContact,
+)
 
 
 @pytest.mark.api

@@ -6,9 +6,16 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
-from infrastructure.models import (CarrierContact, Category, Circuit, Contact,
-                                   Department, Location, PointOfContact,
-                                   UtilityContact)
+from infrastructure.models import (
+    CarrierContact,
+    Category,
+    Circuit,
+    Contact,
+    Department,
+    Location,
+    PointOfContact,
+    UtilityContact,
+)
 
 
 @pytest.mark.django_db

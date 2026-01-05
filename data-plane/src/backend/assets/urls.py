@@ -2,15 +2,27 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_nested import routers
 
-from .views import (AssetAttachmentViewSet, AssetBasicDetailsViewSet,
-                    AssetCategoryViewSet, AssetImageViewSet,
-                    AssetRelationDirectViewSet, AssetRelationViewSet,
-                    AssetTagViewSet, AssetTechSpecsViewSet, AssetViewSet,
-                    CalendarAlertViewSet, ComputerDetailsViewSet,
-                    CustomLifecycleViewSet, DisplayDetailsViewSet,
-                    NetworkDetailsViewSet, PeripheralDetailsViewSet,
-                    PhoneDetailsViewSet, TechSpecsViewSet, VendorViewSet,
-                    api_info_view)
+from .views import (
+    AssetAttachmentViewSet,
+    AssetBasicDetailsViewSet,
+    AssetCategoryViewSet,
+    AssetImageViewSet,
+    AssetRelationDirectViewSet,
+    AssetRelationViewSet,
+    AssetTagViewSet,
+    AssetTechSpecsViewSet,
+    AssetViewSet,
+    CalendarAlertViewSet,
+    ComputerDetailsViewSet,
+    CustomLifecycleViewSet,
+    DisplayDetailsViewSet,
+    NetworkDetailsViewSet,
+    PeripheralDetailsViewSet,
+    PhoneDetailsViewSet,
+    TechSpecsViewSet,
+    VendorViewSet,
+    api_info_view,
+)
 
 router = DefaultRouter()
 router.register(r"tags", AssetTagViewSet, basename="asset-tag")

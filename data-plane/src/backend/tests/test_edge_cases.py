@@ -7,8 +7,7 @@ from django.core.exceptions import ValidationError
 from rest_framework import status
 
 from assets.models import Asset, AssetCategory, AssetRelation, AssetTag, Vendor
-from infrastructure.models import (Category, Circuit, Department, Location,
-                                   PointOfContact)
+from infrastructure.models import Category, Circuit, Department, Location, PointOfContact
 
 
 @pytest.mark.api

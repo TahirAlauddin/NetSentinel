@@ -31,15 +31,15 @@ jobs:
           pip install -r requirements.txt
           pip install black isort flake8
 
-      - name: Check code formatting with Black
-        working-directory: data-plane/src/backend
-        run: |
-          black --check --diff .
-
       - name: Check import sorting with isort
         working-directory: data-plane/src/backend
         run: |
           isort --check-only --diff .
+
+      - name: Check code formatting with Black
+        working-directory: data-plane/src/backend
+        run: |
+          black --check --diff .
 
       - name: Lint with Flake8
         working-directory: data-plane/src/backend

@@ -6,21 +6,44 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import (Asset, AssetAttachment, AssetCategory, AssetImage,
-                     AssetRelation, AssetTag, CalendarAlert, ComputerDetails,
-                     CustomLifecycle, DisplayDetails, NetworkDetails,
-                     PeripheralDetails, PhoneDetails, TechSpecs, Vendor)
-from .serializers import (AssetAttachmentSerializer,
-                          AssetBasicDetailsSerializer, AssetCategorySerializer,
-                          AssetCreateUpdateSerializer, AssetImageSerializer,
-                          AssetRelationSerializer, AssetSerializer,
-                          AssetTagSerializer, AssetTechSpecsSerializer,
-                          CalendarAlertCreateUpdateSerializer,
-                          CalendarAlertSerializer, ComputerDetailsSerializer,
-                          CustomLifecycleSerializer, DisplayDetailsSerializer,
-                          NetworkDetailsSerializer,
-                          PeripheralDetailsSerializer, PhoneDetailsSerializer,
-                          TechSpecsSerializer, VendorSerializer)
+from .models import (
+    Asset,
+    AssetAttachment,
+    AssetCategory,
+    AssetImage,
+    AssetRelation,
+    AssetTag,
+    CalendarAlert,
+    ComputerDetails,
+    CustomLifecycle,
+    DisplayDetails,
+    NetworkDetails,
+    PeripheralDetails,
+    PhoneDetails,
+    TechSpecs,
+    Vendor,
+)
+from .serializers import (
+    AssetAttachmentSerializer,
+    AssetBasicDetailsSerializer,
+    AssetCategorySerializer,
+    AssetCreateUpdateSerializer,
+    AssetImageSerializer,
+    AssetRelationSerializer,
+    AssetSerializer,
+    AssetTagSerializer,
+    AssetTechSpecsSerializer,
+    CalendarAlertCreateUpdateSerializer,
+    CalendarAlertSerializer,
+    ComputerDetailsSerializer,
+    CustomLifecycleSerializer,
+    DisplayDetailsSerializer,
+    NetworkDetailsSerializer,
+    PeripheralDetailsSerializer,
+    PhoneDetailsSerializer,
+    TechSpecsSerializer,
+    VendorSerializer,
+)
 
 
 @api_view(["GET"])

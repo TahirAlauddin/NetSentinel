@@ -1,7 +1,15 @@
 from rest_framework import serializers
 
-from .models import (CarrierContact, Category, Circuit, Contact, Department,
-                     Location, PointOfContact, UtilityContact)
+from .models import (
+    CarrierContact,
+    Category,
+    Circuit,
+    Contact,
+    Department,
+    Location,
+    PointOfContact,
+    UtilityContact,
+)
 
 
 class PointOfContactSerializer(serializers.ModelSerializer):

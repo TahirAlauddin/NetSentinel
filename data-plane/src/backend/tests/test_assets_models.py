@@ -8,10 +8,19 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
-from assets.models import (Asset, AssetAttachment, AssetCategory,
-                           AssetRelation, AssetTag, CalendarAlert,
-                           ComputerDetails, CustomLifecycle, NetworkDetails,
-                           TechSpecs, Vendor)
+from assets.models import (
+    Asset,
+    AssetAttachment,
+    AssetCategory,
+    AssetRelation,
+    AssetTag,
+    CalendarAlert,
+    ComputerDetails,
+    CustomLifecycle,
+    NetworkDetails,
+    TechSpecs,
+    Vendor,
+)
 from infrastructure.models import Department, Location
 
 

@@ -6,16 +6,30 @@ from datetime import date, timedelta
 
 import pytest
 
-from assets.models import (Asset, AssetAttachment, AssetCategory,
-                           AssetRelation, AssetTag, CalendarAlert,
-                           ComputerDetails, CustomLifecycle, TechSpecs, Vendor)
-from assets.serializers import (AssetAttachmentSerializer,
-                                AssetCategorySerializer,
-                                AssetRelationSerializer, AssetSerializer,
-                                AssetTagSerializer, CalendarAlertSerializer,
-                                ComputerDetailsSerializer,
-                                CustomLifecycleSerializer, TechSpecsSerializer,
-                                VendorSerializer)
+from assets.models import (
+    Asset,
+    AssetAttachment,
+    AssetCategory,
+    AssetRelation,
+    AssetTag,
+    CalendarAlert,
+    ComputerDetails,
+    CustomLifecycle,
+    TechSpecs,
+    Vendor,
+)
+from assets.serializers import (
+    AssetAttachmentSerializer,
+    AssetCategorySerializer,
+    AssetRelationSerializer,
+    AssetSerializer,
+    AssetTagSerializer,
+    CalendarAlertSerializer,
+    ComputerDetailsSerializer,
+    CustomLifecycleSerializer,
+    TechSpecsSerializer,
+    VendorSerializer,
+)
 from infrastructure.models import Department, Location
 
 

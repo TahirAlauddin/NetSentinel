@@ -4,16 +4,26 @@ Tests for Infrastructure serializers.
 
 import pytest
 
-from infrastructure.models import (CarrierContact, Category, Circuit, Contact,
-                                   Department, Location, PointOfContact,
-                                   UtilityContact)
-from infrastructure.serializers import (CarrierContactSerializer,
-                                        CategorySerializer, CircuitSerializer,
-                                        ContactSerializer,
-                                        DepartmentSerializer,
-                                        LocationSerializer,
-                                        PointOfContactSerializer,
-                                        UtilityContactSerializer)
+from infrastructure.models import (
+    CarrierContact,
+    Category,
+    Circuit,
+    Contact,
+    Department,
+    Location,
+    PointOfContact,
+    UtilityContact,
+)
+from infrastructure.serializers import (
+    CarrierContactSerializer,
+    CategorySerializer,
+    CircuitSerializer,
+    ContactSerializer,
+    DepartmentSerializer,
+    LocationSerializer,
+    PointOfContactSerializer,
+    UtilityContactSerializer,
+)
 
 
 @pytest.mark.django_db

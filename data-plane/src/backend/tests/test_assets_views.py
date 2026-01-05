@@ -7,8 +7,14 @@ from datetime import date, timedelta
 import pytest
 from rest_framework import status
 
-from assets.models import (Asset, AssetAttachment, AssetCategory,
-                           AssetRelation, ComputerDetails, TechSpecs)
+from assets.models import (
+    Asset,
+    AssetAttachment,
+    AssetCategory,
+    AssetRelation,
+    ComputerDetails,
+    TechSpecs,
+)
 
 
 @pytest.mark.api
