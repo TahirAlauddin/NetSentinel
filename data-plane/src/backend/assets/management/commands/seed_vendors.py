@@ -47,14 +47,10 @@ class Command(BaseCommand):
         )
 
         if created:
-            self.stdout.write(
-                self.style.SUCCESS(f"  ✅ Created: {vendor_name}")
-            )
+            self.stdout.write(self.style.SUCCESS(f"  ✅ Created: {vendor_name}"))
             return "created"
         else:
-            self.stdout.write(
-                self.style.WARNING(f"  ⏭️  Skipped (exists): {vendor_name}")
-            )
+            self.stdout.write(self.style.WARNING(f"  ⏭️  Skipped (exists): {vendor_name}"))
             return "skipped"
 
     def _process_vendors(self, vendors, dry_run):
@@ -81,9 +77,7 @@ class Command(BaseCommand):
                         skipped_count += 1
             except Exception as e:
                 error_count += 1
-                self.stdout.write(
-                    self.style.ERROR(f"  ❌ Error creating '{vendor_name}': {e}")
-                )
+                self.stdout.write(self.style.ERROR(f"  ❌ Error creating '{vendor_name}': {e}"))
 
         return created_count, skipped_count, error_count
 
@@ -103,9 +97,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f"Errors: {error_count}"))
 
         if not dry_run:
-            self.stdout.write(
-                f"\n📊 Total vendors in database: {Vendor.objects.count()}"
-            )
+            self.stdout.write(f"\n📊 Total vendors in database: {Vendor.objects.count()}")
 
     def handle(self, *args, **options):
         """Load vendors from JSON and create them in the database."""
@@ -139,10 +131,6 @@ class Command(BaseCommand):
                 self.style.WARNING("\n🔍 DRY RUN MODE - No vendors will be created\n")
             )
 
-        created_count, skipped_count, error_count = self._process_vendors(
-            vendors, dry_run
-        )
+        created_count, skipped_count, error_count = self._process_vendors(vendors, dry_run)
 
-        self._print_summary(
-            vendors, created_count, skipped_count, error_count, dry_run
-        )
+        self._print_summary(vendors, created_count, skipped_count, error_count, dry_run)

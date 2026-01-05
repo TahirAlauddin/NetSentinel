@@ -14,9 +14,7 @@ from .models import (
 class PointOfContactSerializer(serializers.ModelSerializer):
     """Serializer for Point of Contact."""
 
-    contact_type_display = serializers.CharField(
-        source="get_contact_type_display", read_only=True
-    )
+    contact_type_display = serializers.CharField(source="get_contact_type_display", read_only=True)
 
     class Meta:
         model = PointOfContact
@@ -196,9 +194,7 @@ class UtilityContactSerializer(serializers.ModelSerializer):
     """Serializer for Utility Contact."""
 
     location_name = serializers.CharField(source="location.name", read_only=True)
-    utility_type_display = serializers.CharField(
-        source="get_utility_type_display", read_only=True
-    )
+    utility_type_display = serializers.CharField(source="get_utility_type_display", read_only=True)
 
     class Meta:
         model = UtilityContact

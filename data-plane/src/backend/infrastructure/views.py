@@ -62,9 +62,7 @@ class PointOfContactViewSet(viewsets.ModelViewSet):
     ViewSet for managing points of contact.
     """
 
-    queryset = PointOfContact.objects.select_related(
-        "circuit", "circuit__location"
-    ).all()
+    queryset = PointOfContact.objects.select_related("circuit", "circuit__location").all()
     serializer_class = PointOfContactSerializer
 
 

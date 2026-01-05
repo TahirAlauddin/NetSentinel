@@ -35,9 +35,7 @@ def user_stats_view(request):
     API view for user statistics (admin only).
     """
     if not request.user.is_staff:
-        return Response(
-            {"error": "Permission denied."}, status=status.HTTP_403_FORBIDDEN
-        )
+        return Response({"error": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
 
     stats = {
         "total_users": User.objects.count(),

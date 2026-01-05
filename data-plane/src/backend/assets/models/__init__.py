@@ -189,18 +189,14 @@ class Asset(models.Model):
         blank=True, null=True, help_text="IP address (IPv4 or IPv6)"
     )
     manufacturer = models.CharField(max_length=255, blank=True, null=True)
-    tags = models.ManyToManyField(
-        AssetTag, blank=True, null=True, related_name="assets"
-    )
+    tags = models.ManyToManyField(AssetTag, blank=True, null=True, related_name="assets")
     system_uuid = models.CharField(
         max_length=36,
         blank=True,
         null=True,
         help_text="System UUID (e.g., from BIOS/UEFI)",
     )
-    system_uptime = models.DurationField(
-        blank=True, null=True, help_text="System uptime duration"
-    )
+    system_uptime = models.DurationField(blank=True, null=True, help_text="System uptime duration")
     in_current_state_since = models.DateField(
         blank=True,
         null=True,
@@ -329,9 +325,7 @@ class Asset(models.Model):
         Returns all attachments for this asset using GenericForeignKey.
         """
         content_type = ContentType.objects.get_for_model(self.__class__)
-        return AssetAttachment.objects.filter(
-            content_type=content_type, object_id=self.pk
-        )
+        return AssetAttachment.objects.filter(content_type=content_type, object_id=self.pk)
 
 
 class CalendarAlert(models.Model):
@@ -339,13 +333,9 @@ class CalendarAlert(models.Model):
     Calendar alert model for asset calendar alerts.
     """
 
-    asset = models.ForeignKey(
-        Asset, on_delete=models.CASCADE, related_name="calendar_alerts"
-    )
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="calendar_alerts")
     date = models.DateField(help_text="Date to alert on")
-    message = models.TextField(
-        blank=True, null=True, help_text="Alert message/description"
-    )
+    message = models.TextField(blank=True, null=True, help_text="Alert message/description")
     assigned_to = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -391,9 +381,7 @@ class AssetAttachment(models.Model):
     """
 
     # Generic foreign key to work with Asset
-    asset = models.ForeignKey(
-        Asset, on_delete=models.CASCADE, related_name="attachments"
-    )
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="attachments")
 
     file = models.FileField(upload_to="assets/attachments/")
     name = models.CharField(max_length=255, blank=True, null=True)
@@ -421,12 +409,8 @@ class AssetRelation(models.Model):
     Relation model for assets.
     """
 
-    asset = models.ForeignKey(
-        Asset, on_delete=models.CASCADE, related_name="related_to"
-    )
-    related_asset = models.ForeignKey(
-        Asset, on_delete=models.CASCADE, related_name="related_from"
-    )
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="related_to")
+    related_asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="related_from")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

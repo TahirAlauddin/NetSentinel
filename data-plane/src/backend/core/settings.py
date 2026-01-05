@@ -39,9 +39,7 @@ DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 allowed_hosts_list = []
 if os.environ.get("ALLOWED_HOSTS"):
     allowed_hosts_list = [
-        host.strip()
-        for host in os.environ.get("ALLOWED_HOSTS", "").split(",")
-        if host.strip()
+        host.strip() for host in os.environ.get("ALLOWED_HOSTS", "").split(",") if host.strip()
     ]
 
 # Add Docker internal hostnames for service-to-service communication
@@ -268,9 +266,7 @@ DJOSER = {
 # CORS Configuration
 cors_origins = os.environ.get("CORS_ALLOWED_ORIGINS", "")
 if cors_origins:
-    CORS_ALLOWED_ORIGINS = [
-        origin.strip() for origin in cors_origins.split(",") if origin.strip()
-    ]
+    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
 else:
     CORS_ALLOWED_ORIGINS = [
         "http://localhost:3000",

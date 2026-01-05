@@ -14,9 +14,7 @@ from .views import (
 router = DefaultRouter()
 router.register(r"locations", LocationViewSet, basename="location")
 router.register(r"circuits", CircuitViewSet, basename="circuit")
-router.register(
-    r"points-of-contact", PointOfContactViewSet, basename="point-of-contact"
-)
+router.register(r"points-of-contact", PointOfContactViewSet, basename="point-of-contact")
 router.register(r"departments", DepartmentViewSet, basename="department")
 router.register(r"categories", CategoryViewSet, basename="category")
 router.register(r"contacts", ContactViewSet, basename="contact")

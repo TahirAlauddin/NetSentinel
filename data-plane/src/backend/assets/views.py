@@ -188,9 +188,7 @@ class AssetViewSet(viewsets.ModelViewSet):
         """Filter queryset by search term."""
         search = self.request.query_params.get("search", None)
         if search:
-            queryset = queryset.filter(
-                Q(name__icontains=search) | Q(asset_tag__icontains=search)
-            )
+            queryset = queryset.filter(Q(name__icontains=search) | Q(asset_tag__icontains=search))
         return queryset
 
     def get_queryset(self):
@@ -216,9 +214,7 @@ class AssetViewSet(viewsets.ModelViewSet):
                 or instance.managed_by == user
             )
             if not is_owner:
-                raise PermissionDenied(
-                    "You do not have permission to delete this asset."
-                )
+                raise PermissionDenied("You do not have permission to delete this asset.")
         instance.delete()
 
     @action(detail=True, methods=["get"])
@@ -239,9 +235,9 @@ class AssetViewSet(viewsets.ModelViewSet):
             "related_asset"
         )
         # Get relations where this asset is the target
-        incoming_relations = AssetRelation.objects.filter(
-            related_asset=asset
-        ).select_related("asset")
+        incoming_relations = AssetRelation.objects.filter(related_asset=asset).select_related(
+            "asset"
+        )
 
         # Combine both directions
         all_relations = list(outgoing_relations) + list(incoming_relations)
@@ -355,13 +351,11 @@ class AssetRelationViewSet(viewsets.ModelViewSet):
         """Filter relations by the asset ID from the nested route if present."""
         asset_id = self.kwargs.get("asset_pk")
         if asset_id:
-            queryset = AssetRelation.objects.select_related(
-                "asset", "related_asset"
-            ).filter(asset_id=asset_id)
+            queryset = AssetRelation.objects.select_related("asset", "related_asset").filter(
+                asset_id=asset_id
+            )
         else:
-            queryset = AssetRelation.objects.select_related(
-                "asset", "related_asset"
-            ).all()
+            queryset = AssetRelation.objects.select_related("asset", "related_asset").all()
         return queryset
 
     def create(self, request, *args, **kwargs):
@@ -445,11 +439,7 @@ class AssetBasicDetailsViewSet(viewsets.ReadOnlyModelViewSet):
     ViewSet for viewing asset basic details.
     """
 
-    queryset = (
-        Asset.objects.select_related("category", "vendor")
-        .prefetch_related("tags")
-        .all()
-    )
+    queryset = Asset.objects.select_related("category", "vendor").prefetch_related("tags").all()
     serializer_class = AssetBasicDetailsSerializer
     permission_classes = [IsAuthenticated]
 
@@ -460,9 +450,7 @@ class AssetTechSpecsViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     queryset = (
-        Asset.objects.values(
-            "id", "name", "mac_address", "ip_address", "manufacturer", "model"
-        )
+        Asset.objects.values("id", "name", "mac_address", "ip_address", "manufacturer", "model")
         .prefetch_related("tags")
         .all()
     )
