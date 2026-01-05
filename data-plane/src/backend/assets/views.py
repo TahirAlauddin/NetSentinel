@@ -1,49 +1,26 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework import permissions
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
-from django.db.models import Q
 from django.db import IntegrityError
-from .models import (
-    AssetTag,
-    CustomLifecycle,
-    Vendor,
-    TechSpecs,
-    AssetCategory,
-    Asset,
-    AssetAttachment,
-    AssetRelation,
-    ComputerDetails,
-    NetworkDetails,
-    DisplayDetails,
-    PhoneDetails,
-    PeripheralDetails,
-    AssetImage,
-    CalendarAlert,
-)
-from .serializers import (
-    AssetTagSerializer,
-    CustomLifecycleSerializer,
-    VendorSerializer,
-    TechSpecsSerializer,
-    AssetCategorySerializer,
-    AssetSerializer,
-    AssetCreateUpdateSerializer,
-    AssetAttachmentSerializer,
-    AssetRelationSerializer,
-    ComputerDetailsSerializer,
-    NetworkDetailsSerializer,
-    DisplayDetailsSerializer,
-    PhoneDetailsSerializer,
-    PeripheralDetailsSerializer,
-    AssetBasicDetailsSerializer,
-    AssetTechSpecsSerializer,
-    AssetImageSerializer,
-    CalendarAlertSerializer,
-    CalendarAlertCreateUpdateSerializer,
-)
+from django.db.models import Q
+from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from .models import (Asset, AssetAttachment, AssetCategory, AssetImage,
+                     AssetRelation, AssetTag, CalendarAlert, ComputerDetails,
+                     CustomLifecycle, DisplayDetails, NetworkDetails,
+                     PeripheralDetails, PhoneDetails, TechSpecs, Vendor)
+from .serializers import (AssetAttachmentSerializer,
+                          AssetBasicDetailsSerializer, AssetCategorySerializer,
+                          AssetCreateUpdateSerializer, AssetImageSerializer,
+                          AssetRelationSerializer, AssetSerializer,
+                          AssetTagSerializer, AssetTechSpecsSerializer,
+                          CalendarAlertCreateUpdateSerializer,
+                          CalendarAlertSerializer, ComputerDetailsSerializer,
+                          CustomLifecycleSerializer, DisplayDetailsSerializer,
+                          NetworkDetailsSerializer,
+                          PeripheralDetailsSerializer, PhoneDetailsSerializer,
+                          TechSpecsSerializer, VendorSerializer)
 
 
 @api_view(["GET"])

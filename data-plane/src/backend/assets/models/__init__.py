@@ -1,8 +1,9 @@
-from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.contenttypes.models import ContentType
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+
+from infrastructure.models import Department, Location
 from users.models import User
-from infrastructure.models import Location, Department
 
 
 class AssetTag(models.Model):
@@ -443,10 +444,10 @@ class TechSpecs(models.Model):
 # Import all the extension models after main models are defined
 # This avoids circular imports since extension models import Asset
 from .computer import ComputerDetails  # noqa: E402
-from .network import NetworkDetails  # noqa: E402
 from .display import DisplayDetails  # noqa: E402
-from .phone import PhoneDetails  # noqa: E402
+from .network import NetworkDetails  # noqa: E402
 from .peripheral import PeripheralDetails  # noqa: E402
+from .phone import PhoneDetails  # noqa: E402
 
 __all__ = [
     "ComputerDetails",

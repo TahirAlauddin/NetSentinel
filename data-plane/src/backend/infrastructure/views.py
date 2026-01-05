@@ -1,26 +1,13 @@
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import (
-    Location,
-    Circuit,
-    PointOfContact,
-    Department,
-    Category,
-    Contact,
-    CarrierContact,
-    UtilityContact,
-)
-from .serializers import (
-    LocationSerializer,
-    CircuitSerializer,
-    PointOfContactSerializer,
-    DepartmentSerializer,
-    CategorySerializer,
-    ContactSerializer,
-    CarrierContactSerializer,
-    UtilityContactSerializer,
-)
+
+from .models import (CarrierContact, Category, Circuit, Contact, Department,
+                     Location, PointOfContact, UtilityContact)
+from .serializers import (CarrierContactSerializer, CategorySerializer,
+                          CircuitSerializer, ContactSerializer,
+                          DepartmentSerializer, LocationSerializer,
+                          PointOfContactSerializer, UtilityContactSerializer)
 
 
 class LocationViewSet(viewsets.ModelViewSet):

@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Provider, DataCircuit
+
+from .models import DataCircuit, Provider
 
 
 @admin.register(Provider)

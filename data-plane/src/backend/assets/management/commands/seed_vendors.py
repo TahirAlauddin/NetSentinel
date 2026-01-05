@@ -5,7 +5,9 @@ Usage: python manage.py seed_vendors
 
 import json
 from pathlib import Path
+
 from django.core.management.base import BaseCommand
+
 from assets.models import Vendor
 
 

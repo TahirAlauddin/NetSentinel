@@ -1,23 +1,13 @@
 from rest_framework import serializers
-from .models import (
-    AssetTag,
-    CustomLifecycle,
-    Vendor,
-    AssetCategory,
-    TechSpecs,
-    Asset,
-    AssetAttachment,
-    AssetRelation,
-    ComputerDetails,
-    NetworkDetails,
-    DisplayDetails,
-    PhoneDetails,
-    PeripheralDetails,
-    AssetImage,
-    CalendarAlert,
-)
-from infrastructure.serializers import AssetLocationSerializer, DepartmentSerializer
+
+from infrastructure.serializers import (AssetLocationSerializer,
+                                        DepartmentSerializer)
 from users.serializers import UserSerializer
+
+from .models import (Asset, AssetAttachment, AssetCategory, AssetImage,
+                     AssetRelation, AssetTag, CalendarAlert, ComputerDetails,
+                     CustomLifecycle, DisplayDetails, NetworkDetails,
+                     PeripheralDetails, PhoneDetails, TechSpecs, Vendor)
 
 
 class AssetTagSerializer(serializers.ModelSerializer):

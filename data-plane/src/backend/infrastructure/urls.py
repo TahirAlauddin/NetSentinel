@@ -1,15 +1,9 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from .views import (
-    LocationViewSet,
-    CircuitViewSet,
-    PointOfContactViewSet,
-    DepartmentViewSet,
-    CategoryViewSet,
-    ContactViewSet,
-    CarrierContactViewSet,
-    UtilityContactViewSet,
-)
+
+from .views import (CarrierContactViewSet, CategoryViewSet, CircuitViewSet,
+                    ContactViewSet, DepartmentViewSet, LocationViewSet,
+                    PointOfContactViewSet, UtilityContactViewSet)
 
 router = DefaultRouter()
 router.register(r"locations", LocationViewSet, basename="location")

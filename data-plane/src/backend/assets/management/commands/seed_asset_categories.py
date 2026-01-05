@@ -4,7 +4,8 @@ Usage: python manage.py seed_asset_categories
 """
 
 from django.core.management.base import BaseCommand
-from assets.models import TechSpecs, AssetCategory
+
+from assets.models import AssetCategory, TechSpecs
 
 # Tech Specs mapping (name -> table_name)
 TECH_SPECS = {

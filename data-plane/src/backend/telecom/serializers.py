@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Provider, DataCircuit
+
+from .models import DataCircuit, Provider
 
 
 class ProviderSerializer(serializers.ModelSerializer):

@@ -1,14 +1,7 @@
 from django.contrib import admin
-from .models import (
-    Location,
-    Circuit,
-    PointOfContact,
-    Department,
-    Category,
-    Contact,
-    CarrierContact,
-    UtilityContact,
-)
+
+from .models import (CarrierContact, Category, Circuit, Contact, Department,
+                     Location, PointOfContact, UtilityContact)
 
 
 @admin.register(Location)
