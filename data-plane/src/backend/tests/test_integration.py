@@ -288,9 +288,7 @@ class TestUserPermissionIntegration:
             category="assets",
         )
         django_group = Group.objects.create(name="Asset Viewers")
-        AppPermissionGroup.objects.create(
-            group=django_group, permission=permission
-        )
+        AppPermissionGroup.objects.create(group=django_group, permission=permission)
         user.groups.add(django_group)
 
         django_group.delete()
@@ -380,9 +378,7 @@ class TestComplexQueries:
         )
 
         # Query laptops at this location
-        laptops_at_location = Asset.objects.filter(
-            category=category1, location=location
-        )
+        laptops_at_location = Asset.objects.filter(category=category1, location=location)
         assert laptops_at_location.count() == 2
         assert asset1 in laptops_at_location
         assert asset3 in laptops_at_location
@@ -410,9 +406,7 @@ class TestComplexQueries:
         )
 
         # Query assets assigned to user at this location
-        user_assets_at_location = Asset.objects.filter(
-            assigned_to=user, location=location
-        )
+        user_assets_at_location = Asset.objects.filter(assigned_to=user, location=location)
         assert user_assets_at_location.count() == 1
         assert asset1 in user_assets_at_location
         assert asset2 not in user_assets_at_location
@@ -437,9 +431,9 @@ class TestComplexQueries:
         )
 
         # Query circuits with their contacts
-        circuits_with_contacts = Circuit.objects.filter(
-            location=location
-        ).prefetch_related("points_of_contact")
+        circuits_with_contacts = Circuit.objects.filter(location=location).prefetch_related(
+            "points_of_contact"
+        )
 
         assert circuits_with_contacts.count() == 1
         circuit_result = circuits_with_contacts.first()

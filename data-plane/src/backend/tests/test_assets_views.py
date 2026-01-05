@@ -92,9 +92,7 @@ class TestAssetCategoryViewSet:
         asset1 = Asset.objects.create(name="Laptop 1", category=category)
         asset2 = Asset.objects.create(name="Laptop 2", category=category)
 
-        response = authenticated_api_client.get(
-            f"/api/v1/assets/categories/{category.id}/assets/"
-        )
+        response = authenticated_api_client.get(f"/api/v1/assets/categories/{category.id}/assets/")
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 2
         asset_ids = [a["id"] for a in response.data]
@@ -147,9 +145,7 @@ class TestAssetViewSet:
         Asset.objects.create(name="Laptop 1", category=category1)
         Asset.objects.create(name="Desktop 1", category=category2)
 
-        response = authenticated_api_client.get(
-            f"/api/v1/assets/?category={category1.id}"
-        )
+        response = authenticated_api_client.get(f"/api/v1/assets/?category={category1.id}")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 1
         assert response.data["results"][0]["name"] == "Laptop 1"
@@ -215,9 +211,7 @@ class TestAssetViewSet:
             uploaded_by=user,
         )
 
-        response = authenticated_api_client.get(
-            f"/api/v1/assets/{asset.id}/attachments/"
-        )
+        response = authenticated_api_client.get(f"/api/v1/assets/{asset.id}/attachments/")
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 1
         assert response.data[0]["name"] == "Test Document"
@@ -229,9 +223,7 @@ class TestAssetViewSet:
         asset2 = Asset.objects.create(name="Asset 2", category=category)
         AssetRelation.objects.create(asset=asset1, related_asset=asset2)
 
-        response = authenticated_api_client.get(
-            f"/api/v1/assets/{asset1.id}/related_assets/"
-        )
+        response = authenticated_api_client.get(f"/api/v1/assets/{asset1.id}/related_assets/")
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) >= 1
 

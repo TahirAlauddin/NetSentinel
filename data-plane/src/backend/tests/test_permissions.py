@@ -135,9 +135,7 @@ class TestViewSetPermissions:
         response = admin_api_client.get("/api/v1/users/stats/")
         assert response.status_code == status.HTTP_200_OK
 
-    def test_superuser_only_endpoint_requires_superuser(
-        self, authenticated_api_client, user
-    ):
+    def test_superuser_only_endpoint_requires_superuser(self, authenticated_api_client, user):
         """Test that superuser-only endpoints require superuser permission."""
         response = authenticated_api_client.get("/api/v1/users/groups/")
         assert response.status_code == status.HTTP_200_OK

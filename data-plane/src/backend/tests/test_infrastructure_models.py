@@ -166,12 +166,8 @@ class TestCircuitModel:
 
     def test_circuit_ordering(self):
         """Test that circuits are ordered by location and carrier."""
-        location1 = Location.objects.create(
-            name="Location A", address1="123 St", city="City A"
-        )
-        location2 = Location.objects.create(
-            name="Location B", address1="456 St", city="City B"
-        )
+        location1 = Location.objects.create(name="Location A", address1="123 St", city="City A")
+        location2 = Location.objects.create(name="Location B", address1="456 St", city="City B")
 
         Circuit.objects.create(location=location1, speed=100, carrier="Carrier B")
         Circuit.objects.create(location=location1, speed=100, carrier="Carrier A")

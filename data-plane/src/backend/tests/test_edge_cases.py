@@ -333,9 +333,7 @@ class TestForeignKeyViolations:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_asset_attachment_with_nonexistent_asset(
-        self, authenticated_api_client, user
-    ):
+    def test_asset_attachment_with_nonexistent_asset(self, authenticated_api_client, user):
         """Test that creating attachment with nonexistent asset returns 400."""
         data = {
             "asset": 99999,  # Non-existent ID
@@ -459,9 +457,7 @@ class TestNotFoundErrors:
 
     def test_get_nonexistent_location(self, authenticated_api_client):
         """Test that getting nonexistent location returns 404."""
-        response = authenticated_api_client.get(
-            "/api/v1/infrastructure/locations/99999/"
-        )
+        response = authenticated_api_client.get("/api/v1/infrastructure/locations/99999/")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_get_nonexistent_category(self, authenticated_api_client):
@@ -678,9 +674,7 @@ class TestSQLInjectionAttempts:
         Asset.objects.create(name="Test Asset", category=category)
 
         sql_injection = "'; DROP TABLE assets_asset; --"
-        response = authenticated_api_client.get(
-            f"/api/v1/assets/?search={sql_injection}"
-        )
+        response = authenticated_api_client.get(f"/api/v1/assets/?search={sql_injection}")
         # Should not crash or execute SQL
         assert response.status_code in [
             status.HTTP_200_OK,
@@ -693,9 +687,7 @@ class TestSQLInjectionAttempts:
         Asset.objects.create(name="Test Asset", category=category)
 
         sql_injection = "1' OR '1'='1"
-        response = authenticated_api_client.get(
-            f"/api/v1/assets/?category={sql_injection}"
-        )
+        response = authenticated_api_client.get(f"/api/v1/assets/?category={sql_injection}")
         # Should not crash or execute SQL
         assert response.status_code in [
             status.HTTP_200_OK,

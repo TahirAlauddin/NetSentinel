@@ -170,9 +170,7 @@ class TestURLParameterValidation:
 
     def test_invalid_id_returns_404(self, authenticated_api_client):
         """Test that invalid ID in URL returns 404."""
-        response = authenticated_api_client.get(
-            "/api/v1/infrastructure/locations/99999/"
-        )
+        response = authenticated_api_client.get("/api/v1/infrastructure/locations/99999/")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_nested_url_requires_parent(self, authenticated_api_client):
