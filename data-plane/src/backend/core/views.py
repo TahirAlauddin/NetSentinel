@@ -21,6 +21,10 @@ def api_info_view(request):
                 "user_stats": "/api/v1/stats/",
                 "documentation": "/swagger/",
             },
-            "note": "Most endpoints require authentication. Use /api/v1/auth/users/ to register or /api/v1/auth/jwt/create/ to login.",
+            "note": (
+                "Most endpoints require authentication. "
+                "Use /api/v1/auth/users/ to register or "
+                "/api/v1/auth/jwt/create/ to login."
+            ),
         }
     )

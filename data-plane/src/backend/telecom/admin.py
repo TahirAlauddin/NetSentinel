@@ -63,4 +63,3 @@ class DataCircuitAdmin(admin.ModelAdmin):
         "updated_at",
     ]
     raw_id_fields = ["provider", "location"]
-

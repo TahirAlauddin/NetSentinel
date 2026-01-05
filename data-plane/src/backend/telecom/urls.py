@@ -9,4 +9,3 @@ router.register(r"data-circuits", DataCircuitViewSet, basename="data-circuit")
 urlpatterns = [
     path("", include(router.urls)),
 ]
-

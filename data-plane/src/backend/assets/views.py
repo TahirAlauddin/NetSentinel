@@ -6,8 +6,44 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from django.db.models import Q
 from django.db import IntegrityError
-from .models import *
-from .serializers import *
+from .models import (
+    AssetTag,
+    CustomLifecycle,
+    Vendor,
+    TechSpecs,
+    AssetCategory,
+    Asset,
+    AssetAttachment,
+    AssetRelation,
+    ComputerDetails,
+    NetworkDetails,
+    DisplayDetails,
+    PhoneDetails,
+    PeripheralDetails,
+    AssetImage,
+    CalendarAlert,
+)
+from .serializers import (
+    AssetTagSerializer,
+    CustomLifecycleSerializer,
+    VendorSerializer,
+    TechSpecsSerializer,
+    AssetCategorySerializer,
+    AssetSerializer,
+    AssetCreateUpdateSerializer,
+    AssetAttachmentSerializer,
+    AssetRelationSerializer,
+    ComputerDetailsSerializer,
+    NetworkDetailsSerializer,
+    DisplayDetailsSerializer,
+    PhoneDetailsSerializer,
+    PeripheralDetailsSerializer,
+    AssetBasicDetailsSerializer,
+    AssetTechSpecsSerializer,
+    AssetImageSerializer,
+    CalendarAlertSerializer,
+    CalendarAlertCreateUpdateSerializer,
+)
 
 
 @api_view(["GET"])
@@ -131,49 +167,40 @@ class AssetViewSet(viewsets.ModelViewSet):
             return AssetCreateUpdateSerializer
         return AssetSerializer
 
-    def get_queryset(self):
-        """Filter queryset based on query parameters."""
-        queryset = super().get_queryset()
-
-        # Filter by category
-        category = self.request.query_params.get("category", None)
-        if category:
+    def _filter_by_id_param(self, queryset, param_name, filter_field):
+        """Filter queryset by integer ID parameter."""
+        param_value = self.request.query_params.get(param_name, None)
+        if param_value:
             try:
-                queryset = queryset.filter(category_id=int(category))
+                queryset = queryset.filter(**{filter_field: int(param_value)})
             except (ValueError, TypeError):
-                # Invalid category ID, return empty queryset
                 queryset = queryset.none()
+        return queryset
 
-        # Filter by status
+    def _filter_by_status(self, queryset):
+        """Filter queryset by status."""
         status_filter = self.request.query_params.get("status", None)
         if status_filter:
             queryset = queryset.filter(status=status_filter)
+        return queryset
 
-        # Filter by vendor
-        vendor = self.request.query_params.get("vendor", None)
-        if vendor:
-            try:
-                queryset = queryset.filter(vendor_id=int(vendor))
-            except (ValueError, TypeError):
-                # Invalid vendor ID, return empty queryset
-                queryset = queryset.none()
-
-        # Filter by location
-        location = self.request.query_params.get("location", None)
-        if location:
-            try:
-                queryset = queryset.filter(location_id=int(location))
-            except (ValueError, TypeError):
-                # Invalid location ID, return empty queryset
-                queryset = queryset.none()
-
-        # Search by name or asset_tag
+    def _filter_by_search(self, queryset):
+        """Filter queryset by search term."""
         search = self.request.query_params.get("search", None)
         if search:
             queryset = queryset.filter(
                 Q(name__icontains=search) | Q(asset_tag__icontains=search)
             )
+        return queryset
 
+    def get_queryset(self):
+        """Filter queryset based on query parameters."""
+        queryset = super().get_queryset()
+        queryset = self._filter_by_id_param(queryset, "category", "category_id")
+        queryset = self._filter_by_status(queryset)
+        queryset = self._filter_by_id_param(queryset, "vendor", "vendor_id")
+        queryset = self._filter_by_id_param(queryset, "location", "location_id")
+        queryset = self._filter_by_search(queryset)
         return queryset
 
     def perform_destroy(self, instance):

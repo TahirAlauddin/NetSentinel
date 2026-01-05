@@ -52,4 +52,3 @@ class PhoneDetails(models.Model):
 
     def __str__(self):
         return f"Phone Details for {self.asset}"
-

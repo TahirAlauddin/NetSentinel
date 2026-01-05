@@ -1,9 +1,16 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
 from users.models import User
 from infrastructure.models import Location, Department
+
+# Import all the extension models
+from .computer import ComputerDetails
+from .network import NetworkDetails
+from .display import DisplayDetails
+from .phone import PhoneDetails
+from .peripheral import PeripheralDetails
+
 
 class AssetTag(models.Model):
     """
@@ -337,10 +344,20 @@ class CalendarAlert(models.Model):
     Calendar alert model for asset calendar alerts.
     """
 
-    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="calendar_alerts")
+    asset = models.ForeignKey(
+        Asset, on_delete=models.CASCADE, related_name="calendar_alerts"
+    )
     date = models.DateField(help_text="Date to alert on")
-    message = models.TextField(blank=True, null=True, help_text="Alert message/description")
-    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="calendar_alerts")
+    message = models.TextField(
+        blank=True, null=True, help_text="Alert message/description"
+    )
+    assigned_to = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="calendar_alerts",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -370,6 +387,7 @@ class AssetImage(models.Model):
 
     def __str__(self):
         return self.image.name
+
 
 class AssetAttachment(models.Model):
     """
@@ -440,14 +458,6 @@ class TechSpecs(models.Model):
     def __str__(self):
         return self.name
 
-
-# Import all the extension models
-
-from .computer import ComputerDetails
-from .network import NetworkDetails
-from .display import DisplayDetails
-from .phone import PhoneDetails
-from .peripheral import PeripheralDetails
 
 __all__ = [
     "ComputerDetails",

@@ -1,6 +1,7 @@
 from django.db import models
 from assets.models import Asset
 
+
 class PeripheralDetails(models.Model):
     """
     Extension table for Peripheral category assets (Keyboard, Mouse, Webcam).

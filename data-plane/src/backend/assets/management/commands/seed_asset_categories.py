@@ -87,4 +87,3 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("\n✅ Seeding complete!"))
         self.stdout.write(f"Total Tech Specs: {TechSpecs.objects.count()}")
         self.stdout.write(f"Total Categories: {AssetCategory.objects.count()}")
-

@@ -8,9 +8,7 @@ class ProviderSerializer(serializers.ModelSerializer):
     service_type_display = serializers.CharField(
         source="get_service_type_display", read_only=True
     )
-    status_display = serializers.CharField(
-        source="get_status_display", read_only=True
-    )
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
     data_circuit_count = serializers.SerializerMethodField()
 
     def get_data_circuit_count(self, obj):
@@ -96,4 +94,3 @@ class DataCircuitSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
-

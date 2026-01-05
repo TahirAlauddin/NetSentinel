@@ -19,4 +19,3 @@ class DataCircuitViewSet(viewsets.ModelViewSet):
 
     queryset = DataCircuit.objects.select_related("provider", "location").all()
     serializer_class = DataCircuitSerializer
-

@@ -315,7 +315,6 @@ class AssetSerializer(serializers.ModelSerializer):
             "warranty_expiration",
             "installation_date",
             "calendar_alerts",
-            
             "images",
             "attachments",
 
@@ -328,7 +327,14 @@ class AssetSerializer(serializers.ModelSerializer):
             "phone_details",
             "peripheral_details",
         ]
-        read_only_fields = ["id", "images", "calendar_alerts", "attachments", "created_at", "updated_at"]
+        read_only_fields = [
+            "id",
+            "images",
+            "calendar_alerts",
+            "attachments",
+            "created_at",
+            "updated_at",
+        ]
 
 
 class AssetCreateUpdateSerializer(serializers.ModelSerializer):

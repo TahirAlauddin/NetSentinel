@@ -144,4 +144,3 @@ class DataCircuit(models.Model):
         circuit_display = self.circuit_id or self.alternate_cid or "Unknown"
         carrier_display = f" - {self.carrier}" if self.carrier else ""
         return f"{circuit_display}{carrier_display}"
-
