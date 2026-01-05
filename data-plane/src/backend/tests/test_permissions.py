@@ -5,7 +5,7 @@ Tests for permission system (AppPermissions and ViewSet permissions).
 import pytest
 from rest_framework import status
 from django.contrib.auth.models import Group
-from users.models import User, AppPermission, AppPermissionGroup
+from users.models import AppPermission, AppPermissionGroup
 
 
 @pytest.mark.django_db
@@ -36,7 +36,7 @@ class TestAppPermissionSystem:
 
     def test_superuser_has_all_permissions(self, admin_user):
         """Test that superuser has all permissions."""
-        permission = AppPermission.objects.create(
+        AppPermission.objects.create(
             codename="test_permission",
             name="Test Permission",
             category="test",

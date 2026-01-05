@@ -63,11 +63,9 @@ class TestUsersURLs:
     def test_groups_list_url(self):
         """Test that groups list URL resolves."""
         # Using the router basename
-        from rest_framework.routers import DefaultRouter
-
         # Groups are registered with basename="group"
         # The URL pattern would be /api/v1/users/groups/
-        client = Client()
+        Client()
         # We can't easily reverse router URLs, so we test by making a request
         # This is tested in test_user_views.py
 
@@ -84,7 +82,7 @@ class TestInfrastructureURLs:
 
     def test_locations_list_url(self):
         """Test that locations list URL pattern exists."""
-        client = Client()
+        Client()
         # URL should be /api/v1/infrastructure/locations/
         # This is tested in test_infrastructure_views.py
 

@@ -20,7 +20,6 @@ from assets.models import (
     NetworkDetails,
 )
 from infrastructure.models import Location, Department
-from users.models import User
 
 
 @pytest.mark.django_db

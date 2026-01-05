@@ -4,16 +4,13 @@ Edge cases and error handling tests.
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 from rest_framework import status
 from assets.models import (
     Asset,
     AssetCategory,
     AssetTag,
     Vendor,
-    AssetAttachment,
     AssetRelation,
-    CalendarAlert,
 )
 from infrastructure.models import (
     Location,
@@ -22,7 +19,6 @@ from infrastructure.models import (
     Category,
     PointOfContact,
 )
-from users.models import User, AppPermission
 
 
 @pytest.mark.api
@@ -410,8 +406,6 @@ class TestAuthenticationFailures:
     def test_expired_token(self, api_client, user):
         """Test that expired token returns 401."""
         from rest_framework_simplejwt.tokens import RefreshToken
-        from datetime import timedelta
-        from django.utils import timezone
 
         # Create a token and manually expire it
         refresh = RefreshToken.for_user(user)

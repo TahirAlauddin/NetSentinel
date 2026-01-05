@@ -6,18 +6,13 @@ import pytest
 from rest_framework import status
 from datetime import date, timedelta
 from assets.models import (
-    AssetTag,
-    CustomLifecycle,
-    Vendor,
     TechSpecs,
     AssetCategory,
     Asset,
     AssetAttachment,
     AssetRelation,
-    CalendarAlert,
     ComputerDetails,
 )
-from infrastructure.models import Location, Department
 
 
 @pytest.mark.api
@@ -214,7 +209,7 @@ class TestAssetViewSet:
         asset = Asset.objects.create(name="Test Laptop", category=category)
         # AssetAttachment uses ForeignKey, not GenericForeignKey
         # So we use asset.attachments directly, not get_attachments()
-        attachment = AssetAttachment.objects.create(
+        AssetAttachment.objects.create(
             asset=asset,
             name="Test Document",
             uploaded_by=user,

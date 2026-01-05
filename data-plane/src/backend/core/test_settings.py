@@ -3,7 +3,7 @@ Test settings for pytest.
 This file forces SQLite database for all tests.
 """
 
-from .settings import *
+from .settings import *  # noqa: F403, F401
 
 # Override database to use SQLite for tests
 DATABASES = {

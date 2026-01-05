@@ -3,9 +3,8 @@ Tests for User serializers.
 """
 
 import pytest
-from rest_framework.exceptions import ValidationError
 from django.contrib.auth.models import Group, Permission
-from users.models import User, AppPermission, AppPermissionGroup
+from users.models import AppPermission, AppPermissionGroup
 from users.serializers import (
     UserSerializer,
     UserCreateSerializer,
