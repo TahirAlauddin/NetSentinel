@@ -63,15 +63,18 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Third-party apps
     "rest_framework",
     "rest_framework_simplejwt",
     "djoser",
     "corsheaders",
     "drf_yasg",
+    # Local apps
     "users",  # Our custom users app
     "infrastructure",  # Infrastructure management app (locations, categories etc.)
     "assets",  # Assets management app (assets)
     "telecom",  # Telecom management app (providers, data circuits)
+    "ipam",  # IPAM management app (IP addresses, subnets, etc.)
 ]
 
 MIDDLEWARE = [
