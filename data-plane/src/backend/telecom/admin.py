@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Provider, DataCircuit
+
+from .models import DataCircuit, Provider
 
 
 @admin.register(Provider)
@@ -63,4 +64,3 @@ class DataCircuitAdmin(admin.ModelAdmin):
         "updated_at",
     ]
     raw_id_fields = ["provider", "location"]
-

@@ -1,9 +1,10 @@
-from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+
+from infrastructure.models import Department, Location
 from users.models import User
-from infrastructure.models import Location, Department
+
 
 class AssetTag(models.Model):
     """
@@ -196,9 +197,7 @@ class Asset(models.Model):
         null=True,
         help_text="System UUID (e.g., from BIOS/UEFI)",
     )
-    system_uptime = models.DurationField(
-        blank=True, null=True, help_text="System uptime duration"
-    )
+    system_uptime = models.DurationField(blank=True, null=True, help_text="System uptime duration")
     in_current_state_since = models.DateField(
         blank=True,
         null=True,
@@ -327,9 +326,7 @@ class Asset(models.Model):
         Returns all attachments for this asset using GenericForeignKey.
         """
         content_type = ContentType.objects.get_for_model(self.__class__)
-        return AssetAttachment.objects.filter(
-            content_type=content_type, object_id=self.pk
-        )
+        return AssetAttachment.objects.filter(content_type=content_type, object_id=self.pk)
 
 
 class CalendarAlert(models.Model):
@@ -340,7 +337,13 @@ class CalendarAlert(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="calendar_alerts")
     date = models.DateField(help_text="Date to alert on")
     message = models.TextField(blank=True, null=True, help_text="Alert message/description")
-    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="calendar_alerts")
+    assigned_to = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="calendar_alerts",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -370,6 +373,7 @@ class AssetImage(models.Model):
 
     def __str__(self):
         return self.image.name
+
 
 class AssetAttachment(models.Model):
     """
@@ -406,12 +410,8 @@ class AssetRelation(models.Model):
     Relation model for assets.
     """
 
-    asset = models.ForeignKey(
-        Asset, on_delete=models.CASCADE, related_name="related_to"
-    )
-    related_asset = models.ForeignKey(
-        Asset, on_delete=models.CASCADE, related_name="related_from"
-    )
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="related_to")
+    related_asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="related_from")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -441,13 +441,13 @@ class TechSpecs(models.Model):
         return self.name
 
 
-# Import all the extension models
-
-from .computer import ComputerDetails
-from .network import NetworkDetails
-from .display import DisplayDetails
-from .phone import PhoneDetails
-from .peripheral import PeripheralDetails
+# Import all the extension models after main models are defined
+# This avoids circular imports since extension models import Asset
+from .computer import ComputerDetails  # noqa: E402
+from .display import DisplayDetails  # noqa: E402
+from .network import NetworkDetails  # noqa: E402
+from .peripheral import PeripheralDetails  # noqa: E402
+from .phone import PhoneDetails  # noqa: E402
 
 __all__ = [
     "ComputerDetails",

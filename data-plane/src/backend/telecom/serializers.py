@@ -1,16 +1,13 @@
 from rest_framework import serializers
-from .models import Provider, DataCircuit
+
+from .models import DataCircuit, Provider
 
 
 class ProviderSerializer(serializers.ModelSerializer):
     """Serializer for Provider."""
 
-    service_type_display = serializers.CharField(
-        source="get_service_type_display", read_only=True
-    )
-    status_display = serializers.CharField(
-        source="get_status_display", read_only=True
-    )
+    service_type_display = serializers.CharField(source="get_service_type_display", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
     data_circuit_count = serializers.SerializerMethodField()
 
     def get_data_circuit_count(self, obj):
@@ -46,18 +43,10 @@ class DataCircuitSerializer(serializers.ModelSerializer):
 
     provider_name = serializers.CharField(source="provider.name", read_only=True)
     location_name = serializers.CharField(source="location.name", read_only=True)
-    circuit_type_display = serializers.CharField(
-        source="get_circuit_type_display", read_only=True
-    )
-    line_speed_display = serializers.CharField(
-        source="get_line_speed_display", read_only=True
-    )
-    handoff_type_display = serializers.CharField(
-        source="get_handoff_type_display", read_only=True
-    )
-    fiber_type_display = serializers.CharField(
-        source="get_fiber_type_display", read_only=True
-    )
+    circuit_type_display = serializers.CharField(source="get_circuit_type_display", read_only=True)
+    line_speed_display = serializers.CharField(source="get_line_speed_display", read_only=True)
+    handoff_type_display = serializers.CharField(source="get_handoff_type_display", read_only=True)
+    fiber_type_display = serializers.CharField(source="get_fiber_type_display", read_only=True)
     connector_type_display = serializers.CharField(
         source="get_connector_type_display", read_only=True
     )
@@ -96,4 +85,3 @@ class DataCircuitSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
-

@@ -11,7 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -38,9 +40,7 @@ DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 allowed_hosts_list = []
 if os.environ.get("ALLOWED_HOSTS"):
     allowed_hosts_list = [
-        host.strip()
-        for host in os.environ.get("ALLOWED_HOSTS", "").split(",")
-        if host.strip()
+        host.strip() for host in os.environ.get("ALLOWED_HOSTS", "").split(",") if host.strip()
     ]
 
 # Add Docker internal hostnames for service-to-service communication
@@ -211,8 +211,6 @@ REST_FRAMEWORK = {
 }
 
 # Simple JWT Configuration
-from datetime import timedelta
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
@@ -230,7 +228,9 @@ SIMPLE_JWT = {
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
-    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "USER_AUTHENTICATION_RULE": (
+        "rest_framework_simplejwt.authentication.default_user_authentication_rule"
+    ),
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
     "TOKEN_TYPE_CLAIM": "token_type",
     "JTI_CLAIM": "jti",
@@ -267,9 +267,7 @@ DJOSER = {
 # CORS Configuration
 cors_origins = os.environ.get("CORS_ALLOWED_ORIGINS", "")
 if cors_origins:
-    CORS_ALLOWED_ORIGINS = [
-        origin.strip() for origin in cors_origins.split(",") if origin.strip()
-    ]
+    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
 else:
     CORS_ALLOWED_ORIGINS = [
         "http://localhost:3000",

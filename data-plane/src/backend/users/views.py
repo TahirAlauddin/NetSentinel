@@ -1,8 +1,9 @@
-from rest_framework import status, permissions, viewsets
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied
 from django.contrib.auth.models import Group, Permission
+from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response
+
 from .models import User
 from .serializers import GroupSerializer, PermissionSerializer
 
@@ -22,7 +23,8 @@ def api_info_view(request):
                 "user_stats": "/api/v1/stats/",
                 "documentation": "/swagger/",
             },
-            "note": "Most endpoints require authentication. Use /api/v1/auth/users/ to register or /api/v1/auth/jwt/create/ to login.",
+            "note": "Most endpoints require authentication. \
+Use /api/v1/auth/users/ to register or /api/v1/auth/jwt/create/ to login.",
         }
     )
 
@@ -34,9 +36,7 @@ def user_stats_view(request):
     API view for user statistics (admin only).
     """
     if not request.user.is_staff:
-        return Response(
-            {"error": "Permission denied."}, status=status.HTTP_403_FORBIDDEN
-        )
+        return Response({"error": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
 
     stats = {
         "total_users": User.objects.count(),

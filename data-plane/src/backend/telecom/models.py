@@ -1,4 +1,5 @@
 from django.db import models
+
 from infrastructure.models import Location
 
 
@@ -27,9 +28,7 @@ class Provider(models.Model):
     service_type = models.CharField(
         max_length=20, choices=SERVICE_TYPE_CHOICES, blank=True, null=True
     )
-    status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default="active"
-    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
     account_number = models.CharField(max_length=255, blank=True, null=True)
     contact_name = models.CharField(max_length=255, blank=True, null=True)
     contact_email = models.EmailField(blank=True, null=True)
@@ -37,8 +36,7 @@ class Provider(models.Model):
     website = models.URLField(blank=True, null=True)
     logo_url = models.URLField(blank=True, null=True, help_text="URL to provider logo")
     monthly_cost = models.DecimalField(
-        max_digits=10, decimal_places=2, blank=True, null=True,
-        help_text="Monthly cost in dollars"
+        max_digits=10, decimal_places=2, blank=True, null=True, help_text="Monthly cost in dollars"
     )
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -110,16 +108,12 @@ class DataCircuit(models.Model):
     circuit_type = models.CharField(
         max_length=20, choices=CIRCUIT_TYPE_CHOICES, blank=True, null=True
     )
-    line_speed = models.CharField(
-        max_length=20, choices=LINE_SPEED_CHOICES, blank=True, null=True
-    )
+    line_speed = models.CharField(max_length=20, choices=LINE_SPEED_CHOICES, blank=True, null=True)
     port_speed = models.CharField(max_length=255, blank=True, null=True)
     handoff_type = models.CharField(
         max_length=20, choices=HANDOFF_TYPE_CHOICES, blank=True, null=True
     )
-    fiber_type = models.CharField(
-        max_length=20, choices=FIBER_TYPE_CHOICES, blank=True, null=True
-    )
+    fiber_type = models.CharField(max_length=20, choices=FIBER_TYPE_CHOICES, blank=True, null=True)
     connector_type = models.CharField(
         max_length=20, choices=CONNECTOR_TYPE_CHOICES, blank=True, null=True
     )
@@ -128,8 +122,7 @@ class DataCircuit(models.Model):
     foc_date = models.DateField(blank=True, null=True, help_text="FOC (Firm Order Commitment) Date")
     ttu_date = models.DateField(blank=True, null=True, help_text="TTU (Turn Up) Date")
     monthly_cost = models.DecimalField(
-        max_digits=10, decimal_places=2, blank=True, null=True,
-        help_text="Monthly cost in dollars"
+        max_digits=10, decimal_places=2, blank=True, null=True, help_text="Monthly cost in dollars"
     )
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -144,4 +137,3 @@ class DataCircuit(models.Model):
         circuit_display = self.circuit_id or self.alternate_cid or "Unknown"
         carrier_display = f" - {self.carrier}" if self.carrier else ""
         return f"{circuit_display}{carrier_display}"
-

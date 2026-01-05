@@ -2,25 +2,26 @@
 Tests for Asset models.
 """
 
+from datetime import date, timedelta
+
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
-from datetime import date, timedelta
+
 from assets.models import (
-    AssetTag,
-    CustomLifecycle,
-    Vendor,
-    TechSpecs,
-    AssetCategory,
     Asset,
     AssetAttachment,
+    AssetCategory,
     AssetRelation,
+    AssetTag,
     CalendarAlert,
     ComputerDetails,
+    CustomLifecycle,
     NetworkDetails,
+    TechSpecs,
+    Vendor,
 )
-from infrastructure.models import Location, Department
-from users.models import User
+from infrastructure.models import Department, Location
 
 
 @pytest.mark.django_db
@@ -167,18 +168,10 @@ class TestAssetModel:
         """Test that asset status must be a valid choice."""
         category = AssetCategory.objects.create(name="Laptop")
         # Valid choices
-        asset1 = Asset.objects.create(
-            name="Active Asset", category=category, status="active"
-        )
-        asset2 = Asset.objects.create(
-            name="Retired Asset", category=category, status="retired"
-        )
-        asset3 = Asset.objects.create(
-            name="In Repair Asset", category=category, status="in_repair"
-        )
-        asset4 = Asset.objects.create(
-            name="Disposed Asset", category=category, status="disposed"
-        )
+        asset1 = Asset.objects.create(name="Active Asset", category=category, status="active")
+        asset2 = Asset.objects.create(name="Retired Asset", category=category, status="retired")
+        asset3 = Asset.objects.create(name="In Repair Asset", category=category, status="in_repair")
+        asset4 = Asset.objects.create(name="Disposed Asset", category=category, status="disposed")
         assert asset1.status == "active"
         assert asset2.status == "retired"
         assert asset3.status == "in_repair"
@@ -204,9 +197,7 @@ class TestAssetModel:
         """Test asset relationships with other models."""
         category = AssetCategory.objects.create(name="Laptop")
         vendor = Vendor.objects.create(name="Dell Inc.")
-        location = Location.objects.create(
-            name="Office", address1="123 St", city="City"
-        )
+        location = Location.objects.create(name="Office", address1="123 St", city="City")
         lifecycle = CustomLifecycle.objects.create(name="Standard")
 
         asset = Asset.objects.create(

@@ -3,24 +3,25 @@ Tests for Infrastructure serializers.
 """
 
 import pytest
+
 from infrastructure.models import (
-    Location,
-    Circuit,
-    PointOfContact,
-    Department,
-    Category,
-    Contact,
     CarrierContact,
+    Category,
+    Circuit,
+    Contact,
+    Department,
+    Location,
+    PointOfContact,
     UtilityContact,
 )
 from infrastructure.serializers import (
-    LocationSerializer,
-    CircuitSerializer,
-    PointOfContactSerializer,
-    DepartmentSerializer,
-    CategorySerializer,
-    ContactSerializer,
     CarrierContactSerializer,
+    CategorySerializer,
+    CircuitSerializer,
+    ContactSerializer,
+    DepartmentSerializer,
+    LocationSerializer,
+    PointOfContactSerializer,
     UtilityContactSerializer,
 )
 

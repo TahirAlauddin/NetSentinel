@@ -1,12 +1,13 @@
 from django.contrib import admin
+
 from .models import (
-    Location,
-    Circuit,
-    PointOfContact,
-    Department,
-    Category,
-    Contact,
     CarrierContact,
+    Category,
+    Circuit,
+    Contact,
+    Department,
+    Location,
+    PointOfContact,
     UtilityContact,
 )
 

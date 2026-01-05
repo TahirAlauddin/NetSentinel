@@ -3,17 +3,17 @@ Tests for User serializers.
 """
 
 import pytest
-from rest_framework.exceptions import ValidationError
 from django.contrib.auth.models import Group, Permission
-from users.models import User, AppPermission, AppPermissionGroup
+
+from users.models import AppPermission, AppPermissionGroup
 from users.serializers import (
-    UserSerializer,
-    UserCreateSerializer,
-    GroupSerializer,
-    PermissionSerializer,
-    AppPermissionSerializer,
     AppPermissionGroupSerializer,
+    AppPermissionSerializer,
+    GroupSerializer,
     GroupWithAppPermissionsSerializer,
+    PermissionSerializer,
+    UserCreateSerializer,
+    UserSerializer,
 )
 
 
@@ -403,9 +403,7 @@ class TestGroupWithAppPermissionsSerializer:
         request = factory.get("/")
         request.user = user
 
-        serializer = GroupWithAppPermissionsSerializer(
-            data=data, context={"request": request}
-        )
+        serializer = GroupWithAppPermissionsSerializer(data=data, context={"request": request})
         assert serializer.is_valid()
         group = serializer.save()
         assert group.name == "New Group"
@@ -453,9 +451,7 @@ class TestGroupWithAppPermissionsSerializer:
         # Old permission should be removed, new one added
         assert updated_group.app_permissions.count() == 1
         # app_permissions returns AppPermissionGroup objects, check the permission attribute
-        permission_ids = [
-            apg.permission.id for apg in updated_group.app_permissions.all()
-        ]
+        permission_ids = [apg.permission.id for apg in updated_group.app_permissions.all()]
         assert permission2.id in permission_ids
         assert permission1.id not in permission_ids
 

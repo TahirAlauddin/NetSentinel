@@ -1,6 +1,6 @@
+from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework import permissions
 
 
 @api_view(["GET"])
@@ -21,6 +21,10 @@ def api_info_view(request):
                 "user_stats": "/api/v1/stats/",
                 "documentation": "/swagger/",
             },
-            "note": "Most endpoints require authentication. Use /api/v1/auth/users/ to register or /api/v1/auth/jwt/create/ to login.",
+            "note": (
+                "Most endpoints require authentication. "
+                "Use /api/v1/auth/users/ to register or "
+                "/api/v1/auth/jwt/create/ to login."
+            ),
         }
     )

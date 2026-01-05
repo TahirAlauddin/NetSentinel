@@ -5,14 +5,15 @@ Tests for Infrastructure models.
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+
 from infrastructure.models import (
-    Location,
-    Circuit,
-    PointOfContact,
-    Department,
-    Category,
-    Contact,
     CarrierContact,
+    Category,
+    Circuit,
+    Contact,
+    Department,
+    Location,
+    PointOfContact,
     UtilityContact,
 )
 
@@ -166,12 +167,8 @@ class TestCircuitModel:
 
     def test_circuit_ordering(self):
         """Test that circuits are ordered by location and carrier."""
-        location1 = Location.objects.create(
-            name="Location A", address1="123 St", city="City A"
-        )
-        location2 = Location.objects.create(
-            name="Location B", address1="456 St", city="City B"
-        )
+        location1 = Location.objects.create(name="Location A", address1="123 St", city="City A")
+        location2 = Location.objects.create(name="Location B", address1="456 St", city="City B")
 
         Circuit.objects.create(location=location1, speed=100, carrier="Carrier B")
         Circuit.objects.create(location=location1, speed=100, carrier="Carrier A")

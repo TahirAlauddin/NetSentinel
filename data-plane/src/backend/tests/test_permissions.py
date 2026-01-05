@@ -3,9 +3,10 @@ Tests for permission system (AppPermissions and ViewSet permissions).
 """
 
 import pytest
-from rest_framework import status
 from django.contrib.auth.models import Group
-from users.models import User, AppPermission, AppPermissionGroup
+from rest_framework import status
+
+from users.models import AppPermission, AppPermissionGroup
 
 
 @pytest.mark.django_db
@@ -36,7 +37,7 @@ class TestAppPermissionSystem:
 
     def test_superuser_has_all_permissions(self, admin_user):
         """Test that superuser has all permissions."""
-        permission = AppPermission.objects.create(
+        AppPermission.objects.create(
             codename="test_permission",
             name="Test Permission",
             category="test",
@@ -135,9 +136,7 @@ class TestViewSetPermissions:
         response = admin_api_client.get("/api/v1/users/stats/")
         assert response.status_code == status.HTTP_200_OK
 
-    def test_superuser_only_endpoint_requires_superuser(
-        self, authenticated_api_client, user
-    ):
+    def test_superuser_only_endpoint_requires_superuser(self, authenticated_api_client, user):
         """Test that superuser-only endpoints require superuser permission."""
         response = authenticated_api_client.get("/api/v1/users/groups/")
         assert response.status_code == status.HTTP_200_OK

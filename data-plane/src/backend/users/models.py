@@ -1,6 +1,5 @@
 from django.contrib.auth.models import AbstractUser, Group
 from django.db import models
-from django.core.exceptions import PermissionDenied
 
 
 class AppPermission(models.Model):
@@ -35,7 +34,8 @@ class AppPermission(models.Model):
         max_length=100,
         blank=True,
         null=True,
-        help_text="Permission category for grouping (e.g., 'monitoring', 'assets', 'infrastructure')",
+        help_text="Permission category for grouping \
+(e.g., 'monitoring', 'assets', 'infrastructure')",
     )
     is_active = models.BooleanField(
         default=True,

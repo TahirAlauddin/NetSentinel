@@ -3,22 +3,19 @@ Integration tests for cross-app relationships and complex workflows.
 """
 
 import pytest
+from django.contrib.auth.models import Group
 from django.db import transaction
-from django.core.exceptions import ValidationError
-from rest_framework import status
+
 from assets.models import (
     Asset,
-    AssetCategory,
-    AssetTag,
-    Vendor,
     AssetAttachment,
+    AssetCategory,
     AssetRelation,
     CalendarAlert,
     ComputerDetails,
 )
-from infrastructure.models import Location, Circuit, Department, PointOfContact
-from users.models import User, AppPermission, AppPermissionGroup
-from django.contrib.auth.models import Group
+from infrastructure.models import Circuit, Location, PointOfContact
+from users.models import AppPermission, AppPermissionGroup
 
 
 @pytest.mark.integration
@@ -148,7 +145,6 @@ class TestAssetUserIntegration:
             managed_by=user,
         )
 
-        user_id = user.id
         user.delete()
 
         asset.refresh_from_db()
@@ -257,7 +253,7 @@ class TestUserPermissionIntegration:
 
     def test_user_group_permission(self, user):
         """Test that users can have permissions through groups."""
-        
+
         permission = AppPermission.objects.create(
             codename="view_assets",
             name="View Assets",
@@ -286,16 +282,14 @@ class TestUserPermissionIntegration:
     def test_group_deletion_removes_permissions_from_users(self, user):
         """Test that deleting a group removes its permissions from users."""
         from django.contrib.auth.models import Group
-        
+
         permission = AppPermission.objects.create(
             codename="view_assets",
             name="View Assets",
             category="assets",
         )
         django_group = Group.objects.create(name="Asset Viewers")
-        app_permission_group = AppPermissionGroup.objects.create(
-            group=django_group, permission=permission
-        )
+        AppPermissionGroup.objects.create(group=django_group, permission=permission)
         user.groups.add(django_group)
 
         django_group.delete()
@@ -385,9 +379,7 @@ class TestComplexQueries:
         )
 
         # Query laptops at this location
-        laptops_at_location = Asset.objects.filter(
-            category=category1, location=location
-        )
+        laptops_at_location = Asset.objects.filter(category=category1, location=location)
         assert laptops_at_location.count() == 2
         assert asset1 in laptops_at_location
         assert asset3 in laptops_at_location
@@ -415,9 +407,7 @@ class TestComplexQueries:
         )
 
         # Query assets assigned to user at this location
-        user_assets_at_location = Asset.objects.filter(
-            assigned_to=user, location=location
-        )
+        user_assets_at_location = Asset.objects.filter(assigned_to=user, location=location)
         assert user_assets_at_location.count() == 1
         assert asset1 in user_assets_at_location
         assert asset2 not in user_assets_at_location
@@ -442,9 +432,9 @@ class TestComplexQueries:
         )
 
         # Query circuits with their contacts
-        circuits_with_contacts = Circuit.objects.filter(
-            location=location
-        ).prefetch_related("points_of_contact")
+        circuits_with_contacts = Circuit.objects.filter(location=location).prefetch_related(
+            "points_of_contact"
+        )
 
         assert circuits_with_contacts.count() == 1
         circuit_result = circuits_with_contacts.first()
@@ -654,7 +644,7 @@ class TestCascadeDeletions:
             name="Test Laptop",
             category=category,
         )
-        computer_details = ComputerDetails.objects.create(
+        ComputerDetails.objects.create(
             asset=asset,
             cpu="Intel i7",
             ram="16GB",
@@ -665,4 +655,3 @@ class TestCascadeDeletions:
 
         # ComputerDetails uses asset as primary key, so check if it exists for the deleted asset
         assert not ComputerDetails.objects.filter(asset_id=asset_id).exists()
-

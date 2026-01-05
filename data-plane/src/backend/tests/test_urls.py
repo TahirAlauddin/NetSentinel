@@ -3,9 +3,9 @@ Tests for URL routing and endpoint accessibility.
 """
 
 import pytest
-from rest_framework import status
-from django.urls import reverse, resolve
 from django.test import Client
+from django.urls import resolve, reverse
+from rest_framework import status
 
 
 @pytest.mark.unit
@@ -63,11 +63,9 @@ class TestUsersURLs:
     def test_groups_list_url(self):
         """Test that groups list URL resolves."""
         # Using the router basename
-        from rest_framework.routers import DefaultRouter
-
         # Groups are registered with basename="group"
         # The URL pattern would be /api/v1/users/groups/
-        client = Client()
+        Client()
         # We can't easily reverse router URLs, so we test by making a request
         # This is tested in test_user_views.py
 
@@ -84,7 +82,7 @@ class TestInfrastructureURLs:
 
     def test_locations_list_url(self):
         """Test that locations list URL pattern exists."""
-        client = Client()
+        Client()
         # URL should be /api/v1/infrastructure/locations/
         # This is tested in test_infrastructure_views.py
 
@@ -172,9 +170,7 @@ class TestURLParameterValidation:
 
     def test_invalid_id_returns_404(self, authenticated_api_client):
         """Test that invalid ID in URL returns 404."""
-        response = authenticated_api_client.get(
-            "/api/v1/infrastructure/locations/99999/"
-        )
+        response = authenticated_api_client.get("/api/v1/infrastructure/locations/99999/")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_nested_url_requires_parent(self, authenticated_api_client):

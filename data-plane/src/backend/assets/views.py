@@ -1,13 +1,49 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework import permissions
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
-from django.db.models import Q
 from django.db import IntegrityError
-from .models import *
-from .serializers import *
+from django.db.models import Q
+from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from .models import (
+    Asset,
+    AssetAttachment,
+    AssetCategory,
+    AssetImage,
+    AssetRelation,
+    AssetTag,
+    CalendarAlert,
+    ComputerDetails,
+    CustomLifecycle,
+    DisplayDetails,
+    NetworkDetails,
+    PeripheralDetails,
+    PhoneDetails,
+    TechSpecs,
+    Vendor,
+)
+from .serializers import (
+    AssetAttachmentSerializer,
+    AssetBasicDetailsSerializer,
+    AssetCategorySerializer,
+    AssetCreateUpdateSerializer,
+    AssetImageSerializer,
+    AssetRelationSerializer,
+    AssetSerializer,
+    AssetTagSerializer,
+    AssetTechSpecsSerializer,
+    CalendarAlertCreateUpdateSerializer,
+    CalendarAlertSerializer,
+    ComputerDetailsSerializer,
+    CustomLifecycleSerializer,
+    DisplayDetailsSerializer,
+    NetworkDetailsSerializer,
+    PeripheralDetailsSerializer,
+    PhoneDetailsSerializer,
+    TechSpecsSerializer,
+    VendorSerializer,
+)
 
 
 @api_view(["GET"])
@@ -131,49 +167,38 @@ class AssetViewSet(viewsets.ModelViewSet):
             return AssetCreateUpdateSerializer
         return AssetSerializer
 
-    def get_queryset(self):
-        """Filter queryset based on query parameters."""
-        queryset = super().get_queryset()
-
-        # Filter by category
-        category = self.request.query_params.get("category", None)
-        if category:
+    def _filter_by_id_param(self, queryset, param_name, filter_field):
+        """Filter queryset by integer ID parameter."""
+        param_value = self.request.query_params.get(param_name, None)
+        if param_value:
             try:
-                queryset = queryset.filter(category_id=int(category))
+                queryset = queryset.filter(**{filter_field: int(param_value)})
             except (ValueError, TypeError):
-                # Invalid category ID, return empty queryset
                 queryset = queryset.none()
+        return queryset
 
-        # Filter by status
+    def _filter_by_status(self, queryset):
+        """Filter queryset by status."""
         status_filter = self.request.query_params.get("status", None)
         if status_filter:
             queryset = queryset.filter(status=status_filter)
+        return queryset
 
-        # Filter by vendor
-        vendor = self.request.query_params.get("vendor", None)
-        if vendor:
-            try:
-                queryset = queryset.filter(vendor_id=int(vendor))
-            except (ValueError, TypeError):
-                # Invalid vendor ID, return empty queryset
-                queryset = queryset.none()
-
-        # Filter by location
-        location = self.request.query_params.get("location", None)
-        if location:
-            try:
-                queryset = queryset.filter(location_id=int(location))
-            except (ValueError, TypeError):
-                # Invalid location ID, return empty queryset
-                queryset = queryset.none()
-
-        # Search by name or asset_tag
+    def _filter_by_search(self, queryset):
+        """Filter queryset by search term."""
         search = self.request.query_params.get("search", None)
         if search:
-            queryset = queryset.filter(
-                Q(name__icontains=search) | Q(asset_tag__icontains=search)
-            )
+            queryset = queryset.filter(Q(name__icontains=search) | Q(asset_tag__icontains=search))
+        return queryset
 
+    def get_queryset(self):
+        """Filter queryset based on query parameters."""
+        queryset = super().get_queryset()
+        queryset = self._filter_by_id_param(queryset, "category", "category_id")
+        queryset = self._filter_by_status(queryset)
+        queryset = self._filter_by_id_param(queryset, "vendor", "vendor_id")
+        queryset = self._filter_by_id_param(queryset, "location", "location_id")
+        queryset = self._filter_by_search(queryset)
         return queryset
 
     def perform_destroy(self, instance):
@@ -189,9 +214,7 @@ class AssetViewSet(viewsets.ModelViewSet):
                 or instance.managed_by == user
             )
             if not is_owner:
-                raise PermissionDenied(
-                    "You do not have permission to delete this asset."
-                )
+                raise PermissionDenied("You do not have permission to delete this asset.")
         instance.delete()
 
     @action(detail=True, methods=["get"])
@@ -212,9 +235,9 @@ class AssetViewSet(viewsets.ModelViewSet):
             "related_asset"
         )
         # Get relations where this asset is the target
-        incoming_relations = AssetRelation.objects.filter(
-            related_asset=asset
-        ).select_related("asset")
+        incoming_relations = AssetRelation.objects.filter(related_asset=asset).select_related(
+            "asset"
+        )
 
         # Combine both directions
         all_relations = list(outgoing_relations) + list(incoming_relations)
@@ -328,13 +351,11 @@ class AssetRelationViewSet(viewsets.ModelViewSet):
         """Filter relations by the asset ID from the nested route if present."""
         asset_id = self.kwargs.get("asset_pk")
         if asset_id:
-            queryset = AssetRelation.objects.select_related(
-                "asset", "related_asset"
-            ).filter(asset_id=asset_id)
+            queryset = AssetRelation.objects.select_related("asset", "related_asset").filter(
+                asset_id=asset_id
+            )
         else:
-            queryset = AssetRelation.objects.select_related(
-                "asset", "related_asset"
-            ).all()
+            queryset = AssetRelation.objects.select_related("asset", "related_asset").all()
         return queryset
 
     def create(self, request, *args, **kwargs):
@@ -418,11 +439,7 @@ class AssetBasicDetailsViewSet(viewsets.ReadOnlyModelViewSet):
     ViewSet for viewing asset basic details.
     """
 
-    queryset = (
-        Asset.objects.select_related("category", "vendor")
-        .prefetch_related("tags")
-        .all()
-    )
+    queryset = Asset.objects.select_related("category", "vendor").prefetch_related("tags").all()
     serializer_class = AssetBasicDetailsSerializer
     permission_classes = [IsAuthenticated]
 
@@ -433,9 +450,7 @@ class AssetTechSpecsViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     queryset = (
-        Asset.objects.values(
-            "id", "name", "mac_address", "ip_address", "manufacturer", "model"
-        )
+        Asset.objects.values("id", "name", "mac_address", "ip_address", "manufacturer", "model")
         .prefetch_related("tags")
         .all()
     )

@@ -4,14 +4,15 @@ Tests for Infrastructure API views.
 
 import pytest
 from rest_framework import status
+
 from infrastructure.models import (
-    Location,
-    Circuit,
-    PointOfContact,
-    Department,
-    Category,
-    Contact,
     CarrierContact,
+    Category,
+    Circuit,
+    Contact,
+    Department,
+    Location,
+    PointOfContact,
     UtilityContact,
 )
 
@@ -68,9 +69,7 @@ class TestLocationViewSet:
             address1="123 Main St",
             city="Test City",
         )
-        response = authenticated_api_client.get(
-            f"/api/v1/infrastructure/locations/{location.id}/"
-        )
+        response = authenticated_api_client.get(f"/api/v1/infrastructure/locations/{location.id}/")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["name"] == "Test Location"
 
@@ -227,9 +226,7 @@ class TestCircuitViewSet:
             speed=100,
             carrier="Test Carrier",
         )
-        response = authenticated_api_client.get(
-            f"/api/v1/infrastructure/circuits/{circuit.id}/"
-        )
+        response = authenticated_api_client.get(f"/api/v1/infrastructure/circuits/{circuit.id}/")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["speed"] == 100
         assert response.data["carrier"] == "Test Carrier"
@@ -272,9 +269,7 @@ class TestCircuitViewSet:
             speed=100,
             carrier="Test Carrier",
         )
-        response = authenticated_api_client.delete(
-            f"/api/v1/infrastructure/circuits/{circuit.id}/"
-        )
+        response = authenticated_api_client.delete(f"/api/v1/infrastructure/circuits/{circuit.id}/")
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert not Circuit.objects.filter(id=circuit.id).exists()
 
@@ -519,9 +514,7 @@ class TestContactViewSet:
             last_name="Doe",
             job_title="Engineer",
         )
-        response = authenticated_api_client.get(
-            f"/api/v1/infrastructure/contacts/{contact.id}/"
-        )
+        response = authenticated_api_client.get(f"/api/v1/infrastructure/contacts/{contact.id}/")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["first_name"] == "John"
         assert response.data["last_name"] == "Doe"
@@ -572,9 +565,7 @@ class TestContactViewSet:
             first_name="John",
             last_name="Doe",
         )
-        response = authenticated_api_client.delete(
-            f"/api/v1/infrastructure/contacts/{contact.id}/"
-        )
+        response = authenticated_api_client.delete(f"/api/v1/infrastructure/contacts/{contact.id}/")
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert not Contact.objects.filter(id=contact.id).exists()
 
@@ -605,9 +596,7 @@ class TestCarrierContactViewSet:
             location=location,
         )
 
-        response = authenticated_api_client.get(
-            "/api/v1/infrastructure/carrier-contacts/"
-        )
+        response = authenticated_api_client.get("/api/v1/infrastructure/carrier-contacts/")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 2
 
@@ -785,9 +774,7 @@ class TestUtilityContactViewSet:
             utility_type="water",
         )
 
-        response = authenticated_api_client.get(
-            "/api/v1/infrastructure/utility-contacts/"
-        )
+        response = authenticated_api_client.get("/api/v1/infrastructure/utility-contacts/")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 2
 

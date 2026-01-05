@@ -1,6 +1,7 @@
-from rest_framework import serializers
 from django.contrib.auth.models import Group, Permission
-from .models import User, AppPermission, AppPermissionGroup
+from rest_framework import serializers
+
+from .models import AppPermission, AppPermissionGroup, User
 
 
 class PermissionSerializer(serializers.ModelSerializer):
@@ -17,9 +18,7 @@ class PermissionSerializer(serializers.ModelSerializer):
 class GroupSerializer(serializers.ModelSerializer):
     """Serializer for Group."""
 
-    permissions_detail = PermissionSerializer(
-        source="permissions", many=True, read_only=True
-    )
+    permissions_detail = PermissionSerializer(source="permissions", many=True, read_only=True)
     permissions = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Permission.objects.all(), required=False
     )
@@ -83,9 +82,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if attrs["password"] != attrs["re_password"]:
-            raise serializers.ValidationError(
-                {"password": "Password fields didn't match."}
-            )
+            raise serializers.ValidationError({"password": "Password fields didn't match."})
         return attrs
 
     def create(self, validated_data):

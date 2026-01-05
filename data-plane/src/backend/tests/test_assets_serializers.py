@@ -2,33 +2,35 @@
 Tests for Asset serializers.
 """
 
-import pytest
 from datetime import date, timedelta
+
+import pytest
+
 from assets.models import (
-    AssetTag,
-    CustomLifecycle,
-    Vendor,
-    TechSpecs,
-    AssetCategory,
     Asset,
     AssetAttachment,
+    AssetCategory,
     AssetRelation,
-    ComputerDetails,
+    AssetTag,
     CalendarAlert,
+    ComputerDetails,
+    CustomLifecycle,
+    TechSpecs,
+    Vendor,
 )
 from assets.serializers import (
+    AssetAttachmentSerializer,
+    AssetCategorySerializer,
+    AssetRelationSerializer,
+    AssetSerializer,
     AssetTagSerializer,
-    VendorSerializer,
+    CalendarAlertSerializer,
+    ComputerDetailsSerializer,
     CustomLifecycleSerializer,
     TechSpecsSerializer,
-    AssetCategorySerializer,
-    AssetSerializer,
-    AssetAttachmentSerializer,
-    AssetRelationSerializer,
-    ComputerDetailsSerializer,
-    CalendarAlertSerializer,
+    VendorSerializer,
 )
-from infrastructure.models import Location, Department
+from infrastructure.models import Department, Location
 
 
 @pytest.mark.django_db
@@ -245,9 +247,7 @@ class TestAssetSerializer:
         """Test that AssetSerializer correctly serializes."""
         category = AssetCategory.objects.create(name="Laptop")
         vendor = Vendor.objects.create(name="Dell Inc.")
-        location = Location.objects.create(
-            name="Office", address1="123 St", city="City"
-        )
+        location = Location.objects.create(name="Office", address1="123 St", city="City")
         asset = Asset.objects.create(
             name="Test Laptop",
             category=category,
@@ -343,9 +343,7 @@ class TestAssetRelationSerializer:
         """Test that AssetRelationSerializer correctly serializes."""
         category = AssetCategory.objects.create(name="Laptop")
         asset1 = Asset.objects.create(name="Asset 1", category=category)
-        asset2 = Asset.objects.create(
-            name="Asset 2", category=category, asset_tag="ASSET-002"
-        )
+        asset2 = Asset.objects.create(name="Asset 2", category=category, asset_tag="ASSET-002")
         relation = AssetRelation.objects.create(asset=asset1, related_asset=asset2)
         serializer = AssetRelationSerializer(relation)
         data = serializer.data

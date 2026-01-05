@@ -1,6 +1,7 @@
 from rest_framework import viewsets
-from .models import Provider, DataCircuit
-from .serializers import ProviderSerializer, DataCircuitSerializer
+
+from .models import DataCircuit, Provider
+from .serializers import DataCircuitSerializer, ProviderSerializer
 
 
 class ProviderViewSet(viewsets.ModelViewSet):
@@ -19,4 +20,3 @@ class DataCircuitViewSet(viewsets.ModelViewSet):
 
     queryset = DataCircuit.objects.select_related("provider", "location").all()
     serializer_class = DataCircuitSerializer
-
