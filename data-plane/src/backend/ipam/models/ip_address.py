@@ -9,11 +9,11 @@ class IPAddress(models.Model):
     """
 
     STATUS_CHOICES = [
-        ("available", "Available"), # unused, available, free
-        ("reserved", "Reserved"), # reserved, allocated
-        ("assigned", "Assigned"), # used, active, assigned
-        ("dhcp", "DHCP"), # dhcp, dynamic
-        ("deprecated", "Deprecated"), # deprecated, retired
+        ("available", "Available"),  # unused, available, free
+        ("reserved", "Reserved"),  # reserved, allocated
+        ("assigned", "Assigned"),  # used, active, assigned
+        ("dhcp", "DHCP"),  # dhcp, dynamic
+        ("deprecated", "Deprecated"),  # deprecated, retired
     ]
 
     address = models.GenericIPAddressField(

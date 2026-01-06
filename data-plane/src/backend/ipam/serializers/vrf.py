@@ -1,11 +1,23 @@
+"""
+VRF serializer for IPAM.
+
+This module provides serialization for VRF (Virtual Routing and Forwarding) models.
+"""
+
 from rest_framework import serializers
 
 from infrastructure.serializers import AssetLocationSerializer
+
 from ..models import VRF
 
 
 class VRFSerializer(serializers.ModelSerializer):
-    """Serializer for VRF."""
+    """
+    Serializer for VRF model.
+
+    Serializes VRF information including location details.
+    VRFs provide Layer 3 network isolation and routing separation.
+    """
 
     location_detail = AssetLocationSerializer(source="location", read_only=True)
 

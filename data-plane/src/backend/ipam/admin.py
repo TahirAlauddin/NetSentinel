@@ -1,15 +1,6 @@
 from django.contrib import admin
 
-from .models import (
-    Customer,
-    DNSRecord,
-    DNSZone,
-    IPAddress,
-    Subnet,
-    SubnetGroup,
-    VLAN,
-    VRF,
-)
+from .models import VLAN, VRF, Customer, DNSRecord, DNSZone, IPAddress, Subnet, SubnetGroup
 
 
 @admin.register(SubnetGroup)

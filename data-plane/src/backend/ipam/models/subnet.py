@@ -27,7 +27,10 @@ class Subnet(models.Model):
         validators=[
             RegexValidator(
                 CIDR_REGEX_PATTERN,
-                message="Network must be in valid IPv4 or IPv6 CIDR notation (e.g., 192.168.1.0/24 or 2001:db8::/32)",
+                message=(
+                    "Network must be in valid IPv4 or IPv6 CIDR notation "
+                    "(e.g., 192.168.1.0/24 or 2001:db8::/32)"
+                ),
             )
         ],
         help_text="Network in CIDR notation (e.g., 192.168.1.0/24 or 2001:db8::/32)",

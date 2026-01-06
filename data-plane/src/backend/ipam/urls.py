@@ -1,3 +1,10 @@
+"""
+IPAM URL configuration.
+
+This module defines URL routing for IPAM (IP Address Management) endpoints.
+Includes both top-level routes and nested routes for related resources.
+"""
+
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_nested import routers

@@ -1,6 +1,14 @@
+"""
+Subnet serializer for IPAM.
+
+This module provides serialization for subnet models with comprehensive
+relationship details and computed fields.
+"""
+
 from rest_framework import serializers
 
 from infrastructure.serializers import AssetLocationSerializer
+
 from ..models import Subnet
 from .customer import CustomerSerializer
 from .subnet_group import SubnetGroupSerializer
@@ -9,7 +17,13 @@ from .vrf import VRFSerializer
 
 
 class SubnetSerializer(serializers.ModelSerializer):
-    """Serializer for Subnet."""
+    """
+    Serializer for Subnet model.
+
+    Serializes subnet information with nested details for related objects.
+    Supports both IPv4 and IPv6 networks in CIDR notation.
+    Includes computed fields for child subnets and IP address counts.
+    """
 
     group_detail = SubnetGroupSerializer(source="group", read_only=True)
     location_detail = AssetLocationSerializer(source="location", read_only=True)
@@ -22,7 +36,15 @@ class SubnetSerializer(serializers.ModelSerializer):
     ip_addresses_count = serializers.SerializerMethodField()
 
     def get_master_subnet_detail(self, obj):
-        """Return master subnet details if exists."""
+        """
+        Return master subnet details if exists.
+
+        Args:
+            obj: Subnet instance
+
+        Returns:
+            dict: Master subnet summary with id and network, or None
+        """
         if obj.master_subnet:
             return {
                 "id": obj.master_subnet.id,
@@ -31,11 +53,27 @@ class SubnetSerializer(serializers.ModelSerializer):
         return None
 
     def get_child_subnets_count(self, obj):
-        """Return count of child subnets."""
+        """
+        Return count of child subnets.
+
+        Args:
+            obj: Subnet instance
+
+        Returns:
+            int: Number of child subnets
+        """
         return obj.child_subnets.count()
 
     def get_ip_addresses_count(self, obj):
-        """Return count of IP addresses in this subnet."""
+        """
+        Return count of IP addresses in this subnet.
+
+        Args:
+            obj: Subnet instance
+
+        Returns:
+            int: Number of IP addresses
+        """
         return obj.ip_addresses.count()
 
     class Meta:
