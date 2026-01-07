@@ -13,6 +13,7 @@ import {
   Pi as Api,
   LifeBuoy,
   Settings,
+  Network,
 } from "lucide-react";
 import { NavigationItem, SubmenuColumn } from "../types/navigation";
 
@@ -181,6 +182,12 @@ export const navigationItems: NavigationItem[] = [
   { label: "VM Management", icon: Server, href: "#" },
   { label: "Phone Management", icon: Phone, href: "#" },
   { label: "API Management", icon: Api, href: "#" },
+  {
+    label: "IPAM",
+    icon: Network,
+    href: "/ipam",
+    hasSubmenu: false,
+  },
   {
     label: "Settings",
     icon: Settings,
