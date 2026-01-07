@@ -7,7 +7,10 @@ import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
 import { SubnetTable } from "@/components/ipam/subnet-table";
 import { SubnetTree } from "@/components/ipam/subnet-tree";
 import { Subnet } from "@/types/ipam";
-import { api } from "@/lib/utils";
+import { IpamApiClient } from "@/lib/api-client/ipam";
+import { extractIpamArrayData } from "@/lib/ipam-utils";
+
+const ipamApi = new IpamApiClient();
 
 /**
  * Subnets Page
@@ -20,35 +23,28 @@ export default function SubnetsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedSubnetId, setSelectedSubnetId] = useState<number | undefined>();
 
+  const loadSubnets = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await ipamApi.getSubnets();
+      
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      setSubnets(extractIpamArrayData(response.data));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to load subnets";
+      console.error("[SubnetsPage] Error loading subnets:", err);
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Load subnets from API
   useEffect(() => {
-    const loadSubnets = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await api.get<Subnet[] | { results: Subnet[] }>("/api/v1/ipam/subnets/");
-        
-        if (response.error) {
-          throw new Error(response.error);
-        }
-
-        let data: Subnet[] = [];
-        if (Array.isArray(response.data)) {
-          data = response.data;
-        } else if (response.data && typeof response.data === "object" && "results" in response.data) {
-          data = (response.data as { results: Subnet[] }).results;
-        }
-
-        setSubnets(data);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to load subnets";
-        console.error("[SubnetsPage] Error loading subnets:", err);
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadSubnets();
   }, []);
 
@@ -63,14 +59,13 @@ export default function SubnetsPage() {
 
     try {
       setError(null);
-      const response = await api.delete(`/api/v1/ipam/subnets/${id}/`);
+      const response = await ipamApi.deleteSubnet(id);
       
       if (response.error) {
         throw new Error(response.error);
       }
 
-      // Reload subnets
-      setSubnets((prev) => prev.filter((s) => s.id !== id));
+      await loadSubnets();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to delete subnet";
       console.error("[SubnetsPage] Error deleting subnet:", err);

@@ -115,3 +115,12 @@ export interface SubnetSortOptions {
   direction: "asc" | "desc";
 }
 
+// Re-export DTO types for convenience
+export type {
+  SubnetCreateUpdateDto,
+  VlanCreateUpdateDto,
+  VrfCreateUpdateDto,
+  CustomerCreateUpdateDto,
+  PaginatedResponse,
+} from "./ipam/dto";
+

@@ -6,7 +6,10 @@ import { IpamHeader } from "@/components/ipam/ipam-header";
 import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
 import { VlanTable } from "@/components/ipam/vlan-table";
 import { VLAN } from "@/types/ipam";
-import { api } from "@/lib/utils";
+import { IpamApiClient } from "@/lib/api-client/ipam";
+import { extractIpamArrayData } from "@/lib/ipam-utils";
+
+const ipamApi = new IpamApiClient();
 
 export default function VlansPage() {
   const router = useRouter();
@@ -14,34 +17,27 @@ export default function VlansPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadVlans = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await api.get<VLAN[] | { results: VLAN[] }>("/api/v1/ipam/vlans/");
-        
-        if (response.error) {
-          throw new Error(response.error);
-        }
-
-        let data: VLAN[] = [];
-        if (Array.isArray(response.data)) {
-          data = response.data;
-        } else if (response.data && typeof response.data === "object" && "results" in response.data) {
-          data = (response.data as { results: VLAN[] }).results;
-        }
-
-        setVlans(data);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to load VLANs";
-        console.error("[VlansPage] Error loading VLANs:", err);
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
+  const loadVlans = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await ipamApi.getVlans();
+      
+      if (response.error) {
+        throw new Error(response.error);
       }
-    };
 
+      setVlans(extractIpamArrayData(response.data));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to load VLANs";
+      console.error("[VlansPage] Error loading VLANs:", err);
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadVlans();
   }, []);
 
@@ -56,13 +52,13 @@ export default function VlansPage() {
 
     try {
       setError(null);
-      const response = await api.delete(`/api/v1/ipam/vlans/${id}/`);
+      const response = await ipamApi.deleteVlan(id);
       
       if (response.error) {
         throw new Error(response.error);
       }
 
-      setVlans((prev) => prev.filter((v) => v.id !== id));
+      await loadVlans();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to delete VLAN";
       console.error("[VlansPage] Error deleting VLAN:", err);

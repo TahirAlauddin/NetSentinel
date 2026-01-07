@@ -6,7 +6,10 @@ import { IpamHeader } from "@/components/ipam/ipam-header";
 import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
 import { CustomerTable } from "@/components/ipam/customer-table";
 import { Customer } from "@/types/ipam";
-import { api } from "@/lib/utils";
+import { IpamApiClient } from "@/lib/api-client/ipam";
+import { extractIpamArrayData } from "@/lib/ipam-utils";
+
+const ipamApi = new IpamApiClient();
 
 export default function CustomersPage() {
   const router = useRouter();
@@ -14,34 +17,27 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadCustomers = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await api.get<Customer[] | { results: Customer[] }>("/api/v1/ipam/customers/");
-        
-        if (response.error) {
-          throw new Error(response.error);
-        }
-
-        let data: Customer[] = [];
-        if (Array.isArray(response.data)) {
-          data = response.data;
-        } else if (response.data && typeof response.data === "object" && "results" in response.data) {
-          data = (response.data as { results: Customer[] }).results;
-        }
-
-        setCustomers(data);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to load customers";
-        console.error("[CustomersPage] Error loading customers:", err);
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
+  const loadCustomers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await ipamApi.getCustomers();
+      
+      if (response.error) {
+        throw new Error(response.error);
       }
-    };
 
+      setCustomers(extractIpamArrayData(response.data));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to load customers";
+      console.error("[CustomersPage] Error loading customers:", err);
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadCustomers();
   }, []);
 
@@ -56,13 +52,13 @@ export default function CustomersPage() {
 
     try {
       setError(null);
-      const response = await api.delete(`/api/v1/ipam/customers/${id}/`);
+      const response = await ipamApi.deleteCustomer(id);
       
       if (response.error) {
         throw new Error(response.error);
       }
 
-      setCustomers((prev) => prev.filter((c) => c.id !== id));
+      await loadCustomers();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to delete customer";
       console.error("[CustomersPage] Error deleting customer:", err);

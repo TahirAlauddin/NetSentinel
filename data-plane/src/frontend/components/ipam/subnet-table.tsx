@@ -4,10 +4,8 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Edit2, Trash2, List, Grid, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Subnet, SubnetSortOptions } from "@/types/ipam";
-import { cn } from "@/lib/utils";
 
 interface SubnetTableProps {
   subnets: Subnet[];
@@ -57,8 +55,8 @@ export function SubnetTable({
 
     // Apply sorting
     filtered = [...filtered].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: string | number;
+      let bValue: string | number;
 
       switch (sortOptions.field) {
         case "network":
@@ -120,7 +118,7 @@ export function SubnetTable({
     }));
   };
 
-  const SortIcon = ({ field }: { field: SubnetSortOptions["field"] }) => {
+  const renderSortIcon = (field: SubnetSortOptions["field"]) => {
     if (sortOptions.field !== field) {
       return <ArrowUpDown className="w-3 h-3 ml-1 text-muted-foreground" />;
     }
@@ -128,20 +126,6 @@ export function SubnetTable({
       <ArrowUp className="w-3 h-3 ml-1" />
     ) : (
       <ArrowDown className="w-3 h-3 ml-1" />
-    );
-  };
-
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, { label: string; className: string }> = {
-      active: { label: "Active", className: "bg-green-100 text-green-800" },
-      planned: { label: "Planned", className: "bg-yellow-100 text-yellow-800" },
-      deprecated: { label: "Deprecated", className: "bg-gray-100 text-gray-800" },
-    };
-    const variant = variants[status] || variants.active;
-    return (
-      <Badge className={variant.className} variant="outline">
-        {variant.label}
-      </Badge>
     );
   };
 
@@ -207,7 +191,7 @@ export function SubnetTable({
               >
                 <div className="flex items-center">
                   Subnet
-                  <SortIcon field="network" />
+                  {renderSortIcon("network")}
                 </div>
               </th>
               <th
@@ -216,7 +200,7 @@ export function SubnetTable({
               >
                 <div className="flex items-center">
                   Description
-                  <SortIcon field="description" />
+                  {renderSortIcon("description")}
                 </div>
               </th>
               <th
@@ -225,7 +209,7 @@ export function SubnetTable({
               >
                 <div className="flex items-center">
                   VLAN
-                  <SortIcon field="vlan" />
+                  {renderSortIcon("vlan")}
                 </div>
               </th>
               <th
@@ -234,7 +218,7 @@ export function SubnetTable({
               >
                 <div className="flex items-center">
                   VRF
-                  <SortIcon field="vrf" />
+                  {renderSortIcon("vrf")}
                 </div>
               </th>
               <th className="text-left py-3 px-4">Master Subnet</th>
@@ -245,7 +229,7 @@ export function SubnetTable({
               >
                 <div className="flex items-center">
                   Customer
-                  <SortIcon field="customer" />
+                  {renderSortIcon("customer")}
                 </div>
               </th>
               <th
@@ -254,7 +238,7 @@ export function SubnetTable({
               >
                 <div className="flex items-center">
                   Subnet Location
-                  <SortIcon field="location" />
+                  {renderSortIcon("location")}
                 </div>
               </th>
               <th className="text-left py-3 px-4">Contact</th>
@@ -264,7 +248,7 @@ export function SubnetTable({
               >
                 <div className="flex items-center">
                   Routable
-                  <SortIcon field="status" />
+                  {renderSortIcon("status")}
                 </div>
               </th>
               <th className="text-left py-3 px-4">Actions</th>
@@ -280,7 +264,14 @@ export function SubnetTable({
             ) : (
               paginatedSubnets.map((subnet) => (
                 <tr key={subnet.id} className="border-b hover:bg-[oklch(0.98_0_0)]">
-                  <td className="py-3 px-4 font-mono text-sm">{subnet.network}</td>
+                  <td className="py-3 px-4">
+                    <a
+                      href={`/ipam/subnets/${subnet.id}`}
+                      className="font-mono text-sm text-[oklch(0.40_0.15_249)] hover:underline"
+                    >
+                      {subnet.network}
+                    </a>
+                  </td>
                   <td className="py-3 px-4">{subnet.description || "/"}</td>
                   <td className="py-3 px-4">
                     {subnet.vlan_detail ? (

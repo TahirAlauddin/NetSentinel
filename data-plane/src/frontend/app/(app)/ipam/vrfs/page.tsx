@@ -6,7 +6,10 @@ import { IpamHeader } from "@/components/ipam/ipam-header";
 import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
 import { VrfTable } from "@/components/ipam/vrf-table";
 import { VRF } from "@/types/ipam";
-import { api } from "@/lib/utils";
+import { IpamApiClient } from "@/lib/api-client/ipam";
+import { extractIpamArrayData } from "@/lib/ipam-utils";
+
+const ipamApi = new IpamApiClient();
 
 export default function VrfsPage() {
   const router = useRouter();
@@ -14,34 +17,27 @@ export default function VrfsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadVrfs = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await api.get<VRF[] | { results: VRF[] }>("/api/v1/ipam/vrfs/");
-        
-        if (response.error) {
-          throw new Error(response.error);
-        }
-
-        let data: VRF[] = [];
-        if (Array.isArray(response.data)) {
-          data = response.data;
-        } else if (response.data && typeof response.data === "object" && "results" in response.data) {
-          data = (response.data as { results: VRF[] }).results;
-        }
-
-        setVrfs(data);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to load VRFs";
-        console.error("[VrfsPage] Error loading VRFs:", err);
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
+  const loadVrfs = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await ipamApi.getVrfs();
+      
+      if (response.error) {
+        throw new Error(response.error);
       }
-    };
 
+      setVrfs(extractIpamArrayData(response.data));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to load VRFs";
+      console.error("[VrfsPage] Error loading VRFs:", err);
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadVrfs();
   }, []);
 
@@ -56,13 +52,13 @@ export default function VrfsPage() {
 
     try {
       setError(null);
-      const response = await api.delete(`/api/v1/ipam/vrfs/${id}/`);
+      const response = await ipamApi.deleteVrf(id);
       
       if (response.error) {
         throw new Error(response.error);
       }
 
-      setVrfs((prev) => prev.filter((v) => v.id !== id));
+      await loadVrfs();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to delete VRF";
       console.error("[VrfsPage] Error deleting VRF:", err);
