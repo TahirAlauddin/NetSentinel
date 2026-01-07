@@ -62,15 +62,32 @@ export interface SubnetGroup {
 
 export interface VLAN {
   id: number;
+  vlan_id: number;
   name: string;
-  vlan_id?: number | null;
   description?: string | null;
+  location: number;
+  location_detail?: {
+    id: number;
+    name: string;
+    address?: string | null;
+  };
+  created_at: string;
+  updated_at: string;
 }
 
 export interface VRF {
   id: number;
   name: string;
+  rd?: string | null;
   description?: string | null;
+  location?: number | null;
+  location_detail?: {
+    id: number;
+    name: string;
+    address?: string | null;
+  } | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Customer {
