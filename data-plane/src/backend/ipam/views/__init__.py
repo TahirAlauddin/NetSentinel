@@ -305,7 +305,10 @@ class DNSRecordViewSet(viewsets.ModelViewSet):
             if "unique constraint" in error_str or "duplicate" in error_str:
                 return Response(
                     {
-                        "error": "A DNS record with this combination of zone, name, and record_type already exists.",
+                        "error": (
+                            "A DNS record with this combination of zone, name, "
+                            "and record_type already exists."
+                        ),
                         "detail": "Duplicate DNS records are not allowed within the same zone.",
                     },
                     status=status.HTTP_400_BAD_REQUEST,
