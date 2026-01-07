@@ -6,16 +6,7 @@ import pytest
 from rest_framework import status
 
 from infrastructure.models import Location
-from ipam.models import (
-    Customer,
-    DNSRecord,
-    DNSZone,
-    IPAddress,
-    Subnet,
-    SubnetGroup,
-    VLAN,
-    VRF,
-)
+from ipam.models import VLAN, VRF, Customer, DNSRecord, DNSZone, IPAddress, Subnet, SubnetGroup
 
 
 @pytest.mark.api
@@ -590,7 +581,9 @@ class TestDNSRecordViewSet:
             "value": "192.168.1.1",
             "ttl": 3600,
         }
-        response = authenticated_api_client.post(f"/api/v1/ipam/dns-zones/{zone.id}/records/", data, format="json")
+        response = authenticated_api_client.post(
+            f"/api/v1/ipam/dns-zones/{zone.id}/records/", data, format="json"
+        )
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data["name"] == "www"
         assert response.data["record_type"] == "A"
@@ -642,7 +635,9 @@ class TestDNSRecordViewSet:
             "record_type": "A",
             "value": "192.168.1.2",
         }
-        response = authenticated_api_client.post(f"/api/v1/ipam/dns-zones/{zone.id}/records/", data, format="json")
+        response = authenticated_api_client.post(
+            f"/api/v1/ipam/dns-zones/{zone.id}/records/", data, format="json"
+        )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_retrieve_dns_record_success(self, authenticated_api_client):

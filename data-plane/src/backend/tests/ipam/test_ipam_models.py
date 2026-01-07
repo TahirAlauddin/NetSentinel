@@ -7,16 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from infrastructure.models import Location
-from ipam.models import (
-    Customer,
-    DNSRecord,
-    DNSZone,
-    IPAddress,
-    Subnet,
-    SubnetGroup,
-    VLAN,
-    VRF,
-)
+from ipam.models import VLAN, VRF, Customer, DNSRecord, DNSZone, IPAddress, Subnet, SubnetGroup
 
 
 @pytest.mark.django_db

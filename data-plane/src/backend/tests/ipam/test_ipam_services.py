@@ -6,8 +6,8 @@ import pytest
 
 from ipam.services.subnet_utils import (
     calculate_subnet_overlap,
-    get_next_available_ip,
     get_network_info,
+    get_next_available_ip,
     is_ip_in_subnet,
     parse_cidr,
 )
@@ -161,12 +161,8 @@ class TestCalculateSubnetOverlap:
 
     def test_non_overlapping_subnets_ipv4(self):
         """Test that non-overlapping IPv4 subnets are detected."""
-        assert (
-            calculate_subnet_overlap("192.168.1.0/24", "192.168.2.0/24") is False
-        )
-        assert (
-            calculate_subnet_overlap("10.0.0.0/8", "192.168.0.0/16") is False
-        )
+        assert calculate_subnet_overlap("192.168.1.0/24", "192.168.2.0/24") is False
+        assert calculate_subnet_overlap("10.0.0.0/8", "192.168.0.0/16") is False
 
     def test_identical_subnets(self):
         """Test that identical subnets are detected as overlapping."""
@@ -174,27 +170,18 @@ class TestCalculateSubnetOverlap:
 
     def test_overlapping_subnets_ipv6(self):
         """Test that overlapping IPv6 subnets are detected."""
-        assert (
-            calculate_subnet_overlap("2001:db8::/32", "2001:db8::/48") is True
-        )
-        assert (
-            calculate_subnet_overlap("2001:db8::/32", "2001:db8:1::/48") is True
-        )
+        assert calculate_subnet_overlap("2001:db8::/32", "2001:db8::/48") is True
+        assert calculate_subnet_overlap("2001:db8::/32", "2001:db8:1::/48") is True
 
     def test_non_overlapping_subnets_ipv6(self):
         """Test that non-overlapping IPv6 subnets are detected."""
-        assert (
-            calculate_subnet_overlap("2001:db8::/32", "2001:db9::/32") is False
-        )
+        assert calculate_subnet_overlap("2001:db8::/32", "2001:db9::/32") is False
 
     def test_mixed_ipv4_ipv6(self):
         """Test that IPv4 and IPv6 subnets don't overlap."""
-        assert (
-            calculate_subnet_overlap("192.168.1.0/24", "2001:db8::/32") is False
-        )
+        assert calculate_subnet_overlap("192.168.1.0/24", "2001:db8::/32") is False
 
     def test_invalid_subnet_returns_false(self):
         """Test that invalid subnet returns False."""
         assert calculate_subnet_overlap("invalid-subnet", "192.168.1.0/24") is False
         assert calculate_subnet_overlap("192.168.1.0/24", "invalid-subnet") is False
-

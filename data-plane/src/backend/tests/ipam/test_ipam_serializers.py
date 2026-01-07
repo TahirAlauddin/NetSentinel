@@ -5,16 +5,7 @@ Tests for IPAM serializers.
 import pytest
 
 from infrastructure.models import Location
-from ipam.models import (
-    Customer,
-    DNSRecord,
-    DNSZone,
-    IPAddress,
-    Subnet,
-    SubnetGroup,
-    VLAN,
-    VRF,
-)
+from ipam.models import VLAN, VRF, Customer, DNSRecord, DNSZone, IPAddress, Subnet, SubnetGroup
 from ipam.serializers import (
     CustomerSerializer,
     DNSRecordSerializer,
