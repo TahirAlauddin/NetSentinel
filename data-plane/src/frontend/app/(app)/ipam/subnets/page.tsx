@@ -1,0 +1,141 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { IpamHeader } from "@/components/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
+import { SubnetTable } from "@/components/ipam/subnet-table";
+import { SubnetTree } from "@/components/ipam/subnet-tree";
+import { Subnet } from "@/types/ipam";
+import { api } from "@/lib/utils";
+
+/**
+ * Subnets Page
+ * Displays a list of subnets with filtering, sorting, and search functionality
+ */
+export default function SubnetsPage() {
+  const router = useRouter();
+  const [subnets, setSubnets] = useState<Subnet[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedSubnetId, setSelectedSubnetId] = useState<number | undefined>();
+
+  // Load subnets from API
+  useEffect(() => {
+    const loadSubnets = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await api.get<Subnet[] | { results: Subnet[] }>("/api/v1/ipam/subnets/");
+        
+        if (response.error) {
+          throw new Error(response.error);
+        }
+
+        let data: Subnet[] = [];
+        if (Array.isArray(response.data)) {
+          data = response.data;
+        } else if (response.data && typeof response.data === "object" && "results" in response.data) {
+          data = (response.data as { results: Subnet[] }).results;
+        }
+
+        setSubnets(data);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to load subnets";
+        console.error("[SubnetsPage] Error loading subnets:", err);
+        setError(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSubnets();
+  }, []);
+
+  const handleEdit = (subnet: Subnet) => {
+    router.push(`/ipam/subnets/edit/${subnet.id}`);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this subnet?")) {
+      return;
+    }
+
+    try {
+      setError(null);
+      const response = await api.delete(`/api/v1/ipam/subnets/${id}/`);
+      
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      // Reload subnets
+      setSubnets((prev) => prev.filter((s) => s.id !== id));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to delete subnet";
+      console.error("[SubnetsPage] Error deleting subnet:", err);
+      setError(errorMessage);
+    }
+  };
+
+  const handleAdd = () => {
+    router.push("/ipam/subnets/new");
+  };
+
+  const handleFind = () => {
+    // TODO: Implement find subnet functionality
+    console.log("Find subnet clicked");
+  };
+
+  return (
+    <div className="space-y-6">
+      <IpamHeader
+        currentPage="Subnets"
+        breadcrumbs={[
+          { label: "Tools", href: "#" },
+          { label: "Subnets" },
+        ]}
+      />
+      <IpamNavTabs />
+
+      {/* Error Message */}
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="flex gap-6">
+        {/* Left Sidebar - Subnet Tree */}
+        <aside className="w-64 flex-shrink-0">
+          <div className="bg-[oklch(0.96_0_0)] p-4 rounded-lg border border-border">
+            <SubnetTree
+              subnets={subnets}
+              selectedSubnetId={selectedSubnetId}
+              onSubnetSelect={setSelectedSubnetId}
+            />
+          </div>
+        </aside>
+
+        {/* Main Content Area */}
+        <div className="flex-1 min-w-0">
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="text-muted-foreground">Loading subnets...</div>
+            </div>
+          ) : (
+            <SubnetTable
+              subnets={subnets}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onAdd={handleAdd}
+              onFind={handleFind}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
