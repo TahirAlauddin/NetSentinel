@@ -93,8 +93,11 @@ export interface VRF {
 export interface Customer {
   id: number;
   name: string;
-  address?: string | null;
-  contact?: string | null;
+  description?: string | null;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface SubnetFilters {
