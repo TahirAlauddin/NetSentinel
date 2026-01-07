@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card";
 import { VRF } from "@/types/ipam";
 import { VrfCreateUpdateDto } from "@/types/ipam/dto";
 import { api } from "@/lib/utils";
+import { extractIpamArrayData } from "@/lib/ipam-utils";
 
 interface VrfFormProps {
   vrf?: VRF;
@@ -37,7 +38,8 @@ export function VrfForm({ vrf, onSubmit, onCancel, loading }: VrfFormProps) {
       try {
         const res = await api.get("/api/v1/infrastructure/locations/");
         if (res.data) {
-          setLocations(Array.isArray(res.data) ? res.data : res.data.results || []);
+          const locationsData = extractIpamArrayData<{ id: number; name: string }>(res.data);
+          setLocations(locationsData as Array<{ id: number; name: string }>);
         }
       } catch (err) {
         console.error("Error loading locations:", err);
@@ -94,12 +96,11 @@ export function VrfForm({ vrf, onSubmit, onCancel, loading }: VrfFormProps) {
 
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="location">Location</Label>
-            <Select value={location} onValueChange={setLocation}>
+            <Select value={location || undefined} onValueChange={(value) => setLocation(value || "")}>
               <SelectTrigger>
                 <SelectValue placeholder="Select location" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
                 {locations.map((l) => (
                   <SelectItem key={l.id} value={l.id.toString()}>
                     {l.name}

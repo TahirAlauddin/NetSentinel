@@ -53,6 +53,14 @@ export interface CustomerCreateUpdateDto {
 }
 
 /**
+ * DTO for creating/updating a SubnetGroup
+ */
+export interface SubnetGroupCreateUpdateDto {
+  name: string;
+  description?: string | null;
+}
+
+/**
  * Response types for paginated lists
  */
 export interface PaginatedResponse<T> {

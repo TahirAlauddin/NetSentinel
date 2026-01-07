@@ -18,6 +18,7 @@ export function IpamSidebar() {
       links: [
         { href: "/ipam", label: "Dashboard" },
         { href: "/ipam/subnets", label: "Subnets" },
+        { href: "/ipam/subnet-groups", label: "Subnet Groups" },
         { href: "/ipam/favourite-subnets", label: "Favourite Subnets" },
         { href: "/ipam/customers", label: "Customers" },
         { href: "/ipam/vlans", label: "VLAN" },

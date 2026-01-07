@@ -4,9 +4,10 @@ import {
   VlanCreateUpdateDto,
   VrfCreateUpdateDto,
   CustomerCreateUpdateDto,
+  SubnetGroupCreateUpdateDto,
   PaginatedResponse,
 } from "@/types/ipam/dto";
-import { Subnet, VLAN, VRF, Customer } from "@/types/ipam";
+import { Subnet, VLAN, VRF, Customer, SubnetGroup } from "@/types/ipam";
 
 /**
  * IPAM API Client
@@ -22,7 +23,7 @@ export class IpamApiClient extends BaseApiClient {
     params?: Record<string, unknown>
   ): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/api/v1/ipam/subnets${queryString}`);
+    return this.get<T>(`/ipam/subnets${queryString}`);
   }
 
   /**
@@ -31,7 +32,7 @@ export class IpamApiClient extends BaseApiClient {
    * @returns Subnet details
    */
   async getSubnet<T = Subnet>(id: number | string): Promise<BaseApiResponse<T>> {
-    return this.get<T>(`/api/v1/ipam/subnets/${id}/`);
+    return this.get<T>(`/ipam/subnets/${id}/`);
   }
 
   /**
@@ -42,7 +43,7 @@ export class IpamApiClient extends BaseApiClient {
   async createSubnet<T = Subnet>(
     subnet: SubnetCreateUpdateDto
   ): Promise<BaseApiResponse<T>> {
-    return this.post<T>("/api/v1/ipam/subnets/", subnet);
+    return this.post<T>("/ipam/subnets/", subnet);
   }
 
   /**
@@ -55,7 +56,7 @@ export class IpamApiClient extends BaseApiClient {
     id: number | string,
     subnet: SubnetCreateUpdateDto
   ): Promise<BaseApiResponse<T>> {
-    return this.put<T>(`/api/v1/ipam/subnets/${id}/`, subnet);
+    return this.put<T>(`/ipam/subnets/${id}/`, subnet);
   }
 
   /**
@@ -64,7 +65,7 @@ export class IpamApiClient extends BaseApiClient {
    * @returns Deletion response
    */
   async deleteSubnet<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
-    return this.delete<T>(`/api/v1/ipam/subnets/${id}/`);
+    return this.delete<T>(`/ipam/subnets/${id}/`);
   }
 
   /**
@@ -76,7 +77,7 @@ export class IpamApiClient extends BaseApiClient {
     params?: Record<string, unknown>
   ): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/api/v1/ipam/vlans${queryString}`);
+    return this.get<T>(`/ipam/vlans${queryString}`);
   }
 
   /**
@@ -85,7 +86,7 @@ export class IpamApiClient extends BaseApiClient {
    * @returns VLAN details
    */
   async getVlan<T = VLAN>(id: number | string): Promise<BaseApiResponse<T>> {
-    return this.get<T>(`/api/v1/ipam/vlans/${id}/`);
+    return this.get<T>(`/ipam/vlans/${id}/`);
   }
 
   /**
@@ -94,7 +95,7 @@ export class IpamApiClient extends BaseApiClient {
    * @returns Created VLAN
    */
   async createVlan<T = VLAN>(vlan: VlanCreateUpdateDto): Promise<BaseApiResponse<T>> {
-    return this.post<T>("/api/v1/ipam/vlans/", vlan);
+    return this.post<T>("/ipam/vlans/", vlan);
   }
 
   /**
@@ -107,7 +108,7 @@ export class IpamApiClient extends BaseApiClient {
     id: number | string,
     vlan: VlanCreateUpdateDto
   ): Promise<BaseApiResponse<T>> {
-    return this.put<T>(`/api/v1/ipam/vlans/${id}/`, vlan);
+    return this.put<T>(`/ipam/vlans/${id}/`, vlan);
   }
 
   /**
@@ -116,7 +117,7 @@ export class IpamApiClient extends BaseApiClient {
    * @returns Deletion response
    */
   async deleteVlan<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
-    return this.delete<T>(`/api/v1/ipam/vlans/${id}/`);
+    return this.delete<T>(`/ipam/vlans/${id}/`);
   }
 
   /**
@@ -128,7 +129,7 @@ export class IpamApiClient extends BaseApiClient {
     params?: Record<string, unknown>
   ): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/api/v1/ipam/vrfs${queryString}`);
+    return this.get<T>(`/ipam/vrfs${queryString}`);
   }
 
   /**
@@ -137,7 +138,7 @@ export class IpamApiClient extends BaseApiClient {
    * @returns VRF details
    */
   async getVrf<T = VRF>(id: number | string): Promise<BaseApiResponse<T>> {
-    return this.get<T>(`/api/v1/ipam/vrfs/${id}/`);
+    return this.get<T>(`/ipam/vrfs/${id}/`);
   }
 
   /**
@@ -146,7 +147,7 @@ export class IpamApiClient extends BaseApiClient {
    * @returns Created VRF
    */
   async createVrf<T = VRF>(vrf: VrfCreateUpdateDto): Promise<BaseApiResponse<T>> {
-    return this.post<T>("/api/v1/ipam/vrfs/", vrf);
+    return this.post<T>("/ipam/vrfs/", vrf);
   }
 
   /**
@@ -159,7 +160,7 @@ export class IpamApiClient extends BaseApiClient {
     id: number | string,
     vrf: VrfCreateUpdateDto
   ): Promise<BaseApiResponse<T>> {
-    return this.put<T>(`/api/v1/ipam/vrfs/${id}/`, vrf);
+    return this.put<T>(`/ipam/vrfs/${id}/`, vrf);
   }
 
   /**
@@ -168,7 +169,7 @@ export class IpamApiClient extends BaseApiClient {
    * @returns Deletion response
    */
   async deleteVrf<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
-    return this.delete<T>(`/api/v1/ipam/vrfs/${id}/`);
+    return this.delete<T>(`/ipam/vrfs/${id}/`);
   }
 
   /**
@@ -180,7 +181,7 @@ export class IpamApiClient extends BaseApiClient {
     params?: Record<string, unknown>
   ): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/api/v1/ipam/customers${queryString}`);
+    return this.get<T>(`/ipam/customers${queryString}`);
   }
 
   /**
@@ -189,7 +190,7 @@ export class IpamApiClient extends BaseApiClient {
    * @returns Customer details
    */
   async getCustomer<T = Customer>(id: number | string): Promise<BaseApiResponse<T>> {
-    return this.get<T>(`/api/v1/ipam/customers/${id}/`);
+    return this.get<T>(`/ipam/customers/${id}/`);
   }
 
   /**
@@ -200,7 +201,7 @@ export class IpamApiClient extends BaseApiClient {
   async createCustomer<T = Customer>(
     customer: CustomerCreateUpdateDto
   ): Promise<BaseApiResponse<T>> {
-    return this.post<T>("/api/v1/ipam/customers/", customer);
+    return this.post<T>("/ipam/customers/", customer);
   }
 
   /**
@@ -213,7 +214,7 @@ export class IpamApiClient extends BaseApiClient {
     id: number | string,
     customer: CustomerCreateUpdateDto
   ): Promise<BaseApiResponse<T>> {
-    return this.put<T>(`/api/v1/ipam/customers/${id}/`, customer);
+    return this.put<T>(`/ipam/customers/${id}/`, customer);
   }
 
   /**
@@ -222,15 +223,61 @@ export class IpamApiClient extends BaseApiClient {
    * @returns Deletion response
    */
   async deleteCustomer<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
-    return this.delete<T>(`/api/v1/ipam/customers/${id}/`);
+    return this.delete<T>(`/ipam/customers/${id}/`);
   }
 
   /**
-   * Get subnet groups (for dropdowns)
-   * @returns List of subnet groups
+   * Get all subnet groups
+   * @param params - Optional query parameters for filtering/pagination
+   * @returns List of subnet groups or paginated response
    */
-  async getSubnetGroups<T = Array<{ id: number; name: string }>>(): Promise<BaseApiResponse<T>> {
-    return this.get<T>("/api/v1/ipam/subnet-groups/");
+  async getSubnetGroups<T = SubnetGroup[] | PaginatedResponse<SubnetGroup>>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/subnet-groups${queryString}`);
+  }
+
+  /**
+   * Get a single subnet group by ID
+   * @param id - Subnet Group ID
+   * @returns Subnet Group details
+   */
+  async getSubnetGroup<T = SubnetGroup>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/subnet-groups/${id}/`);
+  }
+
+  /**
+   * Create a new subnet group
+   * @param group - Subnet Group data
+   * @returns Created subnet group
+   */
+  async createSubnetGroup<T = SubnetGroup>(
+    group: SubnetGroupCreateUpdateDto
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/subnet-groups/", group);
+  }
+
+  /**
+   * Update a subnet group
+   * @param id - Subnet Group ID
+   * @param group - Updated subnet group data
+   * @returns Updated subnet group
+   */
+  async updateSubnetGroup<T = SubnetGroup>(
+    id: number | string,
+    group: SubnetGroupCreateUpdateDto
+  ): Promise<BaseApiResponse<T>> {
+    return this.put<T>(`/ipam/subnet-groups/${id}/`, group);
+  }
+
+  /**
+   * Delete a subnet group
+   * @param id - Subnet Group ID
+   * @returns Deletion response
+   */
+  async deleteSubnetGroup<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/subnet-groups/${id}/`);
   }
 }
 

@@ -78,22 +78,18 @@ export function SubnetForm({ subnet, onSubmit, onCancel, loading }: SubnetFormPr
         ]);
 
         if (groupsRes.data) {
-          const groupsData = Array.isArray(groupsRes.data) 
-            ? groupsRes.data 
-            : (groupsRes.data as { results?: Array<{ id: number; name: string }> })?.results || [];
+          const groupsData = extractIpamArrayData(groupsRes.data);
           setGroups(groupsData as Array<{ id: number; name: string }>);
         }
         if (locationsRes.data) {
-          const locationsData = Array.isArray(locationsRes.data) 
-            ? locationsRes.data 
-            : (locationsRes.data as { results?: Array<{ id: number; name: string }> })?.results || [];
+          const locationsData = extractIpamArrayData<{ id: number; name: string }>(locationsRes.data);
           setLocations(locationsData as Array<{ id: number; name: string }>);
         }
         if (vlansRes.data) setVlans(extractIpamArrayData(vlansRes.data));
         if (vrfsRes.data) setVrfs(extractIpamArrayData(vrfsRes.data));
         if (subnetsRes.data) {
-          const subs = extractIpamArrayData(subnetsRes.data);
-          setSubnets(subs.filter((s: Subnet) => !subnet || s.id !== subnet.id));
+          const subs = extractIpamArrayData<Subnet>(subnetsRes.data);
+          setSubnets(subs.filter((s) => !subnet || s.id !== subnet.id));
         }
         if (customersRes.data) setCustomers(extractIpamArrayData(customersRes.data));
       } catch (err) {
@@ -211,14 +207,13 @@ export function SubnetForm({ subnet, onSubmit, onCancel, loading }: SubnetFormPr
           <div className="space-y-2">
             <Label htmlFor="vlan">VLAN</Label>
             <Select
-              value={formData.vlan}
-              onValueChange={(value) => setFormData({ ...formData, vlan: value })}
+              value={formData.vlan || undefined}
+              onValueChange={(value) => setFormData({ ...formData, vlan: value || "" })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select VLAN" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
                 {vlans.map((v) => (
                   <SelectItem key={v.id} value={v.id.toString()}>
                     {v.name}
@@ -231,14 +226,13 @@ export function SubnetForm({ subnet, onSubmit, onCancel, loading }: SubnetFormPr
           <div className="space-y-2">
             <Label htmlFor="vrf">VRF</Label>
             <Select
-              value={formData.vrf}
-              onValueChange={(value) => setFormData({ ...formData, vrf: value })}
+              value={formData.vrf || undefined}
+              onValueChange={(value) => setFormData({ ...formData, vrf: value || "" })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select VRF" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
                 {vrfs.map((v) => (
                   <SelectItem key={v.id} value={v.id.toString()}>
                     {v.name}
@@ -251,14 +245,13 @@ export function SubnetForm({ subnet, onSubmit, onCancel, loading }: SubnetFormPr
           <div className="space-y-2">
             <Label htmlFor="master_subnet">Master Subnet</Label>
             <Select
-              value={formData.master_subnet}
-              onValueChange={(value) => setFormData({ ...formData, master_subnet: value })}
+              value={formData.master_subnet || undefined}
+              onValueChange={(value) => setFormData({ ...formData, master_subnet: value || "" })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select master subnet" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
                 {subnets.map((s) => (
                   <SelectItem key={s.id} value={s.id.toString()}>
                     {s.network}
@@ -271,14 +264,13 @@ export function SubnetForm({ subnet, onSubmit, onCancel, loading }: SubnetFormPr
           <div className="space-y-2">
             <Label htmlFor="customer">Customer</Label>
             <Select
-              value={formData.customer}
-              onValueChange={(value) => setFormData({ ...formData, customer: value })}
+              value={formData.customer || undefined}
+              onValueChange={(value) => setFormData({ ...formData, customer: value || "" })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select customer" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
                 {customers.map((c) => (
                   <SelectItem key={c.id} value={c.id.toString()}>
                     {c.name}
