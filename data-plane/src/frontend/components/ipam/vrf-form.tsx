@@ -36,7 +36,7 @@ export function VrfForm({ vrf, onSubmit, onCancel, loading }: VrfFormProps) {
   useEffect(() => {
     const loadLocations = async () => {
       try {
-        const res = await api.get("/api/v1/infrastructure/locations/");
+        const res = await api.get("/infrastructure/locations/");
         if (res.data) {
           const locationsData = extractIpamArrayData<{ id: number; name: string }>(res.data);
           setLocations(locationsData as Array<{ id: number; name: string }>);

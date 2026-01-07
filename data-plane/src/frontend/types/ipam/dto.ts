@@ -11,7 +11,7 @@ import { Subnet, VLAN, VRF, Customer } from "../ipam";
 export interface SubnetCreateUpdateDto {
   network: string;
   description?: string | null;
-  group: number;
+  group?: number | null;
   location: number;
   vlan?: number | null;
   vrf?: number | null;

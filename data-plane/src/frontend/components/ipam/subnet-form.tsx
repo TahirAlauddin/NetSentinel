@@ -70,7 +70,7 @@ export function SubnetForm({ subnet, onSubmit, onCancel, loading }: SubnetFormPr
       try {
         const [groupsRes, locationsRes, vlansRes, vrfsRes, subnetsRes, customersRes] = await Promise.all([
           ipamApi.getSubnetGroups(),
-          api.get("/api/v1/infrastructure/locations/"),
+          api.get("/infrastructure/locations/"),
           ipamApi.getVlans(),
           ipamApi.getVrfs(),
           ipamApi.getSubnets(),
@@ -108,11 +108,11 @@ export function SubnetForm({ subnet, onSubmit, onCancel, loading }: SubnetFormPr
       const submitData: SubnetCreateUpdateDto = {
         network: formData.network,
         description: formData.description || null,
-        group: parseInt(formData.group),
         location: parseInt(formData.location),
         status: formData.status,
       };
 
+      if (formData.group) submitData.group = parseInt(formData.group);
       if (formData.vlan) submitData.vlan = parseInt(formData.vlan);
       if (formData.vrf) submitData.vrf = parseInt(formData.vrf);
       if (formData.gateway_ip) submitData.gateway_ip = formData.gateway_ip;
@@ -165,11 +165,10 @@ export function SubnetForm({ subnet, onSubmit, onCancel, loading }: SubnetFormPr
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="group">Subnet Group *</Label>
+            <Label htmlFor="group">Subnet Group</Label>
             <Select
-              value={formData.group}
-              onValueChange={(value) => setFormData({ ...formData, group: value })}
-              required
+              value={formData.group || undefined}
+              onValueChange={(value) => setFormData({ ...formData, group: value || "" })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select group" />

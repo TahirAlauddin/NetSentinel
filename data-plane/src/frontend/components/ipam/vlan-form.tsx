@@ -36,7 +36,7 @@ export function VlanForm({ vlan, onSubmit, onCancel, loading }: VlanFormProps) {
   useEffect(() => {
     const loadLocations = async () => {
       try {
-        const res = await api.get("/api/v1/infrastructure/locations/");
+        const res = await api.get("/infrastructure/locations/");
         if (res.data) {
           const locationsData = extractIpamArrayData(res.data);
           setLocations(locationsData as Array<{ id: number; name: string }>);
