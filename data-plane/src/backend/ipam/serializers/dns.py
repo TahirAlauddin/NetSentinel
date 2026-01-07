@@ -36,6 +36,23 @@ class DNSRecordSerializer(serializers.ModelSerializer):
     zone_detail = DNSZoneSerializer(source="zone", read_only=True)
     record_type_display = serializers.CharField(source="get_record_type_display", read_only=True)
 
+    def create(self, validated_data):
+        """
+        Create a DNS record, setting zone from context if provided.
+
+        If zone_pk is in the serializer context (from nested routes or tests),
+        it will be used to set the zone. If zone_id is already in validated_data
+        (from viewset's perform_create), it will be used as-is.
+        """
+        # Only set zone_id from context if it's not already in validated_data
+        # (viewset's perform_create may have already set it via save(zone_id=...))
+        if "zone_id" not in validated_data:
+            zone_pk = self.context.get("zone_pk")
+            if zone_pk:
+                validated_data["zone_id"] = zone_pk
+
+        return super().create(validated_data)
+
     class Meta:
         model = DNSRecord
         fields = [
@@ -51,4 +68,4 @@ class DNSRecordSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        read_only_fields = ["id", "zone", "created_at", "updated_at"]

@@ -3,6 +3,7 @@ Constants for IPAM models and utilities.
 """
 
 # Regex pattern for validating IPv4 and IPv6 CIDR notation
+# Uses VERBOSE flag to allow whitespace and comments
 CIDR_REGEX_PATTERN = r"""^(
                 (
                     (25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.
@@ -18,6 +19,20 @@ CIDR_REGEX_PATTERN = r"""^(
                     ([A-Fa-f0-9]{1,4}:){1,7}:
                     |
                     :(:[A-Fa-f0-9]{1,4}){1,7}
+                    |
+                    ([A-Fa-f0-9]{1,4}:){1,6}:[A-Fa-f0-9]{1,4}
+                    |
+                    ([A-Fa-f0-9]{1,4}:){1,5}(:[A-Fa-f0-9]{1,4}){1,2}
+                    |
+                    ([A-Fa-f0-9]{1,4}:){1,4}(:[A-Fa-f0-9]{1,4}){1,3}
+                    |
+                    ([A-Fa-f0-9]{1,4}:){1,3}(:[A-Fa-f0-9]{1,4}){1,4}
+                    |
+                    ([A-Fa-f0-9]{1,4}:){1,2}(:[A-Fa-f0-9]{1,4}){1,5}
+                    |
+                    [A-Fa-f0-9]{1,4}:((:[A-Fa-f0-9]{1,4}){1,6})
+                    |
+                    :((:[A-Fa-f0-9]{1,4}){1,7}|:)
                 )
                 \/(12[0-8]|1[01][0-9]|[1-9]?[0-9])
                 )$

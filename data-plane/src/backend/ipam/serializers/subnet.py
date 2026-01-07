@@ -76,6 +76,20 @@ class SubnetSerializer(serializers.ModelSerializer):
         """
         return obj.ip_addresses.count()
 
+    def create(self, validated_data):
+        """Create subnet and automatically set is_ipv6."""
+        subnet = super().create(validated_data)
+        # is_ipv6 is set in model's save() method, but refresh to ensure it's updated
+        subnet.refresh_from_db()
+        return subnet
+
+    def update(self, instance, validated_data):
+        """Update subnet and automatically set is_ipv6 if network changed."""
+        subnet = super().update(instance, validated_data)
+        # is_ipv6 is set in model's save() method, but refresh to ensure it's updated
+        subnet.refresh_from_db()
+        return subnet
+
     class Meta:
         model = Subnet
         fields = [

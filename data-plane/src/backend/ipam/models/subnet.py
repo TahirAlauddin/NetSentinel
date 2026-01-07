@@ -1,3 +1,6 @@
+import ipaddress
+import re
+
 from django.core.validators import RegexValidator
 from django.db import models
 
@@ -27,6 +30,7 @@ class Subnet(models.Model):
         validators=[
             RegexValidator(
                 CIDR_REGEX_PATTERN,
+                flags=re.VERBOSE,
                 message=(
                     "Network must be in valid IPv4 or IPv6 CIDR notation "
                     "(e.g., 192.168.1.0/24 or 2001:db8::/32)"
@@ -108,6 +112,17 @@ class Subnet(models.Model):
         verbose_name_plural = "Subnets"
         ordering = ["network"]
         unique_together = [["network", "location"]]
+
+    def save(self, *args, **kwargs):
+        """Override save to automatically set is_ipv6 based on network."""
+        if self.network:
+            try:
+                net = ipaddress.ip_network(self.network, strict=False)
+                self.is_ipv6 = isinstance(net, ipaddress.IPv6Network)
+            except (ValueError, TypeError):
+                # If network is invalid, keep default value
+                pass
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.network} - {self.location}"
