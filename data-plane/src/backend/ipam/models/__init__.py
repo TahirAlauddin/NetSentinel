@@ -1,5 +1,6 @@
 from .customer import Customer
 from .dns import DNSRecord, DNSZone
+from .favorite_subnet import FavoriteSubnet
 from .ip_address import IPAddress
 from .ip_assignment_history import IPAssignmentHistory
 from .ip_request import IPRequest
@@ -19,4 +20,5 @@ __all__ = [
     "Customer",
     "IPRequest",
     "IPAssignmentHistory",
+    "FavoriteSubnet",
 ]

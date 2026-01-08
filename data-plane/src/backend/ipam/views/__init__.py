@@ -140,6 +140,30 @@ class SubnetViewSet(viewsets.ModelViewSet):
     )
     serializer_class = SubnetSerializer
 
+    def get_queryset(self):
+        """
+        Annotate queryset with favorite status for the current user.
+        """
+        queryset = super().get_queryset()
+        user = self.request.user
+
+        if user and user.is_authenticated:
+            # Annotate with favorite status
+            from django.db.models import Exists, OuterRef
+
+            from ..models import FavoriteSubnet
+
+            queryset = queryset.annotate(
+                is_favorite=Exists(FavoriteSubnet.objects.filter(user=user, subnet=OuterRef("pk")))
+            )
+        else:
+            # For anonymous users, set is_favorite to False
+            from django.db.models import BooleanField, Value
+
+            queryset = queryset.annotate(is_favorite=Value(False, output_field=BooleanField()))
+
+        return queryset
+
     @action(detail=True, methods=["get"])
     def child_subnets(self, request, pk=None):
         """
@@ -298,6 +322,48 @@ class SubnetViewSet(viewsets.ModelViewSet):
 
         summary = get_utilization_summary()
         return Response(summary, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post", "delete"])
+    def favorite(self, request, pk=None):
+        """
+        Add or remove a subnet from user's favorites.
+
+        POST /api/v1/ipam/subnets/{id}/favorite/ - Add to favorites
+        DELETE /api/v1/ipam/subnets/{id}/favorite/ - Remove from favorites
+
+        Args:
+            request: HTTP request object
+            pk: Primary key of the subnet
+
+        Returns:
+            Response containing updated subnet with is_favorite status
+        """
+        subnet = self.get_object()
+        user = request.user
+
+        if request.method == "POST":
+            # Add to favorites
+            favorite, created = FavoriteSubnet.objects.get_or_create(user=user, subnet=subnet)
+            if created:
+                serializer = SubnetSerializer(subnet)
+                # Add is_favorite field to response
+                data = serializer.data
+                data["is_favorite"] = True
+                return Response(data, status=status.HTTP_201_CREATED)
+            else:
+                # Already favorited
+                serializer = SubnetSerializer(subnet)
+                data = serializer.data
+                data["is_favorite"] = True
+                return Response(data, status=status.HTTP_200_OK)
+        elif request.method == "DELETE":
+            # Remove from favorites
+            deleted_count, _ = FavoriteSubnet.objects.filter(user=user, subnet=subnet).delete()
+
+            serializer = SubnetSerializer(subnet)
+            data = serializer.data
+            data["is_favorite"] = False
+            return Response(data, status=status.HTTP_200_OK)
 
 
 class IPAddressViewSet(viewsets.ModelViewSet):

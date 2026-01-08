@@ -34,6 +34,7 @@ class SubnetSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     child_subnets_count = serializers.SerializerMethodField()
     ip_addresses_count = serializers.SerializerMethodField()
+    is_favorite = serializers.SerializerMethodField()
 
     def get_master_subnet_detail(self, obj):
         """
@@ -76,6 +77,22 @@ class SubnetSerializer(serializers.ModelSerializer):
         """
         return obj.ip_addresses.count()
 
+    def get_is_favorite(self, obj):
+        """
+        Check if the current user has favorited this subnet.
+
+        Args:
+            obj: Subnet instance
+
+        Returns:
+            bool: True if user has favorited this subnet, False otherwise
+        """
+        request = self.context.get("request")
+        if request and request.user and request.user.is_authenticated:
+            # Check if user has favorited this subnet
+            return hasattr(obj, "is_favorite") and obj.is_favorite
+        return False
+
     def create(self, validated_data):
         """Create subnet and automatically set is_ipv6."""
         subnet = super().create(validated_data)
@@ -115,6 +132,7 @@ class SubnetSerializer(serializers.ModelSerializer):
             "status_display",
             "child_subnets_count",
             "ip_addresses_count",
+            "is_favorite",
             "created_at",
             "updated_at",
         ]
