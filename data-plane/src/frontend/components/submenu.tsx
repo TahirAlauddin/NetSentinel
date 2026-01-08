@@ -23,7 +23,24 @@ export function Submenu({ columns, isVisible, onClose, top = 0 }: SubmenuProps) 
       onMouseEnter={() => {
         // Keep submenu open when hovering over it
       }}
-      onMouseLeave={onClose}
+      onMouseLeave={(e) => {
+        // Close when mouse leaves submenu, unless moving back to sidebar
+        const relatedTarget = e.relatedTarget
+        
+        // relatedTarget can be Window, HTMLElement, or null
+        if (relatedTarget instanceof HTMLElement) {
+          const isMovingToSidebar = relatedTarget.closest('nav') !== null || 
+                                   relatedTarget.closest('.top-0.h-screen') !== null
+          
+          // Close if not moving to sidebar
+          if (!isMovingToSidebar) {
+            onClose()
+          }
+        } else {
+          // relatedTarget is Window or null - mouse is leaving to main content
+          onClose()
+        }
+      }}
       style={{
         left: window.innerWidth >= 1024 ? '256px' : '1rem', // Desktop: sidebar width, Mobile: margin
         top: `${top}px`,

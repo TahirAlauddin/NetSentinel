@@ -54,9 +54,26 @@ export function NavigationItemComponent({
           onItemHover(item.label)
         }
       }}
-      onMouseLeave={() => {
+      onMouseLeave={(e) => {
         if (hasSubmenu && onItemLeave) {
-          onItemLeave()
+          const relatedTarget = e.relatedTarget
+          
+          // relatedTarget can be Window, HTMLElement, or null
+          // Check if it's an HTMLElement before using DOM methods
+          if (relatedTarget instanceof HTMLElement) {
+            // Check if the mouse is moving to a submenu element or staying in sidebar
+            const isMovingToSubmenu = relatedTarget.closest('[role="menu"]') !== null
+            const isMovingToSidebar = relatedTarget.closest('nav') !== null || 
+                                     relatedTarget.closest('.top-0.h-screen') !== null
+            
+            // Only close if not moving to submenu or sidebar
+            if (!isMovingToSubmenu && !isMovingToSidebar) {
+              onItemLeave()
+            }
+          } else {
+            // relatedTarget is Window or null - mouse is leaving to main content
+            onItemLeave()
+          }
         }
       }}
     >

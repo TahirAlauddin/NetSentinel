@@ -82,24 +82,49 @@ export function Navigation({ items }: NavigationProps) {
     }
   }, [isDesktop])
 
-  const handleItemLeave = useCallback(() => {
+  const handleItemLeave = () => {
     if (isDesktop) {
-      setHoveredItem(null)
-      // Delay closing to allow moving to submenu
-      setTimeout(() => {
-        if (!hoveredItem) {
-          setExpandedItems(new Set())
-        }
-      }, 100)
+      // Use a ref to track the timeout so we can clear it if needed
+      const timeoutId = setTimeout(() => {
+        setHoveredItem(null)
+        setExpandedItems(new Set())
+      }, 150)
+      
+      // Return cleanup function
+      return () => clearTimeout(timeoutId)
     }
-  }, [isDesktop, hoveredItem])
+  }
 
   const setItemRef = useCallback((itemLabel: string) => (el: HTMLElement | null) => {
     itemRefs.current[itemLabel] = el
   }, [])
 
+  // Handle mouse leave from entire navigation area
+  const handleNavigationLeave = useCallback((e: React.MouseEvent) => {
+    if (isDesktop) {
+      const relatedTarget = e.relatedTarget
+      
+      // relatedTarget can be Window, HTMLElement, or null
+      // Check if it's an HTMLElement and if it's moving to a submenu
+      const isMovingToSubmenu = relatedTarget instanceof HTMLElement && 
+        relatedTarget.closest('[role="menu"]') !== null
+      
+      // Only close if mouse is not moving to a submenu
+      if (!isMovingToSubmenu) {
+        // Close all submenus when mouse leaves the navigation area
+        setTimeout(() => {
+          setHoveredItem(null)
+          setExpandedItems(new Set())
+        }, 100)
+      }
+    }
+  }, [isDesktop])
+
   return (
-    <nav className="py-2">
+    <nav 
+      className="py-2"
+      onMouseLeave={handleNavigationLeave}
+    >
       <ul className="flex flex-col">
         {items.map((item) => {
           const isExpanded = expandedItems.has(item.label) || hoveredItem === item.label
