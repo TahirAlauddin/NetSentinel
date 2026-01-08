@@ -2,7 +2,6 @@
 
 import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
-import { SettingsSidebar } from "@/components/settings/settings-sidebar";
 import { SettingsNavTabs } from "@/components/settings/settings-nav-tabs";
 import { SettingsHeader } from "@/components/settings/settings-header";
 import { useSession } from "next-auth/react";
@@ -215,11 +214,9 @@ export default function CategoriesPage() {
   return (
     <ProtectedRoute>
       <AppShell>
-        <div className="flex gap-6 min-h-[calc(100dvh-120px)]">
-          <SettingsSidebar />
-
+        <div className="min-h-[calc(100dvh-120px)]">
           {/* Main content */}
-          <div className="flex-1 p-8">
+          <div className="p-8">
             <div className="space-y-6">
               <SettingsHeader currentPage="Categories" />
               <SettingsNavTabs />

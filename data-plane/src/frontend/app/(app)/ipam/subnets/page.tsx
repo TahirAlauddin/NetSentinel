@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { IpamHeader } from "@/components/ipam/ipam-header";
 import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
 import { SubnetTable } from "@/components/ipam/subnet-table";
-import { SubnetTree } from "@/components/ipam/subnet-tree";
 import { Subnet } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { extractIpamArrayData } from "@/lib/ipam-utils";
@@ -21,7 +20,6 @@ export default function SubnetsPage() {
   const [subnets, setSubnets] = useState<Subnet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedSubnetId, setSelectedSubnetId] = useState<number | undefined>();
 
   const loadSubnets = async () => {
     try {
@@ -100,20 +98,9 @@ export default function SubnetsPage() {
       )}
 
       {/* Main Content */}
-      <div className="flex gap-6">
-        {/* Left Sidebar - Subnet Tree */}
-        <aside className="w-64 flex-shrink-0">
-          <div className="bg-[oklch(0.96_0_0)] p-4 rounded-lg border border-border">
-            <SubnetTree
-              subnets={subnets}
-              selectedSubnetId={selectedSubnetId}
-              onSubnetSelect={setSelectedSubnetId}
-            />
-          </div>
-        </aside>
-
+      <div>
         {/* Main Content Area */}
-        <div className="flex-1 min-w-0">
+        <div>
           {loading ? (
             <div className="text-center py-12">
               <div className="text-muted-foreground">Loading subnets...</div>

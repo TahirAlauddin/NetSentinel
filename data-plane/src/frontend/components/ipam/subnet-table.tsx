@@ -4,8 +4,10 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search, Plus, Edit2, Trash2, List, Grid, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { Subnet, SubnetSortOptions } from "@/types/ipam";
+import { ViewToggle, ViewMode } from "@/components/ui/view-toggle";
+import { SubnetViews } from "./subnet-views";
 
 interface SubnetTableProps {
   subnets: Subnet[];
@@ -31,6 +33,7 @@ export function SubnetTable({
     field: "network",
     direction: "asc",
   });
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 18;
 
@@ -118,17 +121,6 @@ export function SubnetTable({
     }));
   };
 
-  const renderSortIcon = (field: SubnetSortOptions["field"]) => {
-    if (sortOptions.field !== field) {
-      return <ArrowUpDown className="w-3 h-3 ml-1 text-muted-foreground" />;
-    }
-    return sortOptions.direction === "asc" ? (
-      <ArrowUp className="w-3 h-3 ml-1" />
-    ) : (
-      <ArrowDown className="w-3 h-3 ml-1" />
-    );
-  };
-
   return (
     <Card className="p-6">
       {/* Header with Actions */}
@@ -163,188 +155,20 @@ export function SubnetTable({
               className="pl-10 w-full sm:w-64"
             />
           </div>
-          <div className="flex items-center gap-1 border rounded-md">
-            <button
-              className="p-2 hover:bg-[oklch(0.93_0_0)] rounded-l-md"
-              title="List view"
-            >
-              <List className="w-4 h-4" />
-            </button>
-            <button
-              className="p-2 hover:bg-[oklch(0.93_0_0)] rounded-r-md border-l"
-              title="Grid view"
-            >
-              <Grid className="w-4 h-4" />
-            </button>
-          </div>
+          <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b">
-              <th
-                className="text-left py-3 px-4 cursor-pointer hover:bg-[oklch(0.93_0_0)]"
-                onClick={() => handleSort("network")}
-              >
-                <div className="flex items-center">
-                  Subnet
-                  {renderSortIcon("network")}
-                </div>
-              </th>
-              <th
-                className="text-left py-3 px-4 cursor-pointer hover:bg-[oklch(0.93_0_0)]"
-                onClick={() => handleSort("description")}
-              >
-                <div className="flex items-center">
-                  Description
-                  {renderSortIcon("description")}
-                </div>
-              </th>
-              <th
-                className="text-left py-3 px-4 cursor-pointer hover:bg-[oklch(0.93_0_0)]"
-                onClick={() => handleSort("vlan")}
-              >
-                <div className="flex items-center">
-                  VLAN
-                  {renderSortIcon("vlan")}
-                </div>
-              </th>
-              <th
-                className="text-left py-3 px-4 cursor-pointer hover:bg-[oklch(0.93_0_0)]"
-                onClick={() => handleSort("vrf")}
-              >
-                <div className="flex items-center">
-                  VRF
-                  {renderSortIcon("vrf")}
-                </div>
-              </th>
-              <th className="text-left py-3 px-4">Master Subnet</th>
-              <th className="text-left py-3 px-4">Device</th>
-              <th
-                className="text-left py-3 px-4 cursor-pointer hover:bg-[oklch(0.93_0_0)]"
-                onClick={() => handleSort("customer")}
-              >
-                <div className="flex items-center">
-                  Customer
-                  {renderSortIcon("customer")}
-                </div>
-              </th>
-              <th
-                className="text-left py-3 px-4 cursor-pointer hover:bg-[oklch(0.93_0_0)]"
-                onClick={() => handleSort("location")}
-              >
-                <div className="flex items-center">
-                  Subnet Location
-                  {renderSortIcon("location")}
-                </div>
-              </th>
-              <th className="text-left py-3 px-4">Contact</th>
-              <th
-                className="text-left py-3 px-4 cursor-pointer hover:bg-[oklch(0.93_0_0)]"
-                onClick={() => handleSort("status")}
-              >
-                <div className="flex items-center">
-                  Routable
-                  {renderSortIcon("status")}
-                </div>
-              </th>
-              <th className="text-left py-3 px-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedSubnets.length === 0 ? (
-              <tr>
-                <td colSpan={11} className="py-8 text-center text-muted-foreground">
-                  {searchTerm ? "No subnets found matching your search" : "No subnets available"}
-                </td>
-              </tr>
-            ) : (
-              paginatedSubnets.map((subnet) => (
-                <tr key={subnet.id} className="border-b hover:bg-[oklch(0.98_0_0)]">
-                  <td className="py-3 px-4">
-                    <a
-                      href={`/ipam/subnets/${subnet.id}`}
-                      className="font-mono text-sm text-[oklch(0.40_0.15_249)] hover:underline"
-                    >
-                      {subnet.network}
-                    </a>
-                  </td>
-                  <td className="py-3 px-4">{subnet.description || "/"}</td>
-                  <td className="py-3 px-4">
-                    {subnet.vlan_detail ? (
-                      <span>{subnet.vlan_detail.vlan_id || subnet.vlan_detail.name}</span>
-                    ) : (
-                      <span className="text-muted-foreground">Default</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4">
-                    {subnet.vrf_detail ? (
-                      <span>{subnet.vrf_detail.name}</span>
-                    ) : (
-                      <span className="text-muted-foreground">Default</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4">
-                    {subnet.master_subnet_detail ? (
-                      <span className="font-mono text-xs">{subnet.master_subnet_detail.network}</span>
-                    ) : (
-                      <span className="text-muted-foreground">/</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="text-muted-foreground">/</span>
-                  </td>
-                  <td className="py-3 px-4">
-                    {subnet.customer_detail ? (
-                      <span>{subnet.customer_detail.name}</span>
-                    ) : (
-                      <span className="text-muted-foreground">/</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4">
-                    {subnet.location_detail ? (
-                      <span>{subnet.location_detail.name}</span>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="text-muted-foreground">-</span>
-                  </td>
-                  <td className="py-3 px-4">
-                    {subnet.status === "active" ? (
-                      <span className="text-green-600">Yes</span>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => onEdit?.(subnet)}
-                        className="p-1 hover:bg-[oklch(0.93_0_0)] rounded"
-                        title="Edit"
-                      >
-                        <Edit2 className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                      <button
-                        onClick={() => onDelete?.(subnet.id)}
-                        className="p-1 hover:bg-red-50 rounded"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* List or Grid View */}
+      <SubnetViews
+        subnets={paginatedSubnets}
+        viewMode={viewMode}
+        sortOptions={sortOptions}
+        onSort={handleSort}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        emptyMessage={searchTerm ? "No subnets found matching your search" : "No subnets available"}
+      />
 
       {/* Pagination */}
       {totalPages > 1 && (

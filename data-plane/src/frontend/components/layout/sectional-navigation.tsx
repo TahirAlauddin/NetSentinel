@@ -58,17 +58,37 @@ const SECONDARY_NAV_ITEMS = {
 };
 
 /**
+ * Settings Navigation Items
+ */
+const SETTINGS_NAV_ITEMS = [
+  { href: "/settings", label: "Overview" },
+  { href: "/settings/people", label: "People" },
+  { href: "/settings/groups", label: "Groups & Permissions" },
+  { href: "/settings/locations", label: "Locations" },
+  { href: "/settings/categories", label: "Categories" },
+  { href: "/settings/departments", label: "Departments" },
+  { href: "/settings/carrier-contacts", label: "Carrier Contacts" },
+];
+
+/**
  * Sectional Navigation Component
  * Displays contextual navigation items based on the current route.
- * Shows IPAM navigation when on IPAM routes, otherwise shows default navigation.
+ * Shows IPAM navigation when on IPAM routes, Settings navigation when on Settings routes,
+ * otherwise shows default navigation.
  */
 export function SectionalNavigation() {
   const pathname = usePathname();
   const isIpamRoute = pathname.startsWith("/ipam");
+  const isSettingsRoute = pathname.startsWith("/settings");
 
   // Show IPAM navigation when on IPAM routes
   if (isIpamRoute) {
     return <IpamNavigation pathname={pathname} />;
+  }
+
+  // Show Settings navigation when on Settings routes
+  if (isSettingsRoute) {
+    return <SettingsNavigation pathname={pathname} />;
   }
 
   // Default navigation for other routes
@@ -156,6 +176,42 @@ function IpamNavigation({ pathname }: { pathname: string }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </li>
+    </ul>
+  );
+}
+
+/**
+ * Settings Navigation Component
+ * Displays settings navigation items in a horizontal scrollable bar
+ */
+function SettingsNavigation({ pathname }: { pathname: string }) {
+  const isActive = (href: string) => {
+    if (href === "/settings") {
+      return pathname === "/settings";
+    }
+    return pathname.startsWith(href);
+  };
+
+  return (
+    <ul className="flex items-center gap-2 sm:gap-4 lg:gap-6 py-2 sm:py-3 text-xs sm:text-sm overflow-x-auto">
+      {SETTINGS_NAV_ITEMS.map((item) => {
+        const active = isActive(item.href);
+        return (
+          <li key={item.href} className="flex-shrink-0">
+            <Link
+              href={item.href}
+              className={cn(
+                "hover:underline whitespace-nowrap transition-colors",
+                active
+                  ? "text-primary font-semibold underline"
+                  : "text-secondary-foreground hover:text-foreground"
+              )}
+            >
+              {item.label}
+            </Link>
+          </li>
+        );
+      })}
     </ul>
   );
 }
