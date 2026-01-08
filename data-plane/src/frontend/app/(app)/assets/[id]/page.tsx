@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import { AppShell } from "@/components/layout/app-shell"
-import { AssetDetail } from "@/components/pages/assets/AssetDetail"
+import { AssetDetail } from "@/components/apps/assets/AssetDetail"
 import { AssetsApiClient } from "@/lib/api-client/asset"
 import { Asset } from "@/types/assets"
 import { toast } from "sonner"

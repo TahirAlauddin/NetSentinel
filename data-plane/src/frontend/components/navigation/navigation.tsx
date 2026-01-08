@@ -4,7 +4,6 @@ import { useCallback, useRef, useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { NavigationItemComponent } from "./navigation-item"
 import { NavigationItem } from "../../types/navigation"
-import { settingsSubmenuItems } from "../../constants/navigation"
 
 interface NavigationProps {
   items: NavigationItem[]
@@ -24,10 +23,17 @@ export function Navigation({ items }: NavigationProps) {
       return true
     }
 
-    // For Settings, check if current path matches any settings submenu item
-    if (item.label === "Settings" && item.href === "/settings") {
-      const settingsUrls = settingsSubmenuItems.map(subItem => subItem.url)
-      return settingsUrls.includes(pathname)
+    // For items with submenus, check if current path matches any submenu item
+    if (item.hasSubmenu && item.submenuColumns) {
+      const allSubmenuUrls: string[] = []
+      item.submenuColumns.forEach(column => {
+        column.links.forEach(link => {
+          allSubmenuUrls.push(link.href)
+        })
+      })
+      if (allSubmenuUrls.includes(pathname)) {
+        return true
+      }
     }
 
     // Check if pathname starts with the item href (for nested routes)
@@ -96,7 +102,6 @@ export function Navigation({ items }: NavigationProps) {
     <nav className="py-2">
       <ul className="flex flex-col">
         {items.map((item) => {
-          const hasSubmenu = item.hasSubmenu || false
           const isExpanded = expandedItems.has(item.label) || hoveredItem === item.label
           const isActive = isItemActive(item)
           

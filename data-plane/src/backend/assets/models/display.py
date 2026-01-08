@@ -1,5 +1,7 @@
 from django.db import models
+
 from assets.models import Asset
+
 
 class DisplayDetails(models.Model):
     """
@@ -42,4 +44,3 @@ class DisplayDetails(models.Model):
 
     def __str__(self):
         return f"Display Details for {self.asset}"
-

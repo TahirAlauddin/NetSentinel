@@ -6,11 +6,27 @@ export interface LocationRecord {
   address2: string
   city: string
   state: string
-  zip: string
+  zip_code: string
   phone: string
   longitude: number
   latitude: number
   type_building: string
   mpoe: string
   dmarc: string
+}
+
+export interface LocationCreateDto {
+  name: string
+  address1: string
+  city: string
+  alias?: string
+  address2?: string
+  state?: string
+  zip_code?: string
+  phone?: string
+  longitude?: number
+  latitude?: number
+  type_building?: string
+  mpoe?: string
+  dmarc?: string
 }

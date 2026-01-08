@@ -4,7 +4,8 @@ Usage: python manage.py seed_asset_categories
 """
 
 from django.core.management.base import BaseCommand
-from assets.models import TechSpecs, AssetCategory
+
+from assets.models import AssetCategory, TechSpecs
 
 # Tech Specs mapping (name -> table_name)
 TECH_SPECS = {
@@ -54,20 +55,14 @@ class Command(BaseCommand):
         tech_specs_objects = {}
 
         for name, table_name in TECH_SPECS.items():
-            tech_spec, created = TechSpecs.objects.get_or_create(
-                name=name, defaults={"name": name}
-            )
+            tech_spec, created = TechSpecs.objects.get_or_create(name=name, defaults={"name": name})
             tech_specs_objects[name] = tech_spec
             status = "Created" if created else "Already exists"
-            self.stdout.write(
-                self.style.SUCCESS(f"  {status}: {name} -> {table_name}")
-            )
+            self.stdout.write(self.style.SUCCESS(f"  {status}: {name} -> {table_name}"))
 
         self.stdout.write("\nCreating Asset Categories...")
         for category_name, tech_specs_name in CATEGORIES.items():
-            tech_specs_obj = (
-                tech_specs_objects.get(tech_specs_name) if tech_specs_name else None
-            )
+            tech_specs_obj = tech_specs_objects.get(tech_specs_name) if tech_specs_name else None
 
             category, created = AssetCategory.objects.get_or_create(
                 name=category_name, defaults={"tech_specs": tech_specs_obj}
@@ -80,11 +75,8 @@ class Command(BaseCommand):
 
             status = "Created" if created else "Already exists"
             tech_info = f" -> {tech_specs_name}" if tech_specs_name else " (no tech specs)"
-            self.stdout.write(
-                self.style.SUCCESS(f"  {status}: {category_name}{tech_info}")
-            )
+            self.stdout.write(self.style.SUCCESS(f"  {status}: {category_name}{tech_info}"))
 
         self.stdout.write(self.style.SUCCESS("\n✅ Seeding complete!"))
         self.stdout.write(f"Total Tech Specs: {TechSpecs.objects.count()}")
         self.stdout.write(f"Total Categories: {AssetCategory.objects.count()}")
-

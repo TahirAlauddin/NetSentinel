@@ -1,23 +1,25 @@
 from rest_framework import serializers
-from .models import (
-    AssetTag,
-    CustomLifecycle,
-    Vendor,
-    AssetCategory,
-    TechSpecs,
-    Asset,
-    AssetAttachment,
-    AssetRelation,
-    ComputerDetails,
-    NetworkDetails,
-    DisplayDetails,
-    PhoneDetails,
-    PeripheralDetails,
-    AssetImage,
-    CalendarAlert,
-)
+
 from infrastructure.serializers import AssetLocationSerializer, DepartmentSerializer
 from users.serializers import UserSerializer
+
+from .models import (
+    Asset,
+    AssetAttachment,
+    AssetCategory,
+    AssetImage,
+    AssetRelation,
+    AssetTag,
+    CalendarAlert,
+    ComputerDetails,
+    CustomLifecycle,
+    DisplayDetails,
+    NetworkDetails,
+    PeripheralDetails,
+    PhoneDetails,
+    TechSpecs,
+    Vendor,
+)
 
 
 class AssetTagSerializer(serializers.ModelSerializer):
@@ -182,9 +184,7 @@ class PeripheralDetailsSerializer(serializers.ModelSerializer):
 class AssetAttachmentSerializer(serializers.ModelSerializer):
     """Serializer for Asset Attachment."""
 
-    uploaded_by_name = serializers.CharField(
-        source="uploaded_by.get_full_name", read_only=True
-    )
+    uploaded_by_name = serializers.CharField(source="uploaded_by.get_full_name", read_only=True)
 
     class Meta:
         model = AssetAttachment
@@ -203,12 +203,8 @@ class AssetAttachmentSerializer(serializers.ModelSerializer):
 class AssetRelationSerializer(serializers.ModelSerializer):
     """Serializer for Asset Relation."""
 
-    related_asset_name = serializers.CharField(
-        source="related_asset.name", read_only=True
-    )
-    related_asset_tag = serializers.CharField(
-        source="related_asset.asset_tag", read_only=True
-    )
+    related_asset_name = serializers.CharField(source="related_asset.name", read_only=True)
+    related_asset_tag = serializers.CharField(source="related_asset.asset_tag", read_only=True)
 
     class Meta:
         model = AssetRelation
@@ -316,6 +312,7 @@ class AssetSerializer(serializers.ModelSerializer):
             "installation_date",
             "calendar_alerts",
             "images",
+            "attachments",
             "created_at",
             "updated_at",
             # Extension details
@@ -325,7 +322,14 @@ class AssetSerializer(serializers.ModelSerializer):
             "phone_details",
             "peripheral_details",
         ]
-        read_only_fields = ["id", "images", "calendar_alerts", "created_at", "updated_at"]
+        read_only_fields = [
+            "id",
+            "images",
+            "calendar_alerts",
+            "attachments",
+            "created_at",
+            "updated_at",
+        ]
 
 
 class AssetCreateUpdateSerializer(serializers.ModelSerializer):
@@ -452,21 +456,13 @@ class AssetCreateUpdateSerializer(serializers.ModelSerializer):
 
         # Update extension details
         if computer_details_data:
-            ComputerDetails.objects.update_or_create(
-                asset=instance, defaults=computer_details_data
-            )
+            ComputerDetails.objects.update_or_create(asset=instance, defaults=computer_details_data)
         if network_details_data:
-            NetworkDetails.objects.update_or_create(
-                asset=instance, defaults=network_details_data
-            )
+            NetworkDetails.objects.update_or_create(asset=instance, defaults=network_details_data)
         if display_details_data:
-            DisplayDetails.objects.update_or_create(
-                asset=instance, defaults=display_details_data
-            )
+            DisplayDetails.objects.update_or_create(asset=instance, defaults=display_details_data)
         if phone_details_data:
-            PhoneDetails.objects.update_or_create(
-                asset=instance, defaults=phone_details_data
-            )
+            PhoneDetails.objects.update_or_create(asset=instance, defaults=phone_details_data)
         if peripheral_details_data:
             PeripheralDetails.objects.update_or_create(
                 asset=instance, defaults=peripheral_details_data

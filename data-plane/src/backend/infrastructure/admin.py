@@ -1,12 +1,13 @@
 from django.contrib import admin
+
 from .models import (
-    Location,
-    Circuit,
-    PointOfContact,
-    Department,
-    Category,
-    Contact,
     CarrierContact,
+    Category,
+    Circuit,
+    Contact,
+    Department,
+    Location,
+    PointOfContact,
     UtilityContact,
 )
 
@@ -93,7 +94,6 @@ class CarrierContactAdmin(admin.ModelAdmin):
     list_display = [
         "name",
         "location",
-        "city",
         "customer_service_phone",
         "created_at",
     ]

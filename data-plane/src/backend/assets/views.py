@@ -1,10 +1,78 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from django.db import IntegrityError
 from django.db.models import Q
-from .models import *
-from .serializers import *
+from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from .models import (
+    Asset,
+    AssetAttachment,
+    AssetCategory,
+    AssetImage,
+    AssetRelation,
+    AssetTag,
+    CalendarAlert,
+    ComputerDetails,
+    CustomLifecycle,
+    DisplayDetails,
+    NetworkDetails,
+    PeripheralDetails,
+    PhoneDetails,
+    TechSpecs,
+    Vendor,
+)
+from .serializers import (
+    AssetAttachmentSerializer,
+    AssetBasicDetailsSerializer,
+    AssetCategorySerializer,
+    AssetCreateUpdateSerializer,
+    AssetImageSerializer,
+    AssetRelationSerializer,
+    AssetSerializer,
+    AssetTagSerializer,
+    AssetTechSpecsSerializer,
+    CalendarAlertCreateUpdateSerializer,
+    CalendarAlertSerializer,
+    ComputerDetailsSerializer,
+    CustomLifecycleSerializer,
+    DisplayDetailsSerializer,
+    NetworkDetailsSerializer,
+    PeripheralDetailsSerializer,
+    PhoneDetailsSerializer,
+    TechSpecsSerializer,
+    VendorSerializer,
+)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def api_info_view(request):
+    return Response(
+        {
+            "message": "NetSentinel API is running!",
+            "version": "v1",
+            "endpoints": {
+                "tags": "/api/v1/assets/tags/",
+                "lifecycles": "/api/v1/assets/lifecycles/",
+                "vendors": "/api/v1/assets/vendors/",
+                "tech_specs": "/api/v1/assets/tech_specs/",
+                "categories": "/api/v1/assets/categories/",
+                "attachments": "/api/v1/assets/attachments/",
+                "relations": "/api/v1/assets/relations/",
+                "computer_details": "/api/v1/assets/computer_details/",
+                "network_details": "/api/v1/assets/network_details/",
+                "display_details": "/api/v1/assets/display_details/",
+                "phone_details": "/api/v1/assets/phone_details/",
+                "peripheral_details": "/api/v1/assets/peripheral_details/",
+                "basic_details": "/api/v1/assets/basic_details/",
+                "tech_specs": "/api/v1/assets/tech_specs/",
+                "calendar_alerts": "/api/v1/assets/calendar_alerts/",
+                "images": "/api/v1/assets/images/",
+            },
+        }
+    )
 
 
 class AssetTagViewSet(viewsets.ModelViewSet):
@@ -99,44 +167,62 @@ class AssetViewSet(viewsets.ModelViewSet):
             return AssetCreateUpdateSerializer
         return AssetSerializer
 
-    def get_queryset(self):
-        """Filter queryset based on query parameters."""
-        queryset = super().get_queryset()
+    def _filter_by_id_param(self, queryset, param_name, filter_field):
+        """Filter queryset by integer ID parameter."""
+        param_value = self.request.query_params.get(param_name, None)
+        if param_value:
+            try:
+                queryset = queryset.filter(**{filter_field: int(param_value)})
+            except (ValueError, TypeError):
+                queryset = queryset.none()
+        return queryset
 
-        # Filter by category
-        category = self.request.query_params.get("category", None)
-        if category:
-            queryset = queryset.filter(category_id=category)
-
-        # Filter by status
+    def _filter_by_status(self, queryset):
+        """Filter queryset by status."""
         status_filter = self.request.query_params.get("status", None)
         if status_filter:
             queryset = queryset.filter(status=status_filter)
+        return queryset
 
-        # Filter by vendor
-        vendor = self.request.query_params.get("vendor", None)
-        if vendor:
-            queryset = queryset.filter(vendor_id=vendor)
-
-        # Filter by location
-        location = self.request.query_params.get("location", None)
-        if location:
-            queryset = queryset.filter(location_id=location)
-
-        # Search by name or asset_tag
+    def _filter_by_search(self, queryset):
+        """Filter queryset by search term."""
         search = self.request.query_params.get("search", None)
         if search:
-            queryset = queryset.filter(
-                Q(name__icontains=search) | Q(asset_tag__icontains=search)
-            )
-
+            queryset = queryset.filter(Q(name__icontains=search) | Q(asset_tag__icontains=search))
         return queryset
+
+    def get_queryset(self):
+        """Filter queryset based on query parameters."""
+        queryset = super().get_queryset()
+        queryset = self._filter_by_id_param(queryset, "category", "category_id")
+        queryset = self._filter_by_status(queryset)
+        queryset = self._filter_by_id_param(queryset, "vendor", "vendor_id")
+        queryset = self._filter_by_id_param(queryset, "location", "location_id")
+        queryset = self._filter_by_search(queryset)
+        return queryset
+
+    def perform_destroy(self, instance):
+        """Check permissions before deleting an asset."""
+        # Check if user is superuser or staff, or if they own the asset
+        user = self.request.user
+        if not (user.is_superuser or user.is_staff):
+            # Allow if user is assigned to, uses, OR manages this asset
+            # Deny only if user has NONE of these relationships
+            is_owner = (
+                instance.assigned_to == user
+                or instance.used_by == user
+                or instance.managed_by == user
+            )
+            if not is_owner:
+                raise PermissionDenied("You do not have permission to delete this asset.")
+        instance.delete()
 
     @action(detail=True, methods=["get"])
     def attachments(self, request, pk=None):
         """Get all attachments for an asset."""
         asset = self.get_object()
-        attachments = asset.get_attachments()
+        # Use direct ForeignKey relationship instead of GenericForeignKey
+        attachments = asset.attachments.all()
         serializer = AssetAttachmentSerializer(attachments, many=True)
         return Response(serializer.data)
 
@@ -149,9 +235,9 @@ class AssetViewSet(viewsets.ModelViewSet):
             "related_asset"
         )
         # Get relations where this asset is the target
-        incoming_relations = AssetRelation.objects.filter(
-            related_asset=asset
-        ).select_related("asset")
+        incoming_relations = AssetRelation.objects.filter(related_asset=asset).select_related(
+            "asset"
+        )
 
         # Combine both directions
         all_relations = list(outgoing_relations) + list(incoming_relations)
@@ -254,11 +340,42 @@ class AssetAttachmentViewSet(viewsets.ModelViewSet):
 class AssetRelationViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing asset relations.
+    Can be used both as a direct route and as a nested route.
     """
 
     queryset = AssetRelation.objects.select_related("asset", "related_asset").all()
     serializer_class = AssetRelationSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Filter relations by the asset ID from the nested route if present."""
+        asset_id = self.kwargs.get("asset_pk")
+        if asset_id:
+            queryset = AssetRelation.objects.select_related("asset", "related_asset").filter(
+                asset_id=asset_id
+            )
+        else:
+            queryset = AssetRelation.objects.select_related("asset", "related_asset").all()
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        """Handle duplicate relation creation."""
+        try:
+            return super().create(request, *args, **kwargs)
+        except IntegrityError:
+            return Response(
+                {"error": "This relation already exists."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+class AssetRelationDirectViewSet(AssetRelationViewSet):
+    """
+    Direct route viewset for asset relations (not nested under assets).
+    This allows creating relations via /api/v1/assets/relations/ without needing an asset_pk.
+    """
+
+    pass
 
 
 # Extension detail viewsets (read-only for now, can be extended if needed)
@@ -322,11 +439,7 @@ class AssetBasicDetailsViewSet(viewsets.ReadOnlyModelViewSet):
     ViewSet for viewing asset basic details.
     """
 
-    queryset = (
-        Asset.objects.select_related("category", "vendor")
-        .prefetch_related("tags")
-        .all()
-    )
+    queryset = Asset.objects.select_related("category", "vendor").prefetch_related("tags").all()
     serializer_class = AssetBasicDetailsSerializer
     permission_classes = [IsAuthenticated]
 
@@ -337,9 +450,7 @@ class AssetTechSpecsViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     queryset = (
-        Asset.objects.values(
-            "id", "name", "mac_address", "ip_address", "manufacturer", "model"
-        )
+        Asset.objects.values("id", "name", "mac_address", "ip_address", "manufacturer", "model")
         .prefetch_related("tags")
         .all()
     )
@@ -370,6 +481,7 @@ class AssetImageViewSet(viewsets.ModelViewSet):
         asset_id = self.kwargs.get("asset_pk")
         serializer.save(asset_id=asset_id)
 
+
 class CalendarAlertViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing calendar alerts.
@@ -391,7 +503,9 @@ class CalendarAlertViewSet(viewsets.ModelViewSet):
         Filter alerts by the asset ID from the nested route.
         """
         asset_id = self.kwargs.get("asset_pk")
-        queryset = CalendarAlert.objects.select_related("asset", "assigned_to").filter(asset_id=asset_id)
+        queryset = CalendarAlert.objects.select_related("asset", "assigned_to").filter(
+            asset_id=asset_id
+        )
         return queryset
 
     def perform_create(self, serializer):
@@ -399,4 +513,4 @@ class CalendarAlertViewSet(viewsets.ModelViewSet):
         Set the asset when creating a new alert.
         """
         asset_id = self.kwargs.get("asset_pk")
-        serializer.save(asset_id=asset_id)  
+        serializer.save(asset_id=asset_id)

@@ -1,5 +1,7 @@
 from django.db import models
+
 from assets.models import Asset
+
 
 class PeripheralDetails(models.Model):
     """

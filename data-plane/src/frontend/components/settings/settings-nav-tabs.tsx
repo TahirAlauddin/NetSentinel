@@ -9,9 +9,9 @@ export function SettingsNavTabs() {
   const tabs = [
     { href: "/settings", label: "Overview" },
     { href: "/settings/locations", label: "Locations" },
-    { href: "/settings/circuits", label: "Circuits" },
     { href: "/settings/departments", label: "Departments" },
     { href: "/settings/categories", label: "Categories" },
+    { href: "/settings/carrier-contacts", label: "Carrier Contacts" },
     { href: "/settings/email-format", label: "Email Format" },
   ];
 

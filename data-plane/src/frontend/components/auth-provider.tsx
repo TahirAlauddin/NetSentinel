@@ -9,7 +9,6 @@ function SessionErrorHandler({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (session?.error === 'RefreshAccessTokenError') {
-      console.log('Session error detected, signing out user...')
       signOut({ redirect: true })
     }
   }, [session])

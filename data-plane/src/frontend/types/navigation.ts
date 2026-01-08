@@ -1,8 +1,13 @@
 import { LucideIcon } from "lucide-react"
 
+export interface SubmenuLink {
+  label: string
+  href: string
+}
+
 export interface SubmenuColumn {
   title?: string
-  links: string[]
+  links: SubmenuLink[]
 }
 
 export interface NavigationItem {

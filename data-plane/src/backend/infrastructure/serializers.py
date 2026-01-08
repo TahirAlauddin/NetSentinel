@@ -1,12 +1,13 @@
 from rest_framework import serializers
+
 from .models import (
-    Location,
-    Circuit,
-    PointOfContact,
-    Department,
-    Category,
-    Contact,
     CarrierContact,
+    Category,
+    Circuit,
+    Contact,
+    Department,
+    Location,
+    PointOfContact,
     UtilityContact,
 )
 
@@ -14,9 +15,7 @@ from .models import (
 class PointOfContactSerializer(serializers.ModelSerializer):
     """Serializer for Point of Contact."""
 
-    contact_type_display = serializers.CharField(
-        source="get_contact_type_display", read_only=True
-    )
+    contact_type_display = serializers.CharField(source="get_contact_type_display", read_only=True)
 
     class Meta:
         model = PointOfContact
@@ -89,6 +88,7 @@ class LocationSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
+
 class AssetLocationSerializer(serializers.ModelSerializer):
     """Serializer for Location."""
 
@@ -113,6 +113,7 @@ class AssetLocationSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
 
 class DepartmentSerializer(serializers.ModelSerializer):
     """Serializer for Department."""
@@ -180,11 +181,6 @@ class CarrierContactSerializer(serializers.ModelSerializer):
             "name",
             "location",
             "location_name",
-            "address1",
-            "address2",
-            "city",
-            "state",
-            "zip_code",
             "customer_service_phone",
             "technical_support_phone",
             "sales_phone",
@@ -199,9 +195,7 @@ class UtilityContactSerializer(serializers.ModelSerializer):
     """Serializer for Utility Contact."""
 
     location_name = serializers.CharField(source="location.name", read_only=True)
-    utility_type_display = serializers.CharField(
-        source="get_utility_type_display", read_only=True
-    )
+    utility_type_display = serializers.CharField(source="get_utility_type_display", read_only=True)
 
     class Meta:
         model = UtilityContact

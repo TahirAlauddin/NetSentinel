@@ -6,11 +6,11 @@ import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
 import { Asset } from "@/types/assets";
-import { listAssets, deleteAsset } from "./actions";
-import { AssetTable } from "@/components/pages/assets/AssetTable";
-import { AssetMetricsDisplay } from "@/components/pages/assets/AssetMetrics";
-import { AssetChart } from "@/components/pages/assets/AssetChart";
-import { calculateAssetMetrics, filterAssets } from "@/components/pages/assets/utils";
+import { listAssets, deleteAsset } from "./actions/index";
+import { AssetTable } from "@/components/apps/assets/AssetTable";
+import { AssetMetricsDisplay } from "@/components/apps/assets/AssetMetrics";
+import { AssetChart } from "@/components/apps/assets/AssetChart";
+import { calculateAssetMetrics, filterAssets } from "@/components/apps/assets/utils";
 
 /**
  * AssetsPage component - Main page for asset management
@@ -26,7 +26,7 @@ export default function AssetsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+  const [_editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
 
@@ -43,8 +43,8 @@ export default function AssetsPage() {
       setAssets(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to load assets";
+      console.error("[AssetsPage.loadAssets] Error loading assets:", err);
       setError(errorMessage);
-      console.error("Error loading assets:", err);
     } finally {
       setLoading(false);
     }

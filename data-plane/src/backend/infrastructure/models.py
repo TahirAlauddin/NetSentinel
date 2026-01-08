@@ -1,5 +1,5 @@
-from django.db import models
 from django.core.validators import MinValueValidator
+from django.db import models
 
 
 class Location(models.Model):
@@ -16,19 +16,11 @@ class Location(models.Model):
     state = models.CharField(max_length=100, blank=True, null=True)
     zip_code = models.CharField(max_length=20, blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
-    longitude = models.DecimalField(
-        max_digits=9, decimal_places=6, blank=True, null=True
-    )
-    latitude = models.DecimalField(
-        max_digits=9, decimal_places=6, blank=True, null=True
-    )
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     type_building = models.CharField(max_length=100, blank=True, null=True)
-    mpoe = models.CharField(
-        max_length=100, blank=True, null=True, help_text="Main Point of Entry"
-    )
-    dmarc = models.CharField(
-        max_length=100, blank=True, null=True, help_text="Demarcation Point"
-    )
+    mpoe = models.CharField(max_length=100, blank=True, null=True, help_text="Main Point of Entry")
+    dmarc = models.CharField(max_length=100, blank=True, null=True, help_text="Demarcation Point")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -47,9 +39,7 @@ class Circuit(models.Model):
     Each circuit belongs to a location, and a location can have multiple circuits.
     """
 
-    location = models.ForeignKey(
-        Location, on_delete=models.CASCADE, related_name="circuits"
-    )
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name="circuits")
     speed = models.PositiveIntegerField(
         help_text="Circuit speed in Mbps", validators=[MinValueValidator(1)]
     )
@@ -84,9 +74,7 @@ class PointOfContact(models.Model):
         ("administrative", "Administrative PoC"),
     ]
 
-    circuit = models.ForeignKey(
-        Circuit, on_delete=models.CASCADE, related_name="points_of_contact"
-    )
+    circuit = models.ForeignKey(Circuit, on_delete=models.CASCADE, related_name="points_of_contact")
     contact_type = models.CharField(max_length=20, choices=CONTACT_TYPE_CHOICES)
     name = models.CharField(max_length=255)
     email = models.EmailField()
@@ -182,11 +170,6 @@ class CarrierContact(models.Model):
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, related_name="carrier_contacts"
     )
-    address1 = models.CharField(max_length=255, blank=True, null=True)
-    address2 = models.CharField(max_length=255, blank=True, null=True)
-    city = models.CharField(max_length=100, blank=True, null=True)
-    state = models.CharField(max_length=100, blank=True, null=True)
-    zip_code = models.CharField(max_length=20, blank=True, null=True)
     customer_service_phone = models.CharField(max_length=20, blank=True, null=True)
     technical_support_phone = models.CharField(max_length=20, blank=True, null=True)
     sales_phone = models.CharField(max_length=20, blank=True, null=True)
@@ -240,7 +223,5 @@ class UtilityContact(models.Model):
         ordering = ["name", "location"]
 
     def __str__(self):
-        utility_type_display = (
-            self.get_utility_type_display() if self.utility_type else "Unknown"
-        )
+        utility_type_display = self.get_utility_type_display() if self.utility_type else "Unknown"
         return f"{self.name} ({utility_type_display}) - {self.location}"

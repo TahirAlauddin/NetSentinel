@@ -1,5 +1,8 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
+import type { Session, User } from "next-auth"
+import type { JWT } from "next-auth/jwt"
+import { apiConfig, authConfig } from "@/lib/config"
 
 // Extend NextAuth types
 declare module "next-auth" {
@@ -41,16 +44,16 @@ declare module "next-auth/jwt" {
     isActive?: boolean
     isSuperuser?: boolean
     accessTokenExpires?: number
+    error?: string
   }
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
-
+// API URLs are now centralized in lib/config.ts
 /**
  * Refresh the access token using the refresh token
  * Returns token with error flag if refresh fails (backend unavailable, refresh token expired, etc.)
  */
-async function refreshAccessToken(token: any) {
+async function refreshAccessToken(token: JWT): Promise<JWT> {
   // If no refresh token, mark as error
   if (!token.refreshToken) {
     console.warn('No refresh token available for refresh')
@@ -67,7 +70,8 @@ async function refreshAccessToken(token: any) {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
 
-    const response = await fetch(`${API_BASE_URL}/auth/jwt/refresh/`, {
+    // Use server-side API URL for token refresh
+    const response = await fetch(`${apiConfig.serverBaseUrl}/auth/jwt/refresh/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -100,7 +104,6 @@ async function refreshAccessToken(token: any) {
     }
 
     const refreshedTokens = await response.json()
-    console.log('Token refresh successful')
 
     return {
       ...token,
@@ -109,14 +112,15 @@ async function refreshAccessToken(token: any) {
       refreshToken: refreshedTokens.refresh ?? token.refreshToken, // Fall back to old refresh token
       error: undefined, // Clear any previous error
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Handle network errors, timeouts, and other fetch failures
-    if (error.name === 'AbortError') {
+    const err = error instanceof Error ? error : new Error(String(error))
+    if (err.name === 'AbortError') {
       console.error('Token refresh timeout: Backend may be unavailable')
-    } else if (error.message?.includes('fetch')) {
-      console.error('Token refresh network error: Backend may be unavailable', error)
+    } else if (err.message?.includes('fetch')) {
+      console.error('Token refresh network error: Backend may be unavailable', err)
     } else {
-      console.error('Error refreshing access token:', error)
+      console.error('Error refreshing access token:', err)
     }
 
     // Return token with error flag - the session error handler will sign out the user
@@ -144,8 +148,9 @@ export const authOptions = {
         }
 
         try {
-          // Authenticate with backend
-          const response = await fetch(`${API_BASE_URL}/auth/jwt/create/`, {
+          // Authenticate with backend - use server-side API URL
+          // console.log('[auth.authorize] Using API URL:', apiConfig.serverBaseUrl)
+          const response = await fetch(`${apiConfig.serverBaseUrl}/auth/jwt/create/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -157,13 +162,22 @@ export const authOptions = {
           })
 
           if (!response.ok) {
+            const errorText = await response.text()
+            // console.log('Response not ok', response.status, response.statusText)
+            // console.log('Error response body:', errorText)
+            try {
+              const _errorJson = JSON.parse(errorText)
+              // console.log('Error response JSON:', _errorJson)
+            } catch (_e) {
+              // console.log('Error response is not JSON')
+            }
             return null
           }
 
           const data = await response.json()
-
+          // console.log('Data', data)
           // Get user details
-          const userResponse = await fetch(`${API_BASE_URL}/auth/users/me/`, {
+          const userResponse = await fetch(`${apiConfig.serverBaseUrl}/auth/users/me/`, {
             headers: {
               'Authorization': `Bearer ${data.access}`,
               'Content-Type': 'application/json',
@@ -187,14 +201,14 @@ export const authOptions = {
             isActive: userData.is_active,
             isSuperuser: userData.is_superuser,
           }
-        } catch (error) {
+        } catch (_error) {
           return null
         }
       }
     })
   ],
   callbacks: {
-    async jwt({ token, user }: { token: any; user: any }) {
+    async jwt({ token, user }: { token: JWT; user?: User }) {
       // Initial sign in
       if (user) {
         token.accessToken = user.accessToken
@@ -240,7 +254,7 @@ export const authOptions = {
       // Access token has expired, try to refresh it
       return await refreshAccessToken(token)
     },
-    async session({ session, token }: { session: any; token: any }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       // If there's an error refreshing the token, return the session with error flag
       if (token.error === 'RefreshAccessTokenError') {
         return {
@@ -265,9 +279,9 @@ export const authOptions = {
   session: {
     strategy: 'jwt' as const,
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: authConfig.secret,
   // Set the base URL for NextAuth in production
-  url: process.env.NEXTAUTH_URL,
+  url: authConfig.url,
 }
 
 export default NextAuth(authOptions)

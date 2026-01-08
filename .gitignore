@@ -1,5 +1,6 @@
 # Envs
 *.env
+.github/*.secrets
 
 # IDEs
 .vscode

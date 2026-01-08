@@ -11,7 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -32,11 +34,24 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = (
-    os.environ.get("ALLOWED_HOSTS", "").split(",")
-    if os.environ.get("ALLOWED_HOSTS")
-    else []
-)
+# ALLOWED_HOSTS configuration
+# In Docker, we need to allow internal service names (backend, localhost, etc.)
+# as well as any external domains configured via environment variable
+allowed_hosts_list = []
+if os.environ.get("ALLOWED_HOSTS"):
+    allowed_hosts_list = [
+        host.strip() for host in os.environ.get("ALLOWED_HOSTS", "").split(",") if host.strip()
+    ]
+
+# Add Docker internal hostnames for service-to-service communication
+# These are safe because they're only accessible within the Docker network
+# Note: Django's ALLOWED_HOSTS doesn't include ports, just hostnames
+docker_hosts = ["backend", "localhost", "127.0.0.1"]
+for host in docker_hosts:
+    if host not in allowed_hosts_list:
+        allowed_hosts_list.append(host)
+
+ALLOWED_HOSTS = allowed_hosts_list
 
 
 # Application definition
@@ -48,14 +63,18 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Third-party apps
     "rest_framework",
     "rest_framework_simplejwt",
     "djoser",
     "corsheaders",
     "drf_yasg",
+    # Local apps
     "users",  # Our custom users app
     "infrastructure",  # Infrastructure management app (locations, categories etc.)
-    "assets", # Assets management app (assets)
+    "assets",  # Assets management app (assets)
+    "telecom",  # Telecom management app (providers, data circuits)
+    "ipam",  # IPAM management app (IP addresses, subnets, etc.)
 ]
 
 MIDDLEWARE = [
@@ -158,7 +177,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+
+# Media files (User uploads)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -189,8 +214,6 @@ REST_FRAMEWORK = {
 }
 
 # Simple JWT Configuration
-from datetime import timedelta
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
@@ -208,7 +231,9 @@ SIMPLE_JWT = {
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
-    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "USER_AUTHENTICATION_RULE": (
+        "rest_framework_simplejwt.authentication.default_user_authentication_rule"
+    ),
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
     "TOKEN_TYPE_CLAIM": "token_type",
     "JTI_CLAIM": "jti",
@@ -245,9 +270,7 @@ DJOSER = {
 # CORS Configuration
 cors_origins = os.environ.get("CORS_ALLOWED_ORIGINS", "")
 if cors_origins:
-    CORS_ALLOWED_ORIGINS = [
-        origin.strip() for origin in cors_origins.split(",") if origin.strip()
-    ]
+    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
 else:
     CORS_ALLOWED_ORIGINS = [
         "http://localhost:3000",
@@ -257,3 +280,39 @@ else:
 CORS_ALLOW_CREDENTIALS = True
 
 APPEND_SLASH = os.environ.get("APPEND_SLASH", "True").lower() == "true"
+
+# Production Security Settings
+if not DEBUG:
+    # Security settings
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = "DENY"
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # CSRF settings
+    CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_HTTPONLY = True
+    CSRF_TRUSTED_ORIGINS = [
+        origin.strip()
+        for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+        if origin.strip()
+    ]
+
+    # Session settings
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+
+    # Remove BrowsableAPIRenderer in production
+    REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
+        "rest_framework.renderers.JSONRenderer",
+    ]
+else:
+    # Development settings
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
+
+# Fix drf-yasg deprecation warning
+SWAGGER_USE_COMPAT_RENDERERS = False

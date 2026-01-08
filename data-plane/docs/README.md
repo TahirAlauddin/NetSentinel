@@ -15,7 +15,8 @@ The Data Plane is the tenant-facing application that provides the core ITSM func
 
 ### Core Documentation
 
-- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Complete development guide covering setup, architecture, coding standards, testing, and deployment
+- **[CODING_STANDARDS.md](../CODING_STANDARDS.md)** - ⭐ **ESSENTIAL READING** - Complete coding standards, conventions, and best practices for the codebase
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Complete development guide covering setup, architecture, testing, and deployment
 - **[AUTHENTICATION.md](AUTHENTICATION.md)** - Comprehensive authentication system documentation with refresh token implementation
 - **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)** - Complete API reference with endpoints, examples, and SDK usage
 - **[TESTING.md](TESTING.md)** - Testing strategies, unit tests, integration tests, and E2E testing
@@ -23,10 +24,11 @@ The Data Plane is the tenant-facing application that provides the core ITSM func
 
 ### Quick Start
 
-1. **Prerequisites**: Node.js 18+, Python 3.11+, Docker
-2. **Setup**: Follow [DEVELOPMENT.md](DEVELOPMENT.md) for complete setup instructions
-3. **Authentication**: See [AUTHENTICATION.md](AUTHENTICATION.md) for auth implementation details
-4. **API Usage**: Check [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for endpoint documentation
+1. **Read Coding Standards**: ⭐ **START HERE** - Review [CODING_STANDARDS.md](../CODING_STANDARDS.md) before writing code
+2. **Prerequisites**: Node.js 18+, Python 3.11+, Docker
+3. **Setup**: Follow [DEVELOPMENT.md](DEVELOPMENT.md) for complete setup instructions
+4. **Authentication**: See [AUTHENTICATION.md](AUTHENTICATION.md) for auth implementation details
+5. **API Usage**: Check [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for endpoint documentation
 
 ### Architecture
 

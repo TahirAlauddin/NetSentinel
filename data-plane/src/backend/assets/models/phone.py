@@ -1,4 +1,5 @@
 from django.db import models
+
 from assets.models import Asset
 
 
@@ -52,4 +53,3 @@ class PhoneDetails(models.Model):
 
     def __str__(self):
         return f"Phone Details for {self.asset}"
-

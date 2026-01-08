@@ -13,6 +13,9 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         build-essential \
         curl \
+        libpq-dev \
+        postgresql-client \
+        gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
@@ -26,14 +29,18 @@ RUN pip install --upgrade pip \
 # Copy project
 COPY --chown=django:django . .
 
-# Switch to non-root user
-USER django
+# Create directories for static files and media (will be overridden by volumes, but good to have)
+RUN mkdir -p /app/staticfiles /app/media
+
+# Copy and set up entrypoint scripts
+COPY docker-entrypoint-root.sh /app/docker-entrypoint-root.sh
+COPY --chown=django:django docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint-root.sh /app/docker-entrypoint.sh && \
+    chown root:root /app/docker-entrypoint-root.sh
 
 ENV PORT=8000
 EXPOSE 8000
 
-# Optional: collect static if configured
-# RUN python manage.py collectstatic --noinput || true
-
+# Use root entrypoint to fix permissions, then switch to django user
+ENTRYPOINT ["/app/docker-entrypoint-root.sh"]
 CMD ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-"]
-
