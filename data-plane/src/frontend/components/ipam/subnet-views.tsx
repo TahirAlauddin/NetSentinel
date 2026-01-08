@@ -2,11 +2,12 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, Star } from "lucide-react";
 import { Subnet, SubnetSortOptions } from "@/types/ipam";
 import { ListView, Column } from "@/components/ui/list-view";
 import { GridView, GridItem } from "@/components/ui/grid-view";
 import { ViewMode } from "@/components/ui/view-toggle";
+import { cn } from "@/lib/utils";
 
 interface SubnetViewsProps {
   subnets: Subnet[];
@@ -15,6 +16,7 @@ interface SubnetViewsProps {
   onSort: (field: SubnetSortOptions["field"]) => void;
   onEdit?: (subnet: Subnet) => void;
   onDelete?: (id: number) => void;
+  onToggleFavorite?: (subnet: Subnet) => void;
   emptyMessage?: string;
 }
 
@@ -29,6 +31,7 @@ export function SubnetViews({
   onSort,
   onEdit,
   onDelete,
+  onToggleFavorite,
   emptyMessage = "No subnets available",
 }: SubnetViewsProps) {
   // Define columns for list view
@@ -39,12 +42,36 @@ export function SubnetViews({
         header: "Subnet",
         sortable: true,
         render: (subnet) => (
-          <Link
-            href={`/ipam/subnets/${subnet.id}`}
-            className="font-mono text-sm text-[oklch(0.40_0.15_249)] hover:underline"
-          >
-            {subnet.network}
-          </Link>
+          <div className="flex items-center gap-2">
+            {onToggleFavorite && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite(subnet);
+                }}
+                className={cn(
+                  "p-1 rounded transition-colors",
+                  subnet.is_favorite
+                    ? "text-yellow-500 hover:text-yellow-600"
+                    : "text-muted-foreground hover:text-yellow-500"
+                )}
+                title={subnet.is_favorite ? "Remove from favorites" : "Add to favorites"}
+              >
+                <Star
+                  className={cn(
+                    "w-4 h-4",
+                    subnet.is_favorite && "fill-current"
+                  )}
+                />
+              </button>
+            )}
+            <Link
+              href={`/ipam/subnets/${subnet.id}`}
+              className="font-mono text-sm text-[oklch(0.40_0.15_249)] hover:underline"
+            >
+              {subnet.network}
+            </Link>
+          </div>
         ),
       },
       {
@@ -114,6 +141,28 @@ export function SubnetViews({
         sortable: false,
         render: (subnet) => (
           <div className="flex items-center gap-2">
+            {onToggleFavorite && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite(subnet);
+                }}
+                className={cn(
+                  "p-1 rounded transition-colors",
+                  subnet.is_favorite
+                    ? "text-yellow-500 hover:text-yellow-600"
+                    : "text-muted-foreground hover:text-yellow-500"
+                )}
+                title={subnet.is_favorite ? "Remove from favorites" : "Add to favorites"}
+              >
+                <Star
+                  className={cn(
+                    "w-4 h-4",
+                    subnet.is_favorite && "fill-current"
+                  )}
+                />
+              </button>
+            )}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -138,7 +187,7 @@ export function SubnetViews({
         ),
       },
     ],
-    [onEdit, onDelete]
+    [onEdit, onDelete, onToggleFavorite]
   );
 
   // Define grid items for grid view
@@ -148,12 +197,36 @@ export function SubnetViews({
         key: "network",
         label: "Subnet",
         render: (subnet) => (
-          <Link
-            href={`/ipam/subnets/${subnet.id}`}
-            className="font-mono text-base font-semibold text-[oklch(0.40_0.15_249)] hover:underline"
-          >
-            {subnet.network}
-          </Link>
+          <div className="flex items-center gap-2">
+            {onToggleFavorite && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite(subnet);
+                }}
+                className={cn(
+                  "p-1 rounded transition-colors",
+                  subnet.is_favorite
+                    ? "text-yellow-500 hover:text-yellow-600"
+                    : "text-muted-foreground hover:text-yellow-500"
+                )}
+                title={subnet.is_favorite ? "Remove from favorites" : "Add to favorites"}
+              >
+                <Star
+                  className={cn(
+                    "w-4 h-4",
+                    subnet.is_favorite && "fill-current"
+                  )}
+                />
+              </button>
+            )}
+            <Link
+              href={`/ipam/subnets/${subnet.id}`}
+              className="font-mono text-base font-semibold text-[oklch(0.40_0.15_249)] hover:underline"
+            >
+              {subnet.network}
+            </Link>
+          </div>
         ),
       },
       {
@@ -202,6 +275,28 @@ export function SubnetViews({
               )}
             </div>
             <div className="flex items-center gap-1">
+              {onToggleFavorite && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleFavorite(subnet);
+                  }}
+                  className={cn(
+                    "p-1 rounded transition-colors",
+                    subnet.is_favorite
+                      ? "text-yellow-500 hover:text-yellow-600"
+                      : "text-muted-foreground hover:text-yellow-500"
+                  )}
+                  title={subnet.is_favorite ? "Remove from favorites" : "Add to favorites"}
+                >
+                  <Star
+                    className={cn(
+                      "w-3 h-3",
+                      subnet.is_favorite && "fill-current"
+                    )}
+                  />
+                </button>
+              )}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -227,7 +322,7 @@ export function SubnetViews({
         ),
       },
     ],
-    [onEdit, onDelete]
+    [onEdit, onDelete, onToggleFavorite]
   );
 
   const handleSort = (field: string) => {

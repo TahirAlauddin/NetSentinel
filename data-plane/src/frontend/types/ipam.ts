@@ -50,6 +50,7 @@ export interface Subnet {
   status_display: string;
   child_subnets_count: number;
   ip_addresses_count: number;
+  is_favorite?: boolean;
   created_at: string;
   updated_at: string;
 }

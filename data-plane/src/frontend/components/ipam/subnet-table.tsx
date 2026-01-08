@@ -15,6 +15,7 @@ interface SubnetTableProps {
   onDelete?: (id: number) => void;
   onAdd?: () => void;
   onFind?: () => void;
+  onToggleFavorite?: (subnet: Subnet) => void;
 }
 
 /**
@@ -27,6 +28,7 @@ export function SubnetTable({
   onDelete,
   onAdd,
   onFind,
+  onToggleFavorite,
 }: SubnetTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOptions, setSortOptions] = useState<SubnetSortOptions>({
@@ -167,6 +169,7 @@ export function SubnetTable({
         onSort={handleSort}
         onEdit={onEdit}
         onDelete={onDelete}
+        onToggleFavorite={onToggleFavorite}
         emptyMessage={searchTerm ? "No subnets found matching your search" : "No subnets available"}
       />
 

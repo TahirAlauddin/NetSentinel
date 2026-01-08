@@ -279,5 +279,40 @@ export class IpamApiClient extends BaseApiClient {
   async deleteSubnetGroup<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
     return this.delete<T>(`/ipam/subnet-groups/${id}/`);
   }
+
+  /**
+   * Add a subnet to favorites
+   * @param id - Subnet ID
+   * @returns Updated subnet
+   */
+  async addSubnetToFavorites<T = Subnet>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.post<T>(`/ipam/subnets/${id}/favorite/`, {});
+  }
+
+  /**
+   * Remove a subnet from favorites
+   * @param id - Subnet ID
+   * @returns Updated subnet
+   */
+  async removeSubnetFromFavorites<T = Subnet>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/subnets/${id}/favorite/`);
+  }
+
+  /**
+   * Toggle favorite status of a subnet
+   * @param id - Subnet ID
+   * @param isFavorite - Whether to add or remove from favorites
+   * @returns Updated subnet
+   */
+  async toggleSubnetFavorite<T = Subnet>(
+    id: number | string,
+    isFavorite: boolean
+  ): Promise<BaseApiResponse<T>> {
+    if (isFavorite) {
+      return this.addSubnetToFavorites<T>(id);
+    } else {
+      return this.removeSubnetFromFavorites<T>(id);
+    }
+  }
 }
 

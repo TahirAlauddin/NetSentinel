@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { IpamHeader } from "@/components/ipam/ipam-header";
 import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
 import { SubnetTable } from "@/components/ipam/subnet-table";
@@ -79,6 +80,37 @@ export default function SubnetsPage() {
     // TODO: Implement find subnet functionality
   };
 
+  const handleToggleFavorite = async (subnet: Subnet) => {
+    try {
+      setError(null);
+      const response = await ipamApi.toggleSubnetFavorite(subnet.id, !subnet.is_favorite);
+      
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      // Update the subnet in the list optimistically
+      setSubnets((prevSubnets) =>
+        prevSubnets.map((s) =>
+          s.id === subnet.id
+            ? { ...s, is_favorite: !subnet.is_favorite }
+            : s
+        )
+      );
+
+      toast.success(
+        subnet.is_favorite
+          ? "Removed from favorites"
+          : "Added to favorites"
+      );
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to update favorite status";
+      console.error("[SubnetsPage] Error toggling favorite:", err);
+      toast.error(errorMessage);
+      setError(errorMessage);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <IpamHeader
@@ -112,6 +144,7 @@ export default function SubnetsPage() {
               onDelete={handleDelete}
               onAdd={handleAdd}
               onFind={handleFind}
+              onToggleFavorite={handleToggleFavorite}
             />
           )}
         </div>
