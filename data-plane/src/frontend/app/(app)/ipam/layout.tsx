@@ -1,6 +1,5 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
-import { IpamSidebar } from "@/components/ipam/ipam-sidebar";
 
 export default function IpamLayout({
   children,
@@ -10,11 +9,8 @@ export default function IpamLayout({
   return (
     <ProtectedRoute>
       <AppShell>
-        <div className="flex gap-6 min-h-[calc(100dvh-120px)]">
-          <IpamSidebar />
-          <div className="flex-1 p-8">
-            {children}
-          </div>
+        <div className="min-h-[calc(100dvh-120px)]">
+          {children}
         </div>
       </AppShell>
     </ProtectedRoute>

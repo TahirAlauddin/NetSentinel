@@ -79,7 +79,6 @@ export default function SubnetsPage() {
 
   const handleFind = () => {
     // TODO: Implement find subnet functionality
-    console.log("Find subnet clicked");
   };
 
   return (

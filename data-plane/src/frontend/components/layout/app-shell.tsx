@@ -1,10 +1,10 @@
 "use client"
 
 import type React from "react";
-import Link from "next/link";
 import { useState } from "react";
 import { Topbar } from "./topbar";
 import { Sidebar } from "./sidebar";
+import { SectionalNavigation } from "./sectional-navigation";
 
 export function AppShell({
   children,
@@ -46,43 +46,7 @@ export function AppShell({
           className="w-full bg-secondary text-secondary-foreground border-b border-border"
         >
           <div className="mx-auto max-w-[1400px] px-4">
-            <ul className="flex items-center gap-2 sm:gap-4 lg:gap-6 py-2 sm:py-3 text-xs sm:text-sm overflow-x-auto">
-              <li className="flex-shrink-0">
-                <Link className="hover:underline whitespace-nowrap" href="#">
-                  Sectional Menu
-                </Link>
-              </li>
-              <li className="flex-shrink-0">
-                <Link className="hover:underline whitespace-nowrap" href="#">
-                  Lorem ipsum
-                </Link>
-              </li>
-              <li className="flex-shrink-0">
-                <Link className="hover:underline whitespace-nowrap" href="#">
-                  Dolor sit
-                </Link>
-              </li>
-              <li className="flex-shrink-0">
-                <Link className="hover:underline whitespace-nowrap" href="#">
-                  Amet consectetur
-                </Link>
-              </li>
-              <li className="flex-shrink-0">
-                <Link className="hover:underline whitespace-nowrap" href="#">
-                  Adipiscing elit
-                </Link>
-              </li>
-              <li className="flex-shrink-0">
-                <Link className="hover:underline whitespace-nowrap" href="#">
-                  Sed diam
-                </Link>
-              </li>
-              <li className="flex-shrink-0">
-                <Link className="hover:underline whitespace-nowrap" href="#">
-                  Nibh euismod
-                </Link>
-              </li>
-            </ul>
+            <SectionalNavigation />
           </div>
         </nav>
       </header>
