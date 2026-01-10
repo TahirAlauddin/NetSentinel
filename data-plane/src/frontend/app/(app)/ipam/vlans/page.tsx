@@ -74,10 +74,6 @@ export default function VlansPage() {
     <div className="space-y-6">
       <IpamHeader
         currentPage="VLANs"
-        breadcrumbs={[
-          { label: "Tools", href: "#" },
-          { label: "VLAN" },
-        ]}
       />
       <IpamNavTabs />
 

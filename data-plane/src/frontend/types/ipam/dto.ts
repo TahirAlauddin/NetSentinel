@@ -61,6 +61,42 @@ export interface SubnetGroupCreateUpdateDto {
 }
 
 /**
+ * DTO for creating an IP Request
+ */
+export interface IPRequestCreateDto {
+  subnet: number;
+  requested_ip?: string | null;
+  purpose: string;
+  description?: string | null;
+  reservation_expires_at?: string | null;
+}
+
+/**
+ * DTO for approving/rejecting an IP Request
+ */
+export interface IPRequestApproveRejectDto {
+  approval_notes?: string | null;
+}
+
+/**
+ * DTO for assigning an IP address to an asset
+ */
+export interface IPAssignDto {
+  asset_id: number;
+  reason?: string | null;
+  notes?: string | null;
+}
+
+/**
+ * DTO for releasing an IP address
+ */
+export interface IPReleaseDto {
+  reason?: string | null;
+  notes?: string | null;
+  new_status?: "available" | "reserved" | "deprecated";
+}
+
+/**
  * Response types for paginated lists
  */
 export interface PaginatedResponse<T> {

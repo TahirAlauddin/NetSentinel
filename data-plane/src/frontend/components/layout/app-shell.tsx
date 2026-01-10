@@ -53,7 +53,7 @@ export function AppShell({
 
       {/* Main content area */}
       <div className="w-full">
-        <div className="mx-auto max-w-[1400px] px-3 sm:px-4">
+        <div className="mx-auto max-w-[1400px] px-3 sm:px-4 lg:pl-6">
           <main className="py-4 sm:py-6">{children}</main>
         </div>
       </div>

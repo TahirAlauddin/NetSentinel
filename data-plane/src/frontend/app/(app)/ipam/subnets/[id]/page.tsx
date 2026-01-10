@@ -66,10 +66,6 @@ export default function SubnetViewPage() {
       <div className="flex items-center justify-between">
         <IpamHeader
           currentPage={`Subnet: ${subnet.network}`}
-          breadcrumbs={[
-            { label: "Subnets", href: "/ipam/subnets" },
-            { label: subnet.network },
-          ]}
         />
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => router.push("/ipam/subnets")}>

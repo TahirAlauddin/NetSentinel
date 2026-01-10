@@ -115,10 +115,6 @@ export default function SubnetsPage() {
     <div className="space-y-6">
       <IpamHeader
         currentPage="Subnets"
-        breadcrumbs={[
-          { label: "Tools", href: "#" },
-          { label: "Subnets" },
-        ]}
       />
       <IpamNavTabs />
 

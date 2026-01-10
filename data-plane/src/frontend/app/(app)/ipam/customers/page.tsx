@@ -74,11 +74,6 @@ export default function CustomersPage() {
     <div className="space-y-6">
       <IpamHeader
         currentPage="All customers"
-        breadcrumbs={[
-          { label: "Tools", href: "#" },
-          { label: "Subnets", href: "#" },
-          { label: "Customers" },
-        ]}
       />
       <IpamNavTabs />
 

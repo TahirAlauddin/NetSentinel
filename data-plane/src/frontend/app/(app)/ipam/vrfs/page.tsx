@@ -74,10 +74,6 @@ export default function VrfsPage() {
     <div className="space-y-6">
       <IpamHeader
         currentPage="VRFs"
-        breadcrumbs={[
-          { label: "Tools", href: "#" },
-          { label: "VRF" },
-        ]}
       />
       <IpamNavTabs />
 

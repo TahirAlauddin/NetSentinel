@@ -25,6 +25,7 @@ const PRIMARY_NAV_ITEMS = [
   { href: "/ipam/vlans", label: "VLAN" },
   { href: "/ipam/vrfs", label: "VRF" },
   { href: "/ipam/devices", label: "Devices" },
+  { href: "/ipam/ip-requests", label: "IP Requests" },
 ];
 
 /**
@@ -52,7 +53,7 @@ const SECONDARY_NAV_ITEMS = {
     { href: "/ipam/locations", label: "Locations" },
   ],
   "Tools": [
-    { href: "/ipam/search", label: "Search" },
+    { href: "/ipam/search", label: "IP Search" },
     { href: "/ipam/documentation", label: "Documentation" },
   ],
 };

@@ -130,6 +130,7 @@ export const ipamMainSubmenuLinks = [
   { label: "VLAN", href: "/ipam/vlans" },
   { label: "VRF", href: "/ipam/vrfs" },
   { label: "Devices", href: "/ipam/devices" },
+  { label: "IP Requests", href: "/ipam/ip-requests" },
 ];
 
 export const ipamSubnetManagementSubmenuLinks = [
