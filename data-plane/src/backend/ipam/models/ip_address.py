@@ -1,6 +1,9 @@
+from django.contrib.auth import get_user_model
 from django.db import models
 
 from .subnet import Subnet
+
+User = get_user_model()
 
 
 class IPAddress(models.Model):
@@ -35,6 +38,30 @@ class IPAddress(models.Model):
         help_text="IP address status",
     )
     description = models.TextField(blank=True, null=True)
+    
+    # Asset assignment
+    assigned_to_asset = models.ForeignKey(
+        "assets.Asset",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_ip_addresses",
+        help_text="Asset/device this IP address is assigned to",
+    )
+    assigned_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_ip_addresses",
+        help_text="User who assigned this IP address",
+    )
+    assigned_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When this IP address was assigned",
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -42,6 +69,10 @@ class IPAddress(models.Model):
         verbose_name = "IP Address"
         verbose_name_plural = "IP Addresses"
         ordering = ["address"]
+        indexes = [
+            models.Index(fields=["status", "subnet"]),
+            models.Index(fields=["assigned_to_asset"]),
+        ]
 
     def __str__(self):
         return self.address

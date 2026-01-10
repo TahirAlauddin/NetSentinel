@@ -174,6 +174,55 @@ class SubnetViewSet(viewsets.ModelViewSet):
         serializer = IPAddressSerializer(ip_addresses, many=True)
         return Response(serializer.data)
 
+    @action(detail=True, methods=["post"])
+    def auto_assign(self, request, pk=None):
+        """
+        Automatically assign the next available IP address from this subnet to an asset.
+
+        POST /api/v1/ipam/subnets/{id}/auto-assign/
+        Body: {
+            "asset_id": <asset_id>,
+            "reason": "optional reason",
+            "notes": "optional notes"
+        }
+        """
+        from assets.models import Asset
+        from ..services.ip_assignment import auto_assign_ip_from_subnet
+        from ..serializers import IPAddressSerializer
+
+        subnet = self.get_object()
+        asset_id = request.data.get("asset_id")
+        
+        if not asset_id:
+            return Response(
+                {"error": "asset_id is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            asset = Asset.objects.get(id=asset_id)
+        except Asset.DoesNotExist:
+            return Response(
+                {"error": f"Asset with id {asset_id} not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        try:
+            ip_address, history = auto_assign_ip_from_subnet(
+                subnet=subnet,
+                asset=asset,
+                assigned_by=request.user,
+                reason=request.data.get("reason"),
+                notes=request.data.get("notes"),
+            )
+            serializer = IPAddressSerializer(ip_address)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
 
 class IPAddressViewSet(viewsets.ModelViewSet):
     """
@@ -190,9 +239,13 @@ class IPAddressViewSet(viewsets.ModelViewSet):
     - DELETE /api/v1/ipam/ip-addresses/{id}/ - Delete an IP address
     - GET /api/v1/ipam/subnets/{id}/ip-addresses/ - List IPs in a subnet (nested)
     - POST /api/v1/ipam/subnets/{id}/ip-addresses/ - Create IP in a subnet (nested)
+    - POST /api/v1/ipam/ip-addresses/{id}/assign/ - Assign IP to asset
+    - POST /api/v1/ipam/ip-addresses/{id}/release/ - Release IP from asset
+    - POST /api/v1/ipam/subnets/{id}/auto-assign/ - Auto-assign IP from subnet to asset
+    - GET /api/v1/ipam/ip-addresses/{id}/history/ - Get assignment history
     """
 
-    queryset = IPAddress.objects.select_related("subnet").all()
+    queryset = IPAddress.objects.select_related("subnet", "assigned_to_asset", "assigned_by").all()
     serializer_class = IPAddressSerializer
 
     def get_queryset(self):
@@ -210,6 +263,17 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         subnet_pk = self.kwargs.get("subnet_pk")
         if subnet_pk:
             queryset = queryset.filter(subnet_id=subnet_pk)
+        
+        # Filter by asset if provided
+        asset_id = self.request.query_params.get("assigned_to_asset")
+        if asset_id:
+            queryset = queryset.filter(assigned_to_asset_id=asset_id)
+        
+        # Filter by status if provided
+        status_filter = self.request.query_params.get("status")
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
         return queryset
 
     def perform_create(self, serializer):
@@ -227,6 +291,103 @@ class IPAddressViewSet(viewsets.ModelViewSet):
             serializer.save(subnet_id=subnet_pk)
         else:
             serializer.save()
+
+    @action(detail=True, methods=["post"])
+    def assign(self, request, pk=None):
+        """
+        Assign an IP address to an asset.
+
+        POST /api/v1/ipam/ip-addresses/{id}/assign/
+        Body: {
+            "asset_id": <asset_id>,
+            "reason": "optional reason",
+            "notes": "optional notes"
+        }
+        """
+        from assets.models import Asset
+        from ..services.ip_assignment import assign_ip_to_asset
+
+        ip_address = self.get_object()
+        asset_id = request.data.get("asset_id")
+        
+        if not asset_id:
+            return Response(
+                {"error": "asset_id is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            asset = Asset.objects.get(id=asset_id)
+        except Asset.DoesNotExist:
+            return Response(
+                {"error": f"Asset with id {asset_id} not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        try:
+            history = assign_ip_to_asset(
+                ip_address=ip_address,
+                asset=asset,
+                assigned_by=request.user,
+                reason=request.data.get("reason"),
+                notes=request.data.get("notes"),
+            )
+            serializer = self.get_serializer(ip_address)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(detail=True, methods=["post"])
+    def release(self, request, pk=None):
+        """
+        Release an IP address from its current asset assignment.
+
+        POST /api/v1/ipam/ip-addresses/{id}/release/
+        Body: {
+            "reason": "optional reason",
+            "notes": "optional notes",
+            "new_status": "available" (default) or "reserved" or "deprecated"
+        }
+        """
+        from ..services.ip_assignment import release_ip_from_asset
+
+        ip_address = self.get_object()
+        new_status = request.data.get("new_status", "available")
+
+        try:
+            history = release_ip_from_asset(
+                ip_address=ip_address,
+                released_by=request.user,
+                reason=request.data.get("reason"),
+                notes=request.data.get("notes"),
+                new_status=new_status,
+            )
+            serializer = self.get_serializer(ip_address)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(detail=True, methods=["get"])
+    def history(self, request, pk=None):
+        """
+        Get assignment history for an IP address.
+
+        GET /api/v1/ipam/ip-addresses/{id}/history/
+        """
+        from ..models import IPAssignmentHistory
+        from ..serializers import IPAssignmentHistorySerializer
+
+        ip_address = self.get_object()
+        history = IPAssignmentHistory.objects.filter(ip_address=ip_address).order_by("-created_at")
+        
+        serializer = IPAssignmentHistorySerializer(history, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class DNSZoneViewSet(viewsets.ModelViewSet):
