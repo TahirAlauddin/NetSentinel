@@ -223,6 +223,82 @@ class SubnetViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+    @action(detail=True, methods=["get"])
+    def utilization(self, request, pk=None):
+        """
+        Get utilization statistics for a subnet.
+
+        GET /api/v1/ipam/subnets/{id}/utilization/
+        """
+        from ..services.subnet_utilization import calculate_subnet_utilization
+
+        subnet = self.get_object()
+        utilization = calculate_subnet_utilization(subnet)
+        return Response(utilization, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"])
+    def capacity(self, request, pk=None):
+        """
+        Get capacity planning data for a subnet.
+
+        GET /api/v1/ipam/subnets/{id}/capacity/?growth_rate=0.05&months=12
+        Query params:
+            growth_rate: Monthly growth rate as decimal (default: 0.0)
+            months: Number of months to project (default: 12)
+        """
+        from ..services.subnet_utilization import calculate_subnet_capacity
+
+        subnet = self.get_object()
+        growth_rate = float(request.query_params.get("growth_rate", 0.0))
+        months = int(request.query_params.get("months", 12))
+        
+        capacity = calculate_subnet_capacity(subnet, growth_rate=growth_rate, months=months)
+        return Response(capacity, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def utilization_all(self, request):
+        """
+        Get utilization for all subnets with optional filters.
+
+        GET /api/v1/ipam/subnets/utilization/?location=1&threshold=75
+        Query params:
+            location: Filter by location ID
+            group: Filter by subnet group ID
+            status: Filter by subnet status
+            is_ipv6: Filter by IPv6 (true/false)
+            threshold: Minimum utilization percentage to include
+        """
+        from ..services.subnet_utilization import get_all_subnets_utilization
+
+        filters = {}
+        if "location" in request.query_params:
+            filters["location"] = request.query_params["location"]
+        if "group" in request.query_params:
+            filters["group"] = request.query_params["group"]
+        if "status" in request.query_params:
+            filters["status"] = request.query_params["status"]
+        if "is_ipv6" in request.query_params:
+            filters["is_ipv6"] = request.query_params["is_ipv6"].lower() == "true"
+        
+        threshold = None
+        if "threshold" in request.query_params:
+            threshold = float(request.query_params["threshold"])
+        
+        utilizations = get_all_subnets_utilization(filters=filters, threshold=threshold)
+        return Response(utilizations, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def utilization_summary(self, request):
+        """
+        Get overall utilization summary across all subnets.
+
+        GET /api/v1/ipam/subnets/utilization/summary/
+        """
+        from ..services.subnet_utilization import get_utilization_summary
+
+        summary = get_utilization_summary()
+        return Response(summary, status=status.HTTP_200_OK)
+
 
 class IPAddressViewSet(viewsets.ModelViewSet):
     """
@@ -388,6 +464,172 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         
         serializer = IPAssignmentHistorySerializer(history, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def search(self, request):
+        """
+        Advanced search for IP addresses.
+
+        GET /api/v1/ipam/ip-addresses/search/?q=192.168.1&status=assigned&subnet=1
+        Query params:
+            q: Search query (IP, description, or asset name)
+            status: Filter by status
+            subnet: Filter by subnet ID
+            assigned_to_asset: Filter by asset ID
+            customer: Filter by customer ID (via subnet)
+            location: Filter by location ID (via subnet)
+            is_ipv6: Filter by IPv4/IPv6 (true/false)
+            vlan: Filter by VLAN ID (via subnet)
+            vrf: Filter by VRF ID (via subnet)
+        """
+        from ..services.ip_search import search_ip_addresses
+        from ..serializers import IPAddressSerializer
+
+        filters = {}
+        if "vlan" in request.query_params:
+            filters["vlan_id"] = request.query_params["vlan"]
+        if "vrf" in request.query_params:
+            filters["vrf_id"] = request.query_params["vrf"]
+
+        results = search_ip_addresses(
+            query=request.query_params.get("q"),
+            filters=filters,
+            subnet_id=request.query_params.get("subnet"),
+            status=request.query_params.get("status"),
+            assigned_to_asset=request.query_params.get("assigned_to_asset"),
+            customer_id=request.query_params.get("customer"),
+            location_id=request.query_params.get("location"),
+            is_ipv6=request.query_params.get("is_ipv6") == "true" if "is_ipv6" in request.query_params else None,
+        )
+
+        serializer = IPAddressSerializer(results, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def range_search(self, request):
+        """
+        Search for IP addresses within a range.
+
+        GET /api/v1/ipam/ip-addresses/range/?start=192.168.1.1&end=192.168.1.100&subnet=1
+        Query params:
+            start: Starting IP address
+            end: Ending IP address
+            subnet: Optional subnet ID filter
+        """
+        from ..services.ip_search import search_ip_range
+        from ..serializers import IPAddressSerializer
+
+        start_ip = request.query_params.get("start")
+        end_ip = request.query_params.get("end")
+
+        if not start_ip or not end_ip:
+            return Response(
+                {"error": "start and end IP addresses are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        subnet_id = request.query_params.get("subnet")
+        results = search_ip_range(
+            start_ip=start_ip,
+            end_ip=end_ip,
+            subnet_id=int(subnet_id) if subnet_id else None,
+        )
+
+        serializer = IPAddressSerializer(results, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def search_by_hostname(self, request):
+        """
+        Search for IP addresses by hostname/DNS name.
+
+        GET /api/v1/ipam/ip-addresses/hostname/?hostname=server1.example.com
+        Query params:
+            hostname: Hostname or FQDN to search for
+        """
+        from ..services.ip_search import search_by_hostname
+        from ..serializers import IPAddressSerializer
+
+        hostname = request.query_params.get("hostname")
+        if not hostname:
+            return Response(
+                {"error": "hostname parameter is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        results = search_by_hostname(hostname)
+        serializer = IPAddressSerializer(results, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="(?P<ip_address>[^/.]+)/details")
+    def ip_details(self, request, ip_address=None):
+        """
+        Get comprehensive details for an IP address.
+
+        GET /api/v1/ipam/ip-addresses/{ip_address}/details/
+        """
+        from ..services.ip_search import get_ip_details
+
+        if not ip_address:
+            return Response(
+                {"error": "IP address is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        details = get_ip_details(ip_address)
+        return Response(details, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="(?P<ip_address>[^/.]+)/conflicts")
+    def ip_conflicts(self, request, ip_address=None):
+        """
+        Detect IP address conflicts across subnets.
+
+        GET /api/v1/ipam/ip-addresses/{ip_address}/conflicts/?exclude_subnet=1
+        Query params:
+            exclude_subnet: Optional subnet ID to exclude from conflict check
+        """
+        from ..services.ip_search import detect_ip_conflicts
+
+        if not ip_address:
+            return Response(
+                {"error": "IP address is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        exclude_subnet_id = request.query_params.get("exclude_subnet")
+        conflicts = detect_ip_conflicts(
+            ip_address=ip_address,
+            exclude_subnet_id=int(exclude_subnet_id) if exclude_subnet_id else None,
+        )
+
+        return Response(conflicts, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def find_available(self, request):
+        """
+        Find available IP addresses in a subnet.
+
+        GET /api/v1/ipam/ip-addresses/find-available/?subnet=1&count=10
+        Query params:
+            subnet: Subnet ID (required)
+            count: Number of available IPs to find (default: 10)
+        """
+        from ..services.ip_search import find_available_ips_in_subnet
+
+        subnet_id = request.query_params.get("subnet")
+        if not subnet_id:
+            return Response(
+                {"error": "subnet parameter is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        count = int(request.query_params.get("count", 10))
+        available = find_available_ips_in_subnet(
+            subnet_id=int(subnet_id),
+            count=count,
+        )
+
+        return Response({"available_ips": available}, status=status.HTTP_200_OK)
 
 
 class DNSZoneViewSet(viewsets.ModelViewSet):
