@@ -14,6 +14,7 @@ from .views import (
     DNSRecordViewSet,
     DNSZoneViewSet,
     IPAddressViewSet,
+    IPRequestViewSet,
     SubnetGroupViewSet,
     SubnetViewSet,
     VLANViewSet,
@@ -37,14 +38,22 @@ subnets_router.register(r"ip-addresses", IPAddressViewSet, basename="subnet-ip-a
 dns_zones_router = routers.NestedDefaultRouter(router, r"dns-zones", lookup="zone")
 dns_zones_router.register(r"records", DNSRecordViewSet, basename="dns-zone-record")
 
+# Nested router for IP requests under subnets
+subnets_router_ip_requests = routers.NestedDefaultRouter(router, r"subnets", lookup="subnet")
+subnets_router_ip_requests.register(r"ip-requests", IPRequestViewSet, basename="subnet-ip-request")
+
 # Standalone router for IP addresses (can also be accessed directly)
 router.register(r"ip-addresses", IPAddressViewSet, basename="ip-address")
 
 # Standalone router for DNS records (can also be accessed directly)
 router.register(r"dns-records", DNSRecordViewSet, basename="dns-record")
 
+# Standalone router for IP requests (can also be accessed directly)
+router.register(r"ip-requests", IPRequestViewSet, basename="ip-request")
+
 urlpatterns = [
     path("", include(router.urls)),
     path("", include(subnets_router.urls)),
+    path("", include(subnets_router_ip_requests.urls)),
     path("", include(dns_zones_router.urls)),
 ]

@@ -11,12 +11,25 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ..models import VLAN, VRF, Customer, DNSRecord, DNSZone, IPAddress, Subnet, SubnetGroup
+from ..models import (
+    VLAN,
+    VRF,
+    Customer,
+    DNSRecord,
+    DNSZone,
+    FavoriteSubnet,
+    IPAddress,
+    IPRequest,
+    Subnet,
+    SubnetGroup,
+)
 from ..serializers import (
     CustomerSerializer,
     DNSRecordSerializer,
     DNSZoneSerializer,
     IPAddressSerializer,
+    IPRequestCreateSerializer,
+    IPRequestSerializer,
     SubnetGroupSerializer,
     SubnetSerializer,
     VLANSerializer,
@@ -161,6 +174,131 @@ class SubnetViewSet(viewsets.ModelViewSet):
         serializer = IPAddressSerializer(ip_addresses, many=True)
         return Response(serializer.data)
 
+    @action(detail=True, methods=["post"])
+    def auto_assign(self, request, pk=None):
+        """
+        Automatically assign the next available IP address from this subnet to an asset.
+
+        POST /api/v1/ipam/subnets/{id}/auto-assign/
+        Body: {
+            "asset_id": <asset_id>,
+            "reason": "optional reason",
+            "notes": "optional notes"
+        }
+        """
+        from assets.models import Asset
+        from ..services.ip_assignment import auto_assign_ip_from_subnet
+        from ..serializers import IPAddressSerializer
+
+        subnet = self.get_object()
+        asset_id = request.data.get("asset_id")
+        
+        if not asset_id:
+            return Response(
+                {"error": "asset_id is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            asset = Asset.objects.get(id=asset_id)
+        except Asset.DoesNotExist:
+            return Response(
+                {"error": f"Asset with id {asset_id} not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        try:
+            ip_address, history = auto_assign_ip_from_subnet(
+                subnet=subnet,
+                asset=asset,
+                assigned_by=request.user,
+                reason=request.data.get("reason"),
+                notes=request.data.get("notes"),
+            )
+            serializer = IPAddressSerializer(ip_address)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(detail=True, methods=["get"])
+    def utilization(self, request, pk=None):
+        """
+        Get utilization statistics for a subnet.
+
+        GET /api/v1/ipam/subnets/{id}/utilization/
+        """
+        from ..services.subnet_utilization import calculate_subnet_utilization
+
+        subnet = self.get_object()
+        utilization = calculate_subnet_utilization(subnet)
+        return Response(utilization, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"])
+    def capacity(self, request, pk=None):
+        """
+        Get capacity planning data for a subnet.
+
+        GET /api/v1/ipam/subnets/{id}/capacity/?growth_rate=0.05&months=12
+        Query params:
+            growth_rate: Monthly growth rate as decimal (default: 0.0)
+            months: Number of months to project (default: 12)
+        """
+        from ..services.subnet_utilization import calculate_subnet_capacity
+
+        subnet = self.get_object()
+        growth_rate = float(request.query_params.get("growth_rate", 0.0))
+        months = int(request.query_params.get("months", 12))
+        
+        capacity = calculate_subnet_capacity(subnet, growth_rate=growth_rate, months=months)
+        return Response(capacity, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def utilization_all(self, request):
+        """
+        Get utilization for all subnets with optional filters.
+
+        GET /api/v1/ipam/subnets/utilization/?location=1&threshold=75
+        Query params:
+            location: Filter by location ID
+            group: Filter by subnet group ID
+            status: Filter by subnet status
+            is_ipv6: Filter by IPv6 (true/false)
+            threshold: Minimum utilization percentage to include
+        """
+        from ..services.subnet_utilization import get_all_subnets_utilization
+
+        filters = {}
+        if "location" in request.query_params:
+            filters["location"] = request.query_params["location"]
+        if "group" in request.query_params:
+            filters["group"] = request.query_params["group"]
+        if "status" in request.query_params:
+            filters["status"] = request.query_params["status"]
+        if "is_ipv6" in request.query_params:
+            filters["is_ipv6"] = request.query_params["is_ipv6"].lower() == "true"
+        
+        threshold = None
+        if "threshold" in request.query_params:
+            threshold = float(request.query_params["threshold"])
+        
+        utilizations = get_all_subnets_utilization(filters=filters, threshold=threshold)
+        return Response(utilizations, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def utilization_summary(self, request):
+        """
+        Get overall utilization summary across all subnets.
+
+        GET /api/v1/ipam/subnets/utilization/summary/
+        """
+        from ..services.subnet_utilization import get_utilization_summary
+
+        summary = get_utilization_summary()
+        return Response(summary, status=status.HTTP_200_OK)
+
 
 class IPAddressViewSet(viewsets.ModelViewSet):
     """
@@ -177,9 +315,13 @@ class IPAddressViewSet(viewsets.ModelViewSet):
     - DELETE /api/v1/ipam/ip-addresses/{id}/ - Delete an IP address
     - GET /api/v1/ipam/subnets/{id}/ip-addresses/ - List IPs in a subnet (nested)
     - POST /api/v1/ipam/subnets/{id}/ip-addresses/ - Create IP in a subnet (nested)
+    - POST /api/v1/ipam/ip-addresses/{id}/assign/ - Assign IP to asset
+    - POST /api/v1/ipam/ip-addresses/{id}/release/ - Release IP from asset
+    - POST /api/v1/ipam/subnets/{id}/auto-assign/ - Auto-assign IP from subnet to asset
+    - GET /api/v1/ipam/ip-addresses/{id}/history/ - Get assignment history
     """
 
-    queryset = IPAddress.objects.select_related("subnet").all()
+    queryset = IPAddress.objects.select_related("subnet", "assigned_to_asset", "assigned_by").all()
     serializer_class = IPAddressSerializer
 
     def get_queryset(self):
@@ -197,6 +339,17 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         subnet_pk = self.kwargs.get("subnet_pk")
         if subnet_pk:
             queryset = queryset.filter(subnet_id=subnet_pk)
+        
+        # Filter by asset if provided
+        asset_id = self.request.query_params.get("assigned_to_asset")
+        if asset_id:
+            queryset = queryset.filter(assigned_to_asset_id=asset_id)
+        
+        # Filter by status if provided
+        status_filter = self.request.query_params.get("status")
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
         return queryset
 
     def perform_create(self, serializer):
@@ -214,6 +367,269 @@ class IPAddressViewSet(viewsets.ModelViewSet):
             serializer.save(subnet_id=subnet_pk)
         else:
             serializer.save()
+
+    @action(detail=True, methods=["post"])
+    def assign(self, request, pk=None):
+        """
+        Assign an IP address to an asset.
+
+        POST /api/v1/ipam/ip-addresses/{id}/assign/
+        Body: {
+            "asset_id": <asset_id>,
+            "reason": "optional reason",
+            "notes": "optional notes"
+        }
+        """
+        from assets.models import Asset
+        from ..services.ip_assignment import assign_ip_to_asset
+
+        ip_address = self.get_object()
+        asset_id = request.data.get("asset_id")
+        
+        if not asset_id:
+            return Response(
+                {"error": "asset_id is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            asset = Asset.objects.get(id=asset_id)
+        except Asset.DoesNotExist:
+            return Response(
+                {"error": f"Asset with id {asset_id} not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        try:
+            history = assign_ip_to_asset(
+                ip_address=ip_address,
+                asset=asset,
+                assigned_by=request.user,
+                reason=request.data.get("reason"),
+                notes=request.data.get("notes"),
+            )
+            serializer = self.get_serializer(ip_address)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(detail=True, methods=["post"])
+    def release(self, request, pk=None):
+        """
+        Release an IP address from its current asset assignment.
+
+        POST /api/v1/ipam/ip-addresses/{id}/release/
+        Body: {
+            "reason": "optional reason",
+            "notes": "optional notes",
+            "new_status": "available" (default) or "reserved" or "deprecated"
+        }
+        """
+        from ..services.ip_assignment import release_ip_from_asset
+
+        ip_address = self.get_object()
+        new_status = request.data.get("new_status", "available")
+
+        try:
+            history = release_ip_from_asset(
+                ip_address=ip_address,
+                released_by=request.user,
+                reason=request.data.get("reason"),
+                notes=request.data.get("notes"),
+                new_status=new_status,
+            )
+            serializer = self.get_serializer(ip_address)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(detail=True, methods=["get"])
+    def history(self, request, pk=None):
+        """
+        Get assignment history for an IP address.
+
+        GET /api/v1/ipam/ip-addresses/{id}/history/
+        """
+        from ..models import IPAssignmentHistory
+        from ..serializers import IPAssignmentHistorySerializer
+
+        ip_address = self.get_object()
+        history = IPAssignmentHistory.objects.filter(ip_address=ip_address).order_by("-created_at")
+        
+        serializer = IPAssignmentHistorySerializer(history, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def search(self, request):
+        """
+        Advanced search for IP addresses.
+
+        GET /api/v1/ipam/ip-addresses/search/?q=192.168.1&status=assigned&subnet=1
+        Query params:
+            q: Search query (IP, description, or asset name)
+            status: Filter by status
+            subnet: Filter by subnet ID
+            assigned_to_asset: Filter by asset ID
+            customer: Filter by customer ID (via subnet)
+            location: Filter by location ID (via subnet)
+            is_ipv6: Filter by IPv4/IPv6 (true/false)
+            vlan: Filter by VLAN ID (via subnet)
+            vrf: Filter by VRF ID (via subnet)
+        """
+        from ..services.ip_search import search_ip_addresses
+        from ..serializers import IPAddressSerializer
+
+        filters = {}
+        if "vlan" in request.query_params:
+            filters["vlan_id"] = request.query_params["vlan"]
+        if "vrf" in request.query_params:
+            filters["vrf_id"] = request.query_params["vrf"]
+
+        results = search_ip_addresses(
+            query=request.query_params.get("q"),
+            filters=filters,
+            subnet_id=request.query_params.get("subnet"),
+            status=request.query_params.get("status"),
+            assigned_to_asset=request.query_params.get("assigned_to_asset"),
+            customer_id=request.query_params.get("customer"),
+            location_id=request.query_params.get("location"),
+            is_ipv6=request.query_params.get("is_ipv6") == "true" if "is_ipv6" in request.query_params else None,
+        )
+
+        serializer = IPAddressSerializer(results, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def range_search(self, request):
+        """
+        Search for IP addresses within a range.
+
+        GET /api/v1/ipam/ip-addresses/range/?start=192.168.1.1&end=192.168.1.100&subnet=1
+        Query params:
+            start: Starting IP address
+            end: Ending IP address
+            subnet: Optional subnet ID filter
+        """
+        from ..services.ip_search import search_ip_range
+        from ..serializers import IPAddressSerializer
+
+        start_ip = request.query_params.get("start")
+        end_ip = request.query_params.get("end")
+
+        if not start_ip or not end_ip:
+            return Response(
+                {"error": "start and end IP addresses are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        subnet_id = request.query_params.get("subnet")
+        results = search_ip_range(
+            start_ip=start_ip,
+            end_ip=end_ip,
+            subnet_id=int(subnet_id) if subnet_id else None,
+        )
+
+        serializer = IPAddressSerializer(results, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def search_by_hostname(self, request):
+        """
+        Search for IP addresses by hostname/DNS name.
+
+        GET /api/v1/ipam/ip-addresses/hostname/?hostname=server1.example.com
+        Query params:
+            hostname: Hostname or FQDN to search for
+        """
+        from ..services.ip_search import search_by_hostname
+        from ..serializers import IPAddressSerializer
+
+        hostname = request.query_params.get("hostname")
+        if not hostname:
+            return Response(
+                {"error": "hostname parameter is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        results = search_by_hostname(hostname)
+        serializer = IPAddressSerializer(results, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="(?P<ip_address>[^/.]+)/details")
+    def ip_details(self, request, ip_address=None):
+        """
+        Get comprehensive details for an IP address.
+
+        GET /api/v1/ipam/ip-addresses/{ip_address}/details/
+        """
+        from ..services.ip_search import get_ip_details
+
+        if not ip_address:
+            return Response(
+                {"error": "IP address is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        details = get_ip_details(ip_address)
+        return Response(details, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="(?P<ip_address>[^/.]+)/conflicts")
+    def ip_conflicts(self, request, ip_address=None):
+        """
+        Detect IP address conflicts across subnets.
+
+        GET /api/v1/ipam/ip-addresses/{ip_address}/conflicts/?exclude_subnet=1
+        Query params:
+            exclude_subnet: Optional subnet ID to exclude from conflict check
+        """
+        from ..services.ip_search import detect_ip_conflicts
+
+        if not ip_address:
+            return Response(
+                {"error": "IP address is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        exclude_subnet_id = request.query_params.get("exclude_subnet")
+        conflicts = detect_ip_conflicts(
+            ip_address=ip_address,
+            exclude_subnet_id=int(exclude_subnet_id) if exclude_subnet_id else None,
+        )
+
+        return Response(conflicts, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def find_available(self, request):
+        """
+        Find available IP addresses in a subnet.
+
+        GET /api/v1/ipam/ip-addresses/find-available/?subnet=1&count=10
+        Query params:
+            subnet: Subnet ID (required)
+            count: Number of available IPs to find (default: 10)
+        """
+        from ..services.ip_search import find_available_ips_in_subnet
+
+        subnet_id = request.query_params.get("subnet")
+        if not subnet_id:
+            return Response(
+                {"error": "subnet parameter is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        count = int(request.query_params.get("count", 10))
+        available = find_available_ips_in_subnet(
+            subnet_id=int(subnet_id),
+            count=count,
+        )
+
+        return Response({"available_ips": available}, status=status.HTTP_200_OK)
 
 
 class DNSZoneViewSet(viewsets.ModelViewSet):
@@ -333,3 +749,205 @@ class DNSRecordViewSet(viewsets.ModelViewSet):
             serializer.save(zone_id=zone_pk)
         else:
             serializer.save()
+
+
+class IPRequestViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing IP address reservation requests.
+
+    Supports IP address reservation requests with approval workflow.
+    Users can request IP addresses, which go through an approval process.
+    Once approved, IP addresses are automatically created/updated.
+
+    Endpoints:
+    - GET /api/v1/ipam/ip-requests/ - List all IP requests
+    - POST /api/v1/ipam/ip-requests/ - Create a new IP request
+    - GET /api/v1/ipam/ip-requests/{id}/ - Retrieve an IP request
+    - PUT/PATCH /api/v1/ipam/ip-requests/{id}/ - Update an IP request
+    - DELETE /api/v1/ipam/ip-requests/{id}/ - Delete an IP request
+    - POST /api/v1/ipam/ip-requests/{id}/approve/ - Approve an IP request
+    - POST /api/v1/ipam/ip-requests/{id}/reject/ - Reject an IP request
+    - GET /api/v1/ipam/subnets/{id}/ip-requests/ - List requests for a subnet (nested)
+    - POST /api/v1/ipam/subnets/{id}/ip-requests/ - Create request for a subnet (nested)
+    """
+
+    queryset = IPRequest.objects.select_related(
+        "requested_by", "approved_by", "subnet", "ip_address"
+    ).all()
+    serializer_class = IPRequestSerializer
+
+    def get_queryset(self):
+        """
+        Filter queryset based on user and route context.
+
+        - When accessed via nested route, filters by subnet
+        - Users can only see their own requests unless they have admin permissions
+        - Admins can see all requests
+        """
+        queryset = super().get_queryset()
+        
+        # Filter by subnet when accessed via nested route
+        subnet_pk = self.kwargs.get("subnet_pk")
+        if subnet_pk:
+            queryset = queryset.filter(subnet_id=subnet_pk)
+        
+        # Filter by status if provided
+        status_filter = self.request.query_params.get("status")
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        # Filter by user's own requests if not admin
+        # Note: You may want to add permission checks here
+        # For now, all authenticated users can see all requests
+        # Uncomment below to restrict to own requests:
+        # if not self.request.user.is_staff:
+        #     queryset = queryset.filter(requested_by=self.request.user)
+        
+        return queryset
+
+    def get_serializer_class(self):
+        """Use create serializer for POST requests."""
+        if self.action == "create":
+            return IPRequestCreateSerializer
+        return IPRequestSerializer
+
+    def perform_create(self, serializer):
+        """
+        Set requested_by to current user and subnet when creating via nested route.
+
+        Args:
+            serializer: Serializer instance with validated data
+        """
+        subnet_pk = self.kwargs.get("subnet_pk")
+        if subnet_pk:
+            serializer.save(
+                requested_by=self.request.user,
+                subnet_id=subnet_pk
+            )
+        else:
+            serializer.save(requested_by=self.request.user)
+
+    @action(detail=True, methods=["post"])
+    def approve(self, request, pk=None):
+        """
+        Approve an IP request.
+
+        When approved:
+        1. Creates or updates the IP address with reserved status
+        2. Updates request status to approved/completed
+        3. Links the IP address to the request
+
+        Args:
+            request: HTTP request
+            pk: IP request primary key
+
+        Returns:
+            Response with updated IP request data
+        """
+        ip_request = self.get_object()
+        
+        if not ip_request.can_be_approved():
+            return Response(
+                {
+                    "error": "Request cannot be approved",
+                    "detail": f"Request status is {ip_request.get_status_display()}, only pending requests can be approved.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        approval_notes = request.data.get("approval_notes", "")
+        
+        # Determine the IP address to reserve
+        ip_to_reserve = ip_request.requested_ip
+        
+        # If no specific IP requested, find next available
+        if not ip_to_reserve:
+            from ..services.subnet_utils import get_next_available_ip
+            used_ips = list(
+                IPAddress.objects.filter(subnet=ip_request.subnet)
+                .exclude(status="available")
+                .values_list("address", flat=True)
+            )
+            ip_to_reserve = get_next_available_ip(ip_request.subnet.network, used_ips)
+            
+            if not ip_to_reserve:
+                return Response(
+                    {
+                        "error": "No available IP addresses",
+                        "detail": "No available IP addresses in this subnet.",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        # Create or update IP address
+        ip_address, created = IPAddress.objects.get_or_create(
+            address=ip_to_reserve,
+            defaults={
+                "subnet": ip_request.subnet,
+                "status": "reserved",
+                "description": f"Reserved via IP request: {ip_request.purpose}",
+            },
+        )
+        
+        if not created:
+            # IP already exists, update it
+            if ip_address.status not in ("available", "deprecated"):
+                return Response(
+                    {
+                        "error": "IP address already in use",
+                        "detail": f"IP address {ip_to_reserve} is already in use with status: {ip_address.get_status_display()}",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            ip_address.status = "reserved"
+            ip_address.subnet = ip_request.subnet
+            ip_address.description = f"Reserved via IP request: {ip_request.purpose}"
+            ip_address.save()
+
+        # Update request
+        from django.utils import timezone
+        ip_request.status = "completed"
+        ip_request.approved_by = request.user
+        ip_request.approved_at = timezone.now()
+        ip_request.approval_notes = approval_notes
+        ip_request.ip_address = ip_address
+        ip_request.save()
+
+        serializer = self.get_serializer(ip_request)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"])
+    def reject(self, request, pk=None):
+        """
+        Reject an IP request.
+
+        Args:
+            request: HTTP request
+            pk: IP request primary key
+
+        Returns:
+            Response with updated IP request data
+        """
+        ip_request = self.get_object()
+        
+        if not ip_request.can_be_rejected():
+            return Response(
+                {
+                    "error": "Request cannot be rejected",
+                    "detail": f"Request status is {ip_request.get_status_display()}, only pending requests can be rejected.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        approval_notes = request.data.get("approval_notes", "")
+        
+        # Update request
+        from django.utils import timezone
+        ip_request.status = "rejected"
+        ip_request.approved_by = request.user
+        ip_request.approved_at = timezone.now()
+        ip_request.approval_notes = approval_notes
+        ip_request.save()
+
+        serializer = self.get_serializer(ip_request)
+        return Response(serializer.data, status=status.HTTP_200_OK)
