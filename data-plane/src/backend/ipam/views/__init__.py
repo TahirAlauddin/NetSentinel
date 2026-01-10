@@ -385,6 +385,8 @@ class IPAddressViewSet(viewsets.ModelViewSet):
     - POST /api/v1/ipam/ip-addresses/{id}/release/ - Release IP from asset
     - POST /api/v1/ipam/subnets/{id}/auto-assign/ - Auto-assign IP from subnet to asset
     - GET /api/v1/ipam/ip-addresses/{id}/history/ - Get assignment history
+    - POST /api/v1/ipam/ip-addresses/import/ - Import IP addresses from CSV/JSON
+    - GET /api/v1/ipam/ip-addresses/export/ - Export IP addresses to CSV/JSON
     """
 
     queryset = IPAddress.objects.select_related("subnet", "assigned_to_asset", "assigned_by").all()
@@ -626,6 +628,170 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         results = search_by_hostname(hostname)
         serializer = IPAddressSerializer(results, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["post"])
+    def import_addresses(self, request):
+        """
+        Import IP addresses from CSV or JSON.
+
+        POST /api/v1/ipam/ip-addresses/import/
+        Body (multipart/form-data):
+            file: CSV or JSON file
+            format: "csv" or "json" (optional, auto-detected from file extension)
+            skip_duplicates: true/false (default: true)
+        
+        Returns:
+            {
+                "valid_rows": <count>,
+                "errors": <list of validation errors>,
+                "results": {
+                    "created": <count>,
+                    "updated": <count>,
+                    "skipped": <count>,
+                    "errors": <list of import errors>
+                }
+            }
+        """
+        from ..services.ip_import_export import (
+            IPImportError,
+            import_ip_addresses,
+            parse_csv_import,
+            parse_json_import,
+            validate_import_data,
+        )
+
+        if "file" not in request.FILES:
+            return Response(
+                {"error": "No file provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        file = request.FILES["file"]
+        file_format = request.data.get("format", "").lower()
+        skip_duplicates = request.data.get("skip_duplicates", "true").lower() == "true"
+
+        # Auto-detect format from file extension if not provided
+        if not file_format:
+            filename = file.name.lower()
+            if filename.endswith(".csv"):
+                file_format = "csv"
+            elif filename.endswith(".json"):
+                file_format = "json"
+            else:
+                return Response(
+                    {"error": "Unsupported file format. Use CSV or JSON."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        try:
+            # Read file content
+            content = file.read().decode("utf-8")
+
+            # Parse based on format
+            if file_format == "csv":
+                rows = parse_csv_import(content)
+            elif file_format == "json":
+                rows = parse_json_import(content)
+            else:
+                return Response(
+                    {"error": f"Unsupported format: {file_format}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Validate data
+            valid_rows, validation_errors = validate_import_data(rows)
+
+            # Import valid rows
+            import_results = import_ip_addresses(
+                valid_rows,
+                created_by=request.user,
+                skip_duplicates=skip_duplicates,
+            )
+
+            return Response(
+                {
+                    "valid_rows": len(valid_rows),
+                    "total_rows": len(rows),
+                    "validation_errors": validation_errors,
+                    "results": import_results,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except IPImportError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Import failed: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=False, methods=["get"])
+    def export_addresses(self, request):
+        """
+        Export IP addresses to CSV or JSON.
+
+        GET /api/v1/ipam/ip-addresses/export/?format=csv&status=assigned&subnet=1
+        Query params:
+            format: "csv" or "json" (default: csv)
+            status: Filter by status
+            subnet: Filter by subnet ID
+            assigned_to_asset: Filter by asset ID
+            customer: Filter by customer ID (via subnet)
+            location: Filter by location ID (via subnet)
+        
+        Returns:
+            CSV or JSON file download
+        """
+        from ..services.ip_import_export import (
+            export_ip_addresses_to_csv,
+            export_ip_addresses_to_json,
+        )
+
+        # Get filtered queryset
+        queryset = self.get_queryset()
+
+        # Apply additional filters
+        status_filter = request.query_params.get("status")
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+
+        subnet_id = request.query_params.get("subnet")
+        if subnet_id:
+            queryset = queryset.filter(subnet_id=subnet_id)
+
+        asset_id = request.query_params.get("assigned_to_asset")
+        if asset_id:
+            queryset = queryset.filter(assigned_to_asset_id=asset_id)
+
+        # Convert queryset to list
+        ip_addresses = list(queryset)
+
+        # Get format
+        file_format = request.query_params.get("format", "csv").lower()
+
+        if file_format == "csv":
+            content = export_ip_addresses_to_csv(ip_addresses)
+            content_type = "text/csv"
+            filename = "ip_addresses_export.csv"
+        elif file_format == "json":
+            content = export_ip_addresses_to_json(ip_addresses)
+            content_type = "application/json"
+            filename = "ip_addresses_export.json"
+        else:
+            return Response(
+                {"error": f"Unsupported format: {file_format}. Use 'csv' or 'json'."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from django.http import HttpResponse
+
+        response = HttpResponse(content, content_type=content_type)
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
 
     @action(detail=False, methods=["get"], url_path="(?P<ip_address>[^/.]+)/details")
     def ip_details(self, request, ip_address=None):

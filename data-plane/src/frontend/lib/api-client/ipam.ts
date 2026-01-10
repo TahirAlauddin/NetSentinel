@@ -621,5 +621,114 @@ export class IpamApiClient extends BaseApiClient {
   ): Promise<BaseApiResponse<T>> {
     return this.get<T>(`/ipam/ip-addresses/find-available/?subnet=${subnetId}&count=${count}`);
   }
+
+  // ==================== IP Address Import/Export ====================
+
+  /**
+   * Import IP addresses from CSV or JSON file
+   * @param file - File to import
+   * @param format - File format: "csv" or "json" (optional, auto-detected)
+   * @param skipDuplicates - Whether to skip duplicate IPs (default: true)
+   * @returns Import results with validation errors and import statistics
+   */
+  async importIPAddresses<T = {
+    valid_rows: number;
+    total_rows: number;
+    validation_errors: Array<{
+      row: number;
+      data: Record<string, unknown>;
+      errors: string[];
+    }>;
+    results: {
+      created: number;
+      updated: number;
+      skipped: number;
+      errors: Array<{ address: string; error: string }>;
+    };
+  }>(
+    file: File,
+    format?: "csv" | "json",
+    skipDuplicates: boolean = true
+  ): Promise<BaseApiResponse<T>> {
+    const formData = new FormData();
+    formData.append("file", file);
+    if (format) {
+      formData.append("format", format);
+    }
+    formData.append("skip_duplicates", skipDuplicates.toString());
+
+    // Use fetch directly for FormData
+    const session = await this.getSession();
+    const accessToken = session?.accessToken;
+
+    const response = await fetch(`${this.getApiBaseUrl()}/api/v1/ipam/ip-addresses/import/`, {
+      method: "POST",
+      headers: {
+        "Authorization": accessToken ? `Bearer ${accessToken}` : "",
+        // Don't set Content-Type for FormData - browser will set it with boundary
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: "Import failed" }));
+      return {
+        error: error.error || "Import failed",
+        status: response.status,
+      };
+    }
+
+    const data = await response.json();
+    return {
+      data: data as T,
+      status: response.status,
+    };
+  }
+
+  /**
+   * Export IP addresses to CSV or JSON
+   * @param format - Export format: "csv" or "json" (default: "csv")
+   * @param filters - Optional filters (status, subnet, assigned_to_asset, etc.)
+   * @returns Blob with exported data
+   */
+  async exportIPAddresses(
+    format: "csv" | "json" = "csv",
+    filters?: {
+      status?: string;
+      subnet?: number | string;
+      assigned_to_asset?: number | string;
+      customer?: number | string;
+      location?: number | string;
+    }
+  ): Promise<Blob> {
+    const params: Record<string, unknown> = { format };
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params[key] = value;
+        }
+      });
+    }
+    const queryString = this.buildQueryString(params);
+    
+    // Use fetch directly for blob response
+    const session = await this.getSession();
+    const accessToken = session?.accessToken;
+    
+    const response = await fetch(`${this.getApiBaseUrl()}/api/v1/ipam/ip-addresses/export${queryString}`, {
+      method: "GET",
+      headers: {
+        "Authorization": accessToken ? `Bearer ${accessToken}` : "",
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: "Export failed" }));
+      throw new Error(error.error || "Export failed");
+    }
+
+    return response.blob();
+  }
 }
 
