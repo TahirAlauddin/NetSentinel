@@ -13,6 +13,7 @@ import {
   Pi as Api,
   LifeBuoy,
   Settings,
+  Network,
 } from "lucide-react";
 import { NavigationItem, SubmenuColumn } from "../types/navigation";
 
@@ -120,6 +121,45 @@ export const monitoringSubmenuColumns: SubmenuColumn[] = [
   },
 ];
 
+// IPAM submenu links
+export const ipamMainSubmenuLinks = [
+  { label: "Dashboard", href: "/ipam" },
+  { label: "Subnets", href: "/ipam/subnets" },
+  { label: "Subnet Groups", href: "/ipam/subnet-groups" },
+  { label: "Customers", href: "/ipam/customers" },
+  { label: "VLAN", href: "/ipam/vlans" },
+  { label: "VRF", href: "/ipam/vrfs" },
+  { label: "Devices", href: "/ipam/devices" },
+  { label: "IP Requests", href: "/ipam/ip-requests" },
+];
+
+export const ipamSubnetManagementSubmenuLinks = [
+  { label: "Favourite Subnets", href: "/ipam/favourite-subnets" },
+  { label: "Scanned Networks", href: "/ipam/scanned-networks" },
+  { label: "Subnet Masks", href: "/ipam/subnet-masks" },
+  { label: "Temporary Shares", href: "/ipam/temporary-shares" },
+  { label: "Inactive Hosts", href: "/ipam/inactive-hosts" },
+  { label: "Duplicates", href: "/ipam/duplicates" },
+  { label: "Threshold", href: "/ipam/threshold" },
+];
+
+export const ipamNetworkServicesSubmenuLinks = [
+  { label: "NAT", href: "/ipam/nat" },
+  { label: "Routing", href: "/ipam/routing" },
+  { label: "Firewall Zones", href: "/ipam/firewall-zones" },
+];
+
+export const ipamInfrastructureSubmenuLinks = [
+  { label: "Racks", href: "/ipam/racks" },
+  { label: "Circuits", href: "/ipam/circuits" },
+  { label: "Locations", href: "/ipam/locations" },
+];
+
+export const ipamToolsSubmenuLinks = [
+  { label: "Search", href: "/ipam/search" },
+  { label: "Documentation", href: "/ipam/documentation" },
+];
+
 /******************************************************************************************************************
  * Navigation items are the main navigation items that are displayed in the sidebar.
  * They are used to navigate to the different pages in the application.
@@ -181,6 +221,34 @@ export const navigationItems: NavigationItem[] = [
   { label: "VM Management", icon: Server, href: "#" },
   { label: "Phone Management", icon: Phone, href: "#" },
   { label: "API Management", icon: Api, href: "#" },
+  {
+    label: "IPAM",
+    icon: Network,
+    href: "/ipam",
+    hasSubmenu: true,
+    submenuColumns: [
+      {
+        title: "Main",
+        links: ipamMainSubmenuLinks,
+      },
+      {
+        title: "Subnet Management",
+        links: ipamSubnetManagementSubmenuLinks,
+      },
+      {
+        title: "Network Services",
+        links: ipamNetworkServicesSubmenuLinks,
+      },
+      {
+        title: "Infrastructure",
+        links: ipamInfrastructureSubmenuLinks,
+      },
+      {
+        title: "Tools",
+        links: ipamToolsSubmenuLinks,
+      },
+    ],
+  },
   {
     label: "Settings",
     icon: Settings,
