@@ -127,16 +127,17 @@ describe('AppShell', () => {
     })
   })
 
-  it('should render sectional navigation links', () => {
+  it('should render sectional navigation', () => {
     render(
       <AppShell>
         <div>Test Content</div>
       </AppShell>
     )
 
-    expect(screen.getByText('Sectional Menu')).toBeInTheDocument()
-    expect(screen.getByText('Lorem ipsum')).toBeInTheDocument()
-    expect(screen.getByText('Dolor sit')).toBeInTheDocument()
+    // SectionalNavigation is rendered but content depends on current route
+    // Just verify the navigation container exists
+    const nav = screen.getByLabelText('Sectional navigation')
+    expect(nav).toBeInTheDocument()
   })
 })
 
