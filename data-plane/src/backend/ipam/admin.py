@@ -1,6 +1,16 @@
 from django.contrib import admin
 
-from .models import VLAN, VRF, Customer, DNSRecord, DNSZone, IPAddress, Subnet, SubnetGroup
+from .models import (
+    VLAN,
+    VRF,
+    Customer,
+    DNSRecord,
+    DNSZone,
+    IPAddress,
+    IPRequest,
+    Subnet,
+    SubnetGroup,
+)
 
 
 @admin.register(SubnetGroup)
@@ -96,3 +106,31 @@ class IPAddressAdmin(admin.ModelAdmin):
     search_fields = ["address", "description", "subnet__network"]
     list_filter = ["subnet", "status", "created_at", "updated_at"]
     raw_id_fields = ["subnet"]
+
+
+@admin.register(IPRequest)
+class IPRequestAdmin(admin.ModelAdmin):
+    list_display = [
+        "id",
+        "requested_by",
+        "subnet",
+        "requested_ip",
+        "status",
+        "purpose",
+        "approved_by",
+        "approved_at",
+        "created_at",
+    ]
+    search_fields = [
+        "requested_ip",
+        "purpose",
+        "description",
+        "requested_by__username",
+        "requested_by__email",
+        "subnet__network",
+        "approval_notes",
+    ]
+    list_filter = ["status", "subnet", "created_at", "approved_at"]
+    raw_id_fields = ["requested_by", "approved_by", "subnet", "ip_address"]
+    readonly_fields = ["created_at", "updated_at", "approved_at"]
+    date_hierarchy = "created_at"

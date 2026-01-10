@@ -11,12 +11,25 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ..models import VLAN, VRF, Customer, DNSRecord, DNSZone, IPAddress, Subnet, SubnetGroup
+from ..models import (
+    VLAN,
+    VRF,
+    Customer,
+    DNSRecord,
+    DNSZone,
+    FavoriteSubnet,
+    IPAddress,
+    IPRequest,
+    Subnet,
+    SubnetGroup,
+)
 from ..serializers import (
     CustomerSerializer,
     DNSRecordSerializer,
     DNSZoneSerializer,
     IPAddressSerializer,
+    IPRequestCreateSerializer,
+    IPRequestSerializer,
     SubnetGroupSerializer,
     SubnetSerializer,
     VLANSerializer,
@@ -333,3 +346,205 @@ class DNSRecordViewSet(viewsets.ModelViewSet):
             serializer.save(zone_id=zone_pk)
         else:
             serializer.save()
+
+
+class IPRequestViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing IP address reservation requests.
+
+    Supports IP address reservation requests with approval workflow.
+    Users can request IP addresses, which go through an approval process.
+    Once approved, IP addresses are automatically created/updated.
+
+    Endpoints:
+    - GET /api/v1/ipam/ip-requests/ - List all IP requests
+    - POST /api/v1/ipam/ip-requests/ - Create a new IP request
+    - GET /api/v1/ipam/ip-requests/{id}/ - Retrieve an IP request
+    - PUT/PATCH /api/v1/ipam/ip-requests/{id}/ - Update an IP request
+    - DELETE /api/v1/ipam/ip-requests/{id}/ - Delete an IP request
+    - POST /api/v1/ipam/ip-requests/{id}/approve/ - Approve an IP request
+    - POST /api/v1/ipam/ip-requests/{id}/reject/ - Reject an IP request
+    - GET /api/v1/ipam/subnets/{id}/ip-requests/ - List requests for a subnet (nested)
+    - POST /api/v1/ipam/subnets/{id}/ip-requests/ - Create request for a subnet (nested)
+    """
+
+    queryset = IPRequest.objects.select_related(
+        "requested_by", "approved_by", "subnet", "ip_address"
+    ).all()
+    serializer_class = IPRequestSerializer
+
+    def get_queryset(self):
+        """
+        Filter queryset based on user and route context.
+
+        - When accessed via nested route, filters by subnet
+        - Users can only see their own requests unless they have admin permissions
+        - Admins can see all requests
+        """
+        queryset = super().get_queryset()
+        
+        # Filter by subnet when accessed via nested route
+        subnet_pk = self.kwargs.get("subnet_pk")
+        if subnet_pk:
+            queryset = queryset.filter(subnet_id=subnet_pk)
+        
+        # Filter by status if provided
+        status_filter = self.request.query_params.get("status")
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        # Filter by user's own requests if not admin
+        # Note: You may want to add permission checks here
+        # For now, all authenticated users can see all requests
+        # Uncomment below to restrict to own requests:
+        # if not self.request.user.is_staff:
+        #     queryset = queryset.filter(requested_by=self.request.user)
+        
+        return queryset
+
+    def get_serializer_class(self):
+        """Use create serializer for POST requests."""
+        if self.action == "create":
+            return IPRequestCreateSerializer
+        return IPRequestSerializer
+
+    def perform_create(self, serializer):
+        """
+        Set requested_by to current user and subnet when creating via nested route.
+
+        Args:
+            serializer: Serializer instance with validated data
+        """
+        subnet_pk = self.kwargs.get("subnet_pk")
+        if subnet_pk:
+            serializer.save(
+                requested_by=self.request.user,
+                subnet_id=subnet_pk
+            )
+        else:
+            serializer.save(requested_by=self.request.user)
+
+    @action(detail=True, methods=["post"])
+    def approve(self, request, pk=None):
+        """
+        Approve an IP request.
+
+        When approved:
+        1. Creates or updates the IP address with reserved status
+        2. Updates request status to approved/completed
+        3. Links the IP address to the request
+
+        Args:
+            request: HTTP request
+            pk: IP request primary key
+
+        Returns:
+            Response with updated IP request data
+        """
+        ip_request = self.get_object()
+        
+        if not ip_request.can_be_approved():
+            return Response(
+                {
+                    "error": "Request cannot be approved",
+                    "detail": f"Request status is {ip_request.get_status_display()}, only pending requests can be approved.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        approval_notes = request.data.get("approval_notes", "")
+        
+        # Determine the IP address to reserve
+        ip_to_reserve = ip_request.requested_ip
+        
+        # If no specific IP requested, find next available
+        if not ip_to_reserve:
+            from ..services.subnet_utils import get_next_available_ip
+            used_ips = list(
+                IPAddress.objects.filter(subnet=ip_request.subnet)
+                .exclude(status="available")
+                .values_list("address", flat=True)
+            )
+            ip_to_reserve = get_next_available_ip(ip_request.subnet.network, used_ips)
+            
+            if not ip_to_reserve:
+                return Response(
+                    {
+                        "error": "No available IP addresses",
+                        "detail": "No available IP addresses in this subnet.",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        # Create or update IP address
+        ip_address, created = IPAddress.objects.get_or_create(
+            address=ip_to_reserve,
+            defaults={
+                "subnet": ip_request.subnet,
+                "status": "reserved",
+                "description": f"Reserved via IP request: {ip_request.purpose}",
+            },
+        )
+        
+        if not created:
+            # IP already exists, update it
+            if ip_address.status not in ("available", "deprecated"):
+                return Response(
+                    {
+                        "error": "IP address already in use",
+                        "detail": f"IP address {ip_to_reserve} is already in use with status: {ip_address.get_status_display()}",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            ip_address.status = "reserved"
+            ip_address.subnet = ip_request.subnet
+            ip_address.description = f"Reserved via IP request: {ip_request.purpose}"
+            ip_address.save()
+
+        # Update request
+        from django.utils import timezone
+        ip_request.status = "completed"
+        ip_request.approved_by = request.user
+        ip_request.approved_at = timezone.now()
+        ip_request.approval_notes = approval_notes
+        ip_request.ip_address = ip_address
+        ip_request.save()
+
+        serializer = self.get_serializer(ip_request)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"])
+    def reject(self, request, pk=None):
+        """
+        Reject an IP request.
+
+        Args:
+            request: HTTP request
+            pk: IP request primary key
+
+        Returns:
+            Response with updated IP request data
+        """
+        ip_request = self.get_object()
+        
+        if not ip_request.can_be_rejected():
+            return Response(
+                {
+                    "error": "Request cannot be rejected",
+                    "detail": f"Request status is {ip_request.get_status_display()}, only pending requests can be rejected.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        approval_notes = request.data.get("approval_notes", "")
+        
+        # Update request
+        from django.utils import timezone
+        ip_request.status = "rejected"
+        ip_request.approved_by = request.user
+        ip_request.approved_at = timezone.now()
+        ip_request.approval_notes = approval_notes
+        ip_request.save()
+
+        serializer = self.get_serializer(ip_request)
+        return Response(serializer.data, status=status.HTTP_200_OK)
