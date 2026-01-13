@@ -20,6 +20,7 @@ import {
   IPAddress,
   IPRequest,
   IPAssignmentHistory,
+  PhoneNumberRange,
   SubnetUtilization,
   SubnetCapacity,
   UtilizationSummary,
@@ -910,6 +911,83 @@ export class IpamApiClient extends BaseApiClient {
     }>;
   }>>(): Promise<BaseApiResponse<T>> {
     return this.get<T>("/ipam/subnets/duplicates/");
+  }
+
+  // ==================== Phone Number Ranges ====================
+
+  /**
+   * Get all phone number ranges
+   * @param params - Optional query parameters for filtering/pagination
+   * @returns List of phone number ranges or paginated response
+   */
+  async getPhoneNumberRanges<T = PhoneNumberRange[] | PaginatedResponse<PhoneNumberRange>>(
+    params?: {
+      location?: number | string;
+      carrier?: string;
+    }
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/phone-numbers${queryString}`);
+  }
+
+  /**
+   * Get a single phone number range by ID
+   * @param id - Phone number range ID
+   * @returns Phone number range details
+   */
+  async getPhoneNumberRange<T = PhoneNumberRange>(
+    id: number | string
+  ): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/phone-numbers/${id}/`);
+  }
+
+  /**
+   * Create a new phone number range
+   * @param phoneNumberRange - Phone number range data
+   * @returns Created phone number range
+   */
+  async createPhoneNumberRange<T = PhoneNumberRange>(
+    phoneNumberRange: {
+      location?: number | null;
+      carrier?: string | null;
+      trunk?: string | null;
+      start_number: string;
+      stop_number: string;
+      notes?: string | null;
+    }
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/phone-numbers/", phoneNumberRange);
+  }
+
+  /**
+   * Update a phone number range
+   * @param id - Phone number range ID
+   * @param phoneNumberRange - Updated phone number range data
+   * @returns Updated phone number range
+   */
+  async updatePhoneNumberRange<T = PhoneNumberRange>(
+    id: number | string,
+    phoneNumberRange: {
+      location?: number | null;
+      carrier?: string | null;
+      trunk?: string | null;
+      start_number?: string;
+      stop_number?: string;
+      notes?: string | null;
+    }
+  ): Promise<BaseApiResponse<T>> {
+    return this.put<T>(`/ipam/phone-numbers/${id}/`, phoneNumberRange);
+  }
+
+  /**
+   * Delete a phone number range
+   * @param id - Phone number range ID
+   * @returns Deletion response
+   */
+  async deletePhoneNumberRange<T = unknown>(
+    id: number | string
+  ): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/phone-numbers/${id}/`);
   }
 }
 

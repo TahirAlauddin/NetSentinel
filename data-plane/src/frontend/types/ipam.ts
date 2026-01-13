@@ -278,6 +278,25 @@ export interface UtilizationSummary {
   status: "critical" | "warning" | "moderate" | "healthy";
 }
 
+// Phone Number Range types
+export interface PhoneNumberRange {
+  id: number;
+  location?: number | null;
+  location_detail?: {
+    id: number;
+    name: string;
+    address?: string | null;
+  } | null;
+  carrier?: string | null;
+  trunk?: string | null;
+  start_number: string;
+  stop_number: string;
+  notes?: string | null;
+  number_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
 // Re-export DTO types for convenience
 export type {
   SubnetCreateUpdateDto,

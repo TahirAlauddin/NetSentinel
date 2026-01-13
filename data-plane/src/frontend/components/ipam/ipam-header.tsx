@@ -204,6 +204,7 @@ function generateBreadcrumbsFromPath(pathname: string): Array<{ label: string; h
     "vrfs": { category: "Main", label: "VRF", href: "/ipam/vrfs" },
     "devices": { category: "Main", label: "Devices", href: "/ipam/devices" },
     "ip-requests": { category: "Main", label: "IP Requests", href: "/ipam/ip-requests" },
+    "phone-numbers": { category: "Main", label: "Phone Numbers", href: "/ipam/phone-numbers" },
     
     // Tools category
     "search": { category: "Tools", label: "Search", href: "/ipam/search" },
