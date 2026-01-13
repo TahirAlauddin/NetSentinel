@@ -9,6 +9,7 @@ import { AssetStats } from "@/types/assets";
 import { BasicDetailsStepFormData } from "@/types/assets/steps";
 import { AssetActionUtils } from "./utils";
 import { Tag } from "@/types/assets/fields";
+import { validateImageFile, validateAttachmentFile } from "@/lib/security/file-validation";
 /**
  * Asset CRUD operations and related functionality
  */
@@ -319,10 +320,23 @@ export class AssetActions {
       return { success: false, error: "Not authenticated" };
     }
 
+    // Validate asset ID
+    if (!Number.isInteger(assetId) || assetId <= 0) {
+      return { success: false, error: "Invalid asset ID" };
+    }
+
     // Only handle File uploads; skip existing URLs/objects for now
     const files = images.filter((img): img is File => img instanceof File);
     if (files.length === 0) {
       return { success: true };
+    }
+
+    // Validate files using file validation utility
+    for (const file of files) {
+      const validation = validateImageFile(file, 10); // 10MB max
+      if (!validation.valid) {
+        return { success: false, error: validation.error || `Invalid file: ${file.name}` };
+      }
     }
 
     const formData = new FormData();
@@ -356,9 +370,22 @@ export class AssetActions {
       return { success: false, error: "Not authenticated" };
     }
 
+    // Validate asset ID
+    if (!Number.isInteger(assetId) || assetId <= 0) {
+      return { success: false, error: "Invalid asset ID" };
+    }
+
     const files = attachments.filter((att): att is File => att instanceof File);
     if (files.length === 0) {
       return { success: true };
+    }
+
+    // Validate files using file validation utility
+    for (const file of files) {
+      const validation = validateAttachmentFile(file, 50); // 50MB max
+      if (!validation.valid) {
+        return { success: false, error: validation.error || `Invalid file: ${file.name}` };
+      }
     }
 
     const formData = new FormData();

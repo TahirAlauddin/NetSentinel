@@ -5,6 +5,13 @@ import { authOptions } from "@/lib/auth"
 import { serverApi } from "@/lib/server-api"
 import { UserRecord } from "@/types/users"
 import { GroupRecord, PermissionRecord } from "@/types/groups"
+import {
+  validateString,
+  validateEmail,
+  validateId,
+  validateIdArray,
+  validateFormDataField,
+} from "@/lib/security/input-validation"
 
 export async function listUsers(): Promise<UserRecord[]> {
   const session = await getServerSession(authOptions)
@@ -41,13 +48,27 @@ export async function addUser(formData: FormData) {
     return { success: false, error: 'Not authorized to create users' }
   }
 
-  const username = String(formData.get("username") || "").trim()
-  const email = String(formData.get("email") || "").trim().toLowerCase()
-  const password = String(formData.get("password") || "").trim()
-  const re_password = String(formData.get("re_password") || "").trim()
+  // Validate and sanitize all inputs
+  const username = validateFormDataField(formData, "username", {
+    required: true,
+    maxLength: 150,
+    pattern: /^[a-zA-Z0-9@.+\-_]+$/,
+  })
+  
+  const email = validateEmail(formData.get("email"))
+  const password = validateFormDataField(formData, "password", {
+    required: true,
+    maxLength: 128,
+    minLength: 8,
+  })
+  const re_password = validateFormDataField(formData, "re_password", {
+    required: true,
+    maxLength: 128,
+    minLength: 8,
+  })
 
   if (!username || !email || !password || !re_password) {
-    return { success: false, error: 'All fields are required' }
+    return { success: false, error: 'Invalid input. Please check all fields.' }
   }
 
   if (password !== re_password) {
@@ -130,13 +151,25 @@ export async function createGroup(name: string, permissionIds: number[]) {
     return { success: false, error: 'Not authorized to create groups' }
   }
 
-  if (!name || !name.trim()) {
-    return { success: false, error: 'Group name is required' }
+  // Validate and sanitize inputs
+  const validatedName = validateString(name, {
+    allowEmpty: false,
+    maxLength: 150,
+    minLength: 1,
+  })
+
+  if (!validatedName) {
+    return { success: false, error: 'Group name is required and must be valid' }
+  }
+
+  const validatedPermissionIds = validateIdArray(permissionIds)
+  if (validatedPermissionIds === null) {
+    return { success: false, error: 'Invalid permission IDs' }
   }
 
   const response = await serverApi.post('/groups/', {
-    name: name.trim(),
-    permissions: permissionIds || [],
+    name: validatedName,
+    permissions: validatedPermissionIds,
   })
 
   if (response.error) {
@@ -152,13 +185,30 @@ export async function updateGroup(id: number, name: string, permissionIds: numbe
     return { success: false, error: 'Not authorized to update groups' }
   }
 
-  if (!name || !name.trim()) {
-    return { success: false, error: 'Group name is required' }
+  // Validate and sanitize inputs
+  const validatedId = validateId(id)
+  if (!validatedId) {
+    return { success: false, error: 'Invalid group ID' }
   }
 
-  const response = await serverApi.put(`/groups/${id}/`, {
-    name: name.trim(),
-    permissions: permissionIds || [],
+  const validatedName = validateString(name, {
+    allowEmpty: false,
+    maxLength: 150,
+    minLength: 1,
+  })
+
+  if (!validatedName) {
+    return { success: false, error: 'Group name is required and must be valid' }
+  }
+
+  const validatedPermissionIds = validateIdArray(permissionIds)
+  if (validatedPermissionIds === null) {
+    return { success: false, error: 'Invalid permission IDs' }
+  }
+
+  const response = await serverApi.put(`/groups/${validatedId}/`, {
+    name: validatedName,
+    permissions: validatedPermissionIds,
   })
 
   if (response.error) {
@@ -174,7 +224,13 @@ export async function deleteGroup(id: number) {
     return { success: false, error: 'Not authorized to delete groups' }
   }
 
-  const response = await serverApi.delete(`/groups/${id}/`)
+  // Validate ID
+  const validatedId = validateId(id)
+  if (!validatedId) {
+    return { success: false, error: 'Invalid group ID' }
+  }
+
+  const response = await serverApi.delete(`/groups/${validatedId}/`)
 
   if (response.error) {
     return { success: false, error: response.error || 'Failed to delete group' }
