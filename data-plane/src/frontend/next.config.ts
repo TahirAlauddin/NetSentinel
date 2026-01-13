@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false, // Remove X-Powered-By header for security
   reactStrictMode: true, // Enable React strict mode
   
+  // Enable standalone output for Docker
+  output: 'standalone',
+  
   // Image optimization
   images: {
     formats: ["image/avif", "image/webp"],
