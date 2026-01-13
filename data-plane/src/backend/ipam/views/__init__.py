@@ -20,6 +20,8 @@ from ..models import (
     FavoriteSubnet,
     IPAddress,
     IPRequest,
+    NetworkScan,
+    ScanResult,
     Subnet,
     SubnetGroup,
 )
@@ -30,6 +32,10 @@ from ..serializers import (
     IPAddressSerializer,
     IPRequestCreateSerializer,
     IPRequestSerializer,
+    NetworkScanCreateSerializer,
+    NetworkScanSerializer,
+    ScanResultDetailSerializer,
+    ScanResultSerializer,
     SubnetGroupSerializer,
     SubnetSerializer,
     VLANSerializer,
@@ -364,6 +370,18 @@ class SubnetViewSet(viewsets.ModelViewSet):
             data = serializer.data
             data["is_favorite"] = False
             return Response(data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="duplicates")
+    def duplicate_subnets(self, request):
+        """
+        Detect duplicate or overlapping subnets.
+
+        GET /api/v1/ipam/subnets/duplicates/
+        """
+        from ..services.duplicates_detection import detect_duplicate_subnets
+
+        duplicates = detect_duplicate_subnets()
+        return Response(duplicates, status=status.HTTP_200_OK)
 
 
 class IPAddressViewSet(viewsets.ModelViewSet):
@@ -868,6 +886,182 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         )
 
         return Response({"available_ips": available}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="inactive-hosts")
+    def inactive_hosts(self, request):
+        """
+        Get list of inactive IP addresses.
+
+        GET /api/v1/ipam/ip-addresses/inactive-hosts/?threshold_days=90&status=assigned&subnet=1
+        Query params:
+            threshold_days: Number of days since last update to consider inactive (default: 90)
+            status: Filter by IP status
+            subnet: Filter by subnet ID
+        """
+        from ..services.inactive_hosts import detect_inactive_hosts
+        from ..serializers import IPAddressSerializer
+
+        threshold_days = int(request.query_params.get("threshold_days", 90))
+        status_filter = request.query_params.get("status")
+        subnet_id = request.query_params.get("subnet")
+
+        inactive = detect_inactive_hosts(
+            threshold_days=threshold_days,
+            status_filter=status_filter,
+            subnet_id=int(subnet_id) if subnet_id else None,
+        )
+
+        serializer = IPAddressSerializer(inactive, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="inactive-hosts/summary")
+    def inactive_hosts_summary(self, request):
+        """
+        Get summary statistics for inactive hosts.
+
+        GET /api/v1/ipam/ip-addresses/inactive-hosts/summary/?threshold_days=90
+        Query params:
+            threshold_days: Number of days since last update to consider inactive (default: 90)
+        """
+        from ..services.inactive_hosts import get_inactive_hosts_summary
+
+        threshold_days = int(request.query_params.get("threshold_days", 90))
+        summary = get_inactive_hosts_summary(threshold_days=threshold_days)
+        return Response(summary, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["post"], url_path="inactive-hosts/bulk-release")
+    def bulk_release_inactive(self, request):
+        """
+        Bulk release inactive IP addresses.
+
+        POST /api/v1/ipam/ip-addresses/inactive-hosts/bulk-release/
+        Body:
+            {
+                "ip_ids": [1, 2, 3],
+                "release_reason": "Inactive host cleanup"
+            }
+        """
+        from ..services.inactive_hosts import bulk_release_inactive_hosts
+
+        ip_ids = request.data.get("ip_ids", [])
+        release_reason = request.data.get("release_reason", "Inactive host cleanup")
+
+        if not ip_ids:
+            return Response(
+                {"error": "ip_ids is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        results = bulk_release_inactive_hosts(ip_ids, release_reason)
+        return Response(results, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["post"], url_path="inactive-hosts/bulk-deprecate")
+    def bulk_deprecate_inactive(self, request):
+        """
+        Bulk mark inactive IP addresses as deprecated.
+
+        POST /api/v1/ipam/ip-addresses/inactive-hosts/bulk-deprecate/
+        Body:
+            {
+                "ip_ids": [1, 2, 3],
+                "reason": "Inactive host"
+            }
+        """
+        from ..services.inactive_hosts import bulk_mark_deprecated
+
+        ip_ids = request.data.get("ip_ids", [])
+        reason = request.data.get("reason", "Inactive host")
+
+        if not ip_ids:
+            return Response(
+                {"error": "ip_ids is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        results = bulk_mark_deprecated(ip_ids, reason)
+        return Response(results, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="duplicates")
+    def duplicates(self, request):
+        """
+        Detect duplicate IP addresses.
+
+        GET /api/v1/ipam/ip-addresses/duplicates/
+        """
+        from ..services.duplicates_detection import detect_duplicate_ips
+
+        duplicates = detect_duplicate_ips()
+        return Response(duplicates, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="duplicates/summary")
+    def duplicates_summary(self, request):
+        """
+        Get summary of all duplicates (IPs and subnets).
+
+        GET /api/v1/ipam/ip-addresses/duplicates/summary/
+        """
+        from ..services.duplicates_detection import get_duplicates_summary
+
+        summary = get_duplicates_summary()
+        return Response(summary, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["post"], url_path="duplicates/resolve")
+    def resolve_duplicate(self, request):
+        """
+        Resolve duplicate IP addresses.
+
+        POST /api/v1/ipam/ip-addresses/duplicates/resolve/
+        Body:
+            {
+                "address": "192.168.1.1",
+                "ip_to_keep": 1,
+                "ips_to_remove": [2, 3]
+            }
+        """
+        from ..services.duplicates_detection import resolve_duplicate
+
+        address = request.data.get("address")
+        ip_to_keep = request.data.get("ip_to_keep")
+        ips_to_remove = request.data.get("ips_to_remove", [])
+
+        if not address or ip_to_keep is None:
+            return Response(
+                {"error": "address and ip_to_keep are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        results = resolve_duplicate(address, ip_to_keep, ips_to_remove)
+        return Response(results, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="duplicates/suggest")
+    def suggest_duplicate_resolution(self, request):
+        """
+        Get resolution suggestions for a duplicate IP address.
+
+        GET /api/v1/ipam/ip-addresses/duplicates/suggest/?address=192.168.1.1
+        Query params:
+            address: IP address to get suggestions for
+        """
+        from ..services.duplicates_detection import detect_duplicate_ips, suggest_resolution
+
+        address = request.query_params.get("address")
+        if not address:
+            return Response(
+                {"error": "address parameter is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        duplicates = detect_duplicate_ips()
+        duplicate_info = next((dup for dup in duplicates if dup["address"] == address), None)
+
+        if not duplicate_info:
+            return Response(
+                {"error": f"No duplicates found for {address}"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        suggestion = suggest_resolution(duplicate_info)
+        return Response(suggestion, status=status.HTTP_200_OK)
 
 
 class DNSZoneViewSet(viewsets.ModelViewSet):

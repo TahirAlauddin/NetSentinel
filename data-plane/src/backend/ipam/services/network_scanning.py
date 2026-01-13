@@ -1,0 +1,346 @@
+"""
+Network Scanning Service.
+
+Provides network discovery and host scanning capabilities.
+"""
+
+import ipaddress
+import subprocess
+import socket
+import time
+from typing import Dict, List, Optional, Tuple
+
+from django.db import transaction
+from django.utils import timezone
+
+from ..models import NetworkScan, ScanResult, Subnet, IPAddress
+
+
+def ping_host(ip_address: str, timeout: int = 3) -> Tuple[bool, Optional[float]]:
+    """
+    Ping a host to check if it's alive.
+    
+    Args:
+        ip_address: IP address to ping
+        timeout: Timeout in seconds
+        
+    Returns:
+        Tuple of (is_alive, response_time_ms)
+    """
+    try:
+        # Use ping command (works on Windows and Linux)
+        import platform
+        is_windows = platform.system().lower() == "windows"
+        
+        if is_windows:
+            cmd = ["ping", "-n", "1", "-w", str(timeout * 1000), ip_address]
+        else:
+            cmd = ["ping", "-c", "1", "-W", str(timeout), ip_address]
+        
+        start_time = time.time()
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=timeout + 1,
+        )
+        end_time = time.time()
+        
+        response_time = (end_time - start_time) * 1000  # Convert to milliseconds
+        
+        # Ping is successful if return code is 0
+        is_alive = result.returncode == 0
+        return is_alive, response_time if is_alive else None
+        
+    except (subprocess.TimeoutExpired, Exception):
+        return False, None
+
+
+def reverse_dns_lookup(ip_address: str) -> Optional[str]:
+    """
+    Perform reverse DNS lookup to get hostname.
+    
+    Args:
+        ip_address: IP address to lookup
+        
+    Returns:
+        Hostname or None
+    """
+    try:
+        hostname, _, _ = socket.gethostbyaddr(ip_address)
+        return hostname
+    except (socket.herror, socket.gaierror, Exception):
+        return None
+
+
+def get_mac_address(ip_address: str) -> Optional[str]:
+    """
+    Get MAC address for an IP (requires ARP table access).
+    
+    Args:
+        ip_address: IP address to lookup
+        
+    Returns:
+        MAC address or None
+    """
+    try:
+        import platform
+        is_windows = platform.system().lower() == "windows"
+        
+        if is_windows:
+            # Windows: arp -a
+            result = subprocess.run(
+                ["arp", "-a", ip_address],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=2,
+            )
+            if result.returncode == 0:
+                output = result.stdout.decode("utf-8", errors="ignore")
+                # Parse ARP table output
+                for line in output.split("\n"):
+                    if ip_address in line:
+                        parts = line.split()
+                        if len(parts) >= 2:
+                            mac = parts[1] if is_windows else parts[3]
+                            if "-" in mac or ":" in mac:
+                                return mac.upper()
+        else:
+            # Linux: arp -n
+            result = subprocess.run(
+                ["arp", "-n", ip_address],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=2,
+            )
+            if result.returncode == 0:
+                output = result.stdout.decode("utf-8", errors="ignore")
+                parts = output.split()
+                if len(parts) >= 3:
+                    mac = parts[2]
+                    if ":" in mac:
+                        return mac.upper()
+    except Exception:
+        pass
+    
+    return None
+
+
+def scan_subnet(
+    subnet: Subnet,
+    scan_type: str = "ping",
+    timeout: int = 3,
+    max_hosts: Optional[int] = None,
+    started_by=None,
+) -> NetworkScan:
+    """
+    Scan a subnet to discover active hosts.
+    
+    Args:
+        subnet: Subnet to scan
+        scan_type: Type of scan (ping, arp, tcp, full)
+        timeout: Timeout per host in seconds
+        max_hosts: Maximum number of hosts to scan
+        started_by: User who initiated the scan
+        
+    Returns:
+        NetworkScan instance
+    """
+    # Create scan record
+    scan = NetworkScan.objects.create(
+        subnet=subnet,
+        scan_type=scan_type,
+        status="running",
+        timeout=timeout,
+        max_hosts=max_hosts,
+        started_by=started_by,
+        started_at=timezone.now(),
+    )
+    
+    try:
+        # Parse subnet
+        network = ipaddress.ip_network(subnet.network, strict=False)
+        
+        # Get all IPs in subnet
+        all_ips = list(network.hosts())  # Excludes network and broadcast
+        
+        # Limit if max_hosts specified
+        if max_hosts:
+            all_ips = all_ips[:max_hosts]
+        
+        hosts_found = 0
+        hosts_new = 0
+        hosts_missing = 0
+        
+        # Get existing IPs in IPAM for this subnet
+        existing_ips = set(
+            IPAddress.objects.filter(subnet=subnet)
+            .values_list("address", flat=True)
+        )
+        
+        # Scan each IP
+        for ip in all_ips:
+            ip_str = str(ip)
+            
+            # Ping the host
+            is_alive, response_time = ping_host(ip_str, timeout)
+            
+            if is_alive:
+                hosts_found += 1
+                
+                # Get additional information
+                hostname = reverse_dns_lookup(ip_str)
+                mac_address = None
+                vendor = None
+                
+                if scan_type in ["arp", "full"]:
+                    mac_address = get_mac_address(ip_str)
+                    # TODO: MAC vendor lookup
+                
+                # Check if in IPAM
+                in_ipam = ip_str in existing_ips
+                ipam_status = None
+                if in_ipam:
+                    ip_addr = IPAddress.objects.filter(address=ip_str).first()
+                    if ip_addr:
+                        ipam_status = ip_addr.status
+                else:
+                    hosts_new += 1
+                
+                # Create scan result
+                ScanResult.objects.create(
+                    scan=scan,
+                    ip_address=ip_str,
+                    is_active=True,
+                    response_time=response_time,
+                    mac_address=mac_address,
+                    hostname=hostname,
+                    vendor=vendor,
+                    in_ipam=in_ipam,
+                    ipam_status=ipam_status,
+                )
+            else:
+                # Host didn't respond, but check if it's in IPAM
+                if ip_str in existing_ips:
+                    hosts_missing += 1
+                    ScanResult.objects.create(
+                        scan=scan,
+                        ip_address=ip_str,
+                        is_active=False,
+                        in_ipam=True,
+                    )
+        
+        # Update scan summary
+        scan.hosts_found = hosts_found
+        scan.hosts_new = hosts_new
+        scan.hosts_missing = hosts_missing
+        scan.status = "completed"
+        scan.completed_at = timezone.now()
+        scan.save()
+        
+    except Exception as e:
+        scan.status = "failed"
+        scan.error_message = str(e)
+        scan.completed_at = timezone.now()
+        scan.save()
+    
+    return scan
+
+
+def get_scan_summary(scan_id: int) -> Dict:
+    """
+    Get summary statistics for a scan.
+    
+    Args:
+        scan_id: NetworkScan ID
+        
+    Returns:
+        Dictionary with scan summary
+    """
+    scan = NetworkScan.objects.get(id=scan_id)
+    results = scan.results.all()
+    
+    summary = {
+        "scan_id": scan.id,
+        "subnet": scan.subnet.network,
+        "status": scan.status,
+        "scan_type": scan.scan_type,
+        "total_hosts_found": scan.hosts_found,
+        "new_hosts": scan.hosts_new,
+        "missing_hosts": scan.hosts_missing,
+        "total_results": results.count(),
+        "active_hosts": results.filter(is_active=True).count(),
+        "inactive_hosts": results.filter(is_active=False).count(),
+        "in_ipam": results.filter(in_ipam=True).count(),
+        "not_in_ipam": results.filter(in_ipam=False).count(),
+        "started_at": scan.started_at.isoformat() if scan.started_at else None,
+        "completed_at": scan.completed_at.isoformat() if scan.completed_at else None,
+        "duration": scan.duration,
+    }
+    
+    return summary
+
+
+def import_scan_results_to_ipam(
+    scan_id: int,
+    import_new_hosts: bool = True,
+    update_existing: bool = False,
+) -> Dict:
+    """
+    Import scan results into IPAM.
+    
+    Args:
+        scan_id: NetworkScan ID
+        import_new_hosts: Whether to create IP addresses for new hosts
+        update_existing: Whether to update existing IP addresses
+        
+    Returns:
+        Dictionary with import results
+    """
+    scan = NetworkScan.objects.get(id=scan_id)
+    results = scan.results.filter(is_active=True, in_ipam=False)
+    
+    import_stats = {
+        "created": 0,
+        "updated": 0,
+        "skipped": 0,
+        "errors": [],
+    }
+    
+    with transaction.atomic():
+        for result in results:
+            if not import_new_hosts:
+                import_stats["skipped"] += 1
+                continue
+            
+            try:
+                # Check if IP already exists (might have been added manually)
+                ip_addr, created = IPAddress.objects.get_or_create(
+                    address=result.ip_address,
+                    defaults={
+                        "subnet": scan.subnet,
+                        "status": "assigned",
+                        "description": f"Discovered via network scan (Scan #{scan.id})",
+                    },
+                )
+                
+                if created:
+                    import_stats["created"] += 1
+                elif update_existing:
+                    # Update existing IP
+                    if result.hostname:
+                        ip_addr.description = (
+                            f"{ip_addr.description or ''}\nHostname: {result.hostname}"
+                        ).strip()
+                    ip_addr.save()
+                    import_stats["updated"] += 1
+                else:
+                    import_stats["skipped"] += 1
+                    
+            except Exception as e:
+                import_stats["errors"].append({
+                    "ip": result.ip_address,
+                    "error": str(e),
+                })
+    
+    return import_stats

@@ -3,6 +3,12 @@ from .dns import DNSRecordSerializer, DNSZoneSerializer
 from .ip_address import IPAddressSerializer
 from .ip_assignment_history import IPAssignmentHistorySerializer
 from .ip_request import IPRequestSerializer, IPRequestCreateSerializer
+from .network_scan import (
+    NetworkScanSerializer,
+    NetworkScanCreateSerializer,
+    ScanResultSerializer,
+    ScanResultDetailSerializer,
+)
 from .subnet import SubnetSerializer
 from .subnet_group import SubnetGroupSerializer
 from .vlan import VLANSerializer
@@ -20,4 +26,8 @@ __all__ = [
     "IPRequestSerializer",
     "IPRequestCreateSerializer",
     "IPAssignmentHistorySerializer",
+    "NetworkScanSerializer",
+    "NetworkScanCreateSerializer",
+    "ScanResultSerializer",
+    "ScanResultDetailSerializer",
 ]

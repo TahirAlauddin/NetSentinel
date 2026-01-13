@@ -20,6 +20,7 @@ from .views import (
     VLANViewSet,
     VRFViewSet,
 )
+from .views.network_scan_views import NetworkScanViewSet, ScanResultViewSet
 
 # Main router for top-level resources
 router = DefaultRouter()
@@ -51,9 +52,23 @@ router.register(r"dns-records", DNSRecordViewSet, basename="dns-record")
 # Standalone router for IP requests (can also be accessed directly)
 router.register(r"ip-requests", IPRequestViewSet, basename="ip-request")
 
+# Network scan routers
+router.register(r"network-scans", NetworkScanViewSet, basename="network-scan")
+router.register(r"scan-results", ScanResultViewSet, basename="scan-result")
+
+# Nested router for network scans under subnets
+subnets_router_scans = routers.NestedDefaultRouter(router, r"subnets", lookup="subnet")
+subnets_router_scans.register(r"network-scans", NetworkScanViewSet, basename="subnet-network-scan")
+
+# Nested router for scan results under scans
+scans_router = routers.NestedDefaultRouter(router, r"network-scans", lookup="scan")
+scans_router.register(r"results", ScanResultViewSet, basename="scan-result")
+
 urlpatterns = [
     path("", include(router.urls)),
     path("", include(subnets_router.urls)),
     path("", include(subnets_router_ip_requests.urls)),
     path("", include(dns_zones_router.urls)),
+    path("", include(subnets_router_scans.urls)),
+    path("", include(scans_router.urls)),
 ]

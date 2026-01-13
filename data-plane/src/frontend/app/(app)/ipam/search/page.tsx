@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { IpamHeader } from "@/components/ipam/ipam-header";
 import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { IPSearch } from "@/components/ipam/ip-search";
+import { IPSearchEnhanced } from "@/components/ipam/ip-search-enhanced";
 import { IPImportDialog } from "@/components/ipam/ip-import-dialog";
 import { IPExportDialog } from "@/components/ipam/ip-export-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,7 +52,7 @@ export default function SearchPage() {
         </div>
       </div>
 
-      <IPSearch onIPSelect={handleIPSelect} />
+      <IPSearchEnhanced onIPSelect={handleIPSelect} />
 
       {selectedIP && (
         <Card>

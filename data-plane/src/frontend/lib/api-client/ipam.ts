@@ -730,5 +730,186 @@ export class IpamApiClient extends BaseApiClient {
 
     return response.blob();
   }
+
+  // ==================== Inactive Hosts Detection ====================
+
+  /**
+   * Get list of inactive IP addresses
+   * @param params - Query parameters (threshold_days, status, subnet)
+   * @returns List of inactive IP addresses
+   */
+  async getInactiveHosts<T = IPAddress[]>(
+    params?: {
+      threshold_days?: number;
+      status?: string;
+      subnet?: number | string;
+    }
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/ip-addresses/inactive-hosts${queryString}`);
+  }
+
+  /**
+   * Get summary statistics for inactive hosts
+   * @param thresholdDays - Number of days since last update to consider inactive
+   * @returns Summary statistics
+   */
+  async getInactiveHostsSummary<T = {
+    total_inactive: number;
+    by_status: Record<string, number>;
+    by_subnet: Record<string, number>;
+    oldest_inactive: {
+      address: string;
+      last_updated: string | null;
+      days_inactive: number;
+    } | null;
+    threshold_days: number;
+  }>(thresholdDays?: number): Promise<BaseApiResponse<T>> {
+    const params = thresholdDays ? { threshold_days: thresholdDays } : {};
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/ip-addresses/inactive-hosts/summary${queryString}`);
+  }
+
+  /**
+   * Bulk release inactive IP addresses
+   * @param ipIds - List of IP address IDs to release
+   * @param releaseReason - Reason for release
+   * @returns Release results
+   */
+  async bulkReleaseInactiveHosts<T = {
+    released: number;
+    failed: number;
+    errors: string[];
+  }>(
+    ipIds: number[],
+    releaseReason?: string
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/ip-addresses/inactive-hosts/bulk-release/", {
+      ip_ids: ipIds,
+      release_reason: releaseReason || "Inactive host cleanup",
+    });
+  }
+
+  /**
+   * Bulk mark inactive IP addresses as deprecated
+   * @param ipIds - List of IP address IDs to deprecate
+   * @param reason - Reason for deprecation
+   * @returns Deprecation results
+   */
+  async bulkDeprecateInactiveHosts<T = {
+    deprecated: number;
+    failed: number;
+    errors: string[];
+  }>(
+    ipIds: number[],
+    reason?: string
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/ip-addresses/inactive-hosts/bulk-deprecate/", {
+      ip_ids: ipIds,
+      reason: reason || "Inactive host",
+    });
+  }
+
+  // ==================== Duplicates Detection ====================
+
+  /**
+   * Detect duplicate IP addresses
+   * @returns List of duplicate IP addresses
+   */
+  async getDuplicateIPs<T = Array<{
+    address: string;
+    count: number;
+    instances: Array<{
+      id: number;
+      subnet_id: number | null;
+      subnet_network: string | null;
+      status: string;
+      assigned_to_asset_id: number | null;
+      assigned_to_asset_name: string | null;
+      description: string | null;
+      created_at: string;
+      updated_at: string | null;
+    }>;
+    conflicts: Array<{
+      ip_id: number;
+      subnet_id: number;
+      subnet_network: string;
+      status: string;
+    }>;
+  }>>(): Promise<BaseApiResponse<T>> {
+    return this.get<T>("/ipam/ip-addresses/duplicates/");
+  }
+
+  /**
+   * Get summary of all duplicates (IPs and subnets)
+   * @returns Duplicates summary
+   */
+  async getDuplicatesSummary<T = {
+    duplicate_ips_count: number;
+    duplicate_subnets_count: number;
+    total_duplicate_ips: number;
+    duplicate_ips: Array<unknown>;
+    duplicate_subnets: Array<unknown>;
+  }>(): Promise<BaseApiResponse<T>> {
+    return this.get<T>("/ipam/ip-addresses/duplicates/summary/");
+  }
+
+  /**
+   * Get resolution suggestions for a duplicate IP address
+   * @param address - IP address to get suggestions for
+   * @returns Resolution suggestions
+   */
+  async getDuplicateResolutionSuggestion<T = {
+    address: string;
+    recommended_action: string | null;
+    reason: string | null;
+    ip_to_keep: number | null;
+    ips_to_remove: number[];
+  }>(address: string): Promise<BaseApiResponse<T>> {
+    return this.get<T>(
+      `/ipam/ip-addresses/duplicates/suggest/?address=${encodeURIComponent(address)}`
+    );
+  }
+
+  /**
+   * Resolve duplicate IP addresses
+   * @param address - IP address to resolve
+   * @param ipToKeep - ID of IP address to keep
+   * @param ipsToRemove - List of IP address IDs to remove
+   * @returns Resolution results
+   */
+  async resolveDuplicate<T = {
+    resolved: number;
+    failed: number;
+    errors: string[];
+  }>(
+    address: string,
+    ipToKeep: number,
+    ipsToRemove: number[]
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/ip-addresses/duplicates/resolve/", {
+      address,
+      ip_to_keep: ipToKeep,
+      ips_to_remove: ipsToRemove,
+    });
+  }
+
+  /**
+   * Detect duplicate or overlapping subnets
+   * @returns List of duplicate/overlapping subnets
+   */
+  async getDuplicateSubnets<T = Array<{
+    subnet_id: number;
+    subnet_network: string;
+    description: string | null;
+    overlaps: Array<{
+      type: string;
+      subnet_id: number;
+      subnet_network: string;
+      description: string | null;
+    }>;
+  }>>(): Promise<BaseApiResponse<T>> {
+    return this.get<T>("/ipam/subnets/duplicates/");
+  }
 }
 
