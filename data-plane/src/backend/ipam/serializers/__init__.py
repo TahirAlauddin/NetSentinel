@@ -9,6 +9,10 @@ from .network_scan import (
     ScanResultSerializer,
     ScanResultDetailSerializer,
 )
+from .phone_number import (
+    PhoneNumberRangeSerializer,
+    PhoneNumberRangeCreateUpdateSerializer,
+)
 from .subnet import SubnetSerializer
 from .subnet_group import SubnetGroupSerializer
 from .vlan import VLANSerializer
@@ -30,4 +34,6 @@ __all__ = [
     "NetworkScanCreateSerializer",
     "ScanResultSerializer",
     "ScanResultDetailSerializer",
+    "PhoneNumberRangeSerializer",
+    "PhoneNumberRangeCreateUpdateSerializer",
 ]

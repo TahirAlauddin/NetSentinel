@@ -5,6 +5,7 @@ from .ip_address import IPAddress
 from .ip_assignment_history import IPAssignmentHistory
 from .ip_request import IPRequest
 from .network_scan import NetworkScan, ScanResult
+from .phone_number import PhoneNumberRange
 from .subnet import Subnet
 from .subnet_group import SubnetGroup
 from .vlan import VLAN
@@ -24,4 +25,5 @@ __all__ = [
     "FavoriteSubnet",
     "NetworkScan",
     "ScanResult",
+    "PhoneNumberRange",
 ]

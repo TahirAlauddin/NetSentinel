@@ -21,6 +21,7 @@ from ..models import (
     IPAddress,
     IPRequest,
     NetworkScan,
+    PhoneNumberRange,
     ScanResult,
     Subnet,
     SubnetGroup,
@@ -34,6 +35,8 @@ from ..serializers import (
     IPRequestSerializer,
     NetworkScanCreateSerializer,
     NetworkScanSerializer,
+    PhoneNumberRangeCreateUpdateSerializer,
+    PhoneNumberRangeSerializer,
     ScanResultDetailSerializer,
     ScanResultSerializer,
     SubnetGroupSerializer,
@@ -117,6 +120,44 @@ class VRFViewSet(viewsets.ModelViewSet):
 
     queryset = VRF.objects.select_related("location").all()
     serializer_class = VRFSerializer
+
+
+class PhoneNumberRangeViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing phone number ranges.
+
+    Provides CRUD operations for phone number ranges with carrier, trunk, and location information.
+
+    Endpoints:
+    - GET /api/v1/ipam/phone-numbers/ - List all phone number ranges
+    - POST /api/v1/ipam/phone-numbers/ - Create a new phone number range
+    - GET /api/v1/ipam/phone-numbers/{id}/ - Retrieve a phone number range
+    - PUT/PATCH /api/v1/ipam/phone-numbers/{id}/ - Update a phone number range
+    - DELETE /api/v1/ipam/phone-numbers/{id}/ - Delete a phone number range
+    """
+
+    queryset = PhoneNumberRange.objects.select_related("location").all()
+    serializer_class = PhoneNumberRangeSerializer
+
+    def get_serializer_class(self):
+        """Use create/update serializer for POST/PUT/PATCH requests."""
+        if self.action in ["create", "update", "partial_update"]:
+            return PhoneNumberRangeCreateUpdateSerializer
+        return PhoneNumberRangeSerializer
+
+    def get_queryset(self):
+        """Filter by location or carrier if provided."""
+        queryset = super().get_queryset()
+
+        location_id = self.request.query_params.get("location")
+        if location_id:
+            queryset = queryset.filter(location_id=location_id)
+
+        carrier = self.request.query_params.get("carrier")
+        if carrier:
+            queryset = queryset.filter(carrier__icontains=carrier)
+
+        return queryset
 
 
 class SubnetViewSet(viewsets.ModelViewSet):

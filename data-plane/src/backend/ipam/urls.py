@@ -15,6 +15,7 @@ from .views import (
     DNSZoneViewSet,
     IPAddressViewSet,
     IPRequestViewSet,
+    PhoneNumberRangeViewSet,
     SubnetGroupViewSet,
     SubnetViewSet,
     VLANViewSet,
@@ -30,6 +31,7 @@ router.register(r"vlans", VLANViewSet, basename="vlan")
 router.register(r"vrfs", VRFViewSet, basename="vrf")
 router.register(r"subnets", SubnetViewSet, basename="subnet")
 router.register(r"dns-zones", DNSZoneViewSet, basename="dns-zone")
+router.register(r"phone-numbers", PhoneNumberRangeViewSet, basename="phone-number")
 
 # Nested router for IP addresses under subnets
 subnets_router = routers.NestedDefaultRouter(router, r"subnets", lookup="subnet")
