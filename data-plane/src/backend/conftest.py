@@ -22,6 +22,8 @@ def authenticated_api_client(db, user):
     client = APIClient()
     refresh = RefreshToken.for_user(user)
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+    # Attach user to client for tests that need it
+    client.user = user
     return client
 
 

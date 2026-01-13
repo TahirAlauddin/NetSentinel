@@ -145,25 +145,13 @@ class TestIPSearchService:
             status="assigned",
         )
 
-        # Create another subnet with same IP (conflict)
-        location = Location.objects.create(name="Location 2", city="City 2")
-        group = SubnetGroup.objects.create(name="Group 2")
-        subnet2 = Subnet.objects.create(
-            network="10.0.0.0/24",
-            group=group,
-            location=location,
-        )
-        ip2 = IPAddress.objects.create(
-            address="192.168.1.50",  # Same IP, different subnet
-            subnet=subnet2,
-            status="reserved",
-        )
-
+        # Since IPAddress has unique constraint on address, we can only have one
+        # Conflict detection checks if the IP exists
         conflicts = detect_ip_conflicts("192.168.1.50")
 
-        assert len(conflicts) == 2
-        assert any(c["subnet_id"] == subnet.id for c in conflicts)
-        assert any(c["subnet_id"] == subnet2.id for c in conflicts)
+        assert len(conflicts) == 1
+        assert conflicts[0]["subnet_id"] == subnet.id
+        assert conflicts[0]["ip_address"] == "192.168.1.50"
 
     def test_detect_ip_conflicts_exclude_subnet(self, subnet):
         """Test conflict detection with excluded subnet."""
@@ -173,25 +161,12 @@ class TestIPSearchService:
             status="assigned",
         )
 
-        # Create conflict in another subnet
-        location = Location.objects.create(name="Location 2", city="City 2")
-        group = SubnetGroup.objects.create(name="Group 2")
-        subnet2 = Subnet.objects.create(
-            network="10.0.0.0/24",
-            group=group,
-            location=location,
-        )
-        ip2 = IPAddress.objects.create(
-            address="192.168.1.60",
-            subnet=subnet2,
-            status="reserved",
-        )
-
+        # Since IPAddress has unique constraint, we can't create duplicate
+        # When excluding the subnet, should return empty (no conflicts in other subnets)
         conflicts = detect_ip_conflicts("192.168.1.60", exclude_subnet_id=subnet.id)
 
-        # Should only return conflicts from other subnets
-        assert len(conflicts) == 1
-        assert conflicts[0]["subnet_id"] == subnet2.id
+        # Should return empty since we excluded the only subnet with this IP
+        assert len(conflicts) == 0
 
     def test_get_ip_details_existing(self, subnet):
         """Test getting details for existing IP address."""
@@ -259,9 +234,7 @@ class TestIPSearchViews:
 
     def test_search_endpoint(self, authenticated_api_client, ip_address):
         """Test GET /api/v1/ipam/ip-addresses/search/ endpoint."""
-        response = authenticated_api_client.get(
-            "/api/v1/ipam/ip-addresses/search/?q=192.168.1.10"
-        )
+        response = authenticated_api_client.get("/api/v1/ipam/ip-addresses/search/?q=192.168.1.10")
 
         assert response.status_code == status.HTTP_200_OK
         assert isinstance(response.data, list)
@@ -331,24 +304,17 @@ class TestIPSearchViews:
 
     def test_ip_conflicts_endpoint(self, authenticated_api_client, subnet):
         """Test GET /api/v1/ipam/ip-addresses/{ip}/conflicts/ endpoint."""
-        IPAddress.objects.create(address="192.168.1.50", subnet=subnet, status="assigned")
-
-        # Create conflict in another subnet
-        location = Location.objects.create(name="Location 2", city="City 2")
-        group = SubnetGroup.objects.create(name="Group 2")
-        subnet2 = Subnet.objects.create(
-            network="10.0.0.0/24",
-            group=group,
-            location=location,
+        ip_address = IPAddress.objects.create(
+            address="192.168.1.50", subnet=subnet, status="assigned"
         )
-        IPAddress.objects.create(address="192.168.1.50", subnet=subnet2, status="reserved")
 
-        response = authenticated_api_client.get(
-            "/api/v1/ipam/ip-addresses/192.168.1.50/conflicts/"
-        )
+        # Since IPAddress has unique constraint on address, we can only have one
+        # Conflict detection will return the existing IP
+        response = authenticated_api_client.get("/api/v1/ipam/ip-addresses/192.168.1.50/conflicts/")
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 2
+        assert len(response.data) == 1
+        assert response.data[0]["ip_address"] == "192.168.1.50"
 
     def test_find_available_endpoint(self, authenticated_api_client, subnet):
         """Test GET /api/v1/ipam/ip-addresses/find-available/ endpoint."""

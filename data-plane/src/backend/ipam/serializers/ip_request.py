@@ -20,6 +20,7 @@ class IPRequestSerializer(serializers.ModelSerializer):
     Includes validation for IP address assignment and subnet membership.
     """
 
+    subnet = serializers.PrimaryKeyRelatedField(read_only=True)
     subnet_detail = SubnetSerializer(source="subnet", read_only=True)
     requested_by_detail = serializers.SerializerMethodField()
     approved_by_detail = serializers.SerializerMethodField()
@@ -28,6 +29,13 @@ class IPRequestSerializer(serializers.ModelSerializer):
     is_expired = serializers.SerializerMethodField()
     can_be_approved = serializers.SerializerMethodField()
     can_be_rejected = serializers.SerializerMethodField()
+
+    def to_representation(self, instance):
+        """Override to ensure subnet returns as integer."""
+        data = super().to_representation(instance)
+        if "subnet" in data and data["subnet"] is not None:
+            data["subnet"] = int(data["subnet"])
+        return data
 
     def get_requested_by_detail(self, obj):
         """Return requester user details."""
@@ -145,7 +153,14 @@ class IPRequestCreateSerializer(serializers.ModelSerializer):
     Simplified serializer for creating IP requests.
 
     Automatically sets the requested_by field to the current user.
+    Subnet can be provided in request data or via nested route URL parameter.
     """
+
+    subnet = serializers.PrimaryKeyRelatedField(
+        queryset=Subnet.objects.all(),
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = IPRequest
@@ -156,3 +171,23 @@ class IPRequestCreateSerializer(serializers.ModelSerializer):
             "description",
             "reservation_expires_at",
         ]
+
+    def validate(self, data):
+        """Validate that subnet is provided either in data or context."""
+        # If subnet is not in data, it should be in context (from nested route)
+        subnet_pk = self.context.get("subnet_pk")
+        if subnet_pk and not data.get("subnet"):
+            # Set subnet from context if not provided in data
+            from ..models import Subnet
+
+            try:
+                data["subnet"] = Subnet.objects.get(id=subnet_pk)
+            except Subnet.DoesNotExist:
+                raise serializers.ValidationError(
+                    {"subnet": f"Subnet with id {subnet_pk} not found."}
+                )
+        elif not data.get("subnet") and not subnet_pk:
+            raise serializers.ValidationError(
+                {"subnet": "Subnet is required. Provide it in request data or via nested route."}
+            )
+        return data

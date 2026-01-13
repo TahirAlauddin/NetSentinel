@@ -198,7 +198,7 @@ class SubnetViewSet(viewsets.ModelViewSet):
         serializer = IPAddressSerializer(ip_addresses, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["post"], url_path="auto-assign")
     def auto_assign(self, request, pk=None):
         """
         Automatically assign the next available IP address from this subnet to an asset.
@@ -216,7 +216,7 @@ class SubnetViewSet(viewsets.ModelViewSet):
 
         subnet = self.get_object()
         asset_id = request.data.get("asset_id")
-        
+
         if not asset_id:
             return Response(
                 {"error": "asset_id is required"},
@@ -275,11 +275,11 @@ class SubnetViewSet(viewsets.ModelViewSet):
         subnet = self.get_object()
         growth_rate = float(request.query_params.get("growth_rate", 0.0))
         months = int(request.query_params.get("months", 12))
-        
+
         capacity = calculate_subnet_capacity(subnet, growth_rate=growth_rate, months=months)
         return Response(capacity, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=["get"])
+    @action(detail=False, methods=["get"], url_path="utilization_all")
     def utilization_all(self, request):
         """
         Get utilization for all subnets with optional filters.
@@ -303,15 +303,15 @@ class SubnetViewSet(viewsets.ModelViewSet):
             filters["status"] = request.query_params["status"]
         if "is_ipv6" in request.query_params:
             filters["is_ipv6"] = request.query_params["is_ipv6"].lower() == "true"
-        
+
         threshold = None
         if "threshold" in request.query_params:
             threshold = float(request.query_params["threshold"])
-        
+
         utilizations = get_all_subnets_utilization(filters=filters, threshold=threshold)
         return Response(utilizations, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=["get"])
+    @action(detail=False, methods=["get"], url_path="utilization_summary")
     def utilization_summary(self, request):
         """
         Get overall utilization summary across all subnets.
@@ -407,17 +407,17 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         subnet_pk = self.kwargs.get("subnet_pk")
         if subnet_pk:
             queryset = queryset.filter(subnet_id=subnet_pk)
-        
+
         # Filter by asset if provided
         asset_id = self.request.query_params.get("assigned_to_asset")
         if asset_id:
             queryset = queryset.filter(assigned_to_asset_id=asset_id)
-        
+
         # Filter by status if provided
         status_filter = self.request.query_params.get("status")
         if status_filter:
             queryset = queryset.filter(status=status_filter)
-        
+
         return queryset
 
     def perform_create(self, serializer):
@@ -453,7 +453,7 @@ class IPAddressViewSet(viewsets.ModelViewSet):
 
         ip_address = self.get_object()
         asset_id = request.data.get("asset_id")
-        
+
         if not asset_id:
             return Response(
                 {"error": "asset_id is required"},
@@ -528,8 +528,10 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         from ..serializers import IPAssignmentHistorySerializer
 
         ip_address = self.get_object()
-        history = IPAssignmentHistory.objects.filter(ip_address=ip_address).order_by("-created_at")
-        
+        history = IPAssignmentHistory.objects.filter(ip_address=ip_address).order_by(
+            "-created_at", "-id"
+        )
+
         serializer = IPAssignmentHistorySerializer(history, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -567,13 +569,17 @@ class IPAddressViewSet(viewsets.ModelViewSet):
             assigned_to_asset=request.query_params.get("assigned_to_asset"),
             customer_id=request.query_params.get("customer"),
             location_id=request.query_params.get("location"),
-            is_ipv6=request.query_params.get("is_ipv6") == "true" if "is_ipv6" in request.query_params else None,
+            is_ipv6=(
+                request.query_params.get("is_ipv6") == "true"
+                if "is_ipv6" in request.query_params
+                else None
+            ),
         )
 
         serializer = IPAddressSerializer(results, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=["get"])
+    @action(detail=False, methods=["get"], url_path="range")
     def range_search(self, request):
         """
         Search for IP addresses within a range.
@@ -606,7 +612,7 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         serializer = IPAddressSerializer(results, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=["get"])
+    @action(detail=False, methods=["get"], url_path="hostname")
     def search_by_hostname(self, request):
         """
         Search for IP addresses by hostname/DNS name.
@@ -639,7 +645,7 @@ class IPAddressViewSet(viewsets.ModelViewSet):
             file: CSV or JSON file
             format: "csv" or "json" (optional, auto-detected from file extension)
             skip_duplicates: true/false (default: true)
-        
+
         Returns:
             {
                 "valid_rows": <count>,
@@ -742,7 +748,7 @@ class IPAddressViewSet(viewsets.ModelViewSet):
             assigned_to_asset: Filter by asset ID
             customer: Filter by customer ID (via subnet)
             location: Filter by location ID (via subnet)
-        
+
         Returns:
             CSV or JSON file download
         """
@@ -793,7 +799,7 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
 
-    @action(detail=False, methods=["get"], url_path="(?P<ip_address>[^/.]+)/details")
+    @action(detail=False, methods=["get"], url_path="(?P<ip_address>[^/]+)/details")
     def ip_details(self, request, ip_address=None):
         """
         Get comprehensive details for an IP address.
@@ -811,7 +817,7 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         details = get_ip_details(ip_address)
         return Response(details, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=["get"], url_path="(?P<ip_address>[^/.]+)/conflicts")
+    @action(detail=False, methods=["get"], url_path="(?P<ip_address>[^/]+)/conflicts")
     def ip_conflicts(self, request, ip_address=None):
         """
         Detect IP address conflicts across subnets.
@@ -836,7 +842,7 @@ class IPAddressViewSet(viewsets.ModelViewSet):
 
         return Response(conflicts, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=["get"])
+    @action(detail=False, methods=["get"], url_path="find-available")
     def find_available(self, request):
         """
         Find available IP addresses in a subnet.
@@ -1017,24 +1023,24 @@ class IPRequestViewSet(viewsets.ModelViewSet):
         - Admins can see all requests
         """
         queryset = super().get_queryset()
-        
+
         # Filter by subnet when accessed via nested route
         subnet_pk = self.kwargs.get("subnet_pk")
         if subnet_pk:
             queryset = queryset.filter(subnet_id=subnet_pk)
-        
+
         # Filter by status if provided
         status_filter = self.request.query_params.get("status")
         if status_filter:
             queryset = queryset.filter(status=status_filter)
-        
+
         # Filter by user's own requests if not admin
         # Note: You may want to add permission checks here
         # For now, all authenticated users can see all requests
         # Uncomment below to restrict to own requests:
         # if not self.request.user.is_staff:
         #     queryset = queryset.filter(requested_by=self.request.user)
-        
+
         return queryset
 
     def get_serializer_class(self):
@@ -1052,12 +1058,30 @@ class IPRequestViewSet(viewsets.ModelViewSet):
         """
         subnet_pk = self.kwargs.get("subnet_pk")
         if subnet_pk:
-            serializer.save(
-                requested_by=self.request.user,
-                subnet_id=subnet_pk
-            )
+            serializer.save(requested_by=self.request.user, subnet_id=subnet_pk)
         else:
             serializer.save(requested_by=self.request.user)
+
+    def get_serializer_context(self):
+        """Add subnet_pk to serializer context for nested routes."""
+        context = super().get_serializer_context()
+        subnet_pk = self.kwargs.get("subnet_pk")
+        if subnet_pk:
+            context["subnet_pk"] = int(subnet_pk) if isinstance(subnet_pk, str) else subnet_pk
+        return context
+
+    def create(self, request, *args, **kwargs):
+        """
+        Create an IP request and return full serializer data.
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        # Return full serializer data after creation
+        ip_request = serializer.instance
+        full_serializer = IPRequestSerializer(ip_request)
+        return Response(full_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     @action(detail=True, methods=["post"])
     def approve(self, request, pk=None):
@@ -1077,7 +1101,7 @@ class IPRequestViewSet(viewsets.ModelViewSet):
             Response with updated IP request data
         """
         ip_request = self.get_object()
-        
+
         if not ip_request.can_be_approved():
             return Response(
                 {
@@ -1088,20 +1112,21 @@ class IPRequestViewSet(viewsets.ModelViewSet):
             )
 
         approval_notes = request.data.get("approval_notes", "")
-        
+
         # Determine the IP address to reserve
         ip_to_reserve = ip_request.requested_ip
-        
+
         # If no specific IP requested, find next available
         if not ip_to_reserve:
             from ..services.subnet_utils import get_next_available_ip
+
             used_ips = list(
                 IPAddress.objects.filter(subnet=ip_request.subnet)
                 .exclude(status="available")
                 .values_list("address", flat=True)
             )
             ip_to_reserve = get_next_available_ip(ip_request.subnet.network, used_ips)
-            
+
             if not ip_to_reserve:
                 return Response(
                     {
@@ -1120,7 +1145,7 @@ class IPRequestViewSet(viewsets.ModelViewSet):
                 "description": f"Reserved via IP request: {ip_request.purpose}",
             },
         )
-        
+
         if not created:
             # IP already exists, update it
             if ip_address.status not in ("available", "deprecated"):
@@ -1138,6 +1163,7 @@ class IPRequestViewSet(viewsets.ModelViewSet):
 
         # Update request
         from django.utils import timezone
+
         ip_request.status = "completed"
         ip_request.approved_by = request.user
         ip_request.approved_at = timezone.now()
@@ -1161,7 +1187,7 @@ class IPRequestViewSet(viewsets.ModelViewSet):
             Response with updated IP request data
         """
         ip_request = self.get_object()
-        
+
         if not ip_request.can_be_rejected():
             return Response(
                 {
@@ -1172,9 +1198,10 @@ class IPRequestViewSet(viewsets.ModelViewSet):
             )
 
         approval_notes = request.data.get("approval_notes", "")
-        
+
         # Update request
         from django.utils import timezone
+
         ip_request.status = "rejected"
         ip_request.approved_by = request.user
         ip_request.approved_at = timezone.now()
