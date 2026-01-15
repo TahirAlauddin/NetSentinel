@@ -11,6 +11,11 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from .device_views import (
+    DeviceViewSet,
+    DeviceTypeViewSet,
+    RackViewSet,
+)
 from .dhcp_views import (
     DHCPScopeViewSet,
     DHCPLeaseViewSet,

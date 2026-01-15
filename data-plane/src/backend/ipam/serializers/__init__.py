@@ -1,4 +1,11 @@
 from .customer import CustomerSerializer
+from .device import (
+    DeviceCreateUpdateSerializer,
+    DeviceSerializer,
+    DeviceTypeSerializer,
+    RackCreateUpdateSerializer,
+    RackSerializer,
+)
 from .dhcp import (
     DHCPScopeSerializer,
     DHCPScopeCreateUpdateSerializer,
@@ -51,4 +58,9 @@ __all__ = [
     "DHCPReservationSerializer",
     "IPPoolSerializer",
     "IPPoolCreateUpdateSerializer",
+    "DeviceSerializer",
+    "DeviceCreateUpdateSerializer",
+    "DeviceTypeSerializer",
+    "RackSerializer",
+    "RackCreateUpdateSerializer",
 ]

@@ -342,6 +342,64 @@ export interface SubnetMaskInfo {
   is_ipv6?: boolean;
 }
 
+// Device Types
+export interface DeviceType {
+  id: number;
+  name: string;
+  description?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Rack {
+  id: number;
+  name: string;
+  location: number;
+  location_detail?: {
+    id: number;
+    name: string;
+    city: string;
+  };
+  description?: string | null;
+  total_units: number;
+  devices_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Device {
+  id: number;
+  name: string;
+  ip_address?: string | null;
+  device_type?: number | null;
+  device_type_detail?: DeviceType;
+  location?: number | null;
+  location_detail?: {
+    id: number;
+    name: string;
+    city: string;
+  };
+  rack?: number | null;
+  rack_detail?: {
+    id: number;
+    name: string;
+    location?: string | null;
+  };
+  rack_position?: number | null;
+  rack_size?: number | null;
+  description?: string | null;
+  vendor?: string | null;
+  model?: string | null;
+  version?: string | null;
+  switch_port?: "wired" | "wireless" | null;
+  sections?: string[];
+  is_active: boolean;
+  hosts_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface IPPoolUtilization {
   pool_id: number;
   pool_name: string;

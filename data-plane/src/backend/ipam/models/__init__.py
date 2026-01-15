@@ -1,4 +1,5 @@
 from .customer import Customer
+from .device import Device, DeviceType, Rack
 from .dhcp import DHCPScope, DHCPLease, DHCPReservation
 from .dns import DNSRecord, DNSZone
 from .favorite_subnet import FavoriteSubnet
@@ -32,4 +33,7 @@ __all__ = [
     "DHCPLease",
     "DHCPReservation",
     "IPPool",
+    "Device",
+    "DeviceType",
+    "Rack",
 ]

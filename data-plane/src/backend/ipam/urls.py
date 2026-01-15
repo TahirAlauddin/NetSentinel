@@ -22,6 +22,7 @@ from .views import (
     VLANViewSet,
     VRFViewSet,
 )
+from .views.device_views import DeviceViewSet, DeviceTypeViewSet, RackViewSet
 from .views.dhcp_views import DHCPScopeViewSet, DHCPLeaseViewSet, DHCPReservationViewSet
 from .views.network_scan_views import NetworkScanViewSet, ScanResultViewSet
 from .views.subnet_mask_views import subnet_masks_list, subnet_mask_detail
@@ -68,6 +69,11 @@ router.register(r"dhcp-reservations", DHCPReservationViewSet, basename="dhcp-res
 
 # IP Pool routers
 router.register(r"ip-pools", IPPoolViewSet, basename="ip-pool")
+
+# Device routers
+router.register(r"device-types", DeviceTypeViewSet, basename="device-type")
+router.register(r"racks", RackViewSet, basename="rack")
+router.register(r"devices", DeviceViewSet, basename="device")
 
 # Nested router for network scans under subnets
 subnets_router_scans = routers.NestedDefaultRouter(router, r"subnets", lookup="subnet")

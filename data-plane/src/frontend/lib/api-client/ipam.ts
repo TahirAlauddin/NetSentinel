@@ -32,6 +32,9 @@ import {
   DHCPLeaseStatistics,
   IPPool,
   IPPoolUtilization,
+  Device,
+  DeviceType,
+  Rack,
 } from "@/types/ipam";
 
 /**
@@ -1362,6 +1365,183 @@ export class IpamApiClient extends BaseApiClient {
   ): Promise<BaseApiResponse<T>> {
     const queryString = ipv6 ? "?ipv6=true" : "";
     return this.get<T>(`/ipam/subnet-masks/${prefixLength}/${queryString}`);
+  }
+
+  // ==================== Device Management ====================
+
+  /**
+   * Get all devices
+   * @param params - Optional query parameters for filtering/pagination
+   * @returns List of devices or paginated response
+   */
+  async getDevices<T = Device[] | PaginatedResponse<Device>>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/devices${queryString}`);
+  }
+
+  /**
+   * Get a single device by ID
+   * @param id - Device ID
+   * @returns Device details
+   */
+  async getDevice<T = Device>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/devices/${id}/`);
+  }
+
+  /**
+   * Create a new device
+   * @param device - Device data
+   * @returns Created device
+   */
+  async createDevice<T = Device>(device: Partial<Device>): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/devices/", device);
+  }
+
+  /**
+   * Update a device
+   * @param id - Device ID
+   * @param device - Updated device data
+   * @returns Updated device
+   */
+  async updateDevice<T = Device>(
+    id: number | string,
+    device: Partial<Device>
+  ): Promise<BaseApiResponse<T>> {
+    return this.put<T>(`/ipam/devices/${id}/`, device);
+  }
+
+  /**
+   * Delete a device
+   * @param id - Device ID
+   * @returns Deletion response
+   */
+  async deleteDevice<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/devices/${id}/`);
+  }
+
+  /**
+   * Get device statistics
+   * @returns Device statistics
+   */
+  async getDeviceStatistics<T = {
+    total_devices: number;
+    active_devices: number;
+    inactive_devices: number;
+    devices_by_type: Record<string, number>;
+  }>(): Promise<BaseApiResponse<T>> {
+    return this.get<T>("/ipam/devices/statistics/");
+  }
+
+  // ==================== Device Type Management ====================
+
+  /**
+   * Get all device types
+   * @param params - Optional query parameters
+   * @returns List of device types
+   */
+  async getDeviceTypes<T = DeviceType[]>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/device-types${queryString}`);
+  }
+
+  /**
+   * Get a single device type by ID
+   * @param id - Device type ID
+   * @returns Device type details
+   */
+  async getDeviceType<T = DeviceType>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/device-types/${id}/`);
+  }
+
+  /**
+   * Create a new device type
+   * @param deviceType - Device type data
+   * @returns Created device type
+   */
+  async createDeviceType<T = DeviceType>(
+    deviceType: Partial<DeviceType>
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/device-types/", deviceType);
+  }
+
+  /**
+   * Update a device type
+   * @param id - Device type ID
+   * @param deviceType - Updated device type data
+   * @returns Updated device type
+   */
+  async updateDeviceType<T = DeviceType>(
+    id: number | string,
+    deviceType: Partial<DeviceType>
+  ): Promise<BaseApiResponse<T>> {
+    return this.put<T>(`/ipam/device-types/${id}/`, deviceType);
+  }
+
+  /**
+   * Delete a device type
+   * @param id - Device type ID
+   * @returns Deletion response
+   */
+  async deleteDeviceType<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/device-types/${id}/`);
+  }
+
+  // ==================== Rack Management ====================
+
+  /**
+   * Get all racks
+   * @param params - Optional query parameters
+   * @returns List of racks
+   */
+  async getRacks<T = Rack[] | PaginatedResponse<Rack>>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/racks${queryString}`);
+  }
+
+  /**
+   * Get a single rack by ID
+   * @param id - Rack ID
+   * @returns Rack details
+   */
+  async getRack<T = Rack>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/racks/${id}/`);
+  }
+
+  /**
+   * Create a new rack
+   * @param rack - Rack data
+   * @returns Created rack
+   */
+  async createRack<T = Rack>(rack: Partial<Rack>): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/racks/", rack);
+  }
+
+  /**
+   * Update a rack
+   * @param id - Rack ID
+   * @param rack - Updated rack data
+   * @returns Updated rack
+   */
+  async updateRack<T = Rack>(
+    id: number | string,
+    rack: Partial<Rack>
+  ): Promise<BaseApiResponse<T>> {
+    return this.put<T>(`/ipam/racks/${id}/`, rack);
+  }
+
+  /**
+   * Delete a rack
+   * @param id - Rack ID
+   * @returns Deletion response
+   */
+  async deleteRack<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/racks/${id}/`);
   }
 }
 
