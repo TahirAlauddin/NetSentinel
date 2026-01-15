@@ -98,22 +98,20 @@ class NetworkScanSerializer(serializers.ModelSerializer):
         ]
 
 
-class NetworkScanCreateSerializer(serializers.Serializer):
+class NetworkScanCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating a network scan."""
 
-    subnet = serializers.PrimaryKeyRelatedField(queryset=None)
-    scan_type = serializers.ChoiceField(
-        choices=NetworkScan.SCAN_TYPE_CHOICES,
-        default="ping",
-    )
     timeout = serializers.IntegerField(default=3, min_value=1, max_value=30)
     max_hosts = serializers.IntegerField(required=False, min_value=1, allow_null=True)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        from ..models import Subnet
-
-        self.fields["subnet"].queryset = Subnet.objects.all()
+    class Meta:
+        model = NetworkScan
+        fields = [
+            "subnet",
+            "scan_type",
+            "timeout",
+            "max_hosts",
+        ]
 
 
 class ScanResultDetailSerializer(ScanResultSerializer):

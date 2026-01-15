@@ -11,14 +11,24 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from .dhcp_views import (
+    DHCPScopeViewSet,
+    DHCPLeaseViewSet,
+    DHCPReservationViewSet,
+)
+
 from ..models import (
     VLAN,
     VRF,
     Customer,
+    DHCPLease,
+    DHCPScope,
+    DHCPReservation,
     DNSRecord,
     DNSZone,
     FavoriteSubnet,
     IPAddress,
+    IPPool,
     IPRequest,
     NetworkScan,
     PhoneNumberRange,
@@ -28,9 +38,16 @@ from ..models import (
 )
 from ..serializers import (
     CustomerSerializer,
+    DHCPScopeCreateUpdateSerializer,
+    DHCPScopeSerializer,
+    DHCPLeaseCreateSerializer,
+    DHCPLeaseSerializer,
+    DHCPReservationSerializer,
     DNSRecordSerializer,
     DNSZoneSerializer,
     IPAddressSerializer,
+    IPPoolCreateUpdateSerializer,
+    IPPoolSerializer,
     IPRequestCreateSerializer,
     IPRequestSerializer,
     NetworkScanCreateSerializer,
@@ -158,6 +175,77 @@ class PhoneNumberRangeViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(carrier__icontains=carrier)
 
         return queryset
+
+
+class IPPoolViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing IP address pools.
+    
+    Provides CRUD operations for IP pools within subnets.
+    """
+
+    queryset = IPPool.objects.select_related("subnet").all()
+    serializer_class = IPPoolSerializer
+
+    def get_serializer_class(self):
+        """Use create/update serializer for POST/PUT/PATCH requests."""
+        if self.action in ["create", "update", "partial_update"]:
+            return IPPoolCreateUpdateSerializer
+        return IPPoolSerializer
+
+    def get_queryset(self):
+        """Filter by subnet if provided."""
+        queryset = super().get_queryset()
+        
+        subnet_id = self.request.query_params.get("subnet")
+        if subnet_id:
+            queryset = queryset.filter(subnet_id=subnet_id)
+        
+        is_active = self.request.query_params.get("is_active")
+        if is_active is not None:
+            queryset = queryset.filter(is_active=is_active.lower() == "true")
+        
+        return queryset
+
+    @action(detail=True, methods=["get"])
+    def utilization(self, request, pk=None):
+        """Get pool utilization statistics."""
+        from ..services.ip_pool import get_pool_utilization
+        
+        pool = self.get_object()
+        utilization = get_pool_utilization(pool.id)
+        return Response(utilization, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"])
+    def assign_ip(self, request, pk=None):
+        """Assign an IP address from the pool."""
+        from ..services.ip_pool import assign_ip_from_pool
+        from ..serializers import IPAddressSerializer
+        
+        pool = self.get_object()
+        description = request.data.get("description")
+        
+        ip_address = assign_ip_from_pool(pool.id, description)
+        
+        if ip_address:
+            serializer = IPAddressSerializer(ip_address)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(
+                {"error": "No available IPs in pool"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(detail=False, methods=["get"])
+    def utilization_all(self, request):
+        """Get utilization for all pools."""
+        from ..services.ip_pool import get_all_pools_utilization
+        
+        subnet_id = request.query_params.get("subnet")
+        utilization = get_all_pools_utilization(
+            int(subnet_id) if subnet_id else None
+        )
+        return Response(utilization, status=status.HTTP_200_OK)
 
 
 class SubnetViewSet(viewsets.ModelViewSet):

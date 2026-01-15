@@ -1,8 +1,10 @@
 from .customer import Customer
+from .dhcp import DHCPScope, DHCPLease, DHCPReservation
 from .dns import DNSRecord, DNSZone
 from .favorite_subnet import FavoriteSubnet
 from .ip_address import IPAddress
 from .ip_assignment_history import IPAssignmentHistory
+from .ip_pool import IPPool
 from .ip_request import IPRequest
 from .network_scan import NetworkScan, ScanResult
 from .phone_number import PhoneNumberRange
@@ -26,4 +28,8 @@ __all__ = [
     "NetworkScan",
     "ScanResult",
     "PhoneNumberRange",
+    "DHCPScope",
+    "DHCPLease",
+    "DHCPReservation",
+    "IPPool",
 ]

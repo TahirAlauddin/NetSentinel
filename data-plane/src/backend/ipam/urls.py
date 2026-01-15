@@ -14,6 +14,7 @@ from .views import (
     DNSRecordViewSet,
     DNSZoneViewSet,
     IPAddressViewSet,
+    IPPoolViewSet,
     IPRequestViewSet,
     PhoneNumberRangeViewSet,
     SubnetGroupViewSet,
@@ -21,6 +22,7 @@ from .views import (
     VLANViewSet,
     VRFViewSet,
 )
+from .views.dhcp_views import DHCPScopeViewSet, DHCPLeaseViewSet, DHCPReservationViewSet
 from .views.network_scan_views import NetworkScanViewSet, ScanResultViewSet
 
 # Main router for top-level resources
@@ -58,6 +60,14 @@ router.register(r"ip-requests", IPRequestViewSet, basename="ip-request")
 router.register(r"network-scans", NetworkScanViewSet, basename="network-scan")
 router.register(r"scan-results", ScanResultViewSet, basename="scan-result")
 
+# DHCP routers
+router.register(r"dhcp-scopes", DHCPScopeViewSet, basename="dhcp-scope")
+router.register(r"dhcp-leases", DHCPLeaseViewSet, basename="dhcp-lease")
+router.register(r"dhcp-reservations", DHCPReservationViewSet, basename="dhcp-reservation")
+
+# IP Pool routers
+router.register(r"ip-pools", IPPoolViewSet, basename="ip-pool")
+
 # Nested router for network scans under subnets
 subnets_router_scans = routers.NestedDefaultRouter(router, r"subnets", lookup="subnet")
 subnets_router_scans.register(r"network-scans", NetworkScanViewSet, basename="subnet-network-scan")
@@ -66,6 +76,21 @@ subnets_router_scans.register(r"network-scans", NetworkScanViewSet, basename="su
 scans_router = routers.NestedDefaultRouter(router, r"network-scans", lookup="scan")
 scans_router.register(r"results", ScanResultViewSet, basename="scan-result")
 
+# Nested router for DHCP scopes under subnets
+subnets_router_dhcp = routers.NestedDefaultRouter(router, r"subnets", lookup="subnet")
+subnets_router_dhcp.register(r"dhcp-scopes", DHCPScopeViewSet, basename="subnet-dhcp-scope")
+
+# Nested router for DHCP leases under scopes
+dhcp_scopes_router = routers.NestedDefaultRouter(router, r"dhcp-scopes", lookup="scope")
+dhcp_scopes_router.register(r"leases", DHCPLeaseViewSet, basename="dhcp-scope-lease")
+dhcp_scopes_router.register(
+    r"reservations", DHCPReservationViewSet, basename="dhcp-scope-reservation"
+)
+
+# Nested router for IP pools under subnets
+subnets_router_pools = routers.NestedDefaultRouter(router, r"subnets", lookup="subnet")
+subnets_router_pools.register(r"ip-pools", IPPoolViewSet, basename="subnet-ip-pool")
+
 urlpatterns = [
     path("", include(router.urls)),
     path("", include(subnets_router.urls)),
@@ -73,4 +98,7 @@ urlpatterns = [
     path("", include(dns_zones_router.urls)),
     path("", include(subnets_router_scans.urls)),
     path("", include(scans_router.urls)),
+    path("", include(subnets_router_dhcp.urls)),
+    path("", include(dhcp_scopes_router.urls)),
+    path("", include(subnets_router_pools.urls)),
 ]

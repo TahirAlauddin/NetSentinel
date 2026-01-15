@@ -40,8 +40,8 @@ from .subnet_utilization import (
     get_utilization_summary,
 )
 from .subnet_utils import (
-    calculate_next_available_ip,
-    detect_subnet_overlap,
+    calculate_subnet_overlap,
+    get_next_available_ip,
     is_ip_in_subnet,
 )
 
@@ -79,7 +79,7 @@ __all__ = [
     "get_all_subnets_utilization",
     "get_utilization_summary",
     # Subnet Utils
-    "calculate_next_available_ip",
-    "detect_subnet_overlap",
+    "calculate_subnet_overlap",
+    "get_next_available_ip",
     "is_ip_in_subnet",
 ]

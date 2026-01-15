@@ -1,7 +1,15 @@
 from .customer import CustomerSerializer
+from .dhcp import (
+    DHCPScopeSerializer,
+    DHCPScopeCreateUpdateSerializer,
+    DHCPLeaseSerializer,
+    DHCPLeaseCreateSerializer,
+    DHCPReservationSerializer,
+)
 from .dns import DNSRecordSerializer, DNSZoneSerializer
 from .ip_address import IPAddressSerializer
 from .ip_assignment_history import IPAssignmentHistorySerializer
+from .ip_pool import IPPoolSerializer, IPPoolCreateUpdateSerializer
 from .ip_request import IPRequestSerializer, IPRequestCreateSerializer
 from .network_scan import (
     NetworkScanSerializer,
@@ -36,4 +44,11 @@ __all__ = [
     "ScanResultDetailSerializer",
     "PhoneNumberRangeSerializer",
     "PhoneNumberRangeCreateUpdateSerializer",
+    "DHCPScopeSerializer",
+    "DHCPScopeCreateUpdateSerializer",
+    "DHCPLeaseSerializer",
+    "DHCPLeaseCreateSerializer",
+    "DHCPReservationSerializer",
+    "IPPoolSerializer",
+    "IPPoolCreateUpdateSerializer",
 ]
