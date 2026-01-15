@@ -43,6 +43,10 @@ const SECONDARY_NAV_ITEMS = {
     { href: "/ipam/threshold", label: "Threshold" },
   ],
   "Network Services": [
+    { href: "/ipam/dhcp-scopes", label: "DHCP Scopes" },
+    { href: "/ipam/dhcp-leases", label: "DHCP Leases" },
+    { href: "/ipam/dhcp-reservations", label: "DHCP Reservations" },
+    { href: "/ipam/ip-pools", label: "IP Pools" },
     { href: "/ipam/nat", label: "NAT" },
     { href: "/ipam/routing", label: "Routing" },
     { href: "/ipam/firewall-zones", label: "Firewall Zones" },

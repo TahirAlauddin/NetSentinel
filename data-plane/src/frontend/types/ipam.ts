@@ -232,6 +232,114 @@ export interface IPAssignmentHistory {
   created_at: string;
 }
 
+// DHCP Types
+export interface DHCPScope {
+  id: number;
+  subnet: number;
+  subnet_detail?: Subnet;
+  name: string;
+  description?: string | null;
+  start_ip: string;
+  end_ip: string;
+  subnet_mask: string;
+  gateway?: string | null;
+  dns_servers?: string | null;
+  lease_duration: number;
+  max_leases?: number | null;
+  is_active: boolean;
+  active_leases_count?: number;
+  reservations_count?: number;
+  available_ips?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DHCPLease {
+  id: number;
+  scope: number;
+  scope_detail?: {
+    id: number;
+    name: string;
+    subnet?: string | null;
+  };
+  ip_address: string;
+  mac_address: string;
+  hostname?: string | null;
+  status: "active" | "expired" | "released" | "declined";
+  status_display: string;
+  lease_start: string;
+  lease_end: string;
+  lease_renewal?: string | null;
+  client_identifier?: string | null;
+  vendor_class?: string | null;
+  notes?: string | null;
+  is_expired?: boolean;
+  time_remaining?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DHCPReservation {
+  id: number;
+  scope: number;
+  ip_address: string;
+  mac_address: string;
+  hostname?: string | null;
+  description?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DHCPScopeAvailability {
+  total_ips: number;
+  max_leases: number;
+  active_leases: number;
+  reservations: number;
+  available: number;
+  utilization_percentage: number;
+}
+
+export interface DHCPLeaseStatistics {
+  total_leases: number;
+  active_leases: number;
+  expired_leases: number;
+  released_leases: number;
+  scopes_count: number;
+}
+
+// IP Pool Types
+export interface IPPool {
+  id: number;
+  subnet: number;
+  subnet_detail?: Subnet;
+  name: string;
+  description?: string | null;
+  start_ip: string;
+  end_ip: string;
+  reservation_policy: "none" | "percentage" | "fixed";
+  reservation_policy_display: string;
+  reserved_percentage: number;
+  reserved_count: number;
+  is_active: boolean;
+  total_ips?: number;
+  reserved_count?: number;
+  available_count?: number;
+  utilization_percentage?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IPPoolUtilization {
+  pool_id: number;
+  pool_name: string;
+  total_ips: number;
+  used_ips: number;
+  reserved_ips: number;
+  available_ips: number;
+  utilization_percentage: number;
+}
+
 // Subnet Utilization types
 export interface SubnetUtilization {
   subnet_id: number;

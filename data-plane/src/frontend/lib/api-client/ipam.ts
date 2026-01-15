@@ -24,6 +24,13 @@ import {
   SubnetUtilization,
   SubnetCapacity,
   UtilizationSummary,
+  DHCPScope,
+  DHCPLease,
+  DHCPReservation,
+  DHCPScopeAvailability,
+  DHCPLeaseStatistics,
+  IPPool,
+  IPPoolUtilization,
 } from "@/types/ipam";
 
 /**
@@ -988,6 +995,339 @@ export class IpamApiClient extends BaseApiClient {
     id: number | string
   ): Promise<BaseApiResponse<T>> {
     return this.delete<T>(`/ipam/phone-numbers/${id}/`);
+  }
+
+  // ==================== DHCP Management ====================
+
+  /**
+   * Get all DHCP scopes
+   * @param params - Optional query parameters for filtering/pagination
+   * @returns List of DHCP scopes or paginated response
+   */
+  async getDHCPScopes<T = DHCPScope[] | PaginatedResponse<DHCPScope>>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/dhcp-scopes${queryString}`);
+  }
+
+  /**
+   * Get a single DHCP scope by ID
+   * @param id - DHCP scope ID
+   * @returns DHCP scope details
+   */
+  async getDHCPScope<T = DHCPScope>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/dhcp-scopes/${id}/`);
+  }
+
+  /**
+   * Create a new DHCP scope
+   * @param scope - DHCP scope data
+   * @returns Created DHCP scope
+   */
+  async createDHCPScope<T = DHCPScope>(
+    scope: Partial<DHCPScope>
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/dhcp-scopes/", scope);
+  }
+
+  /**
+   * Update a DHCP scope
+   * @param id - DHCP scope ID
+   * @param scope - Updated DHCP scope data
+   * @returns Updated DHCP scope
+   */
+  async updateDHCPScope<T = DHCPScope>(
+    id: number | string,
+    scope: Partial<DHCPScope>
+  ): Promise<BaseApiResponse<T>> {
+    return this.put<T>(`/ipam/dhcp-scopes/${id}/`, scope);
+  }
+
+  /**
+   * Delete a DHCP scope
+   * @param id - DHCP scope ID
+   * @returns Deletion response
+   */
+  async deleteDHCPScope<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/dhcp-scopes/${id}/`);
+  }
+
+  /**
+   * Get availability statistics for a DHCP scope
+   * @param id - DHCP scope ID
+   * @returns Availability statistics
+   */
+  async getDHCPScopeAvailability<T = DHCPScopeAvailability>(
+    id: number | string
+  ): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/dhcp-scopes/${id}/availability/`);
+  }
+
+  /**
+   * Get all leases for a DHCP scope
+   * @param id - DHCP scope ID
+   * @param params - Optional query parameters
+   * @returns List of DHCP leases
+   */
+  async getDHCPScopeLeases<T = DHCPLease[]>(
+    id: number | string,
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/dhcp-scopes/${id}/leases${queryString}`);
+  }
+
+  /**
+   * Get all reservations for a DHCP scope
+   * @param id - DHCP scope ID
+   * @returns List of DHCP reservations
+   */
+  async getDHCPScopeReservations<T = DHCPReservation[]>(
+    id: number | string
+  ): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/dhcp-scopes/${id}/reservations/`);
+  }
+
+  /**
+   * Automatically assign an IP from a DHCP scope
+   * @param id - DHCP scope ID
+   * @param data - Assignment data (mac_address, hostname)
+   * @returns Assigned IP address
+   */
+  async assignIPFromDHCPScope<T = { ip_address: string }>(
+    id: number | string,
+    data: { mac_address: string; hostname?: string }
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>(`/ipam/dhcp-scopes/${id}/assign_ip/`, data);
+  }
+
+  /**
+   * Export DHCP scope configuration
+   * @param id - DHCP scope ID
+   * @param format - Configuration format (isc-dhcpd, windows-dhcp)
+   * @returns Configuration file content
+   */
+  async exportDHCPScopeConfig(
+    id: number | string,
+    format: string = "isc-dhcpd"
+  ): Promise<Blob> {
+    const response = await fetch(
+      `${this.baseURL}/ipam/dhcp-scopes/${id}/export-config/?format=${format}`,
+      {
+        headers: this.getHeaders(),
+      }
+    );
+    return response.blob();
+  }
+
+  /**
+   * Get all DHCP leases
+   * @param params - Optional query parameters for filtering/pagination
+   * @returns List of DHCP leases or paginated response
+   */
+  async getDHCPLeases<T = DHCPLease[] | PaginatedResponse<DHCPLease>>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/dhcp-leases${queryString}`);
+  }
+
+  /**
+   * Get a single DHCP lease by ID
+   * @param id - DHCP lease ID
+   * @returns DHCP lease details
+   */
+  async getDHCPLease<T = DHCPLease>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/dhcp-leases/${id}/`);
+  }
+
+  /**
+   * Create a new DHCP lease
+   * @param lease - DHCP lease data
+   * @returns Created DHCP lease
+   */
+  async createDHCPLease<T = DHCPLease>(
+    lease: Partial<DHCPLease>
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/dhcp-leases/", lease);
+  }
+
+  /**
+   * Release a DHCP lease
+   * @param id - DHCP lease ID
+   * @returns Updated DHCP lease
+   */
+  async releaseDHCPLease<T = DHCPLease>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.post<T>(`/ipam/dhcp-leases/${id}/release/`, {});
+  }
+
+  /**
+   * Expire all expired leases
+   * @returns Number of expired leases
+   */
+  async expireAllDHCPLeases<T = { expired_count: number }>(): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/dhcp-leases/expire_all/", {});
+  }
+
+  /**
+   * Get all DHCP reservations
+   * @param params - Optional query parameters for filtering/pagination
+   * @returns List of DHCP reservations or paginated response
+   */
+  async getDHCPReservations<T = DHCPReservation[] | PaginatedResponse<DHCPReservation>>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/dhcp-reservations${queryString}`);
+  }
+
+  /**
+   * Get a single DHCP reservation by ID
+   * @param id - DHCP reservation ID
+   * @returns DHCP reservation details
+   */
+  async getDHCPReservation<T = DHCPReservation>(
+    id: number | string
+  ): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/dhcp-reservations/${id}/`);
+  }
+
+  /**
+   * Create a new DHCP reservation
+   * @param reservation - DHCP reservation data
+   * @returns Created DHCP reservation
+   */
+  async createDHCPReservation<T = DHCPReservation>(
+    reservation: Partial<DHCPReservation>
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/dhcp-reservations/", reservation);
+  }
+
+  /**
+   * Update a DHCP reservation
+   * @param id - DHCP reservation ID
+   * @param reservation - Updated DHCP reservation data
+   * @returns Updated DHCP reservation
+   */
+  async updateDHCPReservation<T = DHCPReservation>(
+    id: number | string,
+    reservation: Partial<DHCPReservation>
+  ): Promise<BaseApiResponse<T>> {
+    return this.put<T>(`/ipam/dhcp-reservations/${id}/`, reservation);
+  }
+
+  /**
+   * Delete a DHCP reservation
+   * @param id - DHCP reservation ID
+   * @returns Deletion response
+   */
+  async deleteDHCPReservation<T = unknown>(
+    id: number | string
+  ): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/dhcp-reservations/${id}/`);
+  }
+
+  /**
+   * Get DHCP lease statistics
+   * @param scopeId - Optional scope ID to filter by
+   * @returns Lease statistics
+   */
+  async getDHCPLeaseStatistics<T = DHCPLeaseStatistics>(
+    scopeId?: number | string
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = scopeId ? `?scope=${scopeId}` : "";
+    return this.get<T>(`/ipam/dhcp-reservations/statistics/${queryString}`);
+  }
+
+  // ==================== IP Pool Management ====================
+
+  /**
+   * Get all IP pools
+   * @param params - Optional query parameters for filtering/pagination
+   * @returns List of IP pools or paginated response
+   */
+  async getIPPools<T = IPPool[] | PaginatedResponse<IPPool>>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/ip-pools${queryString}`);
+  }
+
+  /**
+   * Get a single IP pool by ID
+   * @param id - IP pool ID
+   * @returns IP pool details
+   */
+  async getIPPool<T = IPPool>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/ip-pools/${id}/`);
+  }
+
+  /**
+   * Create a new IP pool
+   * @param pool - IP pool data
+   * @returns Created IP pool
+   */
+  async createIPPool<T = IPPool>(pool: Partial<IPPool>): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/ip-pools/", pool);
+  }
+
+  /**
+   * Update an IP pool
+   * @param id - IP pool ID
+   * @param pool - Updated IP pool data
+   * @returns Updated IP pool
+   */
+  async updateIPPool<T = IPPool>(
+    id: number | string,
+    pool: Partial<IPPool>
+  ): Promise<BaseApiResponse<T>> {
+    return this.put<T>(`/ipam/ip-pools/${id}/`, pool);
+  }
+
+  /**
+   * Delete an IP pool
+   * @param id - IP pool ID
+   * @returns Deletion response
+   */
+  async deleteIPPool<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/ip-pools/${id}/`);
+  }
+
+  /**
+   * Get utilization statistics for an IP pool
+   * @param id - IP pool ID
+   * @returns Utilization statistics
+   */
+  async getIPPoolUtilization<T = IPPoolUtilization>(
+    id: number | string
+  ): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/ip-pools/${id}/utilization/`);
+  }
+
+  /**
+   * Assign an IP address from a pool
+   * @param id - IP pool ID
+   * @param description - Optional description for the IP
+   * @returns Assigned IP address
+   */
+  async assignIPFromPool<T = IPAddress>(
+    id: number | string,
+    description?: string
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>(`/ipam/ip-pools/${id}/assign_ip/`, { description });
+  }
+
+  /**
+   * Get utilization for all pools
+   * @param subnetId - Optional subnet ID to filter by
+   * @returns List of pool utilization statistics
+   */
+  async getAllIPPoolsUtilization<T = IPPoolUtilization[]>(
+    subnetId?: number | string
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = subnetId ? `?subnet=${subnetId}` : "";
+    return this.get<T>(`/ipam/ip-pools/utilization_all/${queryString}`);
   }
 }
 

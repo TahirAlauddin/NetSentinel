@@ -145,6 +145,10 @@ export const ipamSubnetManagementSubmenuLinks = [
 ];
 
 export const ipamNetworkServicesSubmenuLinks = [
+  { label: "DHCP Scopes", href: "/ipam/dhcp-scopes" },
+  { label: "DHCP Leases", href: "/ipam/dhcp-leases" },
+  { label: "DHCP Reservations", href: "/ipam/dhcp-reservations" },
+  { label: "IP Pools", href: "/ipam/ip-pools" },
   { label: "NAT", href: "/ipam/nat" },
   { label: "Routing", href: "/ipam/routing" },
   { label: "Firewall Zones", href: "/ipam/firewall-zones" },
