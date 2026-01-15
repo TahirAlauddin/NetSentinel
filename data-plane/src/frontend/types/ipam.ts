@@ -330,6 +330,18 @@ export interface IPPool {
   updated_at: string;
 }
 
+export interface SubnetMaskInfo {
+  bitmask: number;
+  netmask: string;
+  wildcard_mask: string;
+  binary: string;
+  subnets: number | string;
+  hosts: number | string;
+  subnet_bits: number;
+  host_bits: number;
+  is_ipv6?: boolean;
+}
+
 export interface IPPoolUtilization {
   pool_id: number;
   pool_name: string;

@@ -24,6 +24,7 @@ from .views import (
 )
 from .views.dhcp_views import DHCPScopeViewSet, DHCPLeaseViewSet, DHCPReservationViewSet
 from .views.network_scan_views import NetworkScanViewSet, ScanResultViewSet
+from .views.subnet_mask_views import subnet_masks_list, subnet_mask_detail
 
 # Main router for top-level resources
 router = DefaultRouter()
@@ -101,4 +102,7 @@ urlpatterns = [
     path("", include(subnets_router_dhcp.urls)),
     path("", include(dhcp_scopes_router.urls)),
     path("", include(subnets_router_pools.urls)),
+    # Subnet mask reference endpoints
+    path("subnet-masks/", subnet_masks_list, name="subnet-masks-list"),
+    path("subnet-masks/<int:prefix_length>/", subnet_mask_detail, name="subnet-mask-detail"),
 ]

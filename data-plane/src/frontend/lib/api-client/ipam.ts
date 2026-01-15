@@ -28,6 +28,7 @@ import {
   DHCPLease,
   DHCPReservation,
   DHCPScopeAvailability,
+  SubnetMaskInfo,
   DHCPLeaseStatistics,
   IPPool,
   IPPoolUtilization,
@@ -1328,6 +1329,39 @@ export class IpamApiClient extends BaseApiClient {
   ): Promise<BaseApiResponse<T>> {
     const queryString = subnetId ? `?subnet=${subnetId}` : "";
     return this.get<T>(`/ipam/ip-pools/utilization_all/${queryString}`);
+  }
+
+  // ==================== Subnet Mask Reference ====================
+
+  /**
+   * Get all subnet mask information
+   * @param params - Optional query parameters (ipv6, common, min_prefix, max_prefix)
+   * @returns List of subnet mask information
+   */
+  async getSubnetMasks<T = SubnetMaskInfo[]>(
+    params?: {
+      ipv6?: boolean;
+      common?: boolean;
+      min_prefix?: number;
+      max_prefix?: number;
+    }
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/subnet-masks${queryString}`);
+  }
+
+  /**
+   * Get detailed information for a specific subnet mask
+   * @param prefixLength - CIDR prefix length
+   * @param ipv6 - Whether this is an IPv6 mask
+   * @returns Subnet mask information
+   */
+  async getSubnetMask<T = SubnetMaskInfo>(
+    prefixLength: number,
+    ipv6?: boolean
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = ipv6 ? "?ipv6=true" : "";
+    return this.get<T>(`/ipam/subnet-masks/${prefixLength}/${queryString}`);
   }
 }
 
