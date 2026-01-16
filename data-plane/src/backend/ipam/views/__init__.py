@@ -20,6 +20,7 @@ from .dhcp_views import (
     DHCPScopeViewSet,
     DHCPLeaseViewSet,
     DHCPReservationViewSet,
+    DHCPOptionViewSet,
 )
 
 from ..models import (

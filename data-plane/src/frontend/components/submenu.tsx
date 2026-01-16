@@ -7,10 +7,11 @@ interface SubmenuProps {
   columns: SubmenuColumn[]
   isVisible: boolean
   onClose: () => void
+  onMouseEnter?: () => void
   top?: number
 }
 
-export function Submenu({ columns, isVisible, onClose, top = 0 }: SubmenuProps) {
+export function Submenu({ columns, isVisible, onClose, onMouseEnter, top = 0 }: SubmenuProps) {
   if (!isVisible) return null
 
   // If there's only one category, spread items horizontally
@@ -21,7 +22,10 @@ export function Submenu({ columns, isVisible, onClose, top = 0 }: SubmenuProps) 
       className="ml-2 pointer-events-auto visible opacity-100 transition-opacity duration-150 fixed z-50 w-[calc(100vw-2rem)] lg:w-[640px] bg-[oklch(0.24_0_0)] text-white shadow-xl rounded-md border border-white/10"
       role="menu"
       onMouseEnter={() => {
-        // Keep submenu open when hovering over it
+        // Cancel any pending close timeouts when hovering over submenu
+        if (onMouseEnter) {
+          onMouseEnter()
+        }
       }}
       onMouseLeave={(e) => {
         // Close when mouse leaves submenu, unless moving back to sidebar

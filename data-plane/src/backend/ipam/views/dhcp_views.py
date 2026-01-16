@@ -6,13 +6,15 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ..models import DHCPScope, DHCPLease, DHCPReservation
+from ..models import DHCPScope, DHCPLease, DHCPReservation, DHCPOption
 from ..serializers import (
     DHCPScopeCreateUpdateSerializer,
     DHCPScopeSerializer,
     DHCPLeaseCreateSerializer,
     DHCPLeaseSerializer,
     DHCPReservationSerializer,
+    DHCPOptionSerializer,
+    DHCPOptionCreateUpdateSerializer,
 )
 
 
@@ -24,7 +26,9 @@ class DHCPScopeViewSet(viewsets.ModelViewSet):
     """
 
     queryset = (
-        DHCPScope.objects.select_related("subnet").prefetch_related("leases", "reservations").all()
+        DHCPScope.objects.select_related("subnet")
+        .prefetch_related("leases", "reservations", "options")
+        .all()
     )
     serializer_class = DHCPScopeSerializer
 
@@ -210,3 +214,34 @@ class DHCPReservationViewSet(viewsets.ModelViewSet):
         scope_id = request.query_params.get("scope")
         stats = get_lease_statistics(int(scope_id) if scope_id else None)
         return Response(stats, status=status.HTTP_200_OK)
+
+
+class DHCPOptionViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing DHCP options.
+
+    Provides endpoints for creating, viewing, and managing DHCP options.
+    """
+
+    queryset = DHCPOption.objects.select_related("scope").all()
+    serializer_class = DHCPOptionSerializer
+
+    def get_serializer_class(self):
+        """Use create serializer for POST/PUT/PATCH requests."""
+        if self.action in ["create", "update", "partial_update"]:
+            return DHCPOptionCreateUpdateSerializer
+        return DHCPOptionSerializer
+
+    def get_queryset(self):
+        """Filter options by scope if accessed via nested route."""
+        queryset = super().get_queryset()
+
+        scope_pk = self.kwargs.get("scope_pk")
+        if scope_pk:
+            queryset = queryset.filter(scope_id=scope_pk)
+
+        option_code = self.request.query_params.get("option_code")
+        if option_code:
+            queryset = queryset.filter(option_code=option_code)
+
+        return queryset

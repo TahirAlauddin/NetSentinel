@@ -12,6 +12,8 @@ from .dhcp import (
     DHCPLeaseSerializer,
     DHCPLeaseCreateSerializer,
     DHCPReservationSerializer,
+    DHCPOptionSerializer,
+    DHCPOptionCreateUpdateSerializer,
 )
 from .dns import DNSRecordSerializer, DNSZoneSerializer
 from .ip_address import IPAddressSerializer
@@ -56,6 +58,8 @@ __all__ = [
     "DHCPLeaseSerializer",
     "DHCPLeaseCreateSerializer",
     "DHCPReservationSerializer",
+    "DHCPOptionSerializer",
+    "DHCPOptionCreateUpdateSerializer",
     "IPPoolSerializer",
     "IPPoolCreateUpdateSerializer",
     "DeviceSerializer",

@@ -27,6 +27,7 @@ import {
   DHCPScope,
   DHCPLease,
   DHCPReservation,
+  DHCPOption,
   DHCPScopeAvailability,
   SubnetMaskInfo,
   DHCPLeaseStatistics,
@@ -1116,12 +1117,25 @@ export class IpamApiClient extends BaseApiClient {
     id: number | string,
     format: string = "isc-dhcpd"
   ): Promise<Blob> {
-    const response = await fetch(
-      `${this.baseURL}/ipam/dhcp-scopes/${id}/export-config/?format=${format}`,
-      {
-        headers: this.getHeaders(),
-      }
-    );
+    const session = await this.getSession();
+    const accessToken = session?.accessToken;
+    
+    if (!accessToken) {
+      throw new Error("No access token available");
+    }
+
+    const url = this.buildUrl(`/ipam/dhcp-scopes/${id}/export-config/?format=${format}`);
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to export config: ${response.statusText}`);
+    }
+
     return response.blob();
   }
 
@@ -1242,6 +1256,86 @@ export class IpamApiClient extends BaseApiClient {
   ): Promise<BaseApiResponse<T>> {
     const queryString = scopeId ? `?scope=${scopeId}` : "";
     return this.get<T>(`/ipam/dhcp-reservations/statistics/${queryString}`);
+  }
+
+  // ==================== DHCP Options Management ====================
+
+  /**
+   * Get all DHCP options
+   * @param params - Optional query parameters for filtering/pagination
+   * @returns List of DHCP options or paginated response
+   */
+  async getDHCPOptions<T = DHCPOption[] | PaginatedResponse<DHCPOption>>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/dhcp-options${queryString}`);
+  }
+
+  /**
+   * Get all DHCP options for a scope
+   * @param scopeId - DHCP scope ID
+   * @returns List of DHCP options
+   */
+  async getDHCPScopeOptions<T = DHCPOption[]>(
+    scopeId: number | string
+  ): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/dhcp-scopes/${scopeId}/options/`);
+  }
+
+  /**
+   * Get a single DHCP option by ID
+   * @param id - DHCP option ID
+   * @returns DHCP option details
+   */
+  async getDHCPOption<T = DHCPOption>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/dhcp-options/${id}/`);
+  }
+
+  /**
+   * Create a new DHCP option
+   * @param option - DHCP option data
+   * @returns Created DHCP option
+   */
+  async createDHCPOption<T = DHCPOption>(
+    option: Partial<DHCPOption>
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/dhcp-options/", option);
+  }
+
+  /**
+   * Create a DHCP option for a scope
+   * @param scopeId - DHCP scope ID
+   * @param option - DHCP option data
+   * @returns Created DHCP option
+   */
+  async createDHCPScopeOption<T = DHCPOption>(
+    scopeId: number | string,
+    option: Partial<DHCPOption>
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>(`/ipam/dhcp-scopes/${scopeId}/options/`, option);
+  }
+
+  /**
+   * Update a DHCP option
+   * @param id - DHCP option ID
+   * @param option - Updated DHCP option data
+   * @returns Updated DHCP option
+   */
+  async updateDHCPOption<T = DHCPOption>(
+    id: number | string,
+    option: Partial<DHCPOption>
+  ): Promise<BaseApiResponse<T>> {
+    return this.put<T>(`/ipam/dhcp-options/${id}/`, option);
+  }
+
+  /**
+   * Delete a DHCP option
+   * @param id - DHCP option ID
+   * @returns Deletion response
+   */
+  async deleteDHCPOption<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/dhcp-options/${id}/`);
   }
 
   // ==================== IP Pool Management ====================

@@ -14,19 +14,27 @@ import {
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DHCPScope } from "@/types/ipam";
+import { DHCPScope, DHCPOption } from "@/types/ipam";
 import { api } from "@/lib/utils";
 import { extractIpamArrayData } from "@/lib/ipam-utils";
 import { Subnet } from "@/types/ipam";
+import { DhcpOptionsForm } from "./dhcp-options-form";
 
 interface DhcpScopeFormProps {
   scope?: DHCPScope;
   onSubmit: (data: Partial<DHCPScope>) => Promise<void>;
+  onOptionsChange?: (options: Partial<DHCPOption>[]) => void;
   onCancel: () => void;
   loading?: boolean;
 }
 
-export function DhcpScopeForm({ scope, onSubmit, onCancel, loading }: DhcpScopeFormProps) {
+export function DhcpScopeForm({
+  scope,
+  onSubmit,
+  onOptionsChange,
+  onCancel,
+  loading,
+}: DhcpScopeFormProps) {
   const [subnet, setSubnet] = useState(scope?.subnet?.toString() || "");
   const [name, setName] = useState(scope?.name || "");
   const [description, setDescription] = useState(scope?.description || "");
@@ -42,6 +50,7 @@ export function DhcpScopeForm({ scope, onSubmit, onCancel, loading }: DhcpScopeF
   const [isActive, setIsActive] = useState(scope?.is_active ?? true);
   const [subnets, setSubnets] = useState<Subnet[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [pendingOptions, setPendingOptions] = useState<Partial<DHCPOption>[]>([]);
 
   useEffect(() => {
     const loadSubnets = async () => {
@@ -75,9 +84,18 @@ export function DhcpScopeForm({ scope, onSubmit, onCancel, loading }: DhcpScopeF
         lease_duration: parseInt(leaseDuration) * 3600, // Convert hours to seconds
         max_leases: maxLeases ? parseInt(maxLeases) : null,
         is_active: isActive,
-      });
+        _pendingOptions: pendingOptions, // Pass pending options to parent
+      } as Partial<DHCPScope> & { _pendingOptions?: Partial<DHCPOption>[] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save DHCP scope");
+    }
+  };
+
+  const handleOptionsChange = (options: Partial<DHCPOption>[]) => {
+    setPendingOptions(options);
+    // If editing existing scope, also call the parent's handler
+    if (scope?.id && onOptionsChange) {
+      onOptionsChange(options);
     }
   };
 
@@ -221,6 +239,14 @@ export function DhcpScopeForm({ scope, onSubmit, onCancel, loading }: DhcpScopeF
               rows={3}
             />
           </div>
+        </div>
+
+        <div className="md:col-span-2">
+          <DhcpOptionsForm
+            scopeId={scope?.id || 0} // Use 0 as placeholder for new scopes
+            options={scope?.options || []}
+            onChange={handleOptionsChange}
+          />
         </div>
 
         <div className="flex justify-end gap-4">

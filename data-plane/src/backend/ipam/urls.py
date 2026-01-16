@@ -23,7 +23,12 @@ from .views import (
     VRFViewSet,
 )
 from .views.device_views import DeviceViewSet, DeviceTypeViewSet, RackViewSet
-from .views.dhcp_views import DHCPScopeViewSet, DHCPLeaseViewSet, DHCPReservationViewSet
+from .views.dhcp_views import (
+    DHCPScopeViewSet,
+    DHCPLeaseViewSet,
+    DHCPReservationViewSet,
+    DHCPOptionViewSet,
+)
 from .views.network_scan_views import NetworkScanViewSet, ScanResultViewSet
 from .views.subnet_mask_views import subnet_masks_list, subnet_mask_detail
 
@@ -66,6 +71,7 @@ router.register(r"scan-results", ScanResultViewSet, basename="scan-result")
 router.register(r"dhcp-scopes", DHCPScopeViewSet, basename="dhcp-scope")
 router.register(r"dhcp-leases", DHCPLeaseViewSet, basename="dhcp-lease")
 router.register(r"dhcp-reservations", DHCPReservationViewSet, basename="dhcp-reservation")
+router.register(r"dhcp-options", DHCPOptionViewSet, basename="dhcp-option")
 
 # IP Pool routers
 router.register(r"ip-pools", IPPoolViewSet, basename="ip-pool")
@@ -93,6 +99,7 @@ dhcp_scopes_router.register(r"leases", DHCPLeaseViewSet, basename="dhcp-scope-le
 dhcp_scopes_router.register(
     r"reservations", DHCPReservationViewSet, basename="dhcp-scope-reservation"
 )
+dhcp_scopes_router.register(r"options", DHCPOptionViewSet, basename="dhcp-scope-option")
 
 # Nested router for IP pools under subnets
 subnets_router_pools = routers.NestedDefaultRouter(router, r"subnets", lookup="subnet")

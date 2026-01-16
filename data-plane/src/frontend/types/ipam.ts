@@ -233,6 +233,16 @@ export interface IPAssignmentHistory {
 }
 
 // DHCP Types
+export interface DHCPOption {
+  id: number;
+  scope: number;
+  option_code: number;
+  value: string;
+  description?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface DHCPScope {
   id: number;
   subnet: number;
@@ -250,6 +260,7 @@ export interface DHCPScope {
   active_leases_count?: number;
   reservations_count?: number;
   available_ips?: number;
+  options?: DHCPOption[];
   created_at: string;
   updated_at: string;
 }
@@ -323,7 +334,6 @@ export interface IPPool {
   reserved_count: number;
   is_active: boolean;
   total_ips?: number;
-  reserved_count?: number;
   available_count?: number;
   utilization_percentage?: number;
   created_at: string;

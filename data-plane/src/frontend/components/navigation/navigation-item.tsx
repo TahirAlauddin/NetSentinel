@@ -13,6 +13,7 @@ interface NavigationItemProps {
   onCloseSubmenu: () => void
   onItemHover?: (itemLabel: string) => void
   onItemLeave?: () => void
+  onSubmenuEnter?: () => void
 }
 
 export function NavigationItemComponent({
@@ -23,6 +24,7 @@ export function NavigationItemComponent({
   onCloseSubmenu,
   onItemHover,
   onItemLeave,
+  onSubmenuEnter,
 }: NavigationItemProps) {
   const Icon = item.icon
   const hasSubmenu = item.hasSubmenu || false
@@ -116,6 +118,7 @@ export function NavigationItemComponent({
           columns={item.submenuColumns}
           isVisible={isExpanded}
           onClose={onCloseSubmenu}
+          onMouseEnter={onSubmenuEnter}
           top={submenuTop}
         />
       )}

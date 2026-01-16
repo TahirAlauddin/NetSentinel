@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { IpamHeader } from "@/components/ipam/ipam-header";
 import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
 import { DhcpScopeForm } from "@/components/ipam/dhcp-scope-form";
-import { DHCPScope } from "@/types/ipam";
+import { DHCPScope, DHCPOption } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 
 const ipamApi = new IpamApiClient();
@@ -53,10 +53,55 @@ export default function EditDhcpScopePage() {
         throw new Error(response.error);
       }
 
-      router.push("/ipam/dhcp-scopes");
+      // Reload scope to get updated data including options
+      const updatedResponse = await ipamApi.getDHCPScope(id);
+      if (!updatedResponse.error) {
+        setScope(updatedResponse.data as DHCPScope);
+      }
     } catch (err) {
       setSaving(false);
       throw err;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleOptionsChange = async (options: Partial<DHCPOption>[]) => {
+    try {
+      // Get current options
+      const currentOptionsResponse = await ipamApi.getDHCPScopeOptions(id);
+      const currentOptions = currentOptionsResponse.data as DHCPOption[] || [];
+
+      // Delete options that are no longer present
+      const newOptionCodes = new Set(options.map((opt) => opt.option_code));
+      for (const currentOption of currentOptions) {
+        if (!newOptionCodes.has(currentOption.option_code)) {
+          await ipamApi.deleteDHCPOption(currentOption.id);
+        }
+      }
+
+      // Create or update options
+      for (const option of options) {
+        const existingOption = currentOptions.find(
+          (opt) => opt.option_code === option.option_code
+        );
+
+        if (existingOption) {
+          // Update existing option
+          await ipamApi.updateDHCPOption(existingOption.id, option);
+        } else {
+          // Create new option
+          await ipamApi.createDHCPScopeOption(id, option);
+        }
+      }
+
+      // Reload scope to get updated options
+      const updatedResponse = await ipamApi.getDHCPScope(id);
+      if (!updatedResponse.error) {
+        setScope(updatedResponse.data as DHCPScope);
+      }
+    } catch (err) {
+      console.error("Error saving DHCP options:", err);
     }
   };
 
@@ -95,6 +140,7 @@ export default function EditDhcpScopePage() {
       <DhcpScopeForm
         scope={scope}
         onSubmit={handleSubmit}
+        onOptionsChange={handleOptionsChange}
         onCancel={handleCancel}
         loading={saving}
       />

@@ -4,7 +4,7 @@ DHCP serializers for IPAM.
 
 from rest_framework import serializers
 
-from ..models import DHCPScope, DHCPLease, DHCPReservation
+from ..models import DHCPScope, DHCPLease, DHCPReservation, DHCPOption
 from .subnet import SubnetSerializer
 
 
@@ -91,6 +91,7 @@ class DHCPScopeSerializer(serializers.ModelSerializer):
     active_leases_count = serializers.SerializerMethodField()
     reservations_count = serializers.SerializerMethodField()
     available_ips = serializers.SerializerMethodField()
+    options = serializers.SerializerMethodField()
 
     def get_active_leases_count(self, obj):
         """Return count of active leases."""
@@ -103,6 +104,19 @@ class DHCPScopeSerializer(serializers.ModelSerializer):
     def get_available_ips(self, obj):
         """Return count of available IPs."""
         return obj.get_available_ips()
+
+    def get_options(self, obj):
+        """Return list of DHCP options for this scope."""
+        options = obj.options.all()
+        return [
+            {
+                "id": opt.id,
+                "option_code": opt.option_code,
+                "value": opt.value,
+                "description": opt.description,
+            }
+            for opt in options
+        ]
 
     class Meta:
         model = DHCPScope
@@ -123,6 +137,7 @@ class DHCPScopeSerializer(serializers.ModelSerializer):
             "active_leases_count",
             "reservations_count",
             "available_ips",
+            "options",
             "created_at",
             "updated_at",
         ]
@@ -131,6 +146,7 @@ class DHCPScopeSerializer(serializers.ModelSerializer):
             "active_leases_count",
             "reservations_count",
             "available_ips",
+            "options",
             "created_at",
             "updated_at",
         ]
@@ -216,3 +232,45 @@ class DHCPLeaseCreateSerializer(serializers.ModelSerializer):
             hostname=hostname,
             lease_duration=lease_duration,
         )
+
+
+class DHCPOptionSerializer(serializers.ModelSerializer):
+    """Serializer for DHCPOption model."""
+
+    class Meta:
+        model = DHCPOption
+        fields = [
+            "id",
+            "scope",
+            "option_code",
+            "value",
+            "description",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+    def validate_option_code(self, value):
+        """Validate option code is in valid range."""
+        if value < 1 or value > 255:
+            raise serializers.ValidationError("Option code must be between 1 and 255")
+        return value
+
+
+class DHCPOptionCreateUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for creating/updating DHCP options."""
+
+    class Meta:
+        model = DHCPOption
+        fields = [
+            "scope",
+            "option_code",
+            "value",
+            "description",
+        ]
+
+    def validate_option_code(self, value):
+        """Validate option code is in valid range."""
+        if value < 1 or value > 255:
+            raise serializers.ValidationError("Option code must be between 1 and 255")
+        return value
