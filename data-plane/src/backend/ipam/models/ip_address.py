@@ -62,6 +62,15 @@ class IPAddress(models.Model):
         help_text="When this IP address was assigned",
     )
     
+    # Tags (many-to-many through IPAddressTag)
+    tags = models.ManyToManyField(
+        "ipam.IPTag",
+        through="ipam.IPAddressTag",
+        related_name="ip_addresses",
+        blank=True,
+        help_text="Tags applied to this IP address",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

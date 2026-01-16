@@ -598,6 +598,17 @@ export class IpamApiClient extends BaseApiClient {
   }
 
   /**
+   * Perform reverse DNS lookup for an IP address
+   * @param ipAddress - IP address to lookup
+   * @returns Reverse DNS lookup result with hostname
+   */
+  async reverseDNSLookup<T = { ip_address: string; hostname: string | null; found: boolean }>(
+    ipAddress: string
+  ): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/ip-addresses/reverse-dns/?ip=${encodeURIComponent(ipAddress)}`);
+  }
+
+  /**
    * Get comprehensive details for an IP address
    * @param ipAddress - IP address
    * @returns IP address details

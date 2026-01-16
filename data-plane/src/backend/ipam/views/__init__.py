@@ -22,6 +22,10 @@ from .dhcp_views import (
     DHCPReservationViewSet,
     DHCPOptionViewSet,
 )
+from .ip_tag_views import (
+    IPTagViewSet,
+    IPAddressTagViewSet,
+)
 
 from ..models import (
     VLAN,
@@ -186,7 +190,7 @@ class PhoneNumberRangeViewSet(viewsets.ModelViewSet):
 class IPPoolViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing IP address pools.
-    
+
     Provides CRUD operations for IP pools within subnets.
     """
 
@@ -202,22 +206,22 @@ class IPPoolViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Filter by subnet if provided."""
         queryset = super().get_queryset()
-        
+
         subnet_id = self.request.query_params.get("subnet")
         if subnet_id:
             queryset = queryset.filter(subnet_id=subnet_id)
-        
+
         is_active = self.request.query_params.get("is_active")
         if is_active is not None:
             queryset = queryset.filter(is_active=is_active.lower() == "true")
-        
+
         return queryset
 
     @action(detail=True, methods=["get"])
     def utilization(self, request, pk=None):
         """Get pool utilization statistics."""
         from ..services.ip_pool import get_pool_utilization
-        
+
         pool = self.get_object()
         utilization = get_pool_utilization(pool.id)
         return Response(utilization, status=status.HTTP_200_OK)
@@ -227,12 +231,12 @@ class IPPoolViewSet(viewsets.ModelViewSet):
         """Assign an IP address from the pool."""
         from ..services.ip_pool import assign_ip_from_pool
         from ..serializers import IPAddressSerializer
-        
+
         pool = self.get_object()
         description = request.data.get("description")
-        
+
         ip_address = assign_ip_from_pool(pool.id, description)
-        
+
         if ip_address:
             serializer = IPAddressSerializer(ip_address)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -246,11 +250,9 @@ class IPPoolViewSet(viewsets.ModelViewSet):
     def utilization_all(self, request):
         """Get utilization for all pools."""
         from ..services.ip_pool import get_all_pools_utilization
-        
+
         subnet_id = request.query_params.get("subnet")
-        utilization = get_all_pools_utilization(
-            int(subnet_id) if subnet_id else None
-        )
+        utilization = get_all_pools_utilization(int(subnet_id) if subnet_id else None)
         return Response(utilization, status=status.HTTP_200_OK)
 
 
@@ -787,6 +789,51 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         results = search_by_hostname(hostname)
         serializer = IPAddressSerializer(results, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="reverse-dns")
+    def reverse_dns_lookup(self, request):
+        """
+        Perform reverse DNS lookup for an IP address.
+
+        GET /api/v1/ipam/ip-addresses/reverse-dns/?ip=192.168.1.1
+        Query params:
+            ip: IP address to lookup
+
+        Returns:
+            {
+                "ip_address": "192.168.1.1",
+                "hostname": "server.example.com" or null,
+                "found": true/false
+            }
+        """
+        from ..services.network_scanning import reverse_dns_lookup
+        import ipaddress
+
+        ip = request.query_params.get("ip")
+        if not ip:
+            return Response(
+                {"error": "ip parameter is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate IP address
+        try:
+            ipaddress.ip_address(ip)
+        except ValueError:
+            return Response(
+                {"error": f"Invalid IP address: {ip}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        hostname = reverse_dns_lookup(ip)
+        return Response(
+            {
+                "ip_address": ip,
+                "hostname": hostname,
+                "found": hostname is not None,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=False, methods=["post"])
     def import_addresses(self, request):

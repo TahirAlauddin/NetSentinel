@@ -8,6 +8,7 @@ from rest_framework import serializers
 
 from ..models import IPAddress
 from .subnet import SubnetSerializer
+from .ip_tag import IPTagSerializer
 
 
 class IPAddressSerializer(serializers.ModelSerializer):
@@ -23,6 +24,14 @@ class IPAddressSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     assigned_to_asset_detail = serializers.SerializerMethodField()
     assigned_by_detail = serializers.SerializerMethodField()
+    tags_detail = IPTagSerializer(source="tags", many=True, read_only=True)
+    tag_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=None,  # Will be set in __init__
+        source="tags",
+        write_only=True,
+        required=False,
+    )
 
     def get_assigned_to_asset_detail(self, obj):
         """Return asset details if assigned."""
@@ -45,6 +54,13 @@ class IPAddressSerializer(serializers.ModelSerializer):
             }
         return None
 
+    def __init__(self, *args, **kwargs):
+        """Initialize serializer and set tag queryset."""
+        super().__init__(*args, **kwargs)
+        # Set queryset for tag_ids field
+        from ..models import IPTag
+        self.fields["tag_ids"].queryset = IPTag.objects.filter(is_active=True)
+
     class Meta:
         model = IPAddress
         fields = [
@@ -60,6 +76,9 @@ class IPAddressSerializer(serializers.ModelSerializer):
             "assigned_by",
             "assigned_by_detail",
             "assigned_at",
+            "tags",
+            "tags_detail",
+            "tag_ids",
             "created_at",
             "updated_at",
         ]

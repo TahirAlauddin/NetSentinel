@@ -20,6 +20,13 @@ from .ip_address import IPAddressSerializer
 from .ip_assignment_history import IPAssignmentHistorySerializer
 from .ip_pool import IPPoolSerializer, IPPoolCreateUpdateSerializer
 from .ip_request import IPRequestSerializer, IPRequestCreateSerializer
+from .ip_tag import (
+    IPTagSerializer,
+    IPTagCreateUpdateSerializer,
+    IPAddressTagSerializer,
+    IPAddressTagCreateSerializer,
+    IPAddressWithTagsSerializer,
+)
 from .network_scan import (
     NetworkScanSerializer,
     NetworkScanCreateSerializer,
@@ -67,4 +74,9 @@ __all__ = [
     "DeviceTypeSerializer",
     "RackSerializer",
     "RackCreateUpdateSerializer",
+    "IPTagSerializer",
+    "IPTagCreateUpdateSerializer",
+    "IPAddressTagSerializer",
+    "IPAddressTagCreateSerializer",
+    "IPAddressWithTagsSerializer",
 ]
