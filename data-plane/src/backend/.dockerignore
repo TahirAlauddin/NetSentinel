@@ -1,36 +1,74 @@
-# Python ignores
-__pycache__
+# Python
+__pycache__/
 *.py[cod]
-*.pyc
-*.pyo
-*.pyd
+*$py.class
 *.so
-*.egg-info
-
-# Virtualenvs
-venv
-.venv
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+venv/
+env/
 ENV/
+.venv
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+/media
+/staticfiles
+*.pot
+*.pyc
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.env
 
 # Git
-.git
+.git/
 .gitignore
+.gitattributes
 
-# Env files
-.env*
-!.env.example
-
-# DB and media
-*.sqlite3
-media
-static
-
-# OS/editor
-.DS_Store
-Thumbs.db
-.vscode
-.idea
+# Documentation
+*.md
+docs/
+README*
 
 # Docker
 Dockerfile*
+docker-compose*.yml
+.dockerignore
 
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets and sensitive files
+*.pem
+*.key
+*.crt
+secrets/
+.secrets/

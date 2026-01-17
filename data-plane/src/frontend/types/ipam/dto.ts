@@ -3,8 +3,6 @@
  * Types for creating and updating IPAM entities
  */
 
-import { Subnet, VLAN, VRF, Customer } from "../ipam";
-
 /**
  * DTO for creating/updating a Subnet
  */

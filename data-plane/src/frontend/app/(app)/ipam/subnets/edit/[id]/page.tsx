@@ -45,8 +45,6 @@ export default function EditSubnetPage() {
         throw new Error(response.error);
       }
       router.push("/ipam/subnets");
-    } catch (err) {
-      throw err;
     } finally {
       setSaving(false);
     }

@@ -53,9 +53,12 @@ export function IPAssignmentDialog({
   const loadAssets = async () => {
     try {
       const response = await api.get("/assets/");
-      if (response.data && Array.isArray(response.data.results || response.data)) {
-        const assetsData = response.data.results || response.data;
-        setAssets(assetsData);
+      if (response.data) {
+        const data = response.data as { results?: Array<{ id: number; name: string; asset_tag?: string | null }> } | Array<{ id: number; name: string; asset_tag?: string | null }>;
+        const assetsData = Array.isArray(data) ? data : (data as { results?: Array<{ id: number; name: string; asset_tag?: string | null }> }).results || [];
+        if (Array.isArray(assetsData)) {
+          setAssets(assetsData);
+        }
       }
     } catch (error) {
       console.error("Error loading assets:", error);

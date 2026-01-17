@@ -45,8 +45,6 @@ export default function EditCustomerPage() {
         throw new Error(response.error);
       }
       router.push("/ipam/customers");
-    } catch (err) {
-      throw err;
     } finally {
       setSaving(false);
     }

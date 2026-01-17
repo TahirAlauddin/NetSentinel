@@ -45,8 +45,6 @@ export default function EditVlanPage() {
         throw new Error(response.error);
       }
       router.push("/ipam/vlans");
-    } catch (err) {
-      throw err;
     } finally {
       setSaving(false);
     }

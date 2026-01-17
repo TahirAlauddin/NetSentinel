@@ -8,8 +8,8 @@ from rest_framework import status
 from infrastructure.models import Location
 from ipam.models import IPAddress, Subnet, SubnetGroup
 from ipam.services.subnet_utilization import (
-    calculate_subnet_utilization,
     calculate_subnet_capacity,
+    calculate_subnet_utilization,
     get_all_subnets_utilization,
     get_utilization_summary,
 )
@@ -101,14 +101,17 @@ class TestSubnetUtilizationService:
         assert len(capacity["projected_usage"]) == 12
         assert capacity["growth_rate"] == 0.05
         # Projected usage should increase over time
-        assert capacity["projected_usage"][11]["projected_used"] > capacity["projected_usage"][0]["projected_used"]
+        assert (
+            capacity["projected_usage"][11]["projected_used"]
+            > capacity["projected_usage"][0]["projected_used"]
+        )
 
     def test_get_all_subnets_utilization(self, subnet):
         """Test getting utilization for all subnets."""
         # Create another subnet
         location = Location.objects.create(name="Location 2", city="City 2")
         group = SubnetGroup.objects.create(name="Group 2")
-        subnet2 = Subnet.objects.create(
+        Subnet.objects.create(
             network="10.0.0.0/24",
             group=group,
             location=location,
@@ -121,13 +124,15 @@ class TestSubnetUtilizationService:
 
         assert len(utilizations) == 2
         # Should be sorted by utilization (descending)
-        assert utilizations[0]["utilization_percentage"] >= utilizations[1]["utilization_percentage"]
+        assert (
+            utilizations[0]["utilization_percentage"] >= utilizations[1]["utilization_percentage"]
+        )
 
     def test_get_all_subnets_utilization_with_filters(self, subnet):
         """Test getting utilization with filters."""
         location = Location.objects.create(name="Location 2", city="City 2")
         group = SubnetGroup.objects.create(name="Group 2")
-        subnet2 = Subnet.objects.create(
+        Subnet.objects.create(
             network="10.0.0.0/24",
             group=group,
             location=location,
@@ -208,19 +213,19 @@ class TestSubnetUtilizationViews:
         assert len(response.data["projected_usage"]) == 12
 
     def test_get_all_subnets_utilization(self, authenticated_api_client, subnet):
-        """Test GET /api/v1/ipam/subnets/utilization/all/ endpoint."""
+        """Test GET /api/v1/ipam/subnets/utilization_all/ endpoint."""
         # Create some IPs
         IPAddress.objects.create(address="192.168.1.1", subnet=subnet, status="assigned")
 
-        response = authenticated_api_client.get("/api/v1/ipam/subnets/utilization/all/")
+        response = authenticated_api_client.get("/api/v1/ipam/subnets/utilization_all/")
 
         assert response.status_code == status.HTTP_200_OK
         assert isinstance(response.data, list)
         assert len(response.data) >= 1
 
     def test_get_utilization_summary(self, authenticated_api_client, subnet):
-        """Test GET /api/v1/ipam/subnets/utilization/summary/ endpoint."""
-        response = authenticated_api_client.get("/api/v1/ipam/subnets/utilization/summary/")
+        """Test GET /api/v1/ipam/subnets/utilization_summary/ endpoint."""
+        response = authenticated_api_client.get("/api/v1/ipam/subnets/utilization_summary/")
 
         assert response.status_code == status.HTTP_200_OK
         assert "total_subnets" in response.data

@@ -6,12 +6,34 @@ Includes filtering, range search, conflict detection, and DNS integration.
 """
 
 import ipaddress
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 from django.db.models import Q
-from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 
-from ..models import IPAddress, Subnet, DNSRecord
+from ..models import DNSRecord, IPAddress, Subnet
+
+
+def _apply_query_filter(queryset, query: str):
+    """Apply text query filter to queryset."""
+    try:
+        ip_obj = ipaddress.ip_address(query)
+        return queryset.filter(address=str(ip_obj))
+    except ValueError:
+        # Not an IP, search in description and asset name
+        return queryset.filter(
+            Q(description__icontains=query)
+            | Q(assigned_to_asset__name__icontains=query)
+            | Q(address__icontains=query)
+        )
+
+
+def _apply_additional_filters(queryset, filters: Dict):
+    """Apply additional filters from dictionary."""
+    if "vlan_id" in filters:
+        queryset = queryset.filter(subnet__vlan_id=filters["vlan_id"])
+    if "vrf_id" in filters:
+        queryset = queryset.filter(subnet__vrf_id=filters["vrf_id"])
+    return queryset
 
 
 def search_ip_addresses(
@@ -46,48 +68,25 @@ def search_ip_addresses(
 
     # Text search
     if query:
-        # Try to parse as IP address
-        try:
-            ip_obj = ipaddress.ip_address(query)
-            queryset = queryset.filter(address=str(ip_obj))
-        except ValueError:
-            # Not an IP, search in description and asset name
-            queryset = queryset.filter(
-                Q(description__icontains=query)
-                | Q(assigned_to_asset__name__icontains=query)
-                | Q(address__icontains=query)
-            )
+        queryset = _apply_query_filter(queryset, query)
 
-    # Status filter
+    # Apply standard filters
     if status:
         queryset = queryset.filter(status=status)
-
-    # Subnet filter
     if subnet_id:
         queryset = queryset.filter(subnet_id=subnet_id)
-
-    # Asset filter
     if assigned_to_asset:
         queryset = queryset.filter(assigned_to_asset_id=assigned_to_asset)
-
-    # Customer filter (via subnet)
     if customer_id:
         queryset = queryset.filter(subnet__customer_id=customer_id)
-
-    # Location filter (via subnet)
     if location_id:
         queryset = queryset.filter(subnet__location_id=location_id)
-
-    # IPv4/IPv6 filter
     if is_ipv6 is not None:
         queryset = queryset.filter(subnet__is_ipv6=is_ipv6)
 
     # Additional filters
     if filters:
-        if "vlan_id" in filters:
-            queryset = queryset.filter(subnet__vlan_id=filters["vlan_id"])
-        if "vrf_id" in filters:
-            queryset = queryset.filter(subnet__vrf_id=filters["vrf_id"])
+        queryset = _apply_additional_filters(queryset, filters)
 
     return list(queryset)
 
@@ -185,14 +184,18 @@ def detect_ip_conflicts(ip_address: str, exclude_subnet_id: Optional[int] = None
 
     conflict_list = []
     for ip_addr in conflicts:
-        conflict_list.append({
-            "ip_address": ip_addr.address,
-            "subnet_id": ip_addr.subnet.id if ip_addr.subnet else None,
-            "subnet_network": ip_addr.subnet.network if ip_addr.subnet else None,
-            "status": ip_addr.status,
-            "assigned_to_asset": ip_addr.assigned_to_asset.id if ip_addr.assigned_to_asset else None,
-            "description": ip_addr.description,
-        })
+        conflict_list.append(
+            {
+                "ip_address": ip_addr.address,
+                "subnet_id": ip_addr.subnet.id if ip_addr.subnet else None,
+                "subnet_network": ip_addr.subnet.network if ip_addr.subnet else None,
+                "status": ip_addr.status,
+                "assigned_to_asset": (
+                    ip_addr.assigned_to_asset.id if ip_addr.assigned_to_asset else None
+                ),
+                "description": ip_addr.description,
+            }
+        )
 
     return conflict_list
 
@@ -210,12 +213,19 @@ def get_ip_details(ip_address: str) -> Dict:
     try:
         ip_obj = ipaddress.ip_address(ip_address)
     except ValueError:
-        return {"error": f"Invalid IP address: {ip_address}"}
+        return {
+            "ip_address": ip_address,
+            "exists": False,
+            "error": f"Invalid IP address: {ip_address}",
+            "message": "IP address not found - invalid IP address format",
+        }
 
     # Get IP address record
-    ip_addr = IPAddress.objects.filter(address=str(ip_obj)).select_related(
-        "subnet", "assigned_to_asset", "assigned_by"
-    ).first()
+    ip_addr = (
+        IPAddress.objects.filter(address=str(ip_obj))
+        .select_related("subnet", "assigned_to_asset", "assigned_by")
+        .first()
+    )
 
     if not ip_addr:
         return {
@@ -228,14 +238,14 @@ def get_ip_details(ip_address: str) -> Dict:
     dns_records = DNSRecord.objects.filter(value=ip_address).select_related("zone")
 
     # Get conflicts
-    conflicts = detect_ip_conflicts(ip_address, exclude_subnet_id=ip_addr.subnet.id if ip_addr.subnet else None)
+    conflicts = detect_ip_conflicts(
+        ip_address, exclude_subnet_id=ip_addr.subnet.id if ip_addr.subnet else None
+    )
 
     # Get assignment history (if available)
-    assignment_history = []
-    if hasattr(ip_addr, "assignment_history"):
-        assignment_history = list(
-            ip_addr.assignment_history.all()[:10]  # Last 10 entries
-        )
+    # Note: assignment_history is available but not included in response
+    # if hasattr(ip_addr, "assignment_history"):
+    #     assignment_history = list(ip_addr.assignment_history.all()[:10])  # Last 10 entries
 
     return {
         "ip_address": ip_address,
@@ -247,10 +257,14 @@ def get_ip_details(ip_address: str) -> Dict:
         },
         "status": ip_addr.status,
         "description": ip_addr.description,
-        "assigned_to_asset": {
-            "id": ip_addr.assigned_to_asset.id if ip_addr.assigned_to_asset else None,
-            "name": ip_addr.assigned_to_asset.name if ip_addr.assigned_to_asset else None,
-        } if ip_addr.assigned_to_asset else None,
+        "assigned_to_asset": (
+            {
+                "id": ip_addr.assigned_to_asset.id if ip_addr.assigned_to_asset else None,
+                "name": ip_addr.assigned_to_asset.name if ip_addr.assigned_to_asset else None,
+            }
+            if ip_addr.assigned_to_asset
+            else None
+        ),
         "dns_records": [
             {
                 "name": record.name,
@@ -267,9 +281,7 @@ def get_ip_details(ip_address: str) -> Dict:
 
 
 def find_available_ips_in_subnet(
-    subnet_id: int,
-    count: int = 10,
-    exclude_ips: Optional[List[str]] = None
+    subnet_id: int, count: int = 10, exclude_ips: Optional[List[str]] = None
 ) -> List[str]:
     """
     Find available IP addresses in a subnet.

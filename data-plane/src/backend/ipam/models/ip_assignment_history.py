@@ -9,7 +9,7 @@ User = get_user_model()
 class IPAssignmentHistory(models.Model):
     """
     Model to track IP address assignment history.
-    
+
     Records all changes to IP address assignments including:
     - Initial assignments
     - Reassignments
@@ -37,7 +37,7 @@ class IPAssignmentHistory(models.Model):
         choices=ACTION_CHOICES,
         help_text="Action performed",
     )
-    
+
     # Assignment details
     assigned_to_asset = models.ForeignKey(
         "assets.Asset",
@@ -55,7 +55,7 @@ class IPAssignmentHistory(models.Model):
         related_name="previous_ip_assignments",
         help_text="Previous asset (for reassignments)",
     )
-    
+
     # Status tracking
     previous_status = models.CharField(
         max_length=20,
@@ -69,7 +69,7 @@ class IPAssignmentHistory(models.Model):
         null=True,
         help_text="New IP address status",
     )
-    
+
     # User tracking
     performed_by = models.ForeignKey(
         User,
@@ -79,7 +79,7 @@ class IPAssignmentHistory(models.Model):
         related_name="ip_assignment_actions",
         help_text="User who performed this action",
     )
-    
+
     # Notes
     reason = models.TextField(
         blank=True,
@@ -91,7 +91,7 @@ class IPAssignmentHistory(models.Model):
         null=True,
         help_text="Additional notes",
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

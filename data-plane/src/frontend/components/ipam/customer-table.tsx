@@ -17,6 +17,25 @@ interface CustomerTableProps {
 type SortField = "name" | "description" | "contact_email" | "contact_phone" | "created_at";
 type SortDirection = "asc" | "desc";
 
+const SortIcon = ({ 
+  field, 
+  currentSortField, 
+  sortDirection 
+}: { 
+  field: SortField; 
+  currentSortField: SortField; 
+  sortDirection: SortDirection;
+}) => {
+  if (currentSortField !== field) {
+    return <ArrowUpDown className="w-3 h-3 ml-1 text-muted-foreground" />;
+  }
+  return sortDirection === "asc" ? (
+    <ArrowUp className="w-3 h-3 ml-1" />
+  ) : (
+    <ArrowDown className="w-3 h-3 ml-1" />
+  );
+};
+
 export function CustomerTable({ customers, onEdit, onDelete, onAdd }: CustomerTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<SortField>("name");
@@ -39,8 +58,8 @@ export function CustomerTable({ customers, onEdit, onDelete, onAdd }: CustomerTa
     }
 
     filtered = [...filtered].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: string | number;
+      let bValue: string | number;
 
       switch (sortField) {
         case "name":
@@ -90,17 +109,6 @@ export function CustomerTable({ customers, onEdit, onDelete, onAdd }: CustomerTa
     }
   };
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) {
-      return <ArrowUpDown className="w-3 h-3 ml-1 text-muted-foreground" />;
-    }
-    return sortDirection === "asc" ? (
-      <ArrowUp className="w-3 h-3 ml-1" />
-    ) : (
-      <ArrowDown className="w-3 h-3 ml-1" />
-    );
-  };
-
   return (
     <Card className="p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -132,7 +140,7 @@ export function CustomerTable({ customers, onEdit, onDelete, onAdd }: CustomerTa
               >
                 <div className="flex items-center">
                   Title
-                  <SortIcon field="name" />
+                  <SortIcon field="name" currentSortField={sortField} sortDirection={sortDirection} />
                 </div>
               </th>
               <th
@@ -141,7 +149,7 @@ export function CustomerTable({ customers, onEdit, onDelete, onAdd }: CustomerTa
               >
                 <div className="flex items-center">
                   Address
-                  <SortIcon field="description" />
+                  <SortIcon field="description" currentSortField={sortField} sortDirection={sortDirection} />
                 </div>
               </th>
               <th
@@ -150,7 +158,7 @@ export function CustomerTable({ customers, onEdit, onDelete, onAdd }: CustomerTa
               >
                 <div className="flex items-center">
                   Contact
-                  <SortIcon field="contact_email" />
+                  <SortIcon field="contact_email" currentSortField={sortField} sortDirection={sortDirection} />
                 </div>
               </th>
               <th className="text-left py-3 px-4">Actions</th>

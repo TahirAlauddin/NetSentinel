@@ -15,6 +15,8 @@ export function Navigation({ items }: NavigationProps) {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [isDesktop, setIsDesktop] = useState(false)
   const itemRefs = useRef<Record<string, HTMLElement | null>>({})
+  const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const navigationLeaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Determine if a navigation item is active based on current pathname
   const isItemActive = useCallback((item: NavigationItem): boolean => {
@@ -77,23 +79,50 @@ export function Navigation({ items }: NavigationProps) {
 
   const handleItemHover = useCallback((itemLabel: string) => {
     if (isDesktop) {
+      // Clear any pending leave timeouts when hovering over an item
+      if (leaveTimeoutRef.current) {
+        clearTimeout(leaveTimeoutRef.current)
+        leaveTimeoutRef.current = null
+      }
+      if (navigationLeaveTimeoutRef.current) {
+        clearTimeout(navigationLeaveTimeoutRef.current)
+        navigationLeaveTimeoutRef.current = null
+      }
+      
       setHoveredItem(itemLabel)
       setExpandedItems(new Set([itemLabel]))
     }
   }, [isDesktop])
 
-  const handleItemLeave = () => {
+  const handleSubmenuEnter = useCallback(() => {
     if (isDesktop) {
-      // Use a ref to track the timeout so we can clear it if needed
-      const timeoutId = setTimeout(() => {
+      // Cancel any pending leave timeouts when entering submenu
+      if (leaveTimeoutRef.current) {
+        clearTimeout(leaveTimeoutRef.current)
+        leaveTimeoutRef.current = null
+      }
+      if (navigationLeaveTimeoutRef.current) {
+        clearTimeout(navigationLeaveTimeoutRef.current)
+        navigationLeaveTimeoutRef.current = null
+      }
+    }
+  }, [isDesktop])
+
+  const handleItemLeave = useCallback(() => {
+    if (isDesktop) {
+      // Clear any existing timeout
+      if (leaveTimeoutRef.current) {
+        clearTimeout(leaveTimeoutRef.current)
+      }
+      
+      // Set a new timeout with 500ms delay to allow time to move cursor to submenu
+      leaveTimeoutRef.current = setTimeout(() => {
         setHoveredItem(null)
         setExpandedItems(new Set())
-      }, 150)
-      
-      // Return cleanup function
-      return () => clearTimeout(timeoutId)
+        leaveTimeoutRef.current = null
+      }, 500)
     }
-  }
+  }, [isDesktop])
 
   const setItemRef = useCallback((itemLabel: string) => (el: HTMLElement | null) => {
     itemRefs.current[itemLabel] = el
@@ -111,11 +140,18 @@ export function Navigation({ items }: NavigationProps) {
       
       // Only close if mouse is not moving to a submenu
       if (!isMovingToSubmenu) {
+        // Clear any existing timeout
+        if (navigationLeaveTimeoutRef.current) {
+          clearTimeout(navigationLeaveTimeoutRef.current)
+        }
+        
         // Close all submenus when mouse leaves the navigation area
-        setTimeout(() => {
+        // Increased timeout to 500ms to allow time to move cursor to submenu
+        navigationLeaveTimeoutRef.current = setTimeout(() => {
           setHoveredItem(null)
           setExpandedItems(new Set())
-        }, 100)
+          navigationLeaveTimeoutRef.current = null
+        }, 500)
       }
     }
   }, [isDesktop])
@@ -143,6 +179,7 @@ export function Navigation({ items }: NavigationProps) {
                 onCloseSubmenu={closeSubmenu}
                 onItemHover={handleItemHover}
                 onItemLeave={handleItemLeave}
+                onSubmenuEnter={handleSubmenuEnter}
               />
             </div>
           )

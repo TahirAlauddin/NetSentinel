@@ -22,8 +22,6 @@ export default function NewVlanPage() {
         throw new Error(response.error);
       }
       router.push("/ipam/vlans");
-    } catch (err) {
-      throw err;
     } finally {
       setLoading(false);
     }

@@ -6,7 +6,17 @@ import pytest
 from rest_framework import status
 
 from infrastructure.models import Location
-from ipam.models import VLAN, VRF, Customer, DNSRecord, DNSZone, IPAddress, Subnet, SubnetGroup, FavoriteSubnet
+from ipam.models import (
+    VLAN,
+    VRF,
+    Customer,
+    DNSRecord,
+    DNSZone,
+    FavoriteSubnet,
+    IPAddress,
+    Subnet,
+    SubnetGroup,
+)
 
 
 @pytest.mark.api
@@ -445,12 +455,12 @@ class TestSubnetViewSet:
 
         response = authenticated_api_client.get("/api/v1/ipam/subnets/")
         assert response.status_code == status.HTTP_200_OK
-        
+
         # Find the subnets in the response
         results = response.data.get("results", response.data)
         subnet1_data = next(s for s in results if s["id"] == subnet1.id)
         subnet2_data = next(s for s in results if s["id"] == subnet2.id)
-        
+
         assert subnet1_data["is_favorite"] is True
         assert subnet2_data["is_favorite"] is False
 

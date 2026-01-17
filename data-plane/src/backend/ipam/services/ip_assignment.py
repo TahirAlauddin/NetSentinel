@@ -38,7 +38,18 @@ def assign_ip_to_asset(
     Raises:
         ValueError: If IP address is not available for assignment
     """
-    if ip_address.status not in ("available", "reserved"):
+    # Check if IP is already assigned to an asset
+    if ip_address.assigned_to_asset is not None:
+        # Allow reassignment if already assigned (handled below)
+        pass
+    elif ip_address.status == "assigned":
+        # Status is "assigned" but no asset assigned - not available for new assignment
+        raise ValueError(
+            f"IP address {ip_address.address} is not available for assignment "
+            f"(current status: {ip_address.get_status_display()})"
+        )
+    elif ip_address.status not in ("available", "reserved"):
+        # Other statuses are not available
         raise ValueError(
             f"IP address {ip_address.address} is not available for assignment "
             f"(current status: {ip_address.get_status_display()})"

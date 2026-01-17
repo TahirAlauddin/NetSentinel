@@ -7,7 +7,7 @@ from django.utils import timezone
 from rest_framework import status
 
 from infrastructure.models import Location
-from ipam.models import IPAddress, IPRequest, Subnet, SubnetGroup
+from ipam.models import IPRequest, Subnet, SubnetGroup
 from users.models import User
 
 
@@ -277,9 +277,7 @@ class TestIPRequestViews:
             status="completed",
         )
 
-        response = authenticated_api_client.get(
-            "/api/v1/ipam/ip-requests/?status=pending"
-        )
+        response = authenticated_api_client.get("/api/v1/ipam/ip-requests/?status=pending")
 
         assert response.status_code == status.HTTP_200_OK
         assert all(req["status"] == "pending" for req in response.data["results"])
@@ -307,9 +305,7 @@ class TestIPRequestViews:
             purpose="Request 2",
         )
 
-        response = authenticated_api_client.get(
-            f"/api/v1/ipam/subnets/{subnet.id}/ip-requests/"
-        )
+        response = authenticated_api_client.get(f"/api/v1/ipam/subnets/{subnet.id}/ip-requests/")
 
         assert response.status_code == status.HTTP_200_OK
         # Should only return requests for subnet, not subnet2

@@ -131,19 +131,26 @@ export const ipamMainSubmenuLinks = [
   { label: "VRF", href: "/ipam/vrfs" },
   { label: "Devices", href: "/ipam/devices" },
   { label: "IP Requests", href: "/ipam/ip-requests" },
+  { label: "Phone Numbers", href: "/ipam/phone-numbers" },
 ];
 
 export const ipamSubnetManagementSubmenuLinks = [
   { label: "Favourite Subnets", href: "/ipam/favourite-subnets" },
-  { label: "Scanned Networks", href: "/ipam/scanned-networks" },
+  // { label: "Scanned Networks", href: "/ipam/scanned-networks" },
   { label: "Subnet Masks", href: "/ipam/subnet-masks" },
   { label: "Temporary Shares", href: "/ipam/temporary-shares" },
   { label: "Inactive Hosts", href: "/ipam/inactive-hosts" },
   { label: "Duplicates", href: "/ipam/duplicates" },
-  { label: "Threshold", href: "/ipam/threshold" },
+  { label: "Threshold Monitoring", href: "/ipam/thresholds" },
+  { label: "IP Tags", href: "/ipam/ip-tags" },
+  { label: "Audit Logs", href: "/ipam/audit-logs" },
 ];
 
 export const ipamNetworkServicesSubmenuLinks = [
+  { label: "DHCP Scopes", href: "/ipam/dhcp-scopes" },
+  { label: "DHCP Leases", href: "/ipam/dhcp-leases" },
+  { label: "DHCP Reservations", href: "/ipam/dhcp-reservations" },
+  { label: "IP Pools", href: "/ipam/ip-pools" },
   { label: "NAT", href: "/ipam/nat" },
   { label: "Routing", href: "/ipam/routing" },
   { label: "Firewall Zones", href: "/ipam/firewall-zones" },

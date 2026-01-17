@@ -3,17 +3,16 @@ Tests for IP Address Assignment functionality.
 """
 
 import pytest
-from django.utils import timezone
 from rest_framework import status
 
 from assets.models import Asset, AssetCategory
 from infrastructure.models import Location
-from ipam.models import IPAddress, IPAssignmentHistory, Subnet, SubnetGroup
+from ipam.models import IPAddress, Subnet, SubnetGroup
 from ipam.services.ip_assignment import (
     assign_ip_to_asset,
     auto_assign_ip_from_subnet,
-    release_ip_from_asset,
     change_ip_status,
+    release_ip_from_asset,
 )
 from users.models import User
 
@@ -170,12 +169,34 @@ class TestIPAssignmentService:
 
     def test_auto_assign_fails_when_subnet_full(self, subnet, asset, user):
         """Test that auto-assign fails when subnet is full."""
-        # Fill the subnet (simplified - in reality would need to fill all 254 addresses)
-        # For this test, we'll just check the error handling
+        # Create IP addresses for all usable IPs in the subnet (192.168.1.1 to 192.168.1.254)
+        # We'll create a few to simulate a full subnet scenario
+        # In practice, we'd need to fill all 254 addresses, but for testing we'll just
+        # ensure no available IPs exist by marking all as used
+        from ipaddress import ip_network
+
+        network = ip_network(subnet.network, strict=False)
+        # Get all host addresses (excluding network and broadcast)
+        hosts = list(network.hosts())
+
+        # Create IP addresses for all hosts to simulate full subnet
+        for host in hosts:
+            IPAddress.objects.get_or_create(
+                address=str(host),
+                defaults={
+                    "subnet": subnet,
+                    "status": "assigned",  # Mark all as assigned
+                },
+            )
+
+        # Now try to auto-assign - should fail
         with pytest.raises(ValueError, match="No available IP addresses"):
-            # This will fail if we can't find an available IP
-            # In a real scenario, we'd need to fill the subnet first
-            pass
+            auto_assign_ip_from_subnet(
+                subnet=subnet,
+                asset=asset,
+                assigned_by=user,
+                reason="Should fail",
+            )
 
     def test_change_ip_status(self, ip_address, user):
         """Test changing IP address status."""

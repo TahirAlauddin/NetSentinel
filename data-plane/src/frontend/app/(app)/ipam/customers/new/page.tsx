@@ -22,8 +22,6 @@ export default function NewCustomerPage() {
         throw new Error(response.error);
       }
       router.push("/ipam/customers");
-    } catch (err) {
-      throw err;
     } finally {
       setLoading(false);
     }

@@ -45,8 +45,6 @@ export default function EditVrfPage() {
         throw new Error(response.error);
       }
       router.push("/ipam/vrfs");
-    } catch (err) {
-      throw err;
     } finally {
       setSaving(false);
     }

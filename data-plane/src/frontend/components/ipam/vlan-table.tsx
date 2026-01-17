@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Search, Plus, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { VLAN } from "@/types/ipam";
-import { cn } from "@/lib/utils";
 
 interface VlanTableProps {
   vlans: VLAN[];
@@ -17,6 +16,25 @@ interface VlanTableProps {
 
 type SortField = "vlan_id" | "name" | "description" | "location" | "created_at";
 type SortDirection = "asc" | "desc";
+
+const SortIcon = ({ 
+  field, 
+  currentSortField, 
+  sortDirection 
+}: { 
+  field: SortField; 
+  currentSortField: SortField; 
+  sortDirection: SortDirection;
+}) => {
+  if (currentSortField !== field) {
+    return <ArrowUpDown className="w-3 h-3 ml-1 text-muted-foreground" />;
+  }
+  return sortDirection === "asc" ? (
+    <ArrowUp className="w-3 h-3 ml-1" />
+  ) : (
+    <ArrowDown className="w-3 h-3 ml-1" />
+  );
+};
 
 export function VlanTable({ vlans, onEdit, onDelete, onAdd }: VlanTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,8 +58,8 @@ export function VlanTable({ vlans, onEdit, onDelete, onAdd }: VlanTableProps) {
     }
 
     filtered = [...filtered].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: string | number;
+      let bValue: string | number;
 
       switch (sortField) {
         case "vlan_id":
@@ -91,17 +109,6 @@ export function VlanTable({ vlans, onEdit, onDelete, onAdd }: VlanTableProps) {
     }
   };
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) {
-      return <ArrowUpDown className="w-3 h-3 ml-1 text-muted-foreground" />;
-    }
-    return sortDirection === "asc" ? (
-      <ArrowUp className="w-3 h-3 ml-1" />
-    ) : (
-      <ArrowDown className="w-3 h-3 ml-1" />
-    );
-  };
-
   return (
     <Card className="p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -133,7 +140,7 @@ export function VlanTable({ vlans, onEdit, onDelete, onAdd }: VlanTableProps) {
               >
                 <div className="flex items-center">
                   VLAN ID
-                  <SortIcon field="vlan_id" />
+                  <SortIcon field="vlan_id" currentSortField={sortField} sortDirection={sortDirection} />
                 </div>
               </th>
               <th
@@ -142,7 +149,7 @@ export function VlanTable({ vlans, onEdit, onDelete, onAdd }: VlanTableProps) {
               >
                 <div className="flex items-center">
                   Name
-                  <SortIcon field="name" />
+                  <SortIcon field="name" currentSortField={sortField} sortDirection={sortDirection} />
                 </div>
               </th>
               <th
@@ -151,7 +158,7 @@ export function VlanTable({ vlans, onEdit, onDelete, onAdd }: VlanTableProps) {
               >
                 <div className="flex items-center">
                   Description
-                  <SortIcon field="description" />
+                  <SortIcon field="description" currentSortField={sortField} sortDirection={sortDirection} />
                 </div>
               </th>
               <th
@@ -160,7 +167,7 @@ export function VlanTable({ vlans, onEdit, onDelete, onAdd }: VlanTableProps) {
               >
                 <div className="flex items-center">
                   Location
-                  <SortIcon field="location" />
+                  <SortIcon field="location" currentSortField={sortField} sortDirection={sortDirection} />
                 </div>
               </th>
               <th className="text-left py-3 px-4">Actions</th>
