@@ -24,30 +24,14 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RefreshCw, Play, Download, AlertCircle, CheckCircle2 } from "lucide-react";
+import { RefreshCw, Play, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { extractIpamArrayData } from "@/lib/ipam-utils";
-import type { Subnet } from "@/types/ipam";
+import type { Subnet, NetworkScan } from "@/types/ipam";
 
 const ipamApi = new IpamApiClient();
 
-interface NetworkScan {
-  id: number;
-  subnet: number;
-  subnet_detail?: {
-    id: number;
-    network: string;
-  };
-  scan_type: string;
-  status: string;
-  hosts_found: number;
-  hosts_new: number;
-  hosts_missing: number;
-  started_at?: string;
-  completed_at?: string;
-  created_at: string;
-}
 
 export default function ScannedNetworksPage() {
   const router = useRouter();
@@ -67,16 +51,12 @@ export default function ScannedNetworksPage() {
   const loadScans = async () => {
     setLoading(true);
     try {
-      // Note: This endpoint needs to be added to the API client
-      const response = await fetch("/api/v1/ipam/network-scans/", {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setScans(extractIpamArrayData(data));
+      const response = await ipamApi.getNetworkScans();
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      if (response.data) {
+        setScans(extractIpamArrayData<NetworkScan>(response.data));
       }
     } catch (error) {
       console.error("Error loading scans:", error);
@@ -105,25 +85,18 @@ export default function ScannedNetworksPage() {
 
     setScanning(true);
     try {
-      const response = await fetch("/api/v1/ipam/network-scans/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          subnet: parseInt(selectedSubnet),
-          scan_type: scanType,
-          timeout: timeout,
-        }),
+      const response = await ipamApi.createNetworkScan({
+        subnet: parseInt(selectedSubnet),
+        scan_type: scanType,
+        timeout: timeout,
       });
 
-      if (response.ok) {
-        toast.success("Network scan started");
-        await loadScans();
-      } else {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to start scan");
+      if (response.error) {
+        throw new Error(response.error);
       }
+
+      toast.success("Network scan started");
+      await loadScans();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to start scan");
     } finally {

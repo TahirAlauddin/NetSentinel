@@ -58,9 +58,7 @@ class IPAddressTagSerializer(serializers.ModelSerializer):
 
     tag_detail = IPTagSerializer(source="tag", read_only=True)
     ip_address_detail = serializers.SerializerMethodField()
-    applied_by_username = serializers.CharField(
-        source="applied_by.username", read_only=True
-    )
+    applied_by_username = serializers.CharField(source="applied_by.username", read_only=True)
 
     def get_ip_address_detail(self, obj):
         """Return basic IP address info."""
@@ -107,9 +105,7 @@ class IPAddressTagCreateSerializer(serializers.ModelSerializer):
         tag = data.get("tag")
 
         if ip_address and tag:
-            if IPAddressTag.objects.filter(
-                ip_address=ip_address, tag=tag
-            ).exists():
+            if IPAddressTag.objects.filter(ip_address=ip_address, tag=tag).exists():
                 raise serializers.ValidationError(
                     f"Tag '{tag.name}' is already applied to IP address {ip_address.address}"
                 )
@@ -121,13 +117,21 @@ class IPAddressWithTagsSerializer(serializers.ModelSerializer):
     """Extended IPAddress serializer that includes tags."""
 
     tags_detail = IPTagSerializer(source="tags", many=True, read_only=True)
-    tag_ids = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=IPTag.objects.filter(is_active=True),
-        source="tags",
-        write_only=True,
-        required=False,
-    )
+
+    def __init__(self, *args, **kwargs):
+        """Initialize serializer and set tag queryset."""
+        super().__init__(*args, **kwargs)
+        # Set queryset for tag_ids field
+        from ..models import IPTag
+
+        self.fields["tag_ids"] = serializers.PrimaryKeyRelatedField(
+            many=True,
+            queryset=IPTag.objects.filter(is_active=True),
+            source="tags",
+            write_only=True,
+            required=False,
+            allow_null=True,
+        )
 
     class Meta:
         model = IPAddress

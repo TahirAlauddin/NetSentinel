@@ -340,6 +340,210 @@ export interface IPPool {
   updated_at: string;
 }
 
+// IP Tag Types
+export interface IPTag {
+  id: number;
+  name: string;
+  description?: string | null;
+  color: "blue" | "green" | "red" | "yellow" | "purple" | "orange" | "pink" | "gray" | "indigo" | "teal";
+  color_display: string;
+  is_active: boolean;
+  usage_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IPAddressTag {
+  id: number;
+  ip_address: number;
+  ip_address_detail?: {
+    id: number;
+    address: string;
+    status: string;
+  };
+  tag: number;
+  tag_detail?: IPTag;
+  applied_by?: number | null;
+  applied_by_username?: string;
+  applied_at: string;
+  notes?: string | null;
+}
+
+// IP Audit Log Types
+export interface IPAuditLog {
+  id: number;
+  ip_address?: number | null;
+  ip_address_str: string;
+  ip_address_detail?: {
+    id: number;
+    address: string;
+    status: string;
+  } | {
+    address: string;
+    subnet_id?: number | null;
+    subnet_network?: string | null;
+  };
+  action: "created" | "updated" | "deleted" | "assigned" | "released" | "status_changed" | "description_changed" | "subnet_changed" | "tag_added" | "tag_removed" | "note_added" | "note_updated" | "note_deleted";
+  action_display: string;
+  user?: number | null;
+  username?: string | null;
+  user_display: string;
+  field_name?: string | null;
+  old_value?: string | null;
+  new_value?: string | null;
+  reason?: string | null;
+  metadata?: Record<string, unknown>;
+  subnet_id?: number | null;
+  subnet_network?: string | null;
+  created_at: string;
+}
+
+export interface IPAuditLogFilter {
+  id: number;
+  name: string;
+  user: number;
+  filters: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+// IP Note Types
+export interface IPNote {
+  id: number;
+  ip_address: number;
+  title?: string | null;
+  content: string;
+  is_public: boolean;
+  is_pinned: boolean;
+  created_by?: number | null;
+  created_by_username?: string;
+  created_by_full_name?: string;
+  updated_by?: number | null;
+  updated_by_username?: string;
+  updated_by_full_name?: string;
+  version: number;
+  parent_note?: number | null;
+  attachments?: IPNoteAttachment[];
+  comments?: IPNoteComment[];
+  comments_count?: number;
+  versions_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IPNoteAttachment {
+  id: number;
+  note: number;
+  file: string;
+  filename: string;
+  file_size: number;
+  content_type?: string | null;
+  uploaded_by?: number | null;
+  uploaded_by_username?: string;
+  uploaded_at: string;
+}
+
+export interface IPNoteComment {
+  id: number;
+  note: number;
+  content: string;
+  author?: number | null;
+  author_username?: string;
+  author_full_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Subnet Threshold Types
+export interface SubnetThreshold {
+  id: number;
+  subnet: number;
+  subnet_detail?: Subnet;
+  warning_threshold: number;
+  critical_threshold: number;
+  enable_alerts: boolean;
+  alert_email?: string | null;
+  notify_on_warning: boolean;
+  notify_on_critical: boolean;
+  notify_on_recovery: boolean;
+  last_checked?: string | null;
+  last_alert_sent?: string | null;
+  current_status: "healthy" | "warning" | "critical";
+  current_status_display: string;
+  alerts_count?: number;
+  unacknowledged_alerts_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubnetThresholdAlert {
+  id: number;
+  threshold: number;
+  threshold_detail?: {
+    id: number;
+    subnet_id: number;
+    subnet_network: string;
+    warning_threshold: number;
+    critical_threshold: number;
+  };
+  alert_type: "warning" | "critical" | "recovery";
+  alert_type_display: string;
+  utilization_percentage: number;
+  message: string;
+  sent_to?: string | null;
+  sent_at: string;
+  acknowledged: boolean;
+  acknowledged_by?: number | null;
+  acknowledged_by_username?: string;
+  acknowledged_at?: string | null;
+}
+
+// Network Scan Types
+export interface NetworkScan {
+  id: number;
+  subnet: number;
+  subnet_detail?: Subnet;
+  scan_type: "ping" | "arp" | "tcp" | "full";
+  scan_type_display: string;
+  status: "pending" | "running" | "completed" | "failed" | "cancelled";
+  status_display: string;
+  started_by?: number | null;
+  started_by_detail?: {
+    id: number;
+    username: string;
+    email: string;
+  };
+  timeout: number;
+  max_hosts?: number | null;
+  hosts_found: number;
+  hosts_new: number;
+  hosts_missing: number;
+  started_at?: string | null;
+  completed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  error_message?: string | null;
+  duration?: number | null;
+  results_count?: number;
+}
+
+export interface ScanResult {
+  id: number;
+  scan: number;
+  scan_detail?: NetworkScan;
+  ip_address: string;
+  is_active: boolean;
+  response_time?: number | null;
+  mac_address?: string | null;
+  hostname?: string | null;
+  vendor?: string | null;
+  in_ipam: boolean;
+  ipam_status?: string | null;
+  open_ports?: number[];
+  notes?: string | null;
+  discovered_at: string;
+}
+
 export interface SubnetMaskInfo {
   bitmask: number;
   netmask: string;

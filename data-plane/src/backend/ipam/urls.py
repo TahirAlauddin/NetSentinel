@@ -30,6 +30,9 @@ from .views.dhcp_views import (
     DHCPOptionViewSet,
 )
 from .views.ip_tag_views import IPTagViewSet, IPAddressTagViewSet
+from .views.ip_audit_log_views import IPAuditLogViewSet, IPAuditLogFilterViewSet
+from .views.ip_note_views import IPNoteViewSet, IPNoteAttachmentViewSet, IPNoteCommentViewSet
+from .views.subnet_threshold_views import SubnetThresholdViewSet, SubnetThresholdAlertViewSet
 from .views.network_scan_views import NetworkScanViewSet, ScanResultViewSet
 from .views.subnet_mask_views import subnet_masks_list, subnet_mask_detail
 
@@ -85,6 +88,19 @@ router.register(r"devices", DeviceViewSet, basename="device")
 # IP Tag routers
 router.register(r"ip-tags", IPTagViewSet, basename="ip-tag")
 router.register(r"ip-address-tags", IPAddressTagViewSet, basename="ip-address-tag")
+
+# IP Audit Log routers
+router.register(r"ip-audit-logs", IPAuditLogViewSet, basename="ip-audit-log")
+router.register(r"ip-audit-log-filters", IPAuditLogFilterViewSet, basename="ip-audit-log-filter")
+
+# IP Note routers
+router.register(r"ip-notes", IPNoteViewSet, basename="ip-note")
+router.register(r"ip-note-attachments", IPNoteAttachmentViewSet, basename="ip-note-attachment")
+router.register(r"ip-note-comments", IPNoteCommentViewSet, basename="ip-note-comment")
+
+# Subnet Threshold routers
+router.register(r"subnet-thresholds", SubnetThresholdViewSet, basename="subnet-threshold")
+router.register(r"subnet-threshold-alerts", SubnetThresholdAlertViewSet, basename="subnet-threshold-alert")
 
 # Nested router for network scans under subnets
 subnets_router_scans = routers.NestedDefaultRouter(router, r"subnets", lookup="subnet")

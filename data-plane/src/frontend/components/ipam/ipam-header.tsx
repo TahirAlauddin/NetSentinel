@@ -54,7 +54,7 @@ const sectionIcons: Record<string, React.ComponentType<{ className?: string }>> 
   "/ipam/ip-requests": FileCheck,
   // Subnet Management
   "/ipam/favourite-subnets": Star,
-  "/ipam/scanned-networks": Eye,
+  // "/ipam/scanned-networks": Eye,
   "/ipam/subnet-masks": Copy,
   "/ipam/temporary-shares": Share2,
   "/ipam/inactive-hosts": AlertCircle,
@@ -212,7 +212,7 @@ function generateBreadcrumbsFromPath(pathname: string): Array<{ label: string; h
     
     // Subnet Management category
     "favourite-subnets": { category: "Subnet Management", label: "Favourite Subnets", href: "/ipam/favourite-subnets" },
-    "scanned-networks": { category: "Subnet Management", label: "Scanned Networks", href: "/ipam/scanned-networks" },
+    // "scanned-networks": { category: "Subnet Management", label: "Scanned Networks", href: "/ipam/scanned-networks" },
     "subnet-masks": { category: "Subnet Management", label: "Subnet Masks", href: "/ipam/subnet-masks" },
     "temporary-shares": { category: "Subnet Management", label: "Temporary Shares", href: "/ipam/temporary-shares" },
     "inactive-hosts": { category: "Subnet Management", label: "Inactive Hosts", href: "/ipam/inactive-hosts" },

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IpamApiClient } from "@/lib/api-client/ipam";
-import { extractIpamArrayData } from "@/lib/utils";
+import { extractIpamArrayData } from "@/lib/ipam-utils";
 import type { IPAddress, Subnet, Customer } from "@/types/ipam";
 import { toast } from "sonner";
 import { listAssets } from "@/app/(app)/assets/actions";

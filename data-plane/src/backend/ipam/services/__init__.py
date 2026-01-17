@@ -44,6 +44,17 @@ from .subnet_utils import (
     get_next_available_ip,
     is_ip_in_subnet,
 )
+from .ip_audit_log import (
+    log_ip_action,
+    get_audit_logs,
+    get_audit_log_summary,
+)
+from .subnet_threshold import (
+    check_subnet_threshold,
+    check_all_thresholds,
+    get_threshold_summary,
+    send_threshold_alert,
+)
 
 __all__ = [
     # Duplicates Detection
@@ -82,4 +93,13 @@ __all__ = [
     "calculate_subnet_overlap",
     "get_next_available_ip",
     "is_ip_in_subnet",
+    # IP Audit Log
+    "log_ip_action",
+    "get_audit_logs",
+    "get_audit_log_summary",
+    # Subnet Threshold
+    "check_subnet_threshold",
+    "check_all_thresholds",
+    "get_threshold_summary",
+    "send_threshold_alert",
 ]

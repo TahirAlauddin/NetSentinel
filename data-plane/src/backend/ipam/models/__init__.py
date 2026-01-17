@@ -9,10 +9,13 @@ from .ip_assignment_history import IPAssignmentHistory
 from .ip_pool import IPPool
 from .ip_request import IPRequest
 from .ip_tag import IPTag, IPAddressTag
+from .ip_audit_log import IPAuditLog, IPAuditLogFilter
+from .ip_note import IPNote, IPNoteAttachment, IPNoteComment
 from .network_scan import NetworkScan, ScanResult
 from .phone_number import PhoneNumberRange
 from .subnet import Subnet
 from .subnet_group import SubnetGroup
+from .subnet_threshold import SubnetThreshold, SubnetThresholdAlert
 from .vlan import VLAN
 from .vrf import VRF
 
@@ -41,4 +44,11 @@ __all__ = [
     "Rack",
     "IPTag",
     "IPAddressTag",
+    "IPAuditLog",
+    "IPAuditLogFilter",
+    "IPNote",
+    "IPNoteAttachment",
+    "IPNoteComment",
+    "SubnetThreshold",
+    "SubnetThresholdAlert",
 ]

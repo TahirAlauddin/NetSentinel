@@ -36,6 +36,17 @@ import {
   Device,
   DeviceType,
   Rack,
+  IPTag,
+  IPAddressTag,
+  IPAuditLog,
+  IPAuditLogFilter,
+  IPNote,
+  IPNoteAttachment,
+  IPNoteComment,
+  SubnetThreshold,
+  SubnetThresholdAlert,
+  NetworkScan,
+  ScanResult,
 } from "@/types/ipam";
 
 /**
@@ -1647,6 +1658,566 @@ export class IpamApiClient extends BaseApiClient {
    */
   async deleteRack<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
     return this.delete<T>(`/ipam/racks/${id}/`);
+  }
+
+  // ==================== IP Tag Management ====================
+
+  /**
+   * Get all IP tags
+   * @param params - Optional query parameters for filtering/pagination
+   * @returns List of IP tags or paginated response
+   */
+  async getIPTags<T = IPTag[] | PaginatedResponse<IPTag>>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/ip-tags${queryString}`);
+  }
+
+  /**
+   * Get a single IP tag by ID
+   * @param id - IP tag ID
+   * @returns IP tag details
+   */
+  async getIPTag<T = IPTag>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/ip-tags/${id}/`);
+  }
+
+  /**
+   * Create a new IP tag
+   * @param tag - IP tag data
+   * @returns Created IP tag
+   */
+  async createIPTag<T = IPTag>(tag: Partial<IPTag>): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/ip-tags/", tag);
+  }
+
+  /**
+   * Update an IP tag
+   * @param id - IP tag ID
+   * @param tag - Updated IP tag data
+   * @returns Updated IP tag
+   */
+  async updateIPTag<T = IPTag>(
+    id: number | string,
+    tag: Partial<IPTag>
+  ): Promise<BaseApiResponse<T>> {
+    return this.put<T>(`/ipam/ip-tags/${id}/`, tag);
+  }
+
+  /**
+   * Delete an IP tag
+   * @param id - IP tag ID
+   * @returns Deletion response
+   */
+  async deleteIPTag<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/ip-tags/${id}/`);
+  }
+
+  /**
+   * Get IP addresses using a tag
+   * @param id - IP tag ID
+   * @returns List of IP addresses
+   */
+  async getIPTagUsage<T = IPAddress[]>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/ip-tags/${id}/usage/`);
+  }
+
+  /**
+   * Get IP address tags
+   * @param params - Optional query parameters
+   * @returns List of IP address tags
+   */
+  async getIPAddressTags<T = IPAddressTag[]>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/ip-address-tags${queryString}`);
+  }
+
+  /**
+   * Apply a tag to an IP address
+   * @param data - Tag application data
+   * @returns Created IP address tag
+   */
+  async applyIPTag<T = IPAddressTag>(
+    data: { ip_address: number; tag: number; notes?: string }
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/ip-address-tags/", data);
+  }
+
+  /**
+   * Remove a tag from an IP address
+   * @param id - IP address tag ID
+   * @returns Deletion response
+   */
+  async removeIPTag<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/ip-address-tags/${id}/`);
+  }
+
+  /**
+   * Bulk apply tags to IP addresses
+   * @param data - Bulk application data
+   * @returns Bulk operation result
+   */
+  async bulkApplyIPTags<T = { created: number; created_ids: number[]; errors: string[] }>(
+    data: { ip_address_ids: number[]; tag_ids: number[]; notes?: string }
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/ip-address-tags/bulk-apply/", data);
+  }
+
+  /**
+   * Bulk remove tags from IP addresses
+   * @param data - Bulk removal data
+   * @returns Bulk operation result
+   */
+  async bulkRemoveIPTags<T = { removed: number; errors: string[] }>(
+    data: { ip_address_ids: number[]; tag_ids: number[] }
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/ip-address-tags/bulk-remove/", data);
+  }
+
+  // ==================== IP Audit Log ====================
+
+  /**
+   * Get IP audit logs
+   * @param params - Optional query parameters for filtering
+   * @returns List of audit logs
+   */
+  async getIPAuditLogs<T = IPAuditLog[]>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/ip-audit-logs${queryString}`);
+  }
+
+  /**
+   * Get audit log summary
+   * @param params - Optional query parameters
+   * @returns Audit log summary
+   */
+  async getIPAuditLogSummary<T = unknown>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/ip-audit-logs/summary${queryString}`);
+  }
+
+  /**
+   * Export audit logs to CSV
+   * @param params - Optional query parameters
+   * @returns CSV file blob
+   */
+  async exportIPAuditLogs(params?: Record<string, unknown>): Promise<Blob> {
+    const queryString = this.buildQueryString(params);
+    const session = await this.getSession();
+    const accessToken = session?.accessToken;
+
+    if (!accessToken) {
+      throw new Error("Not authenticated");
+    }
+
+    const response = await fetch(
+      `${this.getApiBaseUrl()}/api/v1/ipam/ip-audit-logs/export/${queryString}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to export audit logs");
+    }
+
+    return response.blob();
+  }
+
+  /**
+   * Get saved audit log filters
+   * @returns List of saved filters
+   */
+  async getIPAuditLogFilters<T = IPAuditLogFilter[]>(): Promise<BaseApiResponse<T>> {
+    return this.get<T>("/ipam/ip-audit-log-filters/");
+  }
+
+  /**
+   * Create a saved audit log filter
+   * @param filter - Filter data
+   * @returns Created filter
+   */
+  async createIPAuditLogFilter<T = IPAuditLogFilter>(
+    filter: { name: string; filters: Record<string, unknown> }
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/ip-audit-log-filters/", filter);
+  }
+
+  /**
+   * Delete a saved audit log filter
+   * @param id - Filter ID
+   * @returns Deletion response
+   */
+  async deleteIPAuditLogFilter<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/ip-audit-log-filters/${id}/`);
+  }
+
+  // ==================== IP Notes ====================
+
+  /**
+   * Get IP notes
+   * @param params - Optional query parameters
+   * @returns List of IP notes
+   */
+  async getIPNotes<T = IPNote[]>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/ip-notes${queryString}`);
+  }
+
+  /**
+   * Get a single IP note by ID
+   * @param id - IP note ID
+   * @returns IP note details
+   */
+  async getIPNote<T = IPNote>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/ip-notes/${id}/`);
+  }
+
+  /**
+   * Create a new IP note
+   * @param note - IP note data
+   * @returns Created IP note
+   */
+  async createIPNote<T = IPNote>(note: Partial<IPNote>): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/ip-notes/", note);
+  }
+
+  /**
+   * Update an IP note
+   * @param id - IP note ID
+   * @param note - Updated IP note data
+   * @returns Updated IP note
+   */
+  async updateIPNote<T = IPNote>(
+    id: number | string,
+    note: Partial<IPNote>
+  ): Promise<BaseApiResponse<T>> {
+    return this.put<T>(`/ipam/ip-notes/${id}/`, note);
+  }
+
+  /**
+   * Delete an IP note
+   * @param id - IP note ID
+   * @returns Deletion response
+   */
+  async deleteIPNote<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/ip-notes/${id}/`);
+  }
+
+  /**
+   * Get note versions
+   * @param id - IP note ID
+   * @returns List of note versions
+   */
+  async getIPNoteVersions<T = IPNote[]>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/ip-notes/${id}/versions/`);
+  }
+
+  /**
+   * Pin or unpin a note
+   * @param id - IP note ID
+   * @returns Updated IP note
+   */
+  async pinIPNote<T = IPNote>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.post<T>(`/ipam/ip-notes/${id}/pin/`, {});
+  }
+
+  /**
+   * Upload a note attachment
+   * @param data - Form data with file and note ID
+   * @returns Created attachment
+   */
+  async uploadIPNoteAttachment<T = IPNoteAttachment>(
+    data: FormData
+  ): Promise<BaseApiResponse<T>> {
+    // Don't set Content-Type for FormData - browser will set it with boundary
+    return this.post<T>("/ipam/ip-note-attachments/", data);
+  }
+
+  /**
+   * Delete a note attachment
+   * @param id - Attachment ID
+   * @returns Deletion response
+   */
+  async deleteIPNoteAttachment<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/ip-note-attachments/${id}/`);
+  }
+
+  /**
+   * Get note comments
+   * @param params - Optional query parameters
+   * @returns List of comments
+   */
+  async getIPNoteComments<T = IPNoteComment[]>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/ip-note-comments${queryString}`);
+  }
+
+  /**
+   * Create a note comment
+   * @param comment - Comment data
+   * @returns Created comment
+   */
+  async createIPNoteComment<T = IPNoteComment>(
+    comment: { note: number; content: string }
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/ip-note-comments/", comment);
+  }
+
+  /**
+   * Update a note comment
+   * @param id - Comment ID
+   * @param comment - Updated comment data
+   * @returns Updated comment
+   */
+  async updateIPNoteComment<T = IPNoteComment>(
+    id: number | string,
+    comment: { content: string }
+  ): Promise<BaseApiResponse<T>> {
+    return this.put<T>(`/ipam/ip-note-comments/${id}/`, comment);
+  }
+
+  /**
+   * Delete a note comment
+   * @param id - Comment ID
+   * @returns Deletion response
+   */
+  async deleteIPNoteComment<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/ip-note-comments/${id}/`);
+  }
+
+  // ==================== Subnet Thresholds ====================
+
+  /**
+   * Get subnet thresholds
+   * @param params - Optional query parameters
+   * @returns List of subnet thresholds
+   */
+  async getSubnetThresholds<T = SubnetThreshold[]>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/subnet-thresholds${queryString}`);
+  }
+
+  /**
+   * Get a single subnet threshold by ID
+   * @param id - Threshold ID
+   * @returns Threshold details
+   */
+  async getSubnetThreshold<T = SubnetThreshold>(
+    id: number | string
+  ): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/subnet-thresholds/${id}/`);
+  }
+
+  /**
+   * Create a subnet threshold
+   * @param threshold - Threshold data
+   * @returns Created threshold
+   */
+  async createSubnetThreshold<T = SubnetThreshold>(
+    threshold: Partial<SubnetThreshold>
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/subnet-thresholds/", threshold);
+  }
+
+  /**
+   * Update a subnet threshold
+   * @param id - Threshold ID
+   * @param threshold - Updated threshold data
+   * @returns Updated threshold
+   */
+  async updateSubnetThreshold<T = SubnetThreshold>(
+    id: number | string,
+    threshold: Partial<SubnetThreshold>
+  ): Promise<BaseApiResponse<T>> {
+    return this.put<T>(`/ipam/subnet-thresholds/${id}/`, threshold);
+  }
+
+  /**
+   * Delete a subnet threshold
+   * @param id - Threshold ID
+   * @returns Deletion response
+   */
+  async deleteSubnetThreshold<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/subnet-thresholds/${id}/`);
+  }
+
+  /**
+   * Manually check a subnet threshold
+   * @param id - Threshold ID
+   * @returns Check result
+   */
+  async checkSubnetThreshold<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.post<T>(`/ipam/subnet-thresholds/${id}/check/`, {});
+  }
+
+  /**
+   * Check all subnet thresholds
+   * @returns Check results
+   */
+  async checkAllSubnetThresholds<T = unknown>(): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/subnet-thresholds/check-all/", {});
+  }
+
+  /**
+   * Get threshold summary
+   * @param params - Optional query parameters
+   * @returns Summary statistics
+   */
+  async getSubnetThresholdSummary<T = unknown>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/subnet-thresholds/summary${queryString}`);
+  }
+
+  /**
+   * Get subnet threshold alerts
+   * @param params - Optional query parameters
+   * @returns List of alerts
+   */
+  async getSubnetThresholdAlerts<T = SubnetThresholdAlert[]>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/subnet-threshold-alerts${queryString}`);
+  }
+
+  /**
+   * Acknowledge a threshold alert
+   * @param id - Alert ID
+   * @returns Updated alert
+   */
+  async acknowledgeSubnetThresholdAlert<T = SubnetThresholdAlert>(
+    id: number | string
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>(`/ipam/subnet-threshold-alerts/${id}/acknowledge/`, {});
+  }
+
+  /**
+   * Bulk acknowledge threshold alerts
+   * @param alertIds - Array of alert IDs
+   * @returns Bulk operation result
+   */
+  async bulkAcknowledgeSubnetThresholdAlerts<T = { acknowledged: number }>(
+    alertIds: number[]
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/subnet-threshold-alerts/bulk-acknowledge/", {
+      alert_ids: alertIds,
+    });
+  }
+
+  // ==================== Network Scans ====================
+
+  /**
+   * Get all network scans
+   * @param params - Optional query parameters for filtering/pagination
+   * @returns List of network scans or paginated response
+   */
+  async getNetworkScans<T = NetworkScan[] | PaginatedResponse<NetworkScan>>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/network-scans${queryString}`);
+  }
+
+  /**
+   * Get a single network scan by ID
+   * @param id - Network scan ID
+   * @returns Network scan details
+   */
+  async getNetworkScan<T = NetworkScan>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/network-scans/${id}/`);
+  }
+
+  /**
+   * Create a new network scan
+   * @param scan - Network scan data
+   * @returns Created network scan
+   */
+  async createNetworkScan<T = NetworkScan>(
+    scan: { subnet: number; scan_type?: string; timeout?: number; max_hosts?: number | null }
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>("/ipam/network-scans/", scan);
+  }
+
+  /**
+   * Delete a network scan
+   * @param id - Network scan ID
+   * @returns Deletion response
+   */
+  async deleteNetworkScan<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.delete<T>(`/ipam/network-scans/${id}/`);
+  }
+
+  /**
+   * Get scan results for a network scan
+   * @param id - Network scan ID
+   * @returns List of scan results
+   */
+  async getNetworkScanResults<T = ScanResult[]>(
+    id: number | string
+  ): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/network-scans/${id}/results/`);
+  }
+
+  /**
+   * Get scan summary for a network scan
+   * @param id - Network scan ID
+   * @returns Scan summary statistics
+   */
+  async getNetworkScanSummary<T = unknown>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/network-scans/${id}/summary/`);
+  }
+
+  /**
+   * Import scan results into IPAM
+   * @param id - Network scan ID
+   * @param options - Import options
+   * @returns Import results
+   */
+  async importNetworkScanResults<T = unknown>(
+    id: number | string,
+    options?: { import_new_hosts?: boolean; update_existing?: boolean }
+  ): Promise<BaseApiResponse<T>> {
+    return this.post<T>(`/ipam/network-scans/${id}/import_results/`, options || {});
+  }
+
+  /**
+   * Get all scan results
+   * @param params - Optional query parameters
+   * @returns List of scan results
+   */
+  async getScanResults<T = ScanResult[]>(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    const queryString = this.buildQueryString(params);
+    return this.get<T>(`/ipam/scan-results${queryString}`);
+  }
+
+  /**
+   * Get a single scan result by ID
+   * @param id - Scan result ID
+   * @returns Scan result details
+   */
+  async getScanResult<T = ScanResult>(id: number | string): Promise<BaseApiResponse<T>> {
+    return this.get<T>(`/ipam/scan-results/${id}/`);
   }
 }
 

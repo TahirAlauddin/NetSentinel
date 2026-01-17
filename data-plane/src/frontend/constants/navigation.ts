@@ -136,12 +136,14 @@ export const ipamMainSubmenuLinks = [
 
 export const ipamSubnetManagementSubmenuLinks = [
   { label: "Favourite Subnets", href: "/ipam/favourite-subnets" },
-  { label: "Scanned Networks", href: "/ipam/scanned-networks" },
+  // { label: "Scanned Networks", href: "/ipam/scanned-networks" },
   { label: "Subnet Masks", href: "/ipam/subnet-masks" },
   { label: "Temporary Shares", href: "/ipam/temporary-shares" },
   { label: "Inactive Hosts", href: "/ipam/inactive-hosts" },
   { label: "Duplicates", href: "/ipam/duplicates" },
-  { label: "Threshold", href: "/ipam/threshold" },
+  { label: "Threshold Monitoring", href: "/ipam/thresholds" },
+  { label: "IP Tags", href: "/ipam/ip-tags" },
+  { label: "Audit Logs", href: "/ipam/audit-logs" },
 ];
 
 export const ipamNetworkServicesSubmenuLinks = [

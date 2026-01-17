@@ -35,12 +35,14 @@ const PRIMARY_NAV_ITEMS = [
 const SECONDARY_NAV_ITEMS = {
   "Subnet Management": [
     { href: "/ipam/favourite-subnets", label: "Favourite Subnets" },
-    { href: "/ipam/scanned-networks", label: "Scanned Networks" },
+    // { href: "/ipam/scanned-networks", label: "Scanned Networks" },
     { href: "/ipam/subnet-masks", label: "Subnet Masks" },
     { href: "/ipam/temporary-shares", label: "Temporary Shares" },
     { href: "/ipam/inactive-hosts", label: "Inactive Hosts" },
     { href: "/ipam/duplicates", label: "Duplicates" },
-    { href: "/ipam/threshold", label: "Threshold" },
+    { href: "/ipam/thresholds", label: "Threshold Monitoring" },
+    { href: "/ipam/ip-tags", label: "IP Tags" },
+    { href: "/ipam/audit-logs", label: "Audit Logs" },
   ],
   "Network Services": [
     { href: "/ipam/dhcp-scopes", label: "DHCP Scopes" },

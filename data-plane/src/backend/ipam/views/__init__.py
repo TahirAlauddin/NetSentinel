@@ -26,6 +26,19 @@ from .ip_tag_views import (
     IPTagViewSet,
     IPAddressTagViewSet,
 )
+from .ip_audit_log_views import (
+    IPAuditLogViewSet,
+    IPAuditLogFilterViewSet,
+)
+from .ip_note_views import (
+    IPNoteViewSet,
+    IPNoteAttachmentViewSet,
+    IPNoteCommentViewSet,
+)
+from .subnet_threshold_views import (
+    SubnetThresholdViewSet,
+    SubnetThresholdAlertViewSet,
+)
 
 from ..models import (
     VLAN,
@@ -577,7 +590,7 @@ class IPAddressViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """
-        Set subnet when creating via nested route.
+        Set subnet when creating via nested route and log the action.
 
         Automatically assigns the IP address to the parent subnet
         when created through the nested endpoint.
@@ -587,9 +600,89 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         """
         subnet_pk = self.kwargs.get("subnet_pk")
         if subnet_pk:
-            serializer.save(subnet_id=subnet_pk)
+            ip_address = serializer.save(subnet_id=subnet_pk)
         else:
-            serializer.save()
+            ip_address = serializer.save()
+        
+        # Log the creation
+        from ..services.ip_audit_log import log_ip_action
+        log_ip_action(
+            ip_address=ip_address,
+            action="created",
+            user=self.request.user,
+            reason="IP address created via API",
+        )
+
+    def perform_update(self, serializer):
+        """Update IP address and log changes."""
+        old_instance = self.get_object()
+        old_data = {
+            "status": old_instance.status,
+            "description": old_instance.description,
+            "subnet": old_instance.subnet.id if old_instance.subnet else None,
+        }
+        
+        ip_address = serializer.save()
+        
+        # Log changes
+        from ..services.ip_audit_log import log_ip_action
+        
+        # Check what changed
+        if old_data["status"] != ip_address.status:
+            log_ip_action(
+                ip_address=ip_address,
+                action="status_changed",
+                user=self.request.user,
+                field_name="status",
+                old_value=old_data["status"],
+                new_value=ip_address.status,
+            )
+        
+        if old_data["description"] != ip_address.description:
+            log_ip_action(
+                ip_address=ip_address,
+                action="description_changed",
+                user=self.request.user,
+                field_name="description",
+                old_value=old_data["description"] or "",
+                new_value=ip_address.description or "",
+            )
+        
+        if old_data["subnet"] != (ip_address.subnet.id if ip_address.subnet else None):
+            log_ip_action(
+                ip_address=ip_address,
+                action="subnet_changed",
+                user=self.request.user,
+                field_name="subnet",
+                old_value=str(old_data["subnet"]) if old_data["subnet"] else "",
+                new_value=str(ip_address.subnet.id) if ip_address.subnet else "",
+            )
+        
+        # General update log
+        log_ip_action(
+            ip_address=ip_address,
+            action="updated",
+            user=self.request.user,
+        )
+
+    def perform_destroy(self, instance):
+        """Delete IP address and log the deletion."""
+        from ..services.ip_audit_log import log_ip_action
+        
+        # Log before deletion
+        log_ip_action(
+            ip_address=instance,
+            action="deleted",
+            user=self.request.user,
+            metadata={
+                "ip_address": instance.address,
+                "subnet_id": instance.subnet.id if instance.subnet else None,
+                "subnet_network": instance.subnet.network if instance.subnet else None,
+                "status": instance.status,
+            },
+        )
+        
+        instance.delete()
 
     @action(detail=True, methods=["post"])
     def assign(self, request, pk=None):
