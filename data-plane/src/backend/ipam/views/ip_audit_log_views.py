@@ -3,79 +3,78 @@ IP Audit Log ViewSets for IPAM.
 """
 
 from django.utils import timezone
-from datetime import timedelta
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from ..models import IPAuditLog, IPAuditLogFilter
-from ..serializers import IPAuditLogSerializer, IPAuditLogFilterSerializer
-from ..services.ip_audit_log import get_audit_logs, get_audit_log_summary
+from ..serializers import IPAuditLogFilterSerializer, IPAuditLogSerializer
+from ..services.ip_audit_log import get_audit_log_summary
 
 
 class IPAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for viewing IP audit logs.
-    
+
     Provides read-only access to audit logs with filtering capabilities.
     """
 
     queryset = IPAuditLog.objects.select_related("user", "ip_address").all()
     serializer_class = IPAuditLogSerializer
 
-    def get_queryset(self):
-        """Filter audit logs based on query parameters."""
-        queryset = super().get_queryset()
+    def _parse_date(self, date_str):
+        """Parse ISO format date string to datetime object."""
+        if not date_str:
+            return None
+        try:
+            return timezone.datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+        except (ValueError, AttributeError):
+            return None
 
+    def _apply_filters(self, queryset, query_params):
+        """Apply filters to queryset based on query parameters."""
         # Filter by IP address
-        ip_address = self.request.query_params.get("ip_address")
-        if ip_address:
+        if ip_address := query_params.get("ip_address"):
             queryset = queryset.filter(ip_address_str=ip_address)
 
         # Filter by IP address ID
-        ip_address_id = self.request.query_params.get("ip_address_id")
-        if ip_address_id:
+        if ip_address_id := query_params.get("ip_address_id"):
             queryset = queryset.filter(ip_address_id=ip_address_id)
 
         # Filter by user
-        user_id = self.request.query_params.get("user")
-        if user_id:
+        if user_id := query_params.get("user"):
             queryset = queryset.filter(user_id=user_id)
 
         # Filter by action
-        action = self.request.query_params.get("action")
-        if action:
+        if action := query_params.get("action"):
             queryset = queryset.filter(action=action)
 
         # Filter by date range
-        start_date = self.request.query_params.get("start_date")
-        if start_date:
-            try:
-                start_date_obj = timezone.datetime.fromisoformat(start_date.replace("Z", "+00:00"))
-                queryset = queryset.filter(created_at__gte=start_date_obj)
-            except (ValueError, AttributeError):
-                pass
+        if start_date := self._parse_date(query_params.get("start_date")):
+            queryset = queryset.filter(created_at__gte=start_date)
 
-        end_date = self.request.query_params.get("end_date")
-        if end_date:
-            try:
-                end_date_obj = timezone.datetime.fromisoformat(end_date.replace("Z", "+00:00"))
-                queryset = queryset.filter(created_at__lte=end_date_obj)
-            except (ValueError, AttributeError):
-                pass
+        if end_date := self._parse_date(query_params.get("end_date")):
+            queryset = queryset.filter(created_at__lte=end_date)
 
-        # Limit results
-        limit = int(self.request.query_params.get("limit", 100))
-        if limit > 1000:
-            limit = 1000  # Max limit
+        return queryset
 
+    def _get_limit(self, query_params):
+        """Get and validate limit parameter."""
+        limit = int(query_params.get("limit", 100))
+        return min(limit, 1000)  # Max limit
+
+    def get_queryset(self):
+        """Filter audit logs based on query parameters."""
+        queryset = super().get_queryset()
+        queryset = self._apply_filters(queryset, self.request.query_params)
+        limit = self._get_limit(self.request.query_params)
         return queryset[:limit]
 
     @action(detail=False, methods=["get"], url_path="summary")
     def summary(self, request):
         """
         Get audit log summary statistics.
-        
+
         GET /api/v1/ipam/ip-audit-logs/summary/?ip_address=192.168.1.1&days=30
         """
         ip_address = request.query_params.get("ip_address")
@@ -88,10 +87,11 @@ class IPAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     def export(self, request):
         """
         Export audit logs to CSV.
-        
+
         GET /api/v1/ipam/ip-audit-logs/export/?format=csv&ip_address=192.168.1.1
         """
         import csv
+
         from django.http import HttpResponse
 
         queryset = self.get_queryset()
@@ -102,30 +102,34 @@ class IPAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
             response["Content-Disposition"] = 'attachment; filename="ip_audit_logs.csv"'
 
             writer = csv.writer(response)
-            writer.writerow([
-                "ID",
-                "IP Address",
-                "Action",
-                "User",
-                "Field Name",
-                "Old Value",
-                "New Value",
-                "Reason",
-                "Created At",
-            ])
+            writer.writerow(
+                [
+                    "ID",
+                    "IP Address",
+                    "Action",
+                    "User",
+                    "Field Name",
+                    "Old Value",
+                    "New Value",
+                    "Reason",
+                    "Created At",
+                ]
+            )
 
             for log in queryset:
-                writer.writerow([
-                    log.id,
-                    log.ip_address_str,
-                    log.get_action_display(),
-                    log.display_user,
-                    log.field_name or "",
-                    log.old_value or "",
-                    log.new_value or "",
-                    log.reason or "",
-                    log.created_at.isoformat(),
-                ])
+                writer.writerow(
+                    [
+                        log.id,
+                        log.ip_address_str,
+                        log.get_action_display(),
+                        log.display_user,
+                        log.field_name or "",
+                        log.old_value or "",
+                        log.new_value or "",
+                        log.reason or "",
+                        log.created_at.isoformat(),
+                    ]
+                )
 
             return response
 
@@ -138,7 +142,7 @@ class IPAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
 class IPAuditLogFilterViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing saved audit log filters.
-    
+
     Allows users to save and reuse filter combinations.
     """
 

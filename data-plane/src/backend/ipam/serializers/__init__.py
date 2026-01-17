@@ -7,53 +7,47 @@ from .device import (
     RackSerializer,
 )
 from .dhcp import (
-    DHCPScopeSerializer,
-    DHCPScopeCreateUpdateSerializer,
-    DHCPLeaseSerializer,
     DHCPLeaseCreateSerializer,
-    DHCPReservationSerializer,
-    DHCPOptionSerializer,
+    DHCPLeaseSerializer,
     DHCPOptionCreateUpdateSerializer,
+    DHCPOptionSerializer,
+    DHCPReservationSerializer,
+    DHCPScopeCreateUpdateSerializer,
+    DHCPScopeSerializer,
 )
 from .dns import DNSRecordSerializer, DNSZoneSerializer
 from .ip_address import IPAddressSerializer
 from .ip_assignment_history import IPAssignmentHistorySerializer
-from .ip_pool import IPPoolSerializer, IPPoolCreateUpdateSerializer
-from .ip_request import IPRequestSerializer, IPRequestCreateSerializer
-from .ip_tag import (
-    IPTagSerializer,
-    IPTagCreateUpdateSerializer,
-    IPAddressTagSerializer,
-    IPAddressTagCreateSerializer,
-    IPAddressWithTagsSerializer,
-)
-from .ip_audit_log import (
-    IPAuditLogSerializer,
-    IPAuditLogFilterSerializer,
-)
+from .ip_audit_log import IPAuditLogFilterSerializer, IPAuditLogSerializer
 from .ip_note import (
-    IPNoteSerializer,
-    IPNoteCreateUpdateSerializer,
     IPNoteAttachmentSerializer,
     IPNoteCommentSerializer,
+    IPNoteCreateUpdateSerializer,
+    IPNoteSerializer,
 )
-from .subnet_threshold import (
-    SubnetThresholdSerializer,
-    SubnetThresholdCreateUpdateSerializer,
-    SubnetThresholdAlertSerializer,
+from .ip_pool import IPPoolCreateUpdateSerializer, IPPoolSerializer
+from .ip_request import IPRequestCreateSerializer, IPRequestSerializer
+from .ip_tag import (
+    IPAddressTagCreateSerializer,
+    IPAddressTagSerializer,
+    IPAddressWithTagsSerializer,
+    IPTagCreateUpdateSerializer,
+    IPTagSerializer,
 )
 from .network_scan import (
-    NetworkScanSerializer,
     NetworkScanCreateSerializer,
-    ScanResultSerializer,
+    NetworkScanSerializer,
     ScanResultDetailSerializer,
+    ScanResultSerializer,
 )
-from .phone_number import (
-    PhoneNumberRangeSerializer,
-    PhoneNumberRangeCreateUpdateSerializer,
-)
+from .phone_number import PhoneNumberRangeCreateUpdateSerializer, PhoneNumberRangeSerializer
 from .subnet import SubnetSerializer
 from .subnet_group import SubnetGroupSerializer
+from .subnet_threshold import (
+    SubnetThresholdAlertSerializer,
+    SubnetThresholdCreateUpdateSerializer,
+    SubnetThresholdSerializer,
+)
 from .vlan import VLANSerializer
 from .vrf import VRFSerializer
 

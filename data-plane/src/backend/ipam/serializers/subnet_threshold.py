@@ -11,9 +11,7 @@ from .subnet import SubnetSerializer
 class SubnetThresholdAlertSerializer(serializers.ModelSerializer):
     """Serializer for SubnetThresholdAlert model."""
 
-    alert_type_display = serializers.CharField(
-        source="get_alert_type_display", read_only=True
-    )
+    alert_type_display = serializers.CharField(source="get_alert_type_display", read_only=True)
     threshold_detail = serializers.SerializerMethodField()
     acknowledged_by_username = serializers.CharField(
         source="acknowledged_by.username", read_only=True
@@ -113,6 +111,7 @@ class SubnetThresholdCreateUpdateSerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
         # Set queryset for subnet field
         from ..models import Subnet
+
         self.fields["subnet"] = serializers.PrimaryKeyRelatedField(
             queryset=Subnet.objects.all(),
         )
@@ -132,8 +131,12 @@ class SubnetThresholdCreateUpdateSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """Validate that warning threshold is less than critical threshold."""
-        warning = data.get("warning_threshold", self.instance.warning_threshold if self.instance else 75)
-        critical = data.get("critical_threshold", self.instance.critical_threshold if self.instance else 90)
+        warning = data.get(
+            "warning_threshold", self.instance.warning_threshold if self.instance else 75
+        )
+        critical = data.get(
+            "critical_threshold", self.instance.critical_threshold if self.instance else 90
+        )
 
         if warning >= critical:
             raise serializers.ValidationError(

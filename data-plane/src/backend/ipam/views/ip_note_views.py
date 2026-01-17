@@ -5,28 +5,30 @@ IP Note ViewSets for IPAM.
 from django.db import models
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
 
 from ..models import IPNote, IPNoteAttachment, IPNoteComment
 from ..serializers import (
-    IPNoteSerializer,
-    IPNoteCreateUpdateSerializer,
     IPNoteAttachmentSerializer,
     IPNoteCommentSerializer,
+    IPNoteCreateUpdateSerializer,
+    IPNoteSerializer,
 )
 
 
 class IPNoteViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing IP notes.
-    
+
     Provides CRUD operations for IP address notes with versioning.
     """
 
-    queryset = IPNote.objects.select_related(
-        "ip_address", "created_by", "updated_by"
-    ).prefetch_related("attachments", "comments").all()
+    queryset = (
+        IPNote.objects.select_related("ip_address", "created_by", "updated_by")
+        .prefetch_related("attachments", "comments")
+        .all()
+    )
     serializer_class = IPNoteSerializer
 
     def get_serializer_class(self):
@@ -71,10 +73,10 @@ class IPNoteViewSet(viewsets.ModelViewSet):
     def versions(self, request, pk=None):
         """Get all versions of a note."""
         note = self.get_object()
-        
+
         # Get parent note
         parent = note.parent_note or note
-        
+
         # Get all versions
         versions = IPNote.objects.filter(
             models.Q(id=parent.id) | models.Q(parent_note=parent)
@@ -90,7 +92,7 @@ class IPNoteViewSet(viewsets.ModelViewSet):
         note.is_pinned = not note.is_pinned
         note.updated_by = request.user
         note.save()
-        
+
         serializer = IPNoteSerializer(note)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

@@ -22,19 +22,19 @@ from .views import (
     VLANViewSet,
     VRFViewSet,
 )
-from .views.device_views import DeviceViewSet, DeviceTypeViewSet, RackViewSet
+from .views.device_views import DeviceTypeViewSet, DeviceViewSet, RackViewSet
 from .views.dhcp_views import (
-    DHCPScopeViewSet,
     DHCPLeaseViewSet,
-    DHCPReservationViewSet,
     DHCPOptionViewSet,
+    DHCPReservationViewSet,
+    DHCPScopeViewSet,
 )
-from .views.ip_tag_views import IPTagViewSet, IPAddressTagViewSet
-from .views.ip_audit_log_views import IPAuditLogViewSet, IPAuditLogFilterViewSet
-from .views.ip_note_views import IPNoteViewSet, IPNoteAttachmentViewSet, IPNoteCommentViewSet
-from .views.subnet_threshold_views import SubnetThresholdViewSet, SubnetThresholdAlertViewSet
+from .views.ip_audit_log_views import IPAuditLogFilterViewSet, IPAuditLogViewSet
+from .views.ip_note_views import IPNoteAttachmentViewSet, IPNoteCommentViewSet, IPNoteViewSet
+from .views.ip_tag_views import IPAddressTagViewSet, IPTagViewSet
 from .views.network_scan_views import NetworkScanViewSet, ScanResultViewSet
-from .views.subnet_mask_views import subnet_masks_list, subnet_mask_detail
+from .views.subnet_mask_views import subnet_mask_detail, subnet_masks_list
+from .views.subnet_threshold_views import SubnetThresholdAlertViewSet, SubnetThresholdViewSet
 
 # Main router for top-level resources
 router = DefaultRouter()
@@ -100,7 +100,9 @@ router.register(r"ip-note-comments", IPNoteCommentViewSet, basename="ip-note-com
 
 # Subnet Threshold routers
 router.register(r"subnet-thresholds", SubnetThresholdViewSet, basename="subnet-threshold")
-router.register(r"subnet-threshold-alerts", SubnetThresholdAlertViewSet, basename="subnet-threshold-alert")
+router.register(
+    r"subnet-threshold-alerts", SubnetThresholdAlertViewSet, basename="subnet-threshold-alert"
+)
 
 # Nested router for network scans under subnets
 subnets_router_scans = routers.NestedDefaultRouter(router, r"subnets", lookup="subnet")

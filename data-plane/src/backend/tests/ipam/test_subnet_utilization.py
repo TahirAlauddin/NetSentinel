@@ -8,8 +8,8 @@ from rest_framework import status
 from infrastructure.models import Location
 from ipam.models import IPAddress, Subnet, SubnetGroup
 from ipam.services.subnet_utilization import (
-    calculate_subnet_utilization,
     calculate_subnet_capacity,
+    calculate_subnet_utilization,
     get_all_subnets_utilization,
     get_utilization_summary,
 )
@@ -111,7 +111,7 @@ class TestSubnetUtilizationService:
         # Create another subnet
         location = Location.objects.create(name="Location 2", city="City 2")
         group = SubnetGroup.objects.create(name="Group 2")
-        subnet2 = Subnet.objects.create(
+        Subnet.objects.create(
             network="10.0.0.0/24",
             group=group,
             location=location,
@@ -132,7 +132,7 @@ class TestSubnetUtilizationService:
         """Test getting utilization with filters."""
         location = Location.objects.create(name="Location 2", city="City 2")
         group = SubnetGroup.objects.create(name="Group 2")
-        subnet2 = Subnet.objects.create(
+        Subnet.objects.create(
             network="10.0.0.0/24",
             group=group,
             location=location,

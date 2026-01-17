@@ -6,15 +6,15 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ..models import DHCPScope, DHCPLease, DHCPReservation, DHCPOption
+from ..models import DHCPLease, DHCPOption, DHCPReservation, DHCPScope
 from ..serializers import (
-    DHCPScopeCreateUpdateSerializer,
-    DHCPScopeSerializer,
     DHCPLeaseCreateSerializer,
     DHCPLeaseSerializer,
-    DHCPReservationSerializer,
-    DHCPOptionSerializer,
     DHCPOptionCreateUpdateSerializer,
+    DHCPOptionSerializer,
+    DHCPReservationSerializer,
+    DHCPScopeCreateUpdateSerializer,
+    DHCPScopeSerializer,
 )
 
 

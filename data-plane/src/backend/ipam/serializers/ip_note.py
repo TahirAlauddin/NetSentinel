@@ -10,9 +10,7 @@ from ..models import IPNote, IPNoteAttachment, IPNoteComment
 class IPNoteAttachmentSerializer(serializers.ModelSerializer):
     """Serializer for IPNoteAttachment model."""
 
-    uploaded_by_username = serializers.CharField(
-        source="uploaded_by.username", read_only=True
-    )
+    uploaded_by_username = serializers.CharField(source="uploaded_by.username", read_only=True)
 
     class Meta:
         model = IPNoteAttachment
@@ -70,12 +68,8 @@ class IPNoteCommentSerializer(serializers.ModelSerializer):
 class IPNoteSerializer(serializers.ModelSerializer):
     """Serializer for IPNote model."""
 
-    created_by_username = serializers.CharField(
-        source="created_by.username", read_only=True
-    )
-    updated_by_username = serializers.CharField(
-        source="updated_by.username", read_only=True
-    )
+    created_by_username = serializers.CharField(source="created_by.username", read_only=True)
+    updated_by_username = serializers.CharField(source="updated_by.username", read_only=True)
     created_by_full_name = serializers.SerializerMethodField()
     updated_by_full_name = serializers.SerializerMethodField()
     attachments = IPNoteAttachmentSerializer(many=True, read_only=True)
@@ -162,7 +156,7 @@ class IPNoteCreateUpdateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         """Update note and create a new version if content changed."""
         user = self.context["request"].user
-        
+
         # Check if content changed
         if "content" in validated_data and validated_data["content"] != instance.content:
             # Create new version
@@ -177,7 +171,7 @@ class IPNoteCreateUpdateSerializer(serializers.ModelSerializer):
                     setattr(new_version, key, value)
             new_version.save()
             return new_version
-        
+
         # Update current version
         validated_data["updated_by"] = user
         return super().update(instance, validated_data)

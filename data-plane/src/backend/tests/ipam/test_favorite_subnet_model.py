@@ -6,7 +6,7 @@ import pytest
 from django.contrib.auth import get_user_model
 
 from infrastructure.models import Location
-from ipam.models import Subnet, SubnetGroup, FavoriteSubnet
+from ipam.models import FavoriteSubnet, Subnet, SubnetGroup
 
 User = get_user_model()
 

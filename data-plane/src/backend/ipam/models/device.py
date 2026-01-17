@@ -12,7 +12,7 @@ from infrastructure.models import Location
 class DeviceType(models.Model):
     """
     Device Type model for categorizing network devices.
-    
+
     Examples: Database, Switch, Wireless, Router, Server, Other
     """
 
@@ -45,7 +45,7 @@ class DeviceType(models.Model):
 class Rack(models.Model):
     """
     Rack model for physical rack management.
-    
+
     Represents a physical rack where devices can be mounted.
     """
 
@@ -84,7 +84,7 @@ class Rack(models.Model):
 class Device(models.Model):
     """
     Device model for network device management in IPAM.
-    
+
     Represents network devices like switches, routers, access points, servers, etc.
     """
 
@@ -201,7 +201,11 @@ class Device(models.Model):
         """Get count of IP addresses assigned to this device."""
         from .ip_address import IPAddress
 
-        return IPAddress.objects.filter(
-            assigned_to_asset__isnull=True,  # For now, we'll link via IP address matching
-            address=self.ip_address,
-        ).count() if self.ip_address else 0
+        return (
+            IPAddress.objects.filter(
+                assigned_to_asset__isnull=True,  # For now, we'll link via IP address matching
+                address=self.ip_address,
+            ).count()
+            if self.ip_address
+            else 0
+        )

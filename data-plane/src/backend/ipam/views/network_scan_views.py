@@ -2,14 +2,14 @@
 Network Scan ViewSets for IPAM.
 """
 
+import logging
+import threading
+
+from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.utils import timezone
-import threading
-import logging
 
-logger = logging.getLogger(__name__)
 
 from ..models import NetworkScan, ScanResult
 from ..serializers import (
@@ -18,6 +18,8 @@ from ..serializers import (
     ScanResultDetailSerializer,
     ScanResultSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class NetworkScanViewSet(viewsets.ModelViewSet):

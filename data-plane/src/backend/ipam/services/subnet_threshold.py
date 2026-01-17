@@ -4,10 +4,11 @@ Subnet Threshold Monitoring Service.
 Provides functions for checking subnet utilization against thresholds and sending alerts.
 """
 
-from typing import Dict, List, Optional
-from django.utils import timezone
-from django.core.mail import send_mail
+from typing import Dict, Optional
+
 from django.conf import settings
+from django.core.mail import send_mail
+from django.utils import timezone
 
 from ..models import Subnet, SubnetThreshold, SubnetThresholdAlert
 from ..services.subnet_utilization import calculate_subnet_utilization
@@ -16,10 +17,10 @@ from ..services.subnet_utilization import calculate_subnet_utilization
 def check_subnet_threshold(subnet_id: int) -> Dict:
     """
     Check subnet utilization against thresholds.
-    
+
     Args:
         subnet_id: Subnet ID to check
-    
+
     Returns:
         Dictionary with threshold check results
     """
@@ -63,11 +64,7 @@ def check_subnet_threshold(subnet_id: int) -> Dict:
 
     if threshold.enable_alerts:
         # Check for warning
-        if (
-            new_status == "warning"
-            and threshold.notify_on_warning
-            and previous_status != "warning"
-        ):
+        if new_status == "warning" and threshold.notify_on_warning and previous_status != "warning":
             alert_sent = send_threshold_alert(threshold, "warning", utilization_percentage)
             alert_type = "warning"
 
@@ -110,12 +107,12 @@ def send_threshold_alert(
 ) -> bool:
     """
     Send a threshold alert.
-    
+
     Args:
         threshold: SubnetThreshold instance
         alert_type: Type of alert (warning, critical, recovery)
         utilization_percentage: Current utilization percentage
-    
+
     Returns:
         True if alert was sent successfully
     """
@@ -134,7 +131,11 @@ def send_threshold_alert(
 
     # Create alert message
     if alert_type == "warning":
-        subject = f"Warning: Subnet {threshold.subnet.network} utilization at {utilization_percentage:.1f}%"
+        subnet_network = threshold.subnet.network
+        subject = (
+            f"Warning: Subnet {subnet_network} utilization at "
+            f"{utilization_percentage:.1f}%"
+        )
         message = f"""
 Subnet {threshold.subnet.network} has reached the warning threshold.
 
@@ -142,10 +143,15 @@ Current Utilization: {utilization_percentage:.1f}%
 Warning Threshold: {threshold.warning_threshold}%
 Critical Threshold: {threshold.critical_threshold}%
 
-Please review the subnet utilization and consider expanding the subnet or releasing unused IP addresses.
+Please review the subnet utilization and consider expanding the subnet
+or releasing unused IP addresses.
 """
     elif alert_type == "critical":
-        subject = f"CRITICAL: Subnet {threshold.subnet.network} utilization at {utilization_percentage:.1f}%"
+        subnet_network = threshold.subnet.network
+        subject = (
+            f"CRITICAL: Subnet {subnet_network} utilization at "
+            f"{utilization_percentage:.1f}%"
+        )
         message = f"""
 URGENT: Subnet {threshold.subnet.network} has reached the critical threshold!
 
@@ -200,12 +206,12 @@ The subnet is now operating within normal utilization levels.
 def check_all_thresholds() -> Dict:
     """
     Check all subnet thresholds.
-    
+
     Returns:
         Dictionary with summary of all threshold checks
     """
     thresholds = SubnetThreshold.objects.filter(enable_alerts=True).select_related("subnet")
-    
+
     results = {
         "total_checked": 0,
         "warnings": 0,
@@ -218,17 +224,17 @@ def check_all_thresholds() -> Dict:
     for threshold in thresholds:
         result = check_subnet_threshold(threshold.subnet.id)
         results["total_checked"] += 1
-        
+
         if result.get("current_status") == "warning":
             results["warnings"] += 1
         elif result.get("current_status") == "critical":
             results["criticals"] += 1
         else:
             results["healthy"] += 1
-        
+
         if result.get("alert_sent"):
             results["alerts_sent"] += 1
-        
+
         results["details"].append(result)
 
     return results
@@ -237,10 +243,10 @@ def check_all_thresholds() -> Dict:
 def get_threshold_summary(subnet_id: Optional[int] = None) -> Dict:
     """
     Get summary of threshold statuses.
-    
+
     Args:
         subnet_id: Optional subnet ID to filter by
-    
+
     Returns:
         Dictionary with threshold summary
     """

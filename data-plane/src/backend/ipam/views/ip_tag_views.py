@@ -7,19 +7,19 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ..models import IPTag, IPAddressTag, IPAddress
+from ..models import IPAddress, IPAddressTag, IPTag
 from ..serializers import (
-    IPTagSerializer,
-    IPTagCreateUpdateSerializer,
-    IPAddressTagSerializer,
     IPAddressTagCreateSerializer,
+    IPAddressTagSerializer,
+    IPTagCreateUpdateSerializer,
+    IPTagSerializer,
 )
 
 
 class IPTagViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing IP tags.
-    
+
     Provides CRUD operations for IP tags.
     """
 
@@ -35,20 +35,20 @@ class IPTagViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Filter by active status if provided."""
         queryset = super().get_queryset()
-        
+
         is_active = self.request.query_params.get("is_active")
         if is_active is not None:
             queryset = queryset.filter(is_active=is_active.lower() == "true")
-        
+
         # Order by usage count (most used first) or name
         order_by = self.request.query_params.get("order_by", "name")
         if order_by == "usage":
-            queryset = queryset.annotate(
-                usage_count=models.Count("ip_addresses")
-            ).order_by("-usage_count", "name")
+            queryset = queryset.annotate(usage_count=models.Count("ip_addresses")).order_by(
+                "-usage_count", "name"
+            )
         else:
             queryset = queryset.order_by("name")
-        
+
         return queryset
 
     @action(detail=True, methods=["get"])
@@ -56,8 +56,9 @@ class IPTagViewSet(viewsets.ModelViewSet):
         """Get IP addresses using this tag."""
         tag = self.get_object()
         ip_addresses = IPAddress.objects.filter(tags=tag)
-        
+
         from ..serializers import IPAddressSerializer
+
         serializer = IPAddressSerializer(ip_addresses, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -65,13 +66,11 @@ class IPTagViewSet(viewsets.ModelViewSet):
 class IPAddressTagViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing IP address tag relationships.
-    
+
     Provides CRUD operations for applying/removing tags from IP addresses.
     """
 
-    queryset = IPAddressTag.objects.select_related(
-        "ip_address", "tag", "applied_by"
-    ).all()
+    queryset = IPAddressTag.objects.select_related("ip_address", "tag", "applied_by").all()
     serializer_class = IPAddressTagSerializer
 
     def get_serializer_class(self):
@@ -83,15 +82,15 @@ class IPAddressTagViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Filter by IP address or tag if provided."""
         queryset = super().get_queryset()
-        
+
         ip_address_id = self.request.query_params.get("ip_address")
         if ip_address_id:
             queryset = queryset.filter(ip_address_id=ip_address_id)
-        
+
         tag_id = self.request.query_params.get("tag")
         if tag_id:
             queryset = queryset.filter(tag_id=tag_id)
-        
+
         return queryset.order_by("-applied_at")
 
     def perform_create(self, serializer):
@@ -102,7 +101,7 @@ class IPAddressTagViewSet(viewsets.ModelViewSet):
     def bulk_apply(self, request):
         """
         Apply tags to multiple IP addresses.
-        
+
         POST /api/v1/ipam/ip-address-tags/bulk-apply/
         Body:
             {
@@ -129,16 +128,12 @@ class IPAddressTagViewSet(viewsets.ModelViewSet):
                 try:
                     ip_address = IPAddress.objects.get(id=ip_id)
                     tag = IPTag.objects.get(id=tag_id)
-                    
+
                     # Check if already exists
-                    if IPAddressTag.objects.filter(
-                        ip_address=ip_address, tag=tag
-                    ).exists():
-                        errors.append(
-                            f"Tag '{tag.name}' already applied to {ip_address.address}"
-                        )
+                    if IPAddressTag.objects.filter(ip_address=ip_address, tag=tag).exists():
+                        errors.append(f"Tag '{tag.name}' already applied to {ip_address.address}")
                         continue
-                    
+
                     ip_address_tag = IPAddressTag.objects.create(
                         ip_address=ip_address,
                         tag=tag,
@@ -166,7 +161,7 @@ class IPAddressTagViewSet(viewsets.ModelViewSet):
     def bulk_remove(self, request):
         """
         Remove tags from multiple IP addresses.
-        
+
         POST /api/v1/ipam/ip-address-tags/bulk-remove/
         Body:
             {

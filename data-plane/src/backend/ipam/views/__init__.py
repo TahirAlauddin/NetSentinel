@@ -11,42 +11,13 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .device_views import (
-    DeviceViewSet,
-    DeviceTypeViewSet,
-    RackViewSet,
-)
-from .dhcp_views import (
-    DHCPScopeViewSet,
-    DHCPLeaseViewSet,
-    DHCPReservationViewSet,
-    DHCPOptionViewSet,
-)
-from .ip_tag_views import (
-    IPTagViewSet,
-    IPAddressTagViewSet,
-)
-from .ip_audit_log_views import (
-    IPAuditLogViewSet,
-    IPAuditLogFilterViewSet,
-)
-from .ip_note_views import (
-    IPNoteViewSet,
-    IPNoteAttachmentViewSet,
-    IPNoteCommentViewSet,
-)
-from .subnet_threshold_views import (
-    SubnetThresholdViewSet,
-    SubnetThresholdAlertViewSet,
-)
-
 from ..models import (
     VLAN,
     VRF,
     Customer,
     DHCPLease,
-    DHCPScope,
     DHCPReservation,
+    DHCPScope,
     DNSRecord,
     DNSZone,
     FavoriteSubnet,
@@ -61,11 +32,11 @@ from ..models import (
 )
 from ..serializers import (
     CustomerSerializer,
-    DHCPScopeCreateUpdateSerializer,
-    DHCPScopeSerializer,
     DHCPLeaseCreateSerializer,
     DHCPLeaseSerializer,
     DHCPReservationSerializer,
+    DHCPScopeCreateUpdateSerializer,
+    DHCPScopeSerializer,
     DNSRecordSerializer,
     DNSZoneSerializer,
     IPAddressSerializer,
@@ -84,6 +55,17 @@ from ..serializers import (
     VLANSerializer,
     VRFSerializer,
 )
+from .device_views import DeviceTypeViewSet, DeviceViewSet, RackViewSet
+from .dhcp_views import (
+    DHCPLeaseViewSet,
+    DHCPOptionViewSet,
+    DHCPReservationViewSet,
+    DHCPScopeViewSet,
+)
+from .ip_audit_log_views import IPAuditLogFilterViewSet, IPAuditLogViewSet
+from .ip_note_views import IPNoteAttachmentViewSet, IPNoteCommentViewSet, IPNoteViewSet
+from .ip_tag_views import IPAddressTagViewSet, IPTagViewSet
+from .subnet_threshold_views import SubnetThresholdAlertViewSet, SubnetThresholdViewSet
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
@@ -242,8 +224,8 @@ class IPPoolViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def assign_ip(self, request, pk=None):
         """Assign an IP address from the pool."""
-        from ..services.ip_pool import assign_ip_from_pool
         from ..serializers import IPAddressSerializer
+        from ..services.ip_pool import assign_ip_from_pool
 
         pool = self.get_object()
         description = request.data.get("description")
@@ -367,8 +349,9 @@ class SubnetViewSet(viewsets.ModelViewSet):
         }
         """
         from assets.models import Asset
-        from ..services.ip_assignment import auto_assign_ip_from_subnet
+
         from ..serializers import IPAddressSerializer
+        from ..services.ip_assignment import auto_assign_ip_from_subnet
 
         subnet = self.get_object()
         asset_id = request.data.get("asset_id")
@@ -603,9 +586,10 @@ class IPAddressViewSet(viewsets.ModelViewSet):
             ip_address = serializer.save(subnet_id=subnet_pk)
         else:
             ip_address = serializer.save()
-        
+
         # Log the creation
         from ..services.ip_audit_log import log_ip_action
+
         log_ip_action(
             ip_address=ip_address,
             action="created",
@@ -621,12 +605,12 @@ class IPAddressViewSet(viewsets.ModelViewSet):
             "description": old_instance.description,
             "subnet": old_instance.subnet.id if old_instance.subnet else None,
         }
-        
+
         ip_address = serializer.save()
-        
+
         # Log changes
         from ..services.ip_audit_log import log_ip_action
-        
+
         # Check what changed
         if old_data["status"] != ip_address.status:
             log_ip_action(
@@ -637,7 +621,7 @@ class IPAddressViewSet(viewsets.ModelViewSet):
                 old_value=old_data["status"],
                 new_value=ip_address.status,
             )
-        
+
         if old_data["description"] != ip_address.description:
             log_ip_action(
                 ip_address=ip_address,
@@ -647,7 +631,7 @@ class IPAddressViewSet(viewsets.ModelViewSet):
                 old_value=old_data["description"] or "",
                 new_value=ip_address.description or "",
             )
-        
+
         if old_data["subnet"] != (ip_address.subnet.id if ip_address.subnet else None):
             log_ip_action(
                 ip_address=ip_address,
@@ -657,7 +641,7 @@ class IPAddressViewSet(viewsets.ModelViewSet):
                 old_value=str(old_data["subnet"]) if old_data["subnet"] else "",
                 new_value=str(ip_address.subnet.id) if ip_address.subnet else "",
             )
-        
+
         # General update log
         log_ip_action(
             ip_address=ip_address,
@@ -668,7 +652,7 @@ class IPAddressViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         """Delete IP address and log the deletion."""
         from ..services.ip_audit_log import log_ip_action
-        
+
         # Log before deletion
         log_ip_action(
             ip_address=instance,
@@ -681,7 +665,7 @@ class IPAddressViewSet(viewsets.ModelViewSet):
                 "status": instance.status,
             },
         )
-        
+
         instance.delete()
 
     @action(detail=True, methods=["post"])
@@ -697,6 +681,7 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         }
         """
         from assets.models import Asset
+
         from ..services.ip_assignment import assign_ip_to_asset
 
         ip_address = self.get_object()
@@ -717,7 +702,7 @@ class IPAddressViewSet(viewsets.ModelViewSet):
             )
 
         try:
-            history = assign_ip_to_asset(
+            assign_ip_to_asset(
                 ip_address=ip_address,
                 asset=asset,
                 assigned_by=request.user,
@@ -750,7 +735,7 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         new_status = request.data.get("new_status", "available")
 
         try:
-            history = release_ip_from_asset(
+            release_ip_from_asset(
                 ip_address=ip_address,
                 released_by=request.user,
                 reason=request.data.get("reason"),
@@ -800,8 +785,8 @@ class IPAddressViewSet(viewsets.ModelViewSet):
             vlan: Filter by VLAN ID (via subnet)
             vrf: Filter by VRF ID (via subnet)
         """
-        from ..services.ip_search import search_ip_addresses
         from ..serializers import IPAddressSerializer
+        from ..services.ip_search import search_ip_addresses
 
         filters = {}
         if "vlan" in request.query_params:
@@ -838,8 +823,8 @@ class IPAddressViewSet(viewsets.ModelViewSet):
             end: Ending IP address
             subnet: Optional subnet ID filter
         """
-        from ..services.ip_search import search_ip_range
         from ..serializers import IPAddressSerializer
+        from ..services.ip_search import search_ip_range
 
         start_ip = request.query_params.get("start")
         end_ip = request.query_params.get("end")
@@ -869,8 +854,8 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         Query params:
             hostname: Hostname or FQDN to search for
         """
-        from ..services.ip_search import search_by_hostname
         from ..serializers import IPAddressSerializer
+        from ..services.ip_search import search_by_hostname
 
         hostname = request.query_params.get("hostname")
         if not hostname:
@@ -899,8 +884,9 @@ class IPAddressViewSet(viewsets.ModelViewSet):
                 "found": true/false
             }
         """
-        from ..services.network_scanning import reverse_dns_lookup
         import ipaddress
+
+        from ..services.network_scanning import reverse_dns_lookup
 
         ip = request.query_params.get("ip")
         if not ip:
@@ -1173,8 +1159,8 @@ class IPAddressViewSet(viewsets.ModelViewSet):
             status: Filter by IP status
             subnet: Filter by subnet ID
         """
-        from ..services.inactive_hosts import detect_inactive_hosts
         from ..serializers import IPAddressSerializer
+        from ..services.inactive_hosts import detect_inactive_hosts
 
         threshold_days = int(request.query_params.get("threshold_days", 90))
         status_filter = request.query_params.get("status")
@@ -1575,7 +1561,8 @@ class IPRequestViewSet(viewsets.ModelViewSet):
             return Response(
                 {
                     "error": "Request cannot be approved",
-                    "detail": f"Request status is {ip_request.get_status_display()}, only pending requests can be approved.",
+                    "detail": f"Request status is {ip_request.get_status_display()},"
+                    "only pending requests can be approved.",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -1621,7 +1608,10 @@ class IPRequestViewSet(viewsets.ModelViewSet):
                 return Response(
                     {
                         "error": "IP address already in use",
-                        "detail": f"IP address {ip_to_reserve} is already in use with status: {ip_address.get_status_display()}",
+                        "detail": (
+                            f"IP address {ip_to_reserve} is already in use with "
+                            f"status: {ip_address.get_status_display()}"
+                        ),
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
@@ -1661,7 +1651,8 @@ class IPRequestViewSet(viewsets.ModelViewSet):
             return Response(
                 {
                     "error": "Request cannot be rejected",
-                    "detail": f"Request status is {ip_request.get_status_display()}, only pending requests can be rejected.",
+                    "detail": f"Request status is {ip_request.get_status_display()},"
+                    "only pending requests can be rejected.",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )

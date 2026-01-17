@@ -5,7 +5,6 @@ Device serializers for IPAM.
 from rest_framework import serializers
 
 from ..models import Device, DeviceType, Rack
-from infrastructure.models import Location
 
 
 class DeviceTypeSerializer(serializers.ModelSerializer):

@@ -5,7 +5,7 @@ Models for monitoring subnet utilization thresholds and alerts.
 """
 
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from .subnet import Subnet
@@ -16,7 +16,7 @@ User = get_user_model()
 class SubnetThreshold(models.Model):
     """
     Model for subnet utilization thresholds.
-    
+
     Defines warning and critical thresholds for subnet utilization.
     """
 
@@ -26,7 +26,7 @@ class SubnetThreshold(models.Model):
         related_name="threshold",
         help_text="Subnet this threshold applies to",
     )
-    
+
     # Threshold percentages
     warning_threshold = models.IntegerField(
         default=75,
@@ -44,7 +44,7 @@ class SubnetThreshold(models.Model):
             MaxValueValidator(100),
         ],
     )
-    
+
     # Alert settings
     enable_alerts = models.BooleanField(
         default=True,
@@ -55,7 +55,7 @@ class SubnetThreshold(models.Model):
         null=True,
         help_text="Email address to send alerts to (if different from subnet owner)",
     )
-    
+
     # Notification preferences
     notify_on_warning = models.BooleanField(
         default=True,
@@ -69,7 +69,7 @@ class SubnetThreshold(models.Model):
         default=False,
         help_text="Send notification when utilization drops below threshold",
     )
-    
+
     # Status tracking
     last_checked = models.DateTimeField(
         null=True,
@@ -91,7 +91,7 @@ class SubnetThreshold(models.Model):
         default="healthy",
         help_text="Current threshold status",
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -121,7 +121,7 @@ class SubnetThreshold(models.Model):
 class SubnetThresholdAlert(models.Model):
     """
     Model for subnet threshold alerts.
-    
+
     Tracks when thresholds are exceeded and alerts are sent.
     """
 

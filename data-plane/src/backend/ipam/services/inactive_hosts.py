@@ -4,7 +4,7 @@ Inactive Hosts Detection Service.
 Detects and manages inactive/stale IP address assignments based on last seen/updated timestamps.
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Dict, List, Optional
 
 from django.db.models import Q
@@ -46,8 +46,7 @@ def detect_inactive_hosts(
 
     # Only include IPs that are assigned or have been assigned
     queryset = queryset.filter(
-        Q(status__in=["assigned", "dhcp", "reserved"])
-        | Q(assigned_to_asset__isnull=False)
+        Q(status__in=["assigned", "dhcp", "reserved"]) | Q(assigned_to_asset__isnull=False)
     )
 
     return list(queryset.select_related("subnet", "assigned_to_asset", "assigned_by"))
@@ -84,21 +83,15 @@ def get_inactive_hosts_summary(
     for ip in inactive_hosts:
         if ip.subnet:
             subnet_network = ip.subnet.network
-            summary["by_subnet"][subnet_network] = (
-                summary["by_subnet"].get(subnet_network, 0) + 1
-            )
+            summary["by_subnet"][subnet_network] = summary["by_subnet"].get(subnet_network, 0) + 1
 
     # Find oldest inactive IP
     if inactive_hosts:
         oldest = min(inactive_hosts, key=lambda x: x.updated_at or x.created_at)
         summary["oldest_inactive"] = {
             "address": oldest.address,
-            "last_updated": (
-                oldest.updated_at.isoformat() if oldest.updated_at else None
-            ),
-            "days_inactive": (
-                (timezone.now() - (oldest.updated_at or oldest.created_at)).days
-            ),
+            "last_updated": (oldest.updated_at.isoformat() if oldest.updated_at else None),
+            "days_inactive": ((timezone.now() - (oldest.updated_at or oldest.created_at)).days),
         }
 
     return summary

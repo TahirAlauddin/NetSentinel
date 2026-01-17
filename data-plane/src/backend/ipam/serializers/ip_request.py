@@ -6,10 +6,10 @@ This module provides serialization for IP address reservation requests.
 
 from rest_framework import serializers
 
-from ..models import IPRequest, IPAddress, Subnet
-from ..services.subnet_utils import is_ip_in_subnet, get_next_available_ip
-from .subnet import SubnetSerializer
+from ..models import IPAddress, IPRequest, Subnet
+from ..services.subnet_utils import is_ip_in_subnet
 from .ip_address import IPAddressSerializer
+from .subnet import SubnetSerializer
 
 
 class IPRequestSerializer(serializers.ModelSerializer):
@@ -102,9 +102,13 @@ class IPRequestSerializer(serializers.ModelSerializer):
             # Check if IP already exists
             existing_ip = IPAddress.objects.filter(address=requested_ip).first()
             if existing_ip and existing_ip.status not in ("available", "deprecated"):
+                status_display = existing_ip.get_status_display()
                 raise serializers.ValidationError(
                     {
-                        "requested_ip": f"IP address {requested_ip} is already in use (status: {existing_ip.get_status_display()})"
+                        "requested_ip": (
+                            f"IP address {requested_ip} is already in use "
+                            f"(status: {status_display})"
+                        )
                     }
                 )
 

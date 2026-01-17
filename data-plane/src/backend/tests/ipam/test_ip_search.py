@@ -8,12 +8,12 @@ from rest_framework import status
 from infrastructure.models import Location
 from ipam.models import DNSRecord, DNSZone, IPAddress, Subnet, SubnetGroup
 from ipam.services.ip_search import (
+    detect_ip_conflicts,
+    find_available_ips_in_subnet,
+    get_ip_details,
+    search_by_hostname,
     search_ip_addresses,
     search_ip_range,
-    search_by_hostname,
-    detect_ip_conflicts,
-    get_ip_details,
-    find_available_ips_in_subnet,
 )
 
 
@@ -118,7 +118,7 @@ class TestIPSearchService:
         # Create DNS zone and record
         location = Location.objects.create(name="Test Location", city="Test City")
         zone = DNSZone.objects.create(name="example.com", location=location)
-        ip_address = IPAddress.objects.create(
+        IPAddress.objects.create(
             address="192.168.1.100",
             subnet=subnet,
             status="assigned",
@@ -139,7 +139,7 @@ class TestIPSearchService:
     def test_detect_ip_conflicts(self, subnet):
         """Test detecting IP address conflicts."""
         # Create IP in subnet
-        ip1 = IPAddress.objects.create(
+        IPAddress.objects.create(
             address="192.168.1.50",
             subnet=subnet,
             status="assigned",
@@ -155,7 +155,7 @@ class TestIPSearchService:
 
     def test_detect_ip_conflicts_exclude_subnet(self, subnet):
         """Test conflict detection with excluded subnet."""
-        ip1 = IPAddress.objects.create(
+        IPAddress.objects.create(
             address="192.168.1.60",
             subnet=subnet,
             status="assigned",
@@ -170,7 +170,7 @@ class TestIPSearchService:
 
     def test_get_ip_details_existing(self, subnet):
         """Test getting details for existing IP address."""
-        ip_address = IPAddress.objects.create(
+        IPAddress.objects.create(
             address="192.168.1.70",
             subnet=subnet,
             status="assigned",
@@ -272,7 +272,7 @@ class TestIPSearchViews:
         """Test GET /api/v1/ipam/ip-addresses/hostname/ endpoint."""
         location = Location.objects.create(name="Test Location", city="Test City")
         zone = DNSZone.objects.create(name="example.com", location=location)
-        ip_address = IPAddress.objects.create(
+        IPAddress.objects.create(
             address="192.168.1.100",
             subnet=subnet,
             status="assigned",
@@ -304,7 +304,7 @@ class TestIPSearchViews:
 
     def test_ip_conflicts_endpoint(self, authenticated_api_client, subnet):
         """Test GET /api/v1/ipam/ip-addresses/{ip}/conflicts/ endpoint."""
-        ip_address = IPAddress.objects.create(
+        IPAddress.objects.create(
             address="192.168.1.50", subnet=subnet, status="assigned"
         )
 

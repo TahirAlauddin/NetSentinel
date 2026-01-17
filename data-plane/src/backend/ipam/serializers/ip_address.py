@@ -7,8 +7,8 @@ This module provides serialization for individual IP address models.
 from rest_framework import serializers
 
 from ..models import IPAddress
-from .subnet import SubnetSerializer
 from .ip_tag import IPTagSerializer
+from .subnet import SubnetSerializer
 
 
 class IPAddressSerializer(serializers.ModelSerializer):
@@ -52,6 +52,7 @@ class IPAddressSerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
         # Add tag_ids as a write-only field for create/update operations
         from ..models import IPTag
+
         self.fields["tag_ids"] = serializers.PrimaryKeyRelatedField(
             many=True,
             queryset=IPTag.objects.filter(is_active=True),

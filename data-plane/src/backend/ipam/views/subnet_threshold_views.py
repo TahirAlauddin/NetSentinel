@@ -2,20 +2,20 @@
 Subnet Threshold ViewSets for IPAM.
 """
 
+from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.utils import timezone
 
 from ..models import SubnetThreshold, SubnetThresholdAlert
 from ..serializers import (
-    SubnetThresholdSerializer,
-    SubnetThresholdCreateUpdateSerializer,
     SubnetThresholdAlertSerializer,
+    SubnetThresholdCreateUpdateSerializer,
+    SubnetThresholdSerializer,
 )
 from ..services.subnet_threshold import (
-    check_subnet_threshold,
     check_all_thresholds,
+    check_subnet_threshold,
     get_threshold_summary,
 )
 
@@ -23,7 +23,7 @@ from ..services.subnet_threshold import (
 class SubnetThresholdViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing subnet thresholds.
-    
+
     Provides CRUD operations for subnet utilization thresholds.
     """
 
@@ -78,7 +78,7 @@ class SubnetThresholdViewSet(viewsets.ModelViewSet):
 class SubnetThresholdAlertViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for viewing subnet threshold alerts.
-    
+
     Provides read-only access to threshold alerts.
     """
 
@@ -132,9 +132,7 @@ class SubnetThresholdAlertViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        updated = SubnetThresholdAlert.objects.filter(
-            id__in=alert_ids
-        ).update(
+        updated = SubnetThresholdAlert.objects.filter(id__in=alert_ids).update(
             acknowledged=True,
             acknowledged_by=request.user,
             acknowledged_at=timezone.now(),

@@ -29,10 +29,8 @@ def get_subnet_mask_info(prefix_length: int, is_ipv6: bool = False) -> Dict:
     """
     if is_ipv6:
         max_prefix = 128
-        address_class = ipaddress.IPv6Address
     else:
         max_prefix = 32
-        address_class = ipaddress.IPv4Address
 
     if prefix_length < 0 or prefix_length > max_prefix:
         raise ValueError(f"Prefix length must be between 0 and {max_prefix}")
@@ -42,13 +40,13 @@ def get_subnet_mask_info(prefix_length: int, is_ipv6: bool = False) -> Dict:
     subnet_bits = prefix_length
 
     # Calculate number of hosts (2^host_bits)
-    total_hosts = 2 ** host_bits if host_bits <= 64 else float('inf')
-    
+    total_hosts = 2**host_bits if host_bits <= 64 else float("inf")
+
     # For IPv4, exclude network and broadcast addresses
     if is_ipv6:
         usable_hosts = total_hosts
     else:
-        usable_hosts = max(0, total_hosts - 2) if total_hosts != float('inf') else total_hosts
+        usable_hosts = max(0, total_hosts - 2) if total_hosts != float("inf") else total_hosts
 
     # Calculate number of subnets (2^subnet_bits)
     # For reference purposes, we show how many /32 subnets can fit in this prefix
@@ -79,7 +77,7 @@ def get_subnet_mask_info(prefix_length: int, is_ipv6: bool = False) -> Dict:
         "wildcard_mask": wildcard_mask,
         "binary": binary,
         "subnets": subnets,
-        "hosts": usable_hosts if usable_hosts != float('inf') else "Unlimited",
+        "hosts": usable_hosts if usable_hosts != float("inf") else "Unlimited",
         "subnet_bits": subnet_bits,
         "host_bits": host_bits,
         "is_ipv6": is_ipv6,
@@ -88,18 +86,20 @@ def get_subnet_mask_info(prefix_length: int, is_ipv6: bool = False) -> Dict:
 
 def _ipv4_to_binary(ip: ipaddress.IPv4Address) -> str:
     """Convert IPv4 address to binary string with dots."""
-    binary_str = format(int(ip), '032b')
-    return '.'.join([binary_str[i:i+8] for i in range(0, 32, 8)])
+    binary_str = format(int(ip), "032b")
+    return ".".join([binary_str[i:i + 8] for i in range(0, 32, 8)])
 
 
 def _ipv6_to_binary(ip: ipaddress.IPv6Address) -> str:
     """Convert IPv6 address to binary string with colons (hex format for readability)."""
     # For IPv6, show hex representation instead of full binary (too long)
-    hex_str = format(int(ip), '032x')
-    return ':'.join([hex_str[i:i+4] for i in range(0, 32, 4)])
+    hex_str = format(int(ip), "032x")
+    return ":".join([hex_str[i:i + 4] for i in range(0, 32, 4)])
 
 
-def get_all_subnet_masks(is_ipv6: bool = False, min_prefix: int = None, max_prefix: int = None) -> List[Dict]:
+def get_all_subnet_masks(
+    is_ipv6: bool = False, min_prefix: int = None, max_prefix: int = None
+) -> List[Dict]:
     """
     Get subnet mask information for all prefix lengths.
 
@@ -145,10 +145,63 @@ def get_common_subnet_masks(is_ipv6: bool = False) -> List[Dict]:
     """
     if is_ipv6:
         # Common IPv6 prefix lengths
-        common_prefixes = [128, 127, 126, 125, 124, 120, 112, 108, 104, 96, 80, 64, 48, 32, 24, 16, 8, 0]
+        common_prefixes = [
+            128,
+            127,
+            126,
+            125,
+            124,
+            120,
+            112,
+            108,
+            104,
+            96,
+            80,
+            64,
+            48,
+            32,
+            24,
+            16,
+            8,
+            0,
+        ]
     else:
         # Common IPv4 prefix lengths (from /32 to /8)
-        common_prefixes = [32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+        common_prefixes = [
+            32,
+            31,
+            30,
+            29,
+            28,
+            27,
+            26,
+            25,
+            24,
+            23,
+            22,
+            21,
+            20,
+            19,
+            18,
+            17,
+            16,
+            15,
+            14,
+            13,
+            12,
+            11,
+            10,
+            9,
+            8,
+            7,
+            6,
+            5,
+            4,
+            3,
+            2,
+            1,
+            0,
+        ]
 
     masks = []
     for prefix in common_prefixes:

@@ -3,17 +3,16 @@ Tests for IP Address Assignment functionality.
 """
 
 import pytest
-from django.utils import timezone
 from rest_framework import status
 
 from assets.models import Asset, AssetCategory
 from infrastructure.models import Location
-from ipam.models import IPAddress, IPAssignmentHistory, Subnet, SubnetGroup
+from ipam.models import IPAddress, Subnet, SubnetGroup
 from ipam.services.ip_assignment import (
     assign_ip_to_asset,
     auto_assign_ip_from_subnet,
-    release_ip_from_asset,
     change_ip_status,
+    release_ip_from_asset,
 )
 from users.models import User
 

@@ -4,10 +4,9 @@ Duplicate IP Address Detection Service.
 Detects duplicate IP addresses across subnets and provides conflict resolution suggestions.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 
-from django.db.models import Count, Q
-from django.utils import timezone
+from django.db.models import Count
 
 from ..models import IPAddress, Subnet
 
@@ -20,11 +19,7 @@ def detect_duplicate_ips() -> List[Dict]:
         List of dictionaries with duplicate IP information
     """
     # Find IP addresses that appear multiple times
-    duplicates = (
-        IPAddress.objects.values("address")
-        .annotate(count=Count("id"))
-        .filter(count__gt=1)
-    )
+    duplicates = IPAddress.objects.values("address").annotate(count=Count("id")).filter(count__gt=1)
 
     duplicate_list = []
 
@@ -46,9 +41,7 @@ def detect_duplicate_ips() -> List[Dict]:
                 "subnet_id": ip.subnet.id if ip.subnet else None,
                 "subnet_network": ip.subnet.network if ip.subnet else None,
                 "status": ip.status,
-                "assigned_to_asset_id": (
-                    ip.assigned_to_asset.id if ip.assigned_to_asset else None
-                ),
+                "assigned_to_asset_id": (ip.assigned_to_asset.id if ip.assigned_to_asset else None),
                 "assigned_to_asset_name": (
                     ip.assigned_to_asset.name if ip.assigned_to_asset else None
                 ),
@@ -60,9 +53,7 @@ def detect_duplicate_ips() -> List[Dict]:
 
             # Identify conflicts (same IP in different subnets)
             if ip.subnet:
-                other_ips = IPAddress.objects.filter(address=ip.address).exclude(
-                    id=ip.id
-                )
+                other_ips = IPAddress.objects.filter(address=ip.address).exclude(id=ip.id)
                 for other_ip in other_ips:
                     if other_ip.subnet and other_ip.subnet.id != ip.subnet.id:
                         conflict = {
@@ -100,7 +91,7 @@ def detect_duplicate_subnets() -> List[Dict]:
 
         overlaps = []
 
-        for subnet2 in subnet_list[i + 1 :]:
+        for subnet2 in subnet_list[i + 1:]:
             try:
                 network2 = ipaddress.ip_network(subnet2.network, strict=False)
             except (ValueError, AttributeError):
@@ -180,9 +171,7 @@ def suggest_resolution(duplicate_info: Dict) -> Dict:
     instances = duplicate_info["instances"]
 
     # If all instances are in the same subnet, suggest keeping the most recent
-    subnet_ids = set(
-        inst["subnet_id"] for inst in instances if inst["subnet_id"] is not None
-    )
+    subnet_ids = set(inst["subnet_id"] for inst in instances if inst["subnet_id"] is not None)
 
     if len(subnet_ids) == 1:
         # All in same subnet - keep the most recent one
@@ -208,9 +197,7 @@ def suggest_resolution(duplicate_info: Dict) -> Dict:
             suggestions["reason"] = "Keep instance with active assignment"
             suggestions["ip_to_keep"] = assigned_instances[0]["id"]
             suggestions["ips_to_remove"] = [
-                inst["id"]
-                for inst in instances
-                if inst["id"] != assigned_instances[0]["id"]
+                inst["id"] for inst in instances if inst["id"] != assigned_instances[0]["id"]
             ]
         else:
             # Keep the most recent one
@@ -266,12 +253,12 @@ def resolve_duplicate(
                 continue
 
             # Log the removal in description before deleting
+            subnet_network = ip.subnet.network if ip.subnet else "N/A"
+            merge_note = f"[Merged duplicate: {ip.address} from subnet {subnet_network}]"
             if keep_ip.description:
-                keep_ip.description = (
-                    f"{keep_ip.description}\n[Merged duplicate: {ip.address} from subnet {ip.subnet.network if ip.subnet else 'N/A'}]"
-                )
+                keep_ip.description = f"{keep_ip.description}\n{merge_note}"
             else:
-                keep_ip.description = f"[Merged duplicate: {ip.address} from subnet {ip.subnet.network if ip.subnet else 'N/A'}]"
+                keep_ip.description = merge_note
 
             ip.delete()
             results["resolved"] += 1

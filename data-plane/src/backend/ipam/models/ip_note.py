@@ -15,7 +15,7 @@ User = get_user_model()
 class IPNote(models.Model):
     """
     Model for IP address notes.
-    
+
     Supports rich text notes with versioning and attachments.
     """
 
@@ -42,7 +42,7 @@ class IPNote(models.Model):
         default=False,
         help_text="Whether the note is pinned to the top",
     )
-    
+
     # Author information
     created_by = models.ForeignKey(
         User,
@@ -60,7 +60,7 @@ class IPNote(models.Model):
         related_name="updated_ip_notes",
         help_text="User who last updated this note",
     )
-    
+
     # Version tracking
     version = models.IntegerField(
         default=1,
@@ -74,7 +74,7 @@ class IPNote(models.Model):
         related_name="versions",
         help_text="Parent note (for versioning)",
     )
-    
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

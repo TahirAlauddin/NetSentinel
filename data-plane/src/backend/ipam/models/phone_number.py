@@ -12,7 +12,7 @@ from infrastructure.models import Location
 class PhoneNumberRange(models.Model):
     """
     Model for managing phone number ranges.
-    
+
     Represents a range of phone numbers with associated carrier, trunk, and location.
     """
 

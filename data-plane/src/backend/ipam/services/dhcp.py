@@ -6,12 +6,11 @@ Provides DHCP scope management, lease tracking, and reservation management.
 
 import ipaddress
 from datetime import timedelta
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
-from django.db import transaction
 from django.utils import timezone
 
-from ..models import DHCPScope, DHCPLease, DHCPReservation, IPAddress, Subnet
+from ..models import DHCPLease, DHCPScope, IPAddress
 
 
 def calculate_scope_availability(scope_id: int) -> Dict:
@@ -247,20 +246,37 @@ host {reservation.hostname or f"client-{reservation.mac_address.replace(':', '-'
 
     elif format == "windows-dhcp":
         # Windows DHCP format (PowerShell)
+        ip_parts = scope.start_ip.split(".")
+        scope_id = f"{ip_parts[0]}.{ip_parts[1]}.{ip_parts[2]}.0"
+        lease_hours = scope.lease_duration // 3600
+
         config = f"""
 # DHCP Scope: {scope.name}
-Add-DhcpServerv4Scope -Name "{scope.name}" -StartRange {scope.start_ip} -EndRange {scope.end_ip} -SubnetMask {scope.subnet_mask}
-Set-DhcpServerv4Scope -ScopeId {scope.start_ip.split('.')[0]}.{scope.start_ip.split('.')[1]}.{scope.start_ip.split('.')[2]}.0 -LeaseDuration (New-TimeSpan -Hours {scope.lease_duration // 3600})
+Add-DhcpServerv4Scope -Name "{scope.name}" -StartRange {scope.start_ip} \\
+    -EndRange {scope.end_ip} -SubnetMask {scope.subnet_mask}
+Set-DhcpServerv4Scope -ScopeId {scope_id} \\
+    -LeaseDuration (New-TimeSpan -Hours {lease_hours})
 """
         if scope.gateway:
-            config += f'Set-DhcpServerv4OptionValue -ScopeId {scope.start_ip.split(".")[0]}.{scope.start_ip.split(".")[1]}.{scope.start_ip.split(".")[2]}.0 -OptionId 3 -Value {scope.gateway}\n'
+            config += (
+                f"Set-DhcpServerv4OptionValue -ScopeId {scope_id} "
+                f"-OptionId 3 -Value {scope.gateway}\n"
+            )
         if scope.dns_servers:
             dns_list = scope.dns_servers.split(",")
-            config += f'Set-DhcpServerv4OptionValue -ScopeId {scope.start_ip.split(".")[0]}.{scope.start_ip.split(".")[1]}.{scope.start_ip.split(".")[2]}.0 -OptionId 6 -Value {",".join(dns_list)}\n'
+            dns_value = ",".join(dns_list)
+            config += (
+                f"Set-DhcpServerv4OptionValue -ScopeId {scope_id} "
+                f"-OptionId 6 -Value {dns_value}\n"
+            )
 
         # Add reservations
         for reservation in reservations:
-            config += f'Add-DhcpServerv4Reservation -ScopeId {scope.start_ip.split(".")[0]}.{scope.start_ip.split(".")[1]}.{scope.start_ip.split(".")[2]}.0 -IPAddress {reservation.ip_address} -ClientId {reservation.mac_address}\n'
+            config += (
+                f"Add-DhcpServerv4Reservation -ScopeId {scope_id} "
+                f"-IPAddress {reservation.ip_address} "
+                f"-ClientId {reservation.mac_address}\n"
+            )
 
         return config
 

@@ -4,7 +4,7 @@ DHCP serializers for IPAM.
 
 from rest_framework import serializers
 
-from ..models import DHCPScope, DHCPLease, DHCPReservation, DHCPOption
+from ..models import DHCPLease, DHCPOption, DHCPReservation, DHCPScope
 from .subnet import SubnetSerializer
 
 

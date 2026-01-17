@@ -5,8 +5,8 @@ Provides functions for logging IP address changes and querying audit logs.
 """
 
 from typing import Dict, List, Optional
+
 from django.contrib.auth import get_user_model
-from django.db.models import Q
 from django.utils import timezone
 
 from ..models import IPAddress, IPAuditLog
@@ -26,7 +26,7 @@ def log_ip_action(
 ) -> IPAuditLog:
     """
     Log an IP address action.
-    
+
     Args:
         ip_address: IPAddress instance (can be None for deleted IPs)
         action: Action type (from IPAuditLog.ACTION_CHOICES)
@@ -36,7 +36,7 @@ def log_ip_action(
         new_value: New value (if applicable)
         reason: Reason/justification for the change
         metadata: Additional metadata
-    
+
     Returns:
         Created IPAuditLog instance
     """
@@ -89,7 +89,7 @@ def get_audit_logs(
 ) -> List[IPAuditLog]:
     """
     Get audit logs with filters.
-    
+
     Args:
         ip_address: IP address string to filter by
         ip_address_id: IP address ID to filter by
@@ -98,7 +98,7 @@ def get_audit_logs(
         start_date: Start date for filtering
         end_date: End date for filtering
         limit: Maximum number of results
-    
+
     Returns:
         List of IPAuditLog instances
     """
@@ -130,16 +130,17 @@ def get_audit_log_summary(
 ) -> Dict:
     """
     Get summary statistics for audit logs.
-    
+
     Args:
         ip_address: IP address to get summary for (optional)
         days: Number of days to look back
-    
+
     Returns:
         Dictionary with summary statistics
     """
-    from django.utils import timezone
     from datetime import timedelta
+
+    from django.utils import timezone
 
     start_date = timezone.now() - timedelta(days=days)
 
@@ -162,6 +163,7 @@ def get_audit_log_summary(
 
     # Count by user
     from django.db.models import Count
+
     user_counts = (
         queryset.values("user__username", "username")
         .annotate(count=Count("id"))

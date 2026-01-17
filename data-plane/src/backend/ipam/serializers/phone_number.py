@@ -5,6 +5,7 @@ Phone Number serializer for IPAM.
 from rest_framework import serializers
 
 from infrastructure.serializers import AssetLocationSerializer
+
 from ..models import PhoneNumberRange
 
 
@@ -54,13 +55,13 @@ class PhoneNumberRangeCreateUpdateSerializer(serializers.ModelSerializer):
         """Validate that start_number is less than or equal to stop_number."""
         start_number = data.get("start_number", "")
         stop_number = data.get("stop_number", "")
-        
+
         if start_number and stop_number:
             # Extract numeric parts for comparison
             try:
                 start_digits = int("".join(filter(str.isdigit, start_number)))
                 stop_digits = int("".join(filter(str.isdigit, stop_number)))
-                
+
                 if start_digits > stop_digits:
                     raise serializers.ValidationError(
                         "Start number must be less than or equal to stop number"
@@ -68,5 +69,5 @@ class PhoneNumberRangeCreateUpdateSerializer(serializers.ModelSerializer):
             except (ValueError, AttributeError):
                 # If we can't parse, just let it through - validation will happen elsewhere
                 pass
-        
+
         return data

@@ -5,15 +5,15 @@ Provides network discovery and host scanning capabilities.
 """
 
 import ipaddress
-import subprocess
 import socket
+import subprocess
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from django.db import transaction
 from django.utils import timezone
 
-from ..models import NetworkScan, ScanResult, Subnet, IPAddress
+from ..models import IPAddress, NetworkScan, ScanResult, Subnet
 
 
 def ping_host(ip_address: str, timeout: int = 3) -> Tuple[bool, Optional[float]]:
@@ -91,6 +91,28 @@ def reverse_dns_lookup(ip_address: str) -> Optional[str]:
         return None
 
 
+def _parse_windows_arp(output: str, ip_address: str) -> Optional[str]:
+    """Parse Windows ARP table output."""
+    for line in output.split("\n"):
+        if ip_address in line:
+            parts = line.split()
+            if len(parts) >= 2:
+                mac = parts[1]
+                if "-" in mac or ":" in mac:
+                    return mac.upper()
+    return None
+
+
+def _parse_linux_arp(output: str) -> Optional[str]:
+    """Parse Linux ARP table output."""
+    parts = output.split()
+    if len(parts) >= 3:
+        mac = parts[2]
+        if ":" in mac:
+            return mac.upper()
+    return None
+
+
 def get_mac_address(ip_address: str) -> Optional[str]:
     """
     Get MAC address for an IP (requires ARP table access).
@@ -107,7 +129,6 @@ def get_mac_address(ip_address: str) -> Optional[str]:
         is_windows = platform.system().lower() == "windows"
 
         if is_windows:
-            # Windows: arp -a
             result = subprocess.run(
                 ["arp", "-a", ip_address],
                 stdout=subprocess.PIPE,
@@ -116,16 +137,8 @@ def get_mac_address(ip_address: str) -> Optional[str]:
             )
             if result.returncode == 0:
                 output = result.stdout.decode("utf-8", errors="ignore")
-                # Parse ARP table output
-                for line in output.split("\n"):
-                    if ip_address in line:
-                        parts = line.split()
-                        if len(parts) >= 2:
-                            mac = parts[1] if is_windows else parts[3]
-                            if "-" in mac or ":" in mac:
-                                return mac.upper()
+                return _parse_windows_arp(output, ip_address)
         else:
-            # Linux: arp -n
             result = subprocess.run(
                 ["arp", "-n", ip_address],
                 stdout=subprocess.PIPE,
@@ -134,15 +147,91 @@ def get_mac_address(ip_address: str) -> Optional[str]:
             )
             if result.returncode == 0:
                 output = result.stdout.decode("utf-8", errors="ignore")
-                parts = output.split()
-                if len(parts) >= 3:
-                    mac = parts[2]
-                    if ":" in mac:
-                        return mac.upper()
+                return _parse_linux_arp(output)
     except Exception:
         pass
 
     return None
+
+
+def _create_or_update_scan(
+    subnet: Subnet,
+    scan_type: str,
+    timeout: int,
+    max_hosts: Optional[int],
+    started_by,
+    scan_instance: Optional[NetworkScan],
+) -> NetworkScan:
+    """Create or update scan instance."""
+    if scan_instance:
+        scan = scan_instance
+        scan.status = "running"
+        scan.started_at = timezone.now()
+        scan.save()
+    else:
+        scan = NetworkScan.objects.create(
+            subnet=subnet,
+            scan_type=scan_type,
+            status="running",
+            timeout=timeout,
+            max_hosts=max_hosts,
+            started_by=started_by,
+            started_at=timezone.now(),
+        )
+    return scan
+
+
+def _process_alive_host(
+    scan: NetworkScan,
+    ip_str: str,
+    response_time: Optional[float],
+    scan_type: str,
+    existing_ips: set,
+) -> tuple[int, int]:
+    """Process an alive host during scanning."""
+    hosts_found = 1
+    hosts_new = 0
+
+    hostname = reverse_dns_lookup(ip_str)
+    mac_address = None
+    if scan_type in ["arp", "full"]:
+        mac_address = get_mac_address(ip_str)
+
+    in_ipam = ip_str in existing_ips
+    ipam_status = None
+    if in_ipam:
+        ip_addr = IPAddress.objects.filter(address=ip_str).first()
+        if ip_addr:
+            ipam_status = ip_addr.status
+    else:
+        hosts_new = 1
+
+    ScanResult.objects.create(
+        scan=scan,
+        ip_address=ip_str,
+        is_active=True,
+        response_time=response_time,
+        mac_address=mac_address,
+        hostname=hostname,
+        vendor=None,
+        in_ipam=in_ipam,
+        ipam_status=ipam_status,
+    )
+    return hosts_found, hosts_new
+
+
+def _process_inactive_host(scan: NetworkScan, ip_str: str, existing_ips: set) -> int:
+    """Process an inactive host during scanning."""
+    hosts_missing = 0
+    if ip_str in existing_ips:
+        hosts_missing = 1
+        ScanResult.objects.create(
+            scan=scan,
+            ip_address=ip_str,
+            is_active=False,
+            in_ipam=True,
+        )
+    return hosts_missing
 
 
 def scan_subnet(
@@ -167,36 +256,19 @@ def scan_subnet(
     Returns:
         NetworkScan instance
     """
-    # Use existing scan instance or create new one
-    if scan_instance:
-        scan = scan_instance
-        scan.status = "running"
-        scan.started_at = timezone.now()
-        scan.save()
-    else:
-        scan = NetworkScan.objects.create(
-            subnet=subnet,
-            scan_type=scan_type,
-            status="running",
-            timeout=timeout,
-            max_hosts=max_hosts,
-            started_by=started_by,
-            started_at=timezone.now(),
-        )
+    scan = _create_or_update_scan(
+        subnet, scan_type, timeout, max_hosts, started_by, scan_instance
+    )
 
     try:
         import logging
 
         logger = logging.getLogger(__name__)
 
-        # Parse subnet
         network = ipaddress.ip_network(subnet.network, strict=False)
         logger.info(f"Scanning subnet {subnet.network}, total hosts: {network.num_addresses}")
 
-        # Get all IPs in subnet
-        all_ips = list(network.hosts())  # Excludes network and broadcast
-
-        # Limit if max_hosts specified
+        all_ips = list(network.hosts())
         if max_hosts:
             all_ips = all_ips[:max_hosts]
             logger.info(f"Limited to {max_hosts} hosts")
@@ -207,67 +279,26 @@ def scan_subnet(
         hosts_new = 0
         hosts_missing = 0
 
-        # Get existing IPs in IPAM for this subnet
         existing_ips = set(
             IPAddress.objects.filter(subnet=subnet).values_list("address", flat=True)
         )
 
-        # Scan each IP
         for idx, ip in enumerate(all_ips):
             ip_str = str(ip)
-
-            if idx % 10 == 0:  # Log every 10th IP
+            if idx % 10 == 0:
                 logger.debug(f"Scanning IP {idx + 1}/{len(all_ips)}: {ip_str}")
 
-            # Ping the host
             is_alive, response_time = ping_host(ip_str, timeout)
 
             if is_alive:
-                hosts_found += 1
-
-                # Get additional information
-                hostname = reverse_dns_lookup(ip_str)
-                mac_address = None
-                vendor = None
-
-                if scan_type in ["arp", "full"]:
-                    mac_address = get_mac_address(ip_str)
-                    # TODO: MAC vendor lookup
-
-                # Check if in IPAM
-                in_ipam = ip_str in existing_ips
-                ipam_status = None
-                if in_ipam:
-                    ip_addr = IPAddress.objects.filter(address=ip_str).first()
-                    if ip_addr:
-                        ipam_status = ip_addr.status
-                else:
-                    hosts_new += 1
-
-                # Create scan result
-                ScanResult.objects.create(
-                    scan=scan,
-                    ip_address=ip_str,
-                    is_active=True,
-                    response_time=response_time,
-                    mac_address=mac_address,
-                    hostname=hostname,
-                    vendor=vendor,
-                    in_ipam=in_ipam,
-                    ipam_status=ipam_status,
+                found, new = _process_alive_host(
+                    scan, ip_str, response_time, scan_type, existing_ips
                 )
+                hosts_found += found
+                hosts_new += new
             else:
-                # Host didn't respond, but check if it's in IPAM
-                if ip_str in existing_ips:
-                    hosts_missing += 1
-                    ScanResult.objects.create(
-                        scan=scan,
-                        ip_address=ip_str,
-                        is_active=False,
-                        in_ipam=True,
-                    )
+                hosts_missing += _process_inactive_host(scan, ip_str, existing_ips)
 
-        # Update scan summary
         scan.hosts_found = hosts_found
         scan.hosts_new = hosts_new
         scan.hosts_missing = hosts_missing

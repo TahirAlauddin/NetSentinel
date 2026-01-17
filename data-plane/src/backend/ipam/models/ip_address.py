@@ -38,7 +38,7 @@ class IPAddress(models.Model):
         help_text="IP address status",
     )
     description = models.TextField(blank=True, null=True)
-    
+
     # Asset assignment
     assigned_to_asset = models.ForeignKey(
         "assets.Asset",
@@ -61,7 +61,7 @@ class IPAddress(models.Model):
         blank=True,
         help_text="When this IP address was assigned",
     )
-    
+
     # Tags (many-to-many through IPAddressTag)
     tags = models.ManyToManyField(
         "ipam.IPTag",

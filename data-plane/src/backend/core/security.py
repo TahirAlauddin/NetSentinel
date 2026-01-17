@@ -3,8 +3,8 @@ Security utilities for input validation and sanitization.
 Prevents command injection, path traversal, and other security vulnerabilities.
 """
 
-import re
 import ipaddress
+import re
 from typing import Optional, Union
 
 
@@ -89,10 +89,11 @@ def validate_hostname(hostname: str, max_length: int = 253) -> Optional[str]:
 
     # Basic hostname validation (RFC 1123)
     # Allow letters, digits, hyphens, and dots
-    if not re.match(
-        r"^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$",
-        hostname,
-    ):
+    pattern = (
+        r"^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?"
+        r"(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$"
+    )
+    if not re.match(pattern, hostname):
         return None
 
     # Check length

@@ -6,9 +6,7 @@ Provides IP pool management and pool-based IP assignment.
 
 from typing import Dict, List, Optional
 
-from django.db import transaction
-
-from ..models import IPPool, IPAddress, Subnet
+from ..models import IPAddress, IPPool
 
 
 def assign_ip_from_pool(

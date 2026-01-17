@@ -6,7 +6,6 @@ Models for network scanning and discovery functionality.
 
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.utils import timezone
 
 from .subnet import Subnet
 
@@ -16,7 +15,7 @@ User = get_user_model()
 class NetworkScan(models.Model):
     """
     Model for network scan jobs.
-    
+
     Represents a scan operation on a subnet to discover active hosts.
     """
 
@@ -61,7 +60,7 @@ class NetworkScan(models.Model):
         related_name="network_scans",
         help_text="User who initiated the scan",
     )
-    
+
     # Scan configuration
     timeout = models.IntegerField(
         default=3,
@@ -72,7 +71,7 @@ class NetworkScan(models.Model):
         blank=True,
         help_text="Maximum number of hosts to scan (null = all)",
     )
-    
+
     # Scan results summary
     hosts_found = models.IntegerField(
         default=0,
@@ -86,7 +85,7 @@ class NetworkScan(models.Model):
         default=0,
         help_text="Number of IPAM hosts not found in scan",
     )
-    
+
     # Timestamps
     started_at = models.DateTimeField(
         null=True,
@@ -100,7 +99,7 @@ class NetworkScan(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     # Error information
     error_message = models.TextField(
         blank=True,
@@ -132,7 +131,7 @@ class NetworkScan(models.Model):
 class ScanResult(models.Model):
     """
     Model for individual scan results.
-    
+
     Represents a discovered host from a network scan.
     """
 
@@ -145,7 +144,7 @@ class ScanResult(models.Model):
     ip_address = models.GenericIPAddressField(
         help_text="IP address discovered",
     )
-    
+
     # Discovery information
     is_active = models.BooleanField(
         default=True,
@@ -174,7 +173,7 @@ class ScanResult(models.Model):
         null=True,
         help_text="Vendor from MAC address lookup",
     )
-    
+
     # IPAM comparison
     in_ipam = models.BooleanField(
         default=False,
@@ -186,7 +185,7 @@ class ScanResult(models.Model):
         null=True,
         help_text="Status in IPAM if exists",
     )
-    
+
     # Additional information
     open_ports = models.JSONField(
         default=list,
@@ -198,7 +197,7 @@ class ScanResult(models.Model):
         null=True,
         help_text="Additional notes about this host",
     )
-    
+
     discovered_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

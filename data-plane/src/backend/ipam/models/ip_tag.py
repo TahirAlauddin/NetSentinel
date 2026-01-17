@@ -5,8 +5,8 @@ Models for tagging and labeling IP addresses for better organization and filteri
 """
 
 from django.contrib.auth import get_user_model
-from django.db import models
 from django.core.validators import RegexValidator
+from django.db import models
 
 from .ip_address import IPAddress
 
@@ -16,7 +16,7 @@ User = get_user_model()
 class IPTag(models.Model):
     """
     Model for IP address tags.
-    
+
     Tags are reusable labels that can be applied to multiple IP addresses
     for organization, filtering, and reporting purposes.
     """
@@ -82,7 +82,7 @@ class IPTag(models.Model):
 class IPAddressTag(models.Model):
     """
     Many-to-many relationship between IP addresses and tags.
-    
+
     Also stores additional metadata like when the tag was applied and by whom.
     """
 
@@ -133,4 +133,6 @@ class IPAddressTag(models.Model):
 # Add many-to-many relationship to IPAddress model
 # This will be done via a migration, but we can also add it programmatically
 # by updating the IPAddress model to include:
-# tags = models.ManyToManyField(IPTag, through='IPAddressTag', related_name='ip_addresses', blank=True)
+# tags = models.ManyToManyField(
+#     IPTag, through='IPAddressTag', related_name='ip_addresses', blank=True
+# )

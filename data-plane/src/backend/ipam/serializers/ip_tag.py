@@ -4,7 +4,7 @@ IP Tag serializers for IPAM.
 
 from rest_framework import serializers
 
-from ..models import IPTag, IPAddressTag, IPAddress
+from ..models import IPAddress, IPAddressTag, IPTag
 
 
 class IPTagSerializer(serializers.ModelSerializer):
