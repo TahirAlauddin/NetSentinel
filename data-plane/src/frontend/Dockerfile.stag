@@ -1,16 +1,25 @@
-# Multi-stage build for Next.js app (Staging)
-# Stage 1: Dependencies and build
-FROM node:18-alpine AS builder
+# Single-stage build for Next.js app (Staging)
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dependencies as root (needed for build)
-COPY package.json package-lock.json* .npmrc* ./
-# Install all dependencies including devDependencies for build
+ENV NODE_ENV=production \
+    PORT=3000 \
+    NEXT_TELEMETRY_DISABLED=1 \
+    HOSTNAME="0.0.0.0"
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 nextjs
+
+# Copy package files
+COPY --chown=nextjs:nodejs package.json package-lock.json* .npmrc* ./
+
+# Install all dependencies (including devDependencies for build)
 RUN npm ci --no-audit --no-fund
 
 # Copy source code
-COPY . .
+COPY --chown=nextjs:nodejs . .
 
 # Build arguments (secrets should be passed at runtime, not build time)
 ARG NEXT_PUBLIC_API_URL
@@ -25,37 +34,13 @@ RUN NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
     NEXTAUTH_SECRET=${NEXTAUTH_SECRET} \
     npm run build
 
-# Stage 2: Production runtime
-FROM node:18-alpine AS runner
-
-WORKDIR /app
-
-ENV NODE_ENV=production \
-    PORT=3000 \
-    NEXT_TELEMETRY_DISABLED=1
-
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs \
-    && adduser --system --uid 1001 nextjs
-
-# Copy package files
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
-COPY --from=builder --chown=nextjs:nodejs /app/package-lock.json* ./package-lock.json*
-
-# Install only production dependencies
-RUN npm ci --only=production --no-audit --no-fund && \
+# Clean up dev dependencies and npm cache to reduce image size
+RUN npm prune --production && \
     npm cache clean --force
-
-# Copy built application
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/next.config.ts* ./next.config.ts*
 
 USER nextjs
 
 EXPOSE 3000
-
-ENV HOSTNAME="0.0.0.0"
 
 CMD ["npm", "run", "start"]
 
