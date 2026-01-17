@@ -15,6 +15,8 @@ export function Navigation({ items }: NavigationProps) {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [isDesktop, setIsDesktop] = useState(false)
   const itemRefs = useRef<Record<string, HTMLElement | null>>({})
+  const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const navigationLeaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Determine if a navigation item is active based on current pathname
   const isItemActive = useCallback((item: NavigationItem): boolean => {
@@ -77,29 +79,88 @@ export function Navigation({ items }: NavigationProps) {
 
   const handleItemHover = useCallback((itemLabel: string) => {
     if (isDesktop) {
+      // Clear any pending leave timeouts when hovering over an item
+      if (leaveTimeoutRef.current) {
+        clearTimeout(leaveTimeoutRef.current)
+        leaveTimeoutRef.current = null
+      }
+      if (navigationLeaveTimeoutRef.current) {
+        clearTimeout(navigationLeaveTimeoutRef.current)
+        navigationLeaveTimeoutRef.current = null
+      }
+      
       setHoveredItem(itemLabel)
       setExpandedItems(new Set([itemLabel]))
     }
   }, [isDesktop])
 
+  const handleSubmenuEnter = useCallback(() => {
+    if (isDesktop) {
+      // Cancel any pending leave timeouts when entering submenu
+      if (leaveTimeoutRef.current) {
+        clearTimeout(leaveTimeoutRef.current)
+        leaveTimeoutRef.current = null
+      }
+      if (navigationLeaveTimeoutRef.current) {
+        clearTimeout(navigationLeaveTimeoutRef.current)
+        navigationLeaveTimeoutRef.current = null
+      }
+    }
+  }, [isDesktop])
+
   const handleItemLeave = useCallback(() => {
     if (isDesktop) {
-      setHoveredItem(null)
-      // Delay closing to allow moving to submenu
-      setTimeout(() => {
-        if (!hoveredItem) {
-          setExpandedItems(new Set())
-        }
-      }, 100)
+      // Clear any existing timeout
+      if (leaveTimeoutRef.current) {
+        clearTimeout(leaveTimeoutRef.current)
+      }
+      
+      // Set a new timeout with 500ms delay to allow time to move cursor to submenu
+      leaveTimeoutRef.current = setTimeout(() => {
+        setHoveredItem(null)
+        setExpandedItems(new Set())
+        leaveTimeoutRef.current = null
+      }, 500)
     }
-  }, [isDesktop, hoveredItem])
+  }, [isDesktop])
 
   const setItemRef = useCallback((itemLabel: string) => (el: HTMLElement | null) => {
     itemRefs.current[itemLabel] = el
   }, [])
 
+  // Handle mouse leave from entire navigation area
+  const handleNavigationLeave = useCallback((e: React.MouseEvent) => {
+    if (isDesktop) {
+      const relatedTarget = e.relatedTarget
+      
+      // relatedTarget can be Window, HTMLElement, or null
+      // Check if it's an HTMLElement and if it's moving to a submenu
+      const isMovingToSubmenu = relatedTarget instanceof HTMLElement && 
+        relatedTarget.closest('[role="menu"]') !== null
+      
+      // Only close if mouse is not moving to a submenu
+      if (!isMovingToSubmenu) {
+        // Clear any existing timeout
+        if (navigationLeaveTimeoutRef.current) {
+          clearTimeout(navigationLeaveTimeoutRef.current)
+        }
+        
+        // Close all submenus when mouse leaves the navigation area
+        // Increased timeout to 500ms to allow time to move cursor to submenu
+        navigationLeaveTimeoutRef.current = setTimeout(() => {
+          setHoveredItem(null)
+          setExpandedItems(new Set())
+          navigationLeaveTimeoutRef.current = null
+        }, 500)
+      }
+    }
+  }, [isDesktop])
+
   return (
-    <nav className="py-2">
+    <nav 
+      className="py-2"
+      onMouseLeave={handleNavigationLeave}
+    >
       <ul className="flex flex-col">
         {items.map((item) => {
           const isExpanded = expandedItems.has(item.label) || hoveredItem === item.label
@@ -118,6 +179,7 @@ export function Navigation({ items }: NavigationProps) {
                 onCloseSubmenu={closeSubmenu}
                 onItemHover={handleItemHover}
                 onItemLeave={handleItemLeave}
+                onSubmenuEnter={handleSubmenuEnter}
               />
             </div>
           )

@@ -36,6 +36,24 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - netsentinel-network
+    # Security: Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    # Security: Drop unnecessary capabilities
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
@@ -64,6 +82,24 @@ services:
         condition: service_healthy
     networks:
       - netsentinel-network
+    # Security: Run as non-root user
+    user: "django:django"
+    # Resource limits to prevent DoS
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    # Security: Drop all capabilities and add only what's needed
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
@@ -85,17 +121,32 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         SERVER_API_URL: ${SERVER_API_URL:-http://backend:8000/api/v1}
         NEXTAUTH_URL: ${NEXTAUTH_URL}
+        # Note: NEXTAUTH_SECRET should be set via environment variable at runtime, not build arg
         NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
     container_name: netsentinel-frontend
     env_file:
       - .env.stag
+    # Security: Run as non-root user
+    user: "nextjs:nodejs"
+    # Resource limits to prevent DoS
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    # Security: Drop all capabilities
+    cap_drop:
+      - ALL
     depends_on:
       backend:
         condition: service_healthy
     networks:
       - netsentinel-network
     healthcheck:
-      test: ["CMD", "node"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
       timeout: 10s
       retries: 3

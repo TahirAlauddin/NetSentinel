@@ -16,10 +16,6 @@ jest.mock('@/components/layout/app-shell', () => ({
   ),
 }))
 
-jest.mock('@/components/settings/settings-sidebar', () => ({
-  SettingsSidebar: () => <div data-testid="settings-sidebar">Sidebar</div>,
-}))
-
 jest.mock('@/components/settings/settings-nav-tabs', () => ({
   SettingsNavTabs: () => <div data-testid="settings-nav-tabs">Nav Tabs</div>,
 }))
@@ -38,7 +34,6 @@ describe('SettingsPage', () => {
     render(page)
 
     expect(screen.getByTestId('app-shell')).toBeInTheDocument()
-    expect(screen.getByTestId('settings-sidebar')).toBeInTheDocument()
     expect(screen.getByTestId('settings-nav-tabs')).toBeInTheDocument()
     expect(screen.getByTestId('settings-header')).toBeInTheDocument()
     expect(screen.getByTestId('settings-overview')).toBeInTheDocument()

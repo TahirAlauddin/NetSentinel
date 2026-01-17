@@ -48,10 +48,6 @@ jest.mock('@/components/feedback/protected-route', () => ({
   ProtectedRoute: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
-jest.mock('@/components/settings/settings-sidebar', () => ({
-  SettingsSidebar: () => <div data-testid="settings-sidebar">Sidebar</div>,
-}))
-
 jest.mock('@/components/settings/settings-nav-tabs', () => ({
   SettingsNavTabs: () => <div data-testid="settings-nav-tabs">Nav Tabs</div>,
 }))

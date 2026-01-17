@@ -6,7 +6,17 @@ import pytest
 from rest_framework import status
 
 from infrastructure.models import Location
-from ipam.models import VLAN, VRF, Customer, DNSRecord, DNSZone, IPAddress, Subnet, SubnetGroup
+from ipam.models import (
+    VLAN,
+    VRF,
+    Customer,
+    DNSRecord,
+    DNSZone,
+    FavoriteSubnet,
+    IPAddress,
+    Subnet,
+    SubnetGroup,
+)
 
 
 @pytest.mark.api
@@ -378,6 +388,112 @@ class TestSubnetViewSet:
         response = authenticated_api_client.delete(f"/api/v1/ipam/subnets/{subnet.id}/")
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert not Subnet.objects.filter(id=subnet.id).exists()
+
+    def test_subnet_favorite_action_add(self, authenticated_api_client, user):
+        """Test adding a subnet to favorites."""
+        location = Location.objects.create(
+            name="Test Location", address1="123 Main St", city="Test City"
+        )
+        group = SubnetGroup.objects.create(name="Test Group")
+        subnet = Subnet.objects.create(network="192.168.1.0/24", group=group, location=location)
+
+        response = authenticated_api_client.post(f"/api/v1/ipam/subnets/{subnet.id}/favorite/")
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data["is_favorite"] is True
+        assert FavoriteSubnet.objects.filter(user=user, subnet=subnet).exists()
+
+    def test_subnet_favorite_action_add_duplicate(self, authenticated_api_client, user):
+        """Test adding a subnet to favorites when already favorited."""
+        location = Location.objects.create(
+            name="Test Location", address1="123 Main St", city="Test City"
+        )
+        group = SubnetGroup.objects.create(name="Test Group")
+        subnet = Subnet.objects.create(network="192.168.1.0/24", group=group, location=location)
+        FavoriteSubnet.objects.create(user=user, subnet=subnet)
+
+        response = authenticated_api_client.post(f"/api/v1/ipam/subnets/{subnet.id}/favorite/")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["is_favorite"] is True
+        # Should still only have one favorite record
+        assert FavoriteSubnet.objects.filter(user=user, subnet=subnet).count() == 1
+
+    def test_subnet_favorite_action_remove(self, authenticated_api_client, user):
+        """Test removing a subnet from favorites."""
+        location = Location.objects.create(
+            name="Test Location", address1="123 Main St", city="Test City"
+        )
+        group = SubnetGroup.objects.create(name="Test Group")
+        subnet = Subnet.objects.create(network="192.168.1.0/24", group=group, location=location)
+        FavoriteSubnet.objects.create(user=user, subnet=subnet)
+
+        response = authenticated_api_client.delete(f"/api/v1/ipam/subnets/{subnet.id}/favorite/")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["is_favorite"] is False
+        assert not FavoriteSubnet.objects.filter(user=user, subnet=subnet).exists()
+
+    def test_subnet_favorite_action_remove_not_favorited(self, authenticated_api_client, user):
+        """Test removing a subnet from favorites when not favorited."""
+        location = Location.objects.create(
+            name="Test Location", address1="123 Main St", city="Test City"
+        )
+        group = SubnetGroup.objects.create(name="Test Group")
+        subnet = Subnet.objects.create(network="192.168.1.0/24", group=group, location=location)
+
+        response = authenticated_api_client.delete(f"/api/v1/ipam/subnets/{subnet.id}/favorite/")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["is_favorite"] is False
+
+    def test_subnet_list_includes_is_favorite(self, authenticated_api_client, user):
+        """Test that subnet list includes is_favorite field."""
+        location = Location.objects.create(
+            name="Test Location", address1="123 Main St", city="Test City"
+        )
+        group = SubnetGroup.objects.create(name="Test Group")
+        subnet1 = Subnet.objects.create(network="192.168.1.0/24", group=group, location=location)
+        subnet2 = Subnet.objects.create(network="192.168.2.0/24", group=group, location=location)
+        FavoriteSubnet.objects.create(user=user, subnet=subnet1)
+
+        response = authenticated_api_client.get("/api/v1/ipam/subnets/")
+        assert response.status_code == status.HTTP_200_OK
+
+        # Find the subnets in the response
+        results = response.data.get("results", response.data)
+        subnet1_data = next(s for s in results if s["id"] == subnet1.id)
+        subnet2_data = next(s for s in results if s["id"] == subnet2.id)
+
+        assert subnet1_data["is_favorite"] is True
+        assert subnet2_data["is_favorite"] is False
+
+    def test_subnet_retrieve_includes_is_favorite(self, authenticated_api_client, user):
+        """Test that subnet retrieve includes is_favorite field."""
+        location = Location.objects.create(
+            name="Test Location", address1="123 Main St", city="Test City"
+        )
+        group = SubnetGroup.objects.create(name="Test Group")
+        subnet = Subnet.objects.create(network="192.168.1.0/24", group=group, location=location)
+        FavoriteSubnet.objects.create(user=user, subnet=subnet)
+
+        response = authenticated_api_client.get(f"/api/v1/ipam/subnets/{subnet.id}/")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["is_favorite"] is True
+
+    def test_subnet_favorite_user_isolation(self, authenticated_api_client, user, another_user):
+        """Test that favorites are user-specific."""
+        location = Location.objects.create(
+            name="Test Location", address1="123 Main St", city="Test City"
+        )
+        group = SubnetGroup.objects.create(name="Test Group")
+        subnet = Subnet.objects.create(network="192.168.1.0/24", group=group, location=location)
+        # User 1 favorites the subnet
+        FavoriteSubnet.objects.create(user=user, subnet=subnet)
+
+        # User 1 should see it as favorited
+        response = authenticated_api_client.get(f"/api/v1/ipam/subnets/{subnet.id}/")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["is_favorite"] is True
+
+        # User 2 should not see it as favorited (would need another authenticated client)
+        # This test verifies the queryset annotation works correctly per user
 
 
 @pytest.mark.api

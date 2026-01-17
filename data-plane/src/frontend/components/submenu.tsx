@@ -7,10 +7,11 @@ interface SubmenuProps {
   columns: SubmenuColumn[]
   isVisible: boolean
   onClose: () => void
+  onMouseEnter?: () => void
   top?: number
 }
 
-export function Submenu({ columns, isVisible, onClose, top = 0 }: SubmenuProps) {
+export function Submenu({ columns, isVisible, onClose, onMouseEnter, top = 0 }: SubmenuProps) {
   if (!isVisible) return null
 
   // If there's only one category, spread items horizontally
@@ -21,9 +22,29 @@ export function Submenu({ columns, isVisible, onClose, top = 0 }: SubmenuProps) 
       className="ml-2 pointer-events-auto visible opacity-100 transition-opacity duration-150 fixed z-50 w-[calc(100vw-2rem)] lg:w-[640px] bg-[oklch(0.24_0_0)] text-white shadow-xl rounded-md border border-white/10"
       role="menu"
       onMouseEnter={() => {
-        // Keep submenu open when hovering over it
+        // Cancel any pending close timeouts when hovering over submenu
+        if (onMouseEnter) {
+          onMouseEnter()
+        }
       }}
-      onMouseLeave={onClose}
+      onMouseLeave={(e) => {
+        // Close when mouse leaves submenu, unless moving back to sidebar
+        const relatedTarget = e.relatedTarget
+        
+        // relatedTarget can be Window, HTMLElement, or null
+        if (relatedTarget instanceof HTMLElement) {
+          const isMovingToSidebar = relatedTarget.closest('nav') !== null || 
+                                   relatedTarget.closest('.top-0.h-screen') !== null
+          
+          // Close if not moving to sidebar
+          if (!isMovingToSidebar) {
+            onClose()
+          }
+        } else {
+          // relatedTarget is Window or null - mouse is leaving to main content
+          onClose()
+        }
+      }}
       style={{
         left: window.innerWidth >= 1024 ? '256px' : '1rem', // Desktop: sidebar width, Mobile: margin
         top: `${top}px`,

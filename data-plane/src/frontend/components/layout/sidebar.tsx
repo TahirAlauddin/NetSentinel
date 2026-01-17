@@ -7,7 +7,13 @@ import { SidebarProps } from "../../types/navigation"
 
 export function Sidebar({ onClose }: SidebarProps) {
   return (
-    <div className="top-0 h-screen bg-[oklch(0.24_0_0)] text-white overflow-y-auto overflow-x-visible z-30 relative">
+    <div 
+      className="top-0 h-screen bg-[oklch(0.24_0_0)] text-white overflow-y-auto overflow-x-visible z-30 relative"
+      onMouseLeave={() => {
+        // When mouse leaves the entire sidebar, the Navigation component
+        // will handle closing submenus via its own onMouseLeave handler
+      }}
+    >
       <BrandHeader onClose={onClose} />
       <Navigation 
         items={navigationItems} 
