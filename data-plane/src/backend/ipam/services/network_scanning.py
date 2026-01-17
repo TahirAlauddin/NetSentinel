@@ -256,9 +256,7 @@ def scan_subnet(
     Returns:
         NetworkScan instance
     """
-    scan = _create_or_update_scan(
-        subnet, scan_type, timeout, max_hosts, started_by, scan_instance
-    )
+    scan = _create_or_update_scan(subnet, scan_type, timeout, max_hosts, started_by, scan_instance)
 
     try:
         import logging

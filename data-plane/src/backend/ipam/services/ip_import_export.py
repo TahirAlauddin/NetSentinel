@@ -121,9 +121,7 @@ def _validate_subnet_field(row: Dict[str, Any]) -> List[str]:
                 errors.append(f"Subnet with ID {subnet_id} not found")
             elif "address" in row and row["address"]:
                 if not validate_ip_in_subnet(row["address"], subnet.network):
-                    errors.append(
-                        f"IP {row['address']} is not in subnet {subnet.network}"
-                    )
+                    errors.append(f"IP {row['address']} is not in subnet {subnet.network}")
         except (ValueError, TypeError):
             errors.append(f"Invalid subnet ID: {row.get('subnet')}")
     return errors
@@ -135,9 +133,7 @@ def _validate_status_field(row: Dict[str, Any]) -> List[str]:
     if "status" in row and row["status"]:
         valid_statuses = ["available", "reserved", "assigned", "dhcp", "deprecated"]
         if row["status"] not in valid_statuses:
-            errors.append(
-                f"Invalid status: {row['status']}. Must be one of {valid_statuses}"
-            )
+            errors.append(f"Invalid status: {row['status']}. Must be one of {valid_statuses}")
     return errors
 
 

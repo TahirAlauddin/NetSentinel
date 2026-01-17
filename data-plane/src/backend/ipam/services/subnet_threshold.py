@@ -133,8 +133,7 @@ def send_threshold_alert(
     if alert_type == "warning":
         subnet_network = threshold.subnet.network
         subject = (
-            f"Warning: Subnet {subnet_network} utilization at "
-            f"{utilization_percentage:.1f}%"
+            f"Warning: Subnet {subnet_network} utilization at " f"{utilization_percentage:.1f}%"
         )
         message = f"""
 Subnet {threshold.subnet.network} has reached the warning threshold.
@@ -149,8 +148,7 @@ or releasing unused IP addresses.
     elif alert_type == "critical":
         subnet_network = threshold.subnet.network
         subject = (
-            f"CRITICAL: Subnet {subnet_network} utilization at "
-            f"{utilization_percentage:.1f}%"
+            f"CRITICAL: Subnet {subnet_network} utilization at " f"{utilization_percentage:.1f}%"
         )
         message = f"""
 URGENT: Subnet {threshold.subnet.network} has reached the critical threshold!

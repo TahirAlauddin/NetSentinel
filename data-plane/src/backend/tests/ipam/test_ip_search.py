@@ -304,9 +304,7 @@ class TestIPSearchViews:
 
     def test_ip_conflicts_endpoint(self, authenticated_api_client, subnet):
         """Test GET /api/v1/ipam/ip-addresses/{ip}/conflicts/ endpoint."""
-        IPAddress.objects.create(
-            address="192.168.1.50", subnet=subnet, status="assigned"
-        )
+        IPAddress.objects.create(address="192.168.1.50", subnet=subnet, status="assigned")
 
         # Since IPAddress has unique constraint on address, we can only have one
         # Conflict detection will return the existing IP
