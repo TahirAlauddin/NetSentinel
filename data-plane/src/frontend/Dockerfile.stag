@@ -12,14 +12,14 @@ ENV NODE_ENV=production \
 RUN addgroup --system --gid 1001 nodejs \
     && adduser --system --uid 1001 nextjs
 
-# Copy package files
-COPY --chown=nextjs:nodejs package.json package-lock.json* .npmrc* ./
+# Copy package files (as root for installation)
+COPY package.json package-lock.json* .npmrc* ./
 
-# Install all dependencies (including devDependencies for build)
+# Install all dependencies (including devDependencies for build) as root
 RUN npm ci --no-audit --no-fund
 
-# Copy source code
-COPY --chown=nextjs:nodejs . .
+# Copy source code (as root)
+COPY . .
 
 # Build arguments (secrets should be passed at runtime, not build time)
 ARG NEXT_PUBLIC_API_URL
@@ -27,7 +27,7 @@ ARG SERVER_API_URL
 ARG NEXTAUTH_URL
 ARG NEXTAUTH_SECRET
 
-# Build the application
+# Build the application (as root, needs write access)
 RUN NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
     SERVER_API_URL=${SERVER_API_URL} \
     NEXTAUTH_URL=${NEXTAUTH_URL} \
@@ -38,6 +38,10 @@ RUN NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
 RUN npm prune --production && \
     npm cache clean --force
 
+# Change ownership of all files to nextjs user
+RUN chown -R nextjs:nodejs /app
+
+# Switch to non-root user
 USER nextjs
 
 EXPOSE 3000
