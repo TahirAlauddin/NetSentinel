@@ -76,13 +76,20 @@ interface DuplicatesSummary {
   duplicate_subnets: DuplicateSubnet[];
 }
 
+interface ResolutionSuggestion {
+  address: string;
+  ip_to_keep?: number;
+  ips_to_remove?: number[];
+  reason?: string;
+}
+
 export function DuplicatesDashboard() {
   const [duplicateIPs, setDuplicateIPs] = useState<DuplicateIP[]>([]);
   const [duplicateSubnets, setDuplicateSubnets] = useState<DuplicateSubnet[]>([]);
   const [summary, setSummary] = useState<DuplicatesSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedDuplicate, setSelectedDuplicate] = useState<DuplicateIP | null>(null);
-  const [suggestion, setSuggestion] = useState<any>(null);
+  const [suggestion, setSuggestion] = useState<ResolutionSuggestion | null>(null);
   const [showResolveDialog, setShowResolveDialog] = useState(false);
   const [resolving, setResolving] = useState(false);
 

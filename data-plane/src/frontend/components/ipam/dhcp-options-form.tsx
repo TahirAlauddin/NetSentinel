@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,11 +40,11 @@ export function DhcpOptionsForm({
   );
 
   // Initialize from existing options - only when options prop first loads or has new items
-  const [isInitialized, setIsInitialized] = useState(false);
+  const initializedRef = useRef(false);
   
   useEffect(() => {
     // Only initialize once on mount, or when we get new options from backend
-    if (!isInitialized && options.length > 0) {
+    if (!initializedRef.current && options.length > 0) {
       const values = new Map<number, OptionValue>();
       const selected = new Set<number>();
       
@@ -59,9 +59,9 @@ export function DhcpOptionsForm({
       
       setOptionValues(values);
       setSelectedOptions(selected);
-      setIsInitialized(true);
+      initializedRef.current = true;
     }
-  }, [options, isInitialized]);
+  }, [options]);
 
   // Get available options based on mode
   const availableOptions = useMemo(() => {

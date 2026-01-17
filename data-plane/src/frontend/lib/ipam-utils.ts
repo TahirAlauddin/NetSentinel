@@ -3,8 +3,6 @@
  * Helper functions for working with IPAM data
  */
 
-import { Subnet, VLAN, VRF, Customer } from "@/types/ipam";
-import { PaginatedResponse } from "@/types/ipam/dto";
 
 /**
  * Extract array data from API response

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { IpamHeader } from "@/components/ipam/ipam-header";
 import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
@@ -18,7 +17,6 @@ const ipamApi = new IpamApiClient();
  * Displays a list of phone number ranges with filtering, sorting, and CRUD operations
  */
 export default function PhoneNumbersPage() {
-  const router = useRouter();
   const [phoneNumbers, setPhoneNumbers] = useState<PhoneNumberRange[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

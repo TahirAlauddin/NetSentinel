@@ -19,7 +19,6 @@ import {
   Building2,
   Activity,
   Star,
-  Eye,
   Copy,
   Share2,
   AlertCircle,

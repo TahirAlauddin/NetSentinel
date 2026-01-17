@@ -42,6 +42,7 @@ export default function DhcpReservationsPage() {
 
   useEffect(() => {
     loadReservations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scopeId]);
 
   const handleEdit = (reservation: DHCPReservation) => {

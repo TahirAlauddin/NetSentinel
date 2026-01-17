@@ -22,8 +22,6 @@ export default function NewVrfPage() {
         throw new Error(response.error);
       }
       router.push("/ipam/vrfs");
-    } catch (err) {
-      throw err;
     } finally {
       setLoading(false);
     }

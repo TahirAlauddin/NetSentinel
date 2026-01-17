@@ -10,11 +10,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Upload, FileText, X, CheckCircle2, AlertCircle } from "lucide-react";
+import { Upload, FileText, X, AlertCircle } from "lucide-react";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const ipamApi = new IpamApiClient();
@@ -160,9 +159,6 @@ export function IPImportDialog({
 
   const getFileIcon = () => {
     if (!file) return null;
-    const extension = file.name
-      .toLowerCase()
-      .substring(file.name.lastIndexOf("."));
     return <FileText className="w-8 h-8 text-muted-foreground" />;
   };
 

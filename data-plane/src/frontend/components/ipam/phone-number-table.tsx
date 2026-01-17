@@ -18,6 +18,23 @@ interface PhoneNumberTableProps {
 type SortField = "start_number" | "stop_number" | "carrier" | "trunk" | "location" | "created_at";
 type SortDirection = "asc" | "desc";
 
+const SortIcon = ({ 
+  field, 
+  currentSortField, 
+  sortDirection 
+}: { 
+  field: SortField; 
+  currentSortField: SortField; 
+  sortDirection: SortDirection;
+}) => {
+  if (currentSortField !== field) return <ArrowUpDown className="h-4 w-4" />;
+  return sortDirection === "asc" ? (
+    <ArrowUp className="h-4 w-4" />
+  ) : (
+    <ArrowDown className="h-4 w-4" />
+  );
+};
+
 export function PhoneNumberTable({
   phoneNumbers,
   onEdit,
@@ -47,8 +64,8 @@ export function PhoneNumberTable({
     }
 
     filtered = [...filtered].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: string | number;
+      let bValue: string | number;
 
       switch (sortField) {
         case "start_number":
@@ -103,15 +120,6 @@ export function PhoneNumberTable({
     setCurrentPage(1);
   };
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
-    return sortDirection === "asc" ? (
-      <ArrowUp className="h-4 w-4" />
-    ) : (
-      <ArrowDown className="h-4 w-4" />
-    );
-  };
-
   return (
     <Card>
       <div className="p-4 border-b">
@@ -150,7 +158,7 @@ export function PhoneNumberTable({
                   className="h-auto p-0 font-semibold"
                 >
                   Start Number
-                  <SortIcon field="start_number" />
+                  <SortIcon field="start_number" currentSortField={sortField} sortDirection={sortDirection} />
                 </Button>
               </th>
               <th className="text-left p-3">
@@ -161,7 +169,7 @@ export function PhoneNumberTable({
                   className="h-auto p-0 font-semibold"
                 >
                   Stop Number
-                  <SortIcon field="stop_number" />
+                  <SortIcon field="stop_number" currentSortField={sortField} sortDirection={sortDirection} />
                 </Button>
               </th>
               <th className="text-left p-3">
@@ -172,7 +180,7 @@ export function PhoneNumberTable({
                   className="h-auto p-0 font-semibold"
                 >
                   Location
-                  <SortIcon field="location" />
+                  <SortIcon field="location" currentSortField={sortField} sortDirection={sortDirection} />
                 </Button>
               </th>
               <th className="text-left p-3">
@@ -183,7 +191,7 @@ export function PhoneNumberTable({
                   className="h-auto p-0 font-semibold"
                 >
                   Carrier
-                  <SortIcon field="carrier" />
+                  <SortIcon field="carrier" currentSortField={sortField} sortDirection={sortDirection} />
                 </Button>
               </th>
               <th className="text-left p-3">
@@ -194,7 +202,7 @@ export function PhoneNumberTable({
                   className="h-auto p-0 font-semibold"
                 >
                   Trunk
-                  <SortIcon field="trunk" />
+                  <SortIcon field="trunk" currentSortField={sortField} sortDirection={sortDirection} />
                 </Button>
               </th>
               <th className="text-left p-3">Count</th>

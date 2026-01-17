@@ -43,6 +43,7 @@ export function SubnetDetailsTabs({ subnet }: SubnetDetailsTabsProps) {
 
   useEffect(() => {
     loadIPRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subnet.id]);
 
   const loadIPRequests = async () => {

@@ -87,6 +87,7 @@ export default function DevicesPage() {
     loadDeviceTypes();
     loadLocations();
     loadRacks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleFilterChange = (newFilters: typeof filters) => {

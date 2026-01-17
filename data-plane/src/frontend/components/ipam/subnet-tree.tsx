@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { ChevronRight, ChevronDown, Folder, FolderOpen, Plus, Search, QrCode } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Subnet } from "@/types/ipam";

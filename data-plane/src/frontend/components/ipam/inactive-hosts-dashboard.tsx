@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RefreshCw, Download, Trash2, AlertTriangle, Calendar } from "lucide-react";
+import { RefreshCw, Trash2, AlertTriangle, Calendar } from "lucide-react";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import type { IPAddress } from "@/types/ipam";
 import { toast } from "sonner";
@@ -79,6 +79,7 @@ export function InactiveHostsDashboard() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [thresholdDays]);
 
   const handleSelectAll = (checked: boolean) => {
@@ -291,7 +292,7 @@ export function InactiveHostsDashboard() {
         <CardHeader>
           <CardTitle>Inactive Hosts</CardTitle>
           <CardDescription>
-            IP addresses that haven't been updated in {thresholdDays} days
+            IP addresses that haven&apos;t been updated in {thresholdDays} days
           </CardDescription>
         </CardHeader>
         <CardContent>

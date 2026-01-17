@@ -11,10 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Upload, Download } from "lucide-react";
 import type { IPAddress } from "@/types/ipam";
-import { useRouter } from "next/navigation";
 
 export default function SearchPage() {
-  const router = useRouter();
   const [selectedIP, setSelectedIP] = useState<IPAddress | null>(null);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);

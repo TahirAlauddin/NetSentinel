@@ -20,7 +20,7 @@ export default function NewDhcpScopePage() {
       
       // Extract pending options before creating scope
       const pendingOptions = data._pendingOptions || [];
-      delete (data as any)._pendingOptions;
+      delete (data as Partial<DHCPScope> & { _pendingOptions?: Partial<DHCPOption>[] })._pendingOptions;
       
       // Create the scope first
       const response = await ipamApi.createDHCPScope(data);

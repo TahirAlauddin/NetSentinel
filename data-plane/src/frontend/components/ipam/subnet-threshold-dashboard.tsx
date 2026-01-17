@@ -21,7 +21,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -32,7 +31,6 @@ import {
 } from "@/components/ui/select";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -86,6 +84,7 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
     loadSubnets();
     loadThresholds();
     loadAlerts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subnetId]);
 
   const loadSubnets = async () => {

@@ -55,7 +55,7 @@ export function PhoneNumberForm({
   });
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loadingLocations, setLoadingLocations] = useState(false);
+  const [_loadingLocations, setLoadingLocations] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -142,26 +142,32 @@ export function PhoneNumberForm({
 
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error saving phone number range:", error);
-      const errorMessage =
-        error?.response?.data?.error ||
-        error?.message ||
-        "Failed to save phone number range";
-      toast.error(errorMessage);
-
-      // Set field-specific errors if available
-      if (error?.response?.data) {
-        const fieldErrors: Record<string, string> = {};
-        Object.keys(error.response.data).forEach((key) => {
-          if (Array.isArray(error.response.data[key])) {
-            fieldErrors[key] = error.response.data[key][0];
-          } else {
-            fieldErrors[key] = error.response.data[key];
-          }
-        });
-        setErrors(fieldErrors);
+      let errorMessage = "Failed to save phone number range";
+      
+      if (error && typeof error === "object") {
+        const err = error as { response?: { data?: { error?: string; [key: string]: unknown } }; message?: string };
+        errorMessage = err?.response?.data?.error || err?.message || errorMessage;
+        
+        // Set field-specific errors if available
+        if (err?.response?.data) {
+          const fieldErrors: Record<string, string> = {};
+          Object.keys(err.response.data).forEach((key) => {
+            if (key !== "error") {
+              const value = err.response.data![key];
+              if (Array.isArray(value)) {
+                fieldErrors[key] = String(value[0]);
+              } else if (value) {
+                fieldErrors[key] = String(value);
+              }
+            }
+          });
+          setErrors(fieldErrors);
+        }
       }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

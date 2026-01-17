@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Search, Plus, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { IPPool } from "@/types/ipam";
-import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface IpPoolTableProps {
   pools: IPPool[];
@@ -19,6 +19,23 @@ interface IpPoolTableProps {
 
 type SortField = "name" | "subnet" | "start_ip" | "end_ip" | "utilization_percentage" | "is_active" | "created_at";
 type SortDirection = "asc" | "desc";
+
+const SortIcon = ({ 
+  field, 
+  currentSortField, 
+  sortDirection 
+}: { 
+  field: SortField; 
+  currentSortField: SortField; 
+  sortDirection: SortDirection;
+}) => {
+  if (currentSortField !== field) return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
+  return sortDirection === "asc" ? (
+    <ArrowUp className="h-4 w-4 ml-1" />
+  ) : (
+    <ArrowDown className="h-4 w-4 ml-1" />
+  );
+};
 
 export function IpPoolTable({
   pools,
@@ -49,8 +66,8 @@ export function IpPoolTable({
     }
 
     filtered = [...filtered].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: string | number;
+      let bValue: string | number;
 
       switch (sortField) {
         case "name":
@@ -108,15 +125,6 @@ export function IpPoolTable({
     }
   };
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
-    return sortDirection === "asc" ? (
-      <ArrowUp className="h-4 w-4 ml-1" />
-    ) : (
-      <ArrowDown className="h-4 w-4 ml-1" />
-    );
-  };
-
   return (
     <Card className="p-6">
       <div className="space-y-4">
@@ -153,7 +161,7 @@ export function IpPoolTable({
                 >
                   <div className="flex items-center">
                     Name
-                    <SortIcon field="name" />
+                    <SortIcon field="name" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
                 <th
@@ -162,7 +170,7 @@ export function IpPoolTable({
                 >
                   <div className="flex items-center">
                     Subnet
-                    <SortIcon field="subnet" />
+                    <SortIcon field="subnet" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
                 <th
@@ -171,7 +179,7 @@ export function IpPoolTable({
                 >
                   <div className="flex items-center">
                     Start IP
-                    <SortIcon field="start_ip" />
+                    <SortIcon field="start_ip" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
                 <th
@@ -180,7 +188,7 @@ export function IpPoolTable({
                 >
                   <div className="flex items-center">
                     End IP
-                    <SortIcon field="end_ip" />
+                    <SortIcon field="end_ip" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
                 <th className="text-left p-3">Reservation Policy</th>
@@ -191,7 +199,7 @@ export function IpPoolTable({
                 >
                   <div className="flex items-center">
                     Utilization
-                    <SortIcon field="utilization_percentage" />
+                    <SortIcon field="utilization_percentage" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
                 <th
@@ -200,7 +208,7 @@ export function IpPoolTable({
                 >
                   <div className="flex items-center">
                     Status
-                    <SortIcon field="is_active" />
+                    <SortIcon field="is_active" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
                 <th className="text-right p-3">Actions</th>

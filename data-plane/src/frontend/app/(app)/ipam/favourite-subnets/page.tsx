@@ -138,7 +138,7 @@ export default function FavouriteSubnetsPage() {
               No Favorite Subnets
             </CardTitle>
             <CardDescription>
-              You haven't favorited any subnets yet. Add subnets to your favorites to quickly access them here.
+              You haven&apos;t favorited any subnets yet. Add subnets to your favorites to quickly access them here.
             </CardDescription>
           </CardHeader>
           <CardContent>

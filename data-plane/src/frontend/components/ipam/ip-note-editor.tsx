@@ -15,11 +15,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Pin, MessageSquare, Paperclip, History, Plus, Edit, Trash2, Send } from "lucide-react";
+import { Pin, MessageSquare, Paperclip, Plus, Edit, Trash2, Send } from "lucide-react";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { extractIpamArrayData } from "@/lib/ipam-utils";
-import type { IPNote, IPNoteComment, IPNoteAttachment } from "@/types/ipam";
+import type { IPNote } from "@/types/ipam";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -46,6 +45,7 @@ export function IPNoteEditor({ ipAddressId, onNoteChange }: IPNoteEditorProps) {
 
   useEffect(() => {
     loadNotes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ipAddressId]);
 
   const loadNotes = async () => {

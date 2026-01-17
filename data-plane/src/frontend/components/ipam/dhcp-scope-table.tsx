@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Search, Plus, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Activity } from "lucide-react";
 import { DHCPScope } from "@/types/ipam";
-import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 interface DhcpScopeTableProps {
@@ -20,6 +19,23 @@ interface DhcpScopeTableProps {
 
 type SortField = "name" | "subnet" | "start_ip" | "end_ip" | "active_leases_count" | "is_active" | "created_at";
 type SortDirection = "asc" | "desc";
+
+const SortIcon = ({ 
+  field, 
+  currentSortField, 
+  sortDirection 
+}: { 
+  field: SortField; 
+  currentSortField: SortField; 
+  sortDirection: SortDirection;
+}) => {
+  if (currentSortField !== field) return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
+  return sortDirection === "asc" ? (
+    <ArrowUp className="h-4 w-4 ml-1" />
+  ) : (
+    <ArrowDown className="h-4 w-4 ml-1" />
+  );
+};
 
 export function DhcpScopeTable({
   scopes,
@@ -51,8 +67,8 @@ export function DhcpScopeTable({
     }
 
     filtered = [...filtered].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: string | number;
+      let bValue: string | number;
 
       switch (sortField) {
         case "name":
@@ -110,15 +126,6 @@ export function DhcpScopeTable({
     }
   };
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
-    return sortDirection === "asc" ? (
-      <ArrowUp className="h-4 w-4 ml-1" />
-    ) : (
-      <ArrowDown className="h-4 w-4 ml-1" />
-    );
-  };
-
   return (
     <Card className="p-6">
       <div className="space-y-4">
@@ -155,7 +162,7 @@ export function DhcpScopeTable({
                 >
                   <div className="flex items-center">
                     Name
-                    <SortIcon field="name" />
+                    <SortIcon field="name" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
                 <th
@@ -164,7 +171,7 @@ export function DhcpScopeTable({
                 >
                   <div className="flex items-center">
                     Subnet
-                    <SortIcon field="subnet" />
+                    <SortIcon field="subnet" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
                 <th
@@ -173,7 +180,7 @@ export function DhcpScopeTable({
                 >
                   <div className="flex items-center">
                     Start IP
-                    <SortIcon field="start_ip" />
+                    <SortIcon field="start_ip" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
                 <th
@@ -182,7 +189,7 @@ export function DhcpScopeTable({
                 >
                   <div className="flex items-center">
                     End IP
-                    <SortIcon field="end_ip" />
+                    <SortIcon field="end_ip" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
                 <th className="text-left p-3">Lease Duration</th>
@@ -192,7 +199,7 @@ export function DhcpScopeTable({
                 >
                   <div className="flex items-center">
                     Active Leases
-                    <SortIcon field="active_leases_count" />
+                    <SortIcon field="active_leases_count" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
                 <th className="text-left p-3">Available</th>
@@ -202,7 +209,7 @@ export function DhcpScopeTable({
                 >
                   <div className="flex items-center">
                     Status
-                    <SortIcon field="is_active" />
+                    <SortIcon field="is_active" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
                 <th className="text-right p-3">Actions</th>
