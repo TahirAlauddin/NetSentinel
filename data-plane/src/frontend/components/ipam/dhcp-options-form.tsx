@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, startTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,8 +57,10 @@ export function DhcpOptionsForm({
         selected.add(opt.option_code);
       });
       
-      setOptionValues(values);
-      setSelectedOptions(selected);
+      startTransition(() => {
+        setOptionValues(values);
+        setSelectedOptions(selected);
+      });
       initializedRef.current = true;
     }
   }, [options]);

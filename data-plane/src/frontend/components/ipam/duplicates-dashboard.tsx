@@ -78,9 +78,10 @@ interface DuplicatesSummary {
 
 interface ResolutionSuggestion {
   address: string;
-  ip_to_keep?: number;
+  ip_to_keep?: number | null;
   ips_to_remove?: number[];
-  reason?: string;
+  reason?: string | null;
+  recommended_action?: string | null;
 }
 
 export function DuplicatesDashboard() {
@@ -109,7 +110,7 @@ export function DuplicatesDashboard() {
         setDuplicateSubnets(subnetsResponse.data);
       }
       if (summaryResponse.data) {
-        setSummary(summaryResponse.data);
+        setSummary(summaryResponse.data as DuplicatesSummary);
       }
     } catch (error) {
       toast.error("Failed to load duplicates");
@@ -365,7 +366,7 @@ export function DuplicatesDashboard() {
                                 key={idx}
                                 className="flex items-center gap-2 p-2 bg-muted rounded-md"
                               >
-                                <Badge variant={overlap.type === "exact_duplicate" ? "destructive" : "warning"}>
+                                <Badge variant={overlap.type === "exact_duplicate" ? "destructive" : "outline"}>
                                   {overlap.type === "exact_duplicate" ? "Exact Duplicate" : "Overlap"}
                                 </Badge>
                                 <span className="font-mono">{overlap.subnet_network}</span>
@@ -411,7 +412,7 @@ export function DuplicatesDashboard() {
                 <div className="flex items-center gap-2">
                   <XCircle className="h-4 w-4 text-red-500" />
                   <span className="text-sm font-medium">
-                    Remove {suggestion.ips_to_remove.length} duplicate(s)
+                    Remove {suggestion.ips_to_remove?.length || 0} duplicate(s)
                   </span>
                 </div>
               </div>

@@ -153,9 +153,10 @@ export function PhoneNumberForm({
         // Set field-specific errors if available
         if (err?.response?.data) {
           const fieldErrors: Record<string, string> = {};
-          Object.keys(err.response.data).forEach((key) => {
+          const responseData = err.response.data;
+          Object.keys(responseData).forEach((key) => {
             if (key !== "error") {
-              const value = err.response.data![key];
+              const value = responseData[key];
               if (Array.isArray(value)) {
                 fieldErrors[key] = String(value[0]);
               } else if (value) {
