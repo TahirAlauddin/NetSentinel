@@ -1,0 +1,3 @@
+.env.stag
+.env.prod
+.env.local

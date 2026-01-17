@@ -82,8 +82,9 @@ services:
         condition: service_healthy
     networks:
       - netsentinel-network
-    # Security: Run as non-root user
-    user: "django:django"
+
+    # Security: Run as non-root user (handled by entrypoint script)
+    # The entrypoint script runs as root to fix permissions, then switches to django user
     # Resource limits to prevent DoS
     deploy:
       resources:
