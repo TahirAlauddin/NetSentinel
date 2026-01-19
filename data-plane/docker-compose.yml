@@ -7,7 +7,7 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - .env.local
+      - .env
     volumes:
       - ./src/backend:/app
       - backend_db:/app/data
@@ -54,7 +54,7 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - .env.local
+      - .env
     # Security: Run as non-root user
     user: "nextjs:nodejs"
     # Resource limits to prevent DoS

@@ -28,7 +28,7 @@ FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PATH=/home/django/.local/bin:$PATH
+    PATH=/root/.local/bin:$PATH
 
 WORKDIR /app
 
@@ -38,36 +38,26 @@ RUN apt-get update \
         curl \
         libpq5 \
         postgresql-client \
-        gosu \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# Create non-root user
-RUN groupadd -r django && useradd -r -g django django
-
-# Copy Python packages from builder
-COPY --from=builder /root/.local /home/django/.local
+# Copy Python packages from builder (install to root's local for simplicity)
+COPY --from=builder /root/.local /root/.local
 
 # Copy project files
-COPY --chown=django:django . .
+COPY . .
 
 # Create directories for static files and media
-RUN mkdir -p /app/staticfiles /app/media \
-    && chown -R django:django /app/staticfiles /app/media
+RUN mkdir -p /app/staticfiles /app/media
 
 # Copy and set up entrypoint scripts
 COPY docker-entrypoint-root.sh /app/docker-entrypoint-root.sh
-COPY --chown=django:django docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint-root.sh /app/docker-entrypoint.sh \
-    && chown root:root /app/docker-entrypoint-root.sh \
-    && chmod 4755 /app/docker-entrypoint-root.sh
-
-# Set proper ownership
-RUN chown -R django:django /app
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint-root.sh /app/docker-entrypoint.sh
 
 ENV PORT=8000
 EXPOSE 8000
 
-# Use root entrypoint to fix permissions, then switch to django user
+# Use root entrypoint (simplified)
 ENTRYPOINT ["/app/docker-entrypoint-root.sh"]
 CMD ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-"]

@@ -4,6 +4,7 @@ set -e
 # Wait for postgres to be ready (if POSTGRES_HOST is set)
 if [ -n "$POSTGRES_HOST" ]; then
   echo "Waiting for PostgreSQL to be ready..."
+  echo "Connecting to: host=$POSTGRES_HOST, database=$POSTGRES_DB, user=$POSTGRES_USER"
   until python -c "
 import sys
 import os
@@ -14,13 +15,15 @@ try:
         database=os.environ.get('POSTGRES_DB'),
         user=os.environ.get('POSTGRES_USER'),
         password=os.environ.get('POSTGRES_PASSWORD'),
-        connect_timeout=2
+        connect_timeout=5
     )
     conn.close()
     sys.exit(0)
-except Exception:
+except Exception as e:
+    import traceback
+    print(f'Connection failed: {e}', file=sys.stderr)
     sys.exit(1)
-" 2>/dev/null; do
+" 2>&1; do
     echo "PostgreSQL is unavailable - sleeping"
     sleep 1
   done
