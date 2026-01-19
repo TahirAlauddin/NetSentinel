@@ -73,7 +73,7 @@ services:
       dockerfile: Dockerfile.stag
     container_name: netsentinel-backend
     env_file:
-      - .env.stag
+      - .env
     volumes:
       - backend_static:/app/staticfiles
       - backend_media:/app/media
@@ -126,7 +126,7 @@ services:
         NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
     container_name: netsentinel-frontend
     env_file:
-      - .env.stag
+      - .env
     # Security: Run as non-root user
     user: "nextjs:nodejs"
     # Resource limits to prevent DoS
