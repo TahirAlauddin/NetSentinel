@@ -70,10 +70,12 @@ services:
   backend:
     build:
       context: ./src/backend
-      dockerfile: Dockerfile.stag
+      dockerfile: Dockerfile
     container_name: netsentinel-backend
     env_file:
       - .env
+    environment:
+      - POSTGRES_HOST=postgres
     volumes:
       - backend_static:/app/staticfiles
       - backend_media:/app/media
@@ -83,8 +85,6 @@ services:
     networks:
       - netsentinel-network
 
-    # Security: Run as non-root user (handled by entrypoint script)
-    # The entrypoint script runs as root to fix permissions, then switches to django user
     # Resource limits to prevent DoS
     deploy:
       resources:
@@ -94,13 +94,7 @@ services:
         reservations:
           cpus: '0.5'
           memory: 512M
-    # Security: Drop all capabilities and add only what's needed
-    cap_drop:
-      - ALL
-    cap_add:
-      - CHOWN
-      - SETGID
-      - SETUID
+    # Note: Running as root for staging (simplified setup)
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
@@ -117,7 +111,7 @@ services:
   frontend:
     build:
       context: ./src/frontend
-      dockerfile: Dockerfile.stag
+      dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         SERVER_API_URL: ${SERVER_API_URL:-http://backend:8000/api/v1}
