@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to obtain Let's Encrypt SSL certificate for staging environment
+# Script to obtain Let's Encrypt SSL certificate
 # Usage: ./obtain-ssl-cert.sh <email> <domain>
 # Example: ./obtain-ssl-cert.sh admin@example.com staging.netsentinel.io
 
@@ -18,24 +18,38 @@ echo "Obtaining SSL certificate for $DOMAIN..."
 echo "Email: $EMAIL"
 
 # Make sure nginx is running
-docker-compose -f docker-compose.stag.yml up -d nginx
+echo "Starting nginx..."
+docker-compose up -d nginx
 
 # Wait for nginx to be ready
 echo "Waiting for nginx to be ready..."
 sleep 5
 
 # Obtain certificate using certbot
-docker-compose -f docker-compose.stag.yml run --rm certbot certonly \
+echo "Obtaining certificate from Let's Encrypt..."
+docker-compose run --rm certbot certonly \
     --webroot \
     --webroot-path=/var/www/certbot \
     --email $EMAIL \
     --agree-tos \
     --no-eff-email \
-    --force-renewal \
     -d $DOMAIN
 
-echo "Certificate obtained successfully!"
-echo "Reloading nginx to use the new certificate..."
-docker-compose -f docker-compose.stag.yml exec nginx nginx -s reload
-
-echo "SSL certificate setup complete!"
+if [ $? -eq 0 ]; then
+    echo ""
+    echo "Certificate obtained successfully!"
+    echo ""
+    echo "IMPORTANT: Update nginx configuration with your domain name:"
+    echo "  1. Replace 'YOUR_DOMAIN' in nginx/conf.d/netsentinel.conf with: $DOMAIN"
+    echo "  2. Update server_name from '_' to '$DOMAIN'"
+    echo ""
+    echo "After updating, reload nginx:"
+    echo "  docker-compose exec nginx nginx -t  # Test configuration"
+    echo "  docker-compose exec nginx nginx -s reload  # Reload nginx"
+    echo ""
+    echo "SSL certificate setup complete!"
+else
+    echo ""
+    echo "Failed to obtain certificate. Please check the error messages above."
+    exit 1
+fi
