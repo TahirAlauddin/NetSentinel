@@ -1,23 +1,21 @@
-# Single-stage build for Next.js app (Staging)
-FROM node:18-alpine
+# Multi-stage build for Next.js app (Production)
+FROM node:18-alpine AS base
 
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-ENV PORT=3000 \
-    NEXT_TELEMETRY_DISABLED=1 \
-    HOSTNAME="0.0.0.0"
-
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs \
-    && adduser --system --uid 1001 nextjs
-
-# Copy package files (as root for installation)
+# Copy package files
 COPY package.json package-lock.json* .npmrc* ./
 
-# Install all dependencies (including devDependencies for build) as root
+# Install dependencies
 RUN npm ci --no-audit
 
-# Copy source code (as root)
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build arguments (secrets should be passed at runtime, not build time)
@@ -26,27 +24,49 @@ ARG SERVER_API_URL
 ARG NEXTAUTH_URL
 ARG NEXTAUTH_SECRET
 
-# Build the application (as root, needs write access)
-RUN NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
+# Build the application
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
     SERVER_API_URL=${SERVER_API_URL} \
     NEXTAUTH_URL=${NEXTAUTH_URL} \
     NEXTAUTH_SECRET=${NEXTAUTH_SECRET} \
+    NEXT_TELEMETRY_DISABLED=1
 
-    npm run build
-    
-ENV NODE_ENV=production
+RUN npm run build
 
-# Clean up dev dependencies and npm cache to reduce image size
-RUN npm prune --production && \
-    npm cache clean --force
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app
 
-# Change ownership of all files to nextjs user
-RUN chown -R nextjs:nodejs /app
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOSTNAME="0.0.0.0" \
+    NEXT_TELEMETRY_DISABLED=1
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Copy the standalone build output (this includes server.js, node_modules, package.json)
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+
+# Ensure .next directory exists and copy static files (standalone mode requires this)
+# The standalone build may or may not have .next directory, so we ensure it exists
+RUN mkdir -p .next && chown -R nextjs:nodejs .next
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Copy public folder
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+# Verify server.js exists (will fail build if missing - helps catch build issues early)
+RUN test -f server.js || (echo "ERROR: server.js not found in standalone build" && exit 1)
 
 # Switch to non-root user
 USER nextjs
 
 EXPOSE 3000
 
-CMD ["node", ".next/standalone/server.js"]
+ENV PORT=3000
 
+# Run the server (server.js is in the root of /app after copying standalone)
+# In standalone mode, we run server.js directly, not through npm
+CMD ["node", "server.js"]

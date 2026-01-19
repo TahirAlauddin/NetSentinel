@@ -1,20 +1,105 @@
 services:
+  nginx:
+    image: nginx:alpine
+    container_name: netsentinel-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - certbot-etc:/etc/letsencrypt:ro
+      - certbot-var:/var/lib/letsencrypt:ro
+      - certbot-www:/var/www/certbot:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      backend:
+        condition: service_started
+      frontend:
+        condition: service_started
+    networks:
+      - netsentinel-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "sh", "-c", "nginx -t && kill -0 $(cat /var/run/nginx.pid 2>/dev/null) 2>/dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: netsentinel-certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - certbot-www:/var/www/certbot
+    networks:
+      - netsentinel-network
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: netsentinel-postgres
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - netsentinel-network
+    # Security: Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    # Security: Drop unnecessary capabilities
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 60s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   backend:
     build:
       context: ./src/backend
       dockerfile: Dockerfile
     container_name: netsentinel-backend
-    ports:
-      - "8000:8000"
     env_file:
       - .env
+    environment:
+      - POSTGRES_HOST=postgres
     volumes:
-      - ./src/backend:/app
-      - backend_db:/app/data
+      - backend_static:/app/staticfiles
+      - backend_media:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - netsentinel-network
-    # Security: Run as non-root user
-    user: "django:django"
+
     # Resource limits to prevent DoS
     deploy:
       resources:
@@ -24,35 +109,31 @@ services:
         reservations:
           cpus: '0.5'
           memory: 512M
-    # Security: Read-only root filesystem where possible
-    read_only: false  # Set to true if no writes needed to root filesystem
-    # Security: Drop all capabilities and add only what's needed
-    cap_drop:
-      - ALL
-    cap_add:
-      - CHOWN
-      - SETGID
-      - SETUID
+    # Note: Running as root for staging (simplified setup)
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
       start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   frontend:
     build:
       context: ./src/frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         SERVER_API_URL: ${SERVER_API_URL:-http://backend:8000/api/v1}
-        NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+        NEXTAUTH_URL: ${NEXTAUTH_URL}
         # Note: NEXTAUTH_SECRET should be set via environment variable at runtime, not build arg
-        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-local-secret-key}
+        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
     container_name: netsentinel-frontend
-    ports:
-      - "3000:3000"
     env_file:
       - .env
     # Security: Run as non-root user
@@ -75,16 +156,34 @@ services:
     networks:
       - netsentinel-network
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: ["CMD", "node", "-e", "const http = require('http'); const req = http.get('http://127.0.0.1:3000/api/health', {timeout: 5000}, (r) => {process.exit(r.statusCode === 200 ? 0 : 1)}); req.on('error', () => {process.exit(1)}); req.on('timeout', () => {req.destroy(); process.exit(1)})"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
 
 volumes:
-  backend_db:
+  postgres_data:
+    driver: local
+  backend_static:
+    driver: local
+  backend_media:
+    driver: local
+  nginx_logs:
+    driver: local
+  certbot-etc:
+    driver: local
+  certbot-var:
+    driver: local
+  certbot-www:
+    driver: local
 
 networks:
   netsentinel-network:
     driver: bridge
-
