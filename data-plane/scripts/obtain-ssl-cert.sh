@@ -26,8 +26,9 @@ echo "Waiting for nginx to be ready..."
 sleep 5
 
 # Obtain certificate using certbot
+# Override entrypoint to run certonly instead of renew loop
 echo "Obtaining certificate from Let's Encrypt..."
-docker-compose run --rm certbot certonly \
+docker compose run --rm --entrypoint "" certbot certbot certonly \
     --webroot \
     --webroot-path=/var/www/certbot \
     --email $EMAIL \
