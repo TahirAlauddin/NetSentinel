@@ -42,7 +42,9 @@ class Subnet(models.Model):
     description = models.TextField(blank=True, null=True)
     group = models.ForeignKey(
         SubnetGroup,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="subnets",
         help_text="Subnet group this subnet belongs to",
     )
