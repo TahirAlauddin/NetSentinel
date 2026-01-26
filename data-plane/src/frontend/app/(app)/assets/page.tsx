@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
 import { Asset } from "@/types/assets";
 import { listAssets, deleteAsset } from "./actions/index";
-import { AssetTable } from "@/components/apps/assets/AssetTable";
 import { AssetMetricsDisplay } from "@/components/apps/assets/AssetMetrics";
 import { AssetChart } from "@/components/apps/assets/AssetChart";
 import { calculateAssetMetrics, filterAssets } from "@/components/apps/assets/utils";
@@ -27,7 +26,6 @@ export default function AssetsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [_editingAsset, setEditingAsset] = useState<Asset | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
@@ -106,7 +104,6 @@ export default function AssetsPage() {
   // Users will click labels to select which categories to show
 
   const metrics = calculateAssetMetrics(assets);
-  const filteredAssets = filterAssets(assets, searchTerm, filterStatus);
 
   // ==================== Render ====================
 
@@ -167,14 +164,16 @@ export default function AssetsPage() {
                 onCategoryClick={handleCategoryClick}
               />
 
-              {/* Assets Table */}
-              <AssetTable
-                assets={filteredAssets}
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                onEditClick={handleEditAsset}
-                onDeleteClick={handleDeleteAsset}
-              />
+              {/* Link to Assets List */}
+              <div className="mt-6 text-center">
+                <Button
+                  variant="outline"
+                  onClick={() => router.push("/assets/list")}
+                  className="gap-2"
+                >
+                  View All Assets
+                </Button>
+              </div>
             </>
           )}
         </div>
