@@ -4,11 +4,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, BarChart3 } from "lucide-react";
 import { Asset } from "@/types/assets";
 import { listAssets, deleteAsset } from "./actions/index";
 import { AssetMetricsDisplay } from "@/components/apps/assets/AssetMetrics";
 import { AssetChart } from "@/components/apps/assets/AssetChart";
+import { AssetsDashboardNav } from "@/components/apps/assets/AssetsDashboardNav";
 import { calculateAssetMetrics, filterAssets } from "@/components/apps/assets/utils";
 
 /**
@@ -114,7 +115,7 @@ export default function AssetsPage() {
           {/* Header */}
           <div className="mb-8">
             <div className="text-sm text-gray-600 mb-2">Assets</div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-6">
               <h1 className="text-3xl font-bold text-gray-900">Asset Management</h1>
               <div className="flex gap-3">
                 <Button variant="outline" className="gap-2 bg-transparent">
@@ -130,6 +131,9 @@ export default function AssetsPage() {
                 </Button>
               </div>
             </div>
+
+            {/* Dashboard Navigation */}
+            <AssetsDashboardNav />
           </div>
 
           {/* Error Message */}
@@ -163,17 +167,6 @@ export default function AssetsPage() {
                 selectedCategories={selectedCategories}
                 onCategoryClick={handleCategoryClick}
               />
-
-              {/* Link to Assets List */}
-              <div className="mt-6 text-center">
-                <Button
-                  variant="outline"
-                  onClick={() => router.push("/assets/list")}
-                  className="gap-2"
-                >
-                  View All Assets
-                </Button>
-              </div>
             </>
           )}
         </div>

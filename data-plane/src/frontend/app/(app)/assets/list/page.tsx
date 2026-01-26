@@ -32,6 +32,7 @@ import {
 } from "@/components/apps/assets/utils";
 import { ViewToggle, ViewMode } from "@/components/ui/view-toggle";
 import { AssetFilterDialog } from "@/components/apps/assets/AssetFilterDialog";
+import { AssetsDashboardNav } from "@/components/apps/assets/AssetsDashboardNav";
 import Link from "next/link";
 
 export default function AssetsListPage() {
@@ -186,13 +187,16 @@ export default function AssetsListPage() {
         </nav>
 
         {/* Header */}
-        <div>
+        <div className="mb-6">
           <h1 className="text-3xl font-bold">Asset Management</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Showing {filteredAssets.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}-
             {Math.min(currentPage * itemsPerPage, filteredAssets.length)} of {filteredAssets.length} assets
           </p>
         </div>
+
+        {/* Dashboard Navigation */}
+        <AssetsDashboardNav />
 
         {/* Search, Filters, and Controls */}
         <Card className="p-4">

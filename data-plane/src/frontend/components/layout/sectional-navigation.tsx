@@ -78,6 +78,15 @@ const SETTINGS_NAV_ITEMS = [
 ];
 
 /**
+ * Assets Navigation Items
+ */
+const ASSETS_NAV_ITEMS = [
+  { href: "/assets", label: "Overview" },
+  { href: "/assets/list", label: "All Assets" },
+  { href: "/assets/reporting", label: "Reporting" },
+];
+
+/**
  * Sectional Navigation Component
  * Displays contextual navigation items based on the current route.
  * Shows IPAM navigation when on IPAM routes, Settings navigation when on Settings routes,
@@ -87,6 +96,7 @@ export function SectionalNavigation() {
   const pathname = usePathname();
   const isIpamRoute = pathname.startsWith("/ipam");
   const isSettingsRoute = pathname.startsWith("/settings");
+  const isAssetsRoute = pathname.startsWith("/assets");
 
   // Show IPAM navigation when on IPAM routes
   if (isIpamRoute) {
@@ -96,6 +106,11 @@ export function SectionalNavigation() {
   // Show Settings navigation when on Settings routes
   if (isSettingsRoute) {
     return <SettingsNavigation pathname={pathname} />;
+  }
+
+  // Show Assets navigation when on Assets routes
+  if (isAssetsRoute) {
+    return <AssetsNavigation pathname={pathname} />;
   }
 
   // Default navigation for other routes
@@ -202,6 +217,42 @@ function SettingsNavigation({ pathname }: { pathname: string }) {
   return (
     <ul className="flex items-center gap-2 sm:gap-4 lg:gap-6 py-2 sm:py-3 text-xs sm:text-sm overflow-x-auto">
       {SETTINGS_NAV_ITEMS.map((item) => {
+        const active = isActive(item.href);
+        return (
+          <li key={item.href} className="flex-shrink-0">
+            <Link
+              href={item.href}
+              className={cn(
+                "hover:underline whitespace-nowrap transition-colors",
+                active
+                  ? "text-primary font-semibold underline"
+                  : "text-secondary-foreground hover:text-foreground"
+              )}
+            >
+              {item.label}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/**
+ * Assets Navigation Component
+ * Displays assets navigation items in a horizontal scrollable bar
+ */
+function AssetsNavigation({ pathname }: { pathname: string }) {
+  const isActive = (href: string) => {
+    if (href === "/assets") {
+      return pathname === "/assets" || pathname === "/assets/";
+    }
+    return pathname.startsWith(href);
+  };
+
+  return (
+    <ul className="flex items-center gap-2 sm:gap-4 lg:gap-6 py-2 sm:py-3 text-xs sm:text-sm overflow-x-auto">
+      {ASSETS_NAV_ITEMS.map((item) => {
         const active = isActive(item.href);
         return (
           <li key={item.href} className="flex-shrink-0">
