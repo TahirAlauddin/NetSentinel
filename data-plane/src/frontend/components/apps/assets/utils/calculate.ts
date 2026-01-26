@@ -77,14 +77,23 @@ export function calculateAssetMetrics(assets: Asset[]): AssetMetrics {
  */
 export function calculateCategoryDistribution(
   assets: Asset[]
-): Array<{ name: string; value: number }> {
-  const distribution = new Map<string, number>();
+): Array<{ name: string; value: number; id?: string }> {
+  const distribution = new Map<string, { count: number; id?: string }>();
 
   assets.forEach((asset) => {
     const categoryName = asset.category?.name || "Uncategorized";
-    const currentCount = distribution.get(categoryName) || 0;
-    distribution.set(categoryName, currentCount + 1);
+    const categoryId = asset.category?.id?.toString();
+    const existing = distribution.get(categoryName);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      distribution.set(categoryName, { count: 1, id: categoryId });
+    }
   });
 
-  return Array.from(distribution.entries()).map(([name, value]) => ({ name, value }));
+  return Array.from(distribution.entries()).map(([name, data]) => ({
+    name,
+    value: data.count,
+    id: data.id,
+  }));
 }

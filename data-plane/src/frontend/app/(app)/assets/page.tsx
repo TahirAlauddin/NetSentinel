@@ -29,6 +29,7 @@ export default function AssetsPage() {
   const [_editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // ==================== Data Loading ====================
 
@@ -87,7 +88,22 @@ export default function AssetsPage() {
     }
   };
 
+  /**
+   * Handle category label click in chart - adds category to selection
+   * If already selected, removes it. Only selected categories will be shown in chart.
+   */
+  const handleCategoryClick = (categoryId: string, _categoryName: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
   // ==================== Computed Values ====================
+
+  // Don't initialize with all categories - start with empty selection
+  // Users will click labels to select which categories to show
 
   const metrics = calculateAssetMetrics(assets);
   const filteredAssets = filterAssets(assets, searchTerm, filterStatus);
@@ -138,10 +154,18 @@ export default function AssetsPage() {
                 metrics={metrics}
                 filterStatus={filterStatus}
                 onFilterStatusChange={setFilterStatus}
+                assets={assets}
+                selectedCategories={selectedCategories}
+                onCategoriesChange={setSelectedCategories}
               />
 
               {/* Asset Category Distribution Chart */}
-              <AssetChart assets={assets} totalAssets={assets.length} />
+              <AssetChart
+                assets={assets}
+                totalAssets={assets.length}
+                selectedCategories={selectedCategories}
+                onCategoryClick={handleCategoryClick}
+              />
 
               {/* Assets Table */}
               <AssetTable
