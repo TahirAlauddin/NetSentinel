@@ -10,6 +10,7 @@ import { BasicDetailsStepFormData } from "@/types/assets/steps";
 import { AssetActionUtils } from "./utils";
 import { Tag } from "@/types/assets/fields";
 import { validateImageFile, validateAttachmentFile } from "@/lib/security/file-validation";
+import { assetCreateSchema, assetUpdateSchema, validateData } from "@/lib/security/validation-schemas";
 /**
  * Asset CRUD operations and related functionality
  */
@@ -92,31 +93,42 @@ export class AssetActions {
     data: AssetCreateDto
   ): Promise<{ success: boolean; message?: string; error?: string; data?: Asset }> {
     try {
+      // Check authentication inside the action
       const session = await getServerSession(authOptions);
       if (!session?.accessToken) {
         console.error("[AssetActions.create] Not authenticated");
         return { success: false, error: "Not authenticated. Please log in again." };
       }
 
+      // Validate inputs with Zod - never trust form data
+      const validation = validateData(data, assetCreateSchema);
+      if (!validation.success) {
+        console.error("[AssetActions.create] Validation failed:", validation.error);
+        return { success: false, error: `Validation error: ${validation.error}` };
+      }
+
+      // Use validated data (assert to DTO: schema validates required fields, passthrough keeps the rest)
+      const validatedData = validation.data as AssetCreateDto;
+
       // If asset_tag is provided, create/find the tag and add it to tags array
-      if (data.asset_tag && typeof data.asset_tag === "string" && data.asset_tag.trim() !== "") {
-        const tagId = await AssetActionUtils.findOrCreateAssetTag(data.asset_tag);
+      if (validatedData.asset_tag && typeof validatedData.asset_tag === "string" && validatedData.asset_tag.trim() !== "") {
+        const tagId = await AssetActionUtils.findOrCreateAssetTag(validatedData.asset_tag);
         if (tagId) {
           // Add the tag to the tags array if it doesn't already exist
-          if (!data.tags) {
-            data.tags = [];
+          if (!validatedData.tags) {
+            validatedData.tags = [];
           }
-          if (!Array.isArray(data.tags)) {
-            data.tags = [];
+          if (!Array.isArray(validatedData.tags)) {
+            validatedData.tags = [];
           }
-          if (!data.tags.includes(tagId)) {
-            data.tags.push(tagId);
+          if (!validatedData.tags.includes(tagId)) {
+            validatedData.tags.push(tagId);
           }
         }
       }
 
-      // Send request to backend
-      const response = await serverApi.post<Asset>("/assets/", data);
+      // Send request to backend with validated data
+      const response = await serverApi.post<Asset>("/assets/", validatedData);
 
       if (response.error) {
         let errorMessage = response.error || "Failed to create asset";
@@ -165,18 +177,29 @@ export class AssetActions {
     data: AssetUpdateDto
   ): Promise<{ success: boolean; message?: string; error?: string; data?: Asset }> {
     try {
+      // Check authentication inside the action
       const session = await getServerSession(authOptions);
       if (!session?.accessToken) {
         console.error("[AssetActions.update] Not authenticated");
         return { success: false, error: "Not authenticated. Please log in again." };
       }
 
+      // Validate inputs with Zod - never trust form data
+      const validation = validateData(data, assetUpdateSchema);
+      if (!validation.success) {
+        console.error("[AssetActions.update] Validation failed:", validation.error);
+        return { success: false, error: `Validation error: ${validation.error}` };
+      }
+
+      // Use validated data (assert to DTO: schema validates required fields, passthrough keeps the rest)
+      const validatedData = validation.data as AssetUpdateDto;
+
       // If asset_tag is provided, create/find the tag and add it to tags array
-      if (data.asset_tag && typeof data.asset_tag === "string" && data.asset_tag.trim() !== "") {
-        const tagId = await AssetActionUtils.findOrCreateAssetTag(data.asset_tag);
+      if (validatedData.asset_tag && typeof validatedData.asset_tag === "string" && validatedData.asset_tag.trim() !== "") {
+        const tagId = await AssetActionUtils.findOrCreateAssetTag(validatedData.asset_tag);
         if (tagId) {
           // For updates, preserve existing tags if tags weren't explicitly provided in the update
-          if (data.tags === undefined && data.tags === undefined) {
+          if (validatedData.tags === undefined && validatedData.tags === undefined) {
             // Fetch existing asset to get current tags
             try {
               const existingAsset = await AssetActions.get(id);
@@ -184,7 +207,7 @@ export class AssetActions {
               const existingTags = (existingAsset as Asset).tags;
               if (existingTags && Array.isArray(existingTags)) {
                 // Extract tag IDs from tag objects or use IDs directly
-                data.tags = existingTags
+                validatedData.tags = existingTags
                   .map((tag: Tag | number) => {
                     if (typeof tag === "number") return tag;
                     if (typeof tag === "object" && tag !== null && "id" in tag) {
@@ -194,31 +217,32 @@ export class AssetActions {
                   })
                   .filter((id: number | null): id is number => id !== null);
               } else {
-                data.tags = [];
+                validatedData.tags = [];
               }
             } catch (error) {
               // If we can't fetch existing asset, start with empty array
               console.warn("Could not fetch existing asset tags:", error);
-              data.tags = [];
+              validatedData.tags = [];
             }
           }
 
           // Ensure tags is an array
-          if (!data.tags) {
-            data.tags = [];
+          if (!validatedData.tags) {
+            validatedData.tags = [];
           }
-          if (!Array.isArray(data.tags)) {
-            data.tags = [];
+          if (!Array.isArray(validatedData.tags)) {
+            validatedData.tags = [];
           }
 
           // Add the tag if it doesn't already exist
-          if (!data.tags.includes(tagId)) {
-            data.tags.push(tagId);
+          if (!validatedData.tags.includes(tagId)) {
+            validatedData.tags.push(tagId);
           }
         }
       }
 
-      const response = await serverApi.patch<Asset>(`/assets/${id}/`, data);
+      // Send request to backend with validated data
+      const response = await serverApi.patch<Asset>(`/assets/${id}/`, validatedData);
 
       if (response.error) {
         let errorMessage = response.error || "Failed to update asset";
