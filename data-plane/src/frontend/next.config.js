@@ -45,20 +45,18 @@ const nextConfig = {
       ? `'self' ${apiOrigin} ws://localhost:* http://localhost:*`
       : "'self'";
     
-    const cspHeader = [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Required for Next.js
-      "style-src 'self' 'unsafe-inline'", // Required for CSS-in-JS
-      "img-src 'self' data: https:",
-      "font-src 'self' data:",
-      `connect-src ${connectSrc}`,
-      "frame-ancestors 'self'",
-      "base-uri 'self'",
-      "form-action 'self'",
-      "object-src 'none'",
-      // Only upgrade insecure requests in production
-      ...(isDevelopment ? [] : ["upgrade-insecure-requests"]),
-    ].join("; ");
+    // Simplified CSP as per security requirements
+    // Note: In development, we may need to allow more for Next.js to work properly
+    const cspHeader = isDevelopment
+      ? [
+          "default-src 'self'",
+          "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Required for Next.js dev
+          "style-src 'self' 'unsafe-inline'", // Required for CSS-in-JS
+          "img-src 'self' data: https:",
+          "font-src 'self' data:",
+          `connect-src ${connectSrc}`,
+        ].join("; ")
+      : "default-src 'self'"; // Strict CSP in production
 
     return [
       {
@@ -74,7 +72,7 @@ const nextConfig = {
           },
           {
             key: "X-Frame-Options",
-            value: "SAMEORIGIN",
+            value: "DENY",
           },
           {
             key: "X-Content-Type-Options",
