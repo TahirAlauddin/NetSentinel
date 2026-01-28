@@ -9,6 +9,19 @@ export default typescriptEslint.config(
   // Base JavaScript config
   js.configs.recommended,
   
+  // Node scripts (e.g. test-rate-limit.mjs)
+  {
+    files: ["scripts/**/*.mjs", "scripts/**/*.cjs", "scripts/**/*.js"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      globals: { ...globals.node },
+    },
+    rules: {
+      "no-console": "off",
+    },
+  },
+
   // Ignore patterns
   {
     ignores: [
