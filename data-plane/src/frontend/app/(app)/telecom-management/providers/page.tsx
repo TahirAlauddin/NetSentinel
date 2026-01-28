@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Trash2, Edit2, Plus } from "lucide-react";
 import { ProviderRecord, ProviderCreateDto } from "@/types/providers";
 import { TelecomApiClient } from "@/lib/api-client/telecom";
+import { getSafeAbsoluteUrl } from "@/lib/security/url";
 
 async function listProviders(): Promise<ProviderRecord[]> {
   const apiClient = new TelecomApiClient();
@@ -481,7 +482,10 @@ export default function ProvidersPage() {
               <div className="border border-border rounded-lg overflow-hidden bg-card">
                 {providers.length > 0 ? (
                   <div className="divide-y divide-border">
-                    {providers.map((provider) => (
+                    {providers.map((provider) => {
+                      const safeLogoUrl = getSafeAbsoluteUrl(provider.logo_url);
+                      const safeWebsiteUrl = getSafeAbsoluteUrl(provider.website);
+                      return (
                       <div
                         key={provider.id}
                         className="p-4 hover:bg-[oklch(0.98_0_0)]"
@@ -605,9 +609,9 @@ export default function ProvidersPage() {
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
-                                {provider.logo_url && (
+                                {safeLogoUrl && (
                                   <img
-                                    src={provider.logo_url}
+                                    src={safeLogoUrl}
                                     alt={provider.name}
                                     className="w-10 h-10 object-contain rounded"
                                   />
@@ -662,14 +666,18 @@ export default function ProvidersPage() {
                                 {provider.website && (
                                   <p>
                                     <span className="font-medium">Website:</span>{" "}
-                                    <a
-                                      href={provider.website}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-[oklch(0.62_0.25_27.3)] hover:underline"
-                                    >
-                                      {provider.website}
-                                    </a>
+                                    {safeWebsiteUrl ? (
+                                      <a
+                                        href={safeWebsiteUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-[oklch(0.62_0.25_27.3)] hover:underline"
+                                      >
+                                        {provider.website}
+                                      </a>
+                                    ) : (
+                                      <span className="text-muted-foreground">{provider.website}</span>
+                                    )}
                                   </p>
                                 )}
                               </div>
@@ -693,7 +701,8 @@ export default function ProvidersPage() {
                           </div>
                         )}
                       </div>
-                    ))}
+                    );
+                    })}
                   </div>
                 ) : (
                   <div className="px-4 py-8 text-center text-sm text-muted-foreground">
