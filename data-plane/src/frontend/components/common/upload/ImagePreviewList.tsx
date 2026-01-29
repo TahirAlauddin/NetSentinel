@@ -2,8 +2,16 @@
 
 import { useEffect, useMemo } from "react";
 import { X } from "lucide-react";
+import { getSafeAbsoluteUrl } from "@/lib/security/url";
 
 type ImageLike = File | { image?: string } | string;
+
+/** blob: URLs from createObjectURL are safe; for other strings allow only http(s). */
+function safePreviewUrl(url: string): string | null {
+  if (!url) return null;
+  if (url.startsWith("blob:")) return url;
+  return getSafeAbsoluteUrl(url);
+}
 
 interface ImagePreviewListProps {
   images: ImageLike[];
@@ -13,6 +21,7 @@ interface ImagePreviewListProps {
 /**
  * Renders thumbnail previews for images with click-to-open behavior.
  * Purely client-side; does not perform uploads.
+ * Only http(s) or blob URLs are used in src/href to avoid javascript: or data: XSS.
  */
 export function ImagePreviewList({ images, onRemove }: ImagePreviewListProps) {
   const previews = useMemo(
@@ -42,22 +51,29 @@ export function ImagePreviewList({ images, onRemove }: ImagePreviewListProps) {
 
   return (
     <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-3">
-      {previews.map((preview, index) => (
+      {previews.map((preview, index) => {
+        const safeUrl = safePreviewUrl(preview.url);
+        return (
         <div
           key={index}
           className="relative group border border-gray-200 rounded overflow-hidden bg-gray-50"
         >
           <button
             type="button"
-            onClick={() => window.open(preview.url, "_blank", "noopener")}
+            onClick={() => safeUrl && window.open(safeUrl, "_blank", "noopener")}
             className="block w-full h-28 bg-gray-100 focus:outline-none"
+            disabled={!safeUrl}
           >
+            {safeUrl ? (
             <img
-              src={preview.url}
+              src={safeUrl}
               alt={preview.label}
               className="w-full h-full object-cover"
               loading="lazy"
             />
+            ) : (
+              <span className="text-xs text-gray-500">Invalid or unsupported URL</span>
+            )}
           </button>
           <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs px-2 py-1 truncate">
             {preview.label}
@@ -73,7 +89,8 @@ export function ImagePreviewList({ images, onRemove }: ImagePreviewListProps) {
             </button>
           )}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
