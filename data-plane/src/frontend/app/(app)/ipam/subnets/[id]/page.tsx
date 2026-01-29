@@ -8,6 +8,7 @@ import { SubnetDetailsTabs } from "@/components/ipam/subnet-details-tabs";
 import { Button } from "@/components/ui/button";
 import { Subnet } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
+import { validateId } from "@/lib/security/input-validation";
 import { Edit2, ArrowLeft, Star, MoreVertical } from "lucide-react";
 
 const ipamApi = new IpamApiClient();
@@ -15,12 +16,13 @@ const ipamApi = new IpamApiClient();
 export default function SubnetViewPage() {
   const router = useRouter();
   const params = useParams();
-  const id = parseInt(params.id as string);
+  const id = validateId(params.id);
   const [subnet, setSubnet] = useState<Subnet | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(id !== null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (id === null) return;
     const loadSubnet = async () => {
       try {
         const response = await ipamApi.getSubnet(id);
@@ -36,6 +38,22 @@ export default function SubnetViewPage() {
     };
     loadSubnet();
   }, [id]);
+
+  if (id === null) {
+    return (
+      <div className="space-y-6">
+        <IpamHeader currentPage="Subnet Details" />
+        <IpamNavTabs />
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded text-amber-800">
+          Invalid subnet ID. Please use a valid link or go back to the list.
+        </div>
+        <Button variant="outline" onClick={() => router.push("/ipam/subnets")}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to subnets
+        </Button>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

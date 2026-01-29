@@ -1,61 +1,36 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import { AppShell } from "@/components/layout/app-shell";
-import { toast } from "sonner";
 
 import { AssetForm } from "@/components/apps/assets/shared/form/AssetForm";
 import { LoadingState } from "@/components/feedback/loading-state";
+import { validateId } from "@/lib/security/input-validation";
 
 /**
- * Main component with Suspense boundary for useSearchParams
+ * Edit asset page - validates route id before rendering form.
  */
 export function EditAssetPage() {
   const params = useParams();
   const router = useRouter();
-  const { id: assetId } = params as { id: string };
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const assetId = validateId(params.id);
 
   useEffect(() => {
-    const loadAsset = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const assetIdNum = parseInt(assetId, 10);
-        if (isNaN(assetIdNum)) {
-          // Redirect to not found
-          router.push("/404");
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to load asset";
-        setError(errorMessage);
-        toast.error(errorMessage);
-        console.error("Error loading asset:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAsset();
+    if (assetId === null) {
+      router.replace("/assets");
+    }
   }, [assetId, router]);
 
-  if (loading) {
-    return <LoadingState message="Loading asset data..." />;
+  if (assetId === null) {
+    return <LoadingState message="Redirecting..." />;
   }
 
   return (
     <AppShell>
       <div className="flex-1 overflow-auto bg-gray-50">
-        {error && (
-          <div className="max-w-7xl mx-auto p-4">
-            <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700">{error}</div>
-          </div>
-        )}
-        <AssetForm assetId={parseInt(assetId, 10)} mode="edit" />
+        <AssetForm assetId={assetId} mode="edit" />
       </div>
     </AppShell>
   );

@@ -135,6 +135,22 @@ export function validateId(id: unknown): number | null {
 }
 
 /**
+ * Safe path segment for route params (e.g. [id] in /edit/[id]).
+ * Prevents path traversal: only alphanumeric, hyphen, underscore allowed.
+ * Use for string IDs (UUID, slug) that are used in API paths.
+ */
+export function validateRouteIdString(value: unknown): string | null {
+  if (value == null || typeof value !== "string") return null;
+  const s = value.trim();
+  if (s.length === 0 || s.length > 128) return null;
+  // No path separators or traversal
+  if (/[/\\.%]/.test(s)) return null;
+  // Only safe characters for path segment
+  if (!/^[a-zA-Z0-9_-]+$/.test(s)) return null;
+  return s;
+}
+
+/**
  * Validate an array of IDs
  */
 export function validateIdArray(ids: unknown): number[] | null {

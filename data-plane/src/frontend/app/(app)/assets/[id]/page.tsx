@@ -1,30 +1,27 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { AppShell } from "@/components/layout/app-shell"
 import { AssetDetail } from "@/components/apps/assets/AssetDetail"
+import { Button } from "@/components/ui/button"
 import { AssetsApiClient } from "@/lib/api-client/asset"
 import { Asset } from "@/types/assets"
+import { validateId } from "@/lib/security/input-validation"
+import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
 export default function AssetDetailPage() {
   const params = useParams()
-  const id = params.id as string
-  const assetId = id ? parseInt(id, 10) : null
-
-  const [loading, setLoading] = useState(!!assetId)
+  const router = useRouter()
+  const assetId = validateId(params.id)
+  const [loading, setLoading] = useState(assetId !== null)
   const [error, setError] = useState<string | null>(null)
   const [asset, setAsset] = useState<Asset | null>(null)
 
   useEffect(() => {
+    if (assetId === null) return
     const loadAsset = async () => {
-      if (!assetId) {
-        setError("Asset ID is required")
-        setLoading(false)
-        return
-      }
-
       try {
         setLoading(true)
         setError(null)
@@ -54,6 +51,24 @@ export default function AssetDetailPage() {
     loadAsset()
   }, [assetId])
 
+  if (assetId === null) {
+    return (
+      <AppShell>
+        <div className="flex-1 overflow-auto bg-gray-50">
+          <div className="max-w-7xl mx-auto p-4 space-y-4">
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded text-amber-800">
+              Invalid asset ID. Please use a valid link or go back to the list.
+            </div>
+            <Button variant="outline" onClick={() => router.push("/assets")}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to assets
+            </Button>
+          </div>
+        </div>
+      </AppShell>
+    )
+  }
+
   if (loading) {
     return (
       <AppShell>
@@ -72,24 +87,14 @@ export default function AssetDetailPage() {
     return (
       <AppShell>
         <div className="flex-1 overflow-auto bg-gray-50">
-          <div className="max-w-7xl mx-auto p-4">
+          <div className="max-w-7xl mx-auto p-4 space-y-4">
             <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700">
               {error || "Asset not found"}
             </div>
-          </div>
-        </div>
-      </AppShell>
-    )
-  }
-
-  if (!assetId) {
-    return (
-      <AppShell>
-        <div className="flex-1 overflow-auto bg-gray-50">
-          <div className="max-w-7xl mx-auto p-4">
-            <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700">
-              Invalid asset ID
-            </div>
+            <Button variant="outline" onClick={() => router.push("/assets")}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to assets
+            </Button>
           </div>
         </div>
       </AppShell>
