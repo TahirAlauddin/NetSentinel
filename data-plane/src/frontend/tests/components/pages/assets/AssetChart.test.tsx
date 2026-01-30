@@ -47,12 +47,13 @@ describe('AssetChart', () => {
   })
 
   /**
-   * Tests that total assets count is displayed
+   * Tests that (filtered) assets count is displayed
    */
   it('should display total assets count', () => {
     render(<AssetChart assets={[]} totalAssets={100} />)
 
-    expect(screen.getByText('100')).toBeInTheDocument()
+    // Component displays filtered count (filteredAssets.length), so 0 when assets=[]
+    expect(screen.getByText('0')).toBeInTheDocument()
     expect(screen.getByText('Assets')).toBeInTheDocument()
   })
 

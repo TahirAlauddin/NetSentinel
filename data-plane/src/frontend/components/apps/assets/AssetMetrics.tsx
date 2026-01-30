@@ -50,22 +50,25 @@ export function AssetMetricsDisplay({
 }: AssetMetricsProps) {
   const [filterDialogOpen, setFilterDialogOpen] = useState(false)
 
+  const safeAssets = assets ?? []
+  const safeSelectedCategories = selectedCategories ?? []
+
   // Get category names for display
   const getCategoryNames = () => {
     const categoryMap = new Map(
-      assets
+      safeAssets
         .map((asset) => asset.category)
         .filter((cat) => cat)
         .map((cat) => [cat.id.toString(), cat.name])
     )
-    return selectedCategories.map((id) => categoryMap.get(id) || id)
+    return safeSelectedCategories.map((id) => categoryMap.get(id) || id)
   }
 
   const categoryNames = getCategoryNames()
-  const hasCategoryFilters = selectedCategories.length > 0
+  const hasCategoryFilters = safeSelectedCategories.length > 0
   const allCategories = Array.from(
     new Map(
-      assets
+      safeAssets
         .map((asset) => asset.category)
         .filter((cat) => cat)
         .map((cat) => [cat.id, cat])
@@ -75,7 +78,7 @@ export function AssetMetricsDisplay({
   const shouldShowCategoryFilters = hasCategoryFilters
 
   const handleRemoveCategoryFilter = (categoryId: string) => {
-    onCategoriesChange(selectedCategories.filter((id) => id !== categoryId))
+    onCategoriesChange(safeSelectedCategories.filter((id) => id !== categoryId))
   }
 
   const handleRemoveAllCategoryFilters = () => {
