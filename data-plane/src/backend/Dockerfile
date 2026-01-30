@@ -53,11 +53,13 @@ RUN mkdir -p /app/staticfiles /app/media
 # Copy and set up entrypoint scripts
 COPY docker-entrypoint-root.sh /app/docker-entrypoint-root.sh
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint-root.sh /app/docker-entrypoint.sh
+# Strip CRLF so shebang works in Linux (scripts may have Windows line endings)
+RUN sed -i 's/\r$//' /app/docker-entrypoint-root.sh /app/docker-entrypoint.sh \
+    && chmod +x /app/docker-entrypoint-root.sh /app/docker-entrypoint.sh
 
 ENV PORT=8000
 EXPOSE 8000
 
-# Use root entrypoint (simplified)
-ENTRYPOINT ["/app/docker-entrypoint-root.sh"]
+# Use root entrypoint (invoke via bash so shebang/CRLF never cause "no such file")
+ENTRYPOINT ["/bin/bash", "/app/docker-entrypoint-root.sh"]
 CMD ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-"]

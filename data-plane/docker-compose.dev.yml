@@ -1,0 +1,168 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: netsentinel-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d.dev:/etc/nginx/conf.d:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      backend:
+        condition: service_started
+      frontend:
+        condition: service_started
+    networks:
+      - netsentinel-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "sh", "-c", "nginx -t && kill -0 $(cat /var/run/nginx.pid 2>/dev/null) 2>/dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: netsentinel-postgres
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - netsentinel-network
+    # Security: Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    # Security: Drop unnecessary capabilities
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 60s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+    container_name: netsentinel-backend
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=postgres
+    volumes:
+      - backend_static:/app/staticfiles
+      - backend_media:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - netsentinel-network
+
+    # Resource limits to prevent DoS
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    # Note: Running as root for staging (simplified setup)
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        SERVER_API_URL: ${SERVER_API_URL:-http://backend:8000/api/v1}
+        NEXTAUTH_URL: ${NEXTAUTH_URL}
+        # Note: NEXTAUTH_SECRET should be set via environment variable at runtime, not build arg
+        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+    container_name: netsentinel-frontend
+    env_file:
+      - .env
+    # Security: Run as non-root user
+    user: "nextjs:nodejs"
+    # Resource limits to prevent DoS
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    # Security: Drop all capabilities
+    cap_drop:
+      - ALL
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - netsentinel-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http = require('http'); const req = http.get('http://127.0.0.1:3000/api/health', {timeout: 5000}, (r) => {process.exit(r.statusCode === 200 ? 0 : 1)}); req.on('error', () => {process.exit(1)}); req.on('timeout', () => {req.destroy(); process.exit(1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  backend_static:
+    driver: local
+  backend_media:
+    driver: local
+  nginx_logs:
+    driver: local
+
+networks:
+  netsentinel-network:
+    driver: bridge

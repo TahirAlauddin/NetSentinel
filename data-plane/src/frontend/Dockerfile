@@ -1,4 +1,4 @@
-# Multi-stage build for Next.js app (Production)
+# Multi-stage build for Next.js app
 FROM node:18-alpine AS base
 
 # Install dependencies only when needed
@@ -18,17 +18,14 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build arguments (secrets should be passed at runtime, not build time)
+# Build arguments: only public/build-time values. Never pass secrets (NEXTAUTH_SECRET,
+# SERVER_API_URL) here - they are read at runtime from the container environment.
 ARG NEXT_PUBLIC_API_URL
-ARG SERVER_API_URL
 ARG NEXTAUTH_URL
-ARG NEXTAUTH_SECRET
 
-# Build the application
+# Build the application (NEXTAUTH_SECRET and SERVER_API_URL must be set at runtime)
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
-    SERVER_API_URL=${SERVER_API_URL} \
     NEXTAUTH_URL=${NEXTAUTH_URL} \
-    NEXTAUTH_SECRET=${NEXTAUTH_SECRET} \
     NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
