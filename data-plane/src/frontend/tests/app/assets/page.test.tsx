@@ -16,6 +16,7 @@ jest.mock("@/app/(app)/assets/actions/index", () => ({
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
+  usePathname: jest.fn(() => "/assets"),
 }));
 
 jest.mock("@/components/layout/app-shell", () => ({
@@ -88,11 +89,12 @@ describe("AssetsPage", () => {
     render(<AssetsPage />);
 
     await waitFor(() => {
-      expect(screen.getByTestId("asset-table")).toBeInTheDocument();
+      expect(screen.getByTestId("asset-metrics")).toBeInTheDocument();
+      expect(screen.getByTestId("asset-chart")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Asset 1")).toBeInTheDocument();
-    expect(screen.getByText("Asset 2")).toBeInTheDocument();
+    // Metrics mock renders JSON; page shows metrics for loaded assets (total: 2)
+    expect(screen.getByTestId("asset-metrics")).toHaveTextContent(/"total":2/);
   });
 
   it("should render error message on load failure", async () => {
@@ -125,77 +127,6 @@ describe("AssetsPage", () => {
     });
 
     expect(mockRouterPush).toHaveBeenCalledWith("/assets/new");
-  });
-
-  it("should handle asset deletion", async () => {
-    const mockAssets = [{ id: 1, name: "Asset 1", status: "active" }];
-    mockListAssets.mockResolvedValue(mockAssets);
-    mockDeleteAsset.mockResolvedValue({ success: true });
-
-    render(<AssetsPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Asset 1")).toBeInTheDocument();
-    });
-
-    const deleteButton = screen.getByText("Delete");
-    await act(async () => {
-      await userEvent.click(deleteButton);
-    });
-
-    await waitFor(() => {
-      expect(mockDeleteAsset).toHaveBeenCalledWith(1);
-    });
-  });
-
-  it("should not delete asset if user cancels", async () => {
-    const mockAssets = [{ id: 1, name: "Asset 1", status: "active" }];
-    mockListAssets.mockResolvedValue(mockAssets);
-    global.confirm = jest.fn(() => false);
-
-    render(<AssetsPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Asset 1")).toBeInTheDocument();
-    });
-
-    const deleteButton = screen.getByText("Delete");
-    await act(async () => {
-      await userEvent.click(deleteButton);
-    });
-
-    expect(mockDeleteAsset).not.toHaveBeenCalled();
-  });
-
-  it("should display error on delete failure", async () => {
-    const mockAssets = [{ id: 1, name: "Asset 1", status: "active" }];
-    mockListAssets.mockResolvedValue(mockAssets);
-    mockDeleteAsset.mockResolvedValue({
-      success: false,
-      error: "Delete failed",
-    });
-
-    render(<AssetsPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Asset 1")).toBeInTheDocument();
-    });
-
-    const deleteButton = screen.getByText("Delete");
-    await act(async () => {
-      await userEvent.click(deleteButton);
-    });
-
-    // Wait for error message to appear
-    await waitFor(
-      () => {
-        expect(screen.getByText("Delete failed")).toBeInTheDocument();
-      },
-      { timeout: 5000 }
-    );
-
-    // Verify deleteAsset was called
-    expect(mockDeleteAsset).toHaveBeenCalledWith(1);
   });
 
   it("should render metrics and chart", async () => {

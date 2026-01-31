@@ -4,29 +4,19 @@ import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getSafeRedirectPath } from "@/lib/security/redirect";
 
 function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Use callbackUrl from NextAuth, fallback to redirect param, then default to dashboard
   const callbackUrl = searchParams.get("callbackUrl");
   const redirectParam = searchParams.get("redirect");
 
-  // Extract pathname from callbackUrl if it's a full URL
-  let redirectUrl = "/dashboard";
-  if (callbackUrl) {
-    try {
-      const url = new URL(callbackUrl, window.location.origin);
-      redirectUrl = url.pathname + url.search;
-    } catch {
-      // If it's not a full URL, use it as-is (it's already a path)
-      redirectUrl = callbackUrl;
-    }
-  } else if (redirectParam) {
-    redirectUrl = redirectParam;
-  }
+  const safeCallback = getSafeRedirectPath(callbackUrl);
+  const safeRedirect = getSafeRedirectPath(redirectParam);
+  const redirectUrl = safeCallback ?? safeRedirect ?? "/dashboard";
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

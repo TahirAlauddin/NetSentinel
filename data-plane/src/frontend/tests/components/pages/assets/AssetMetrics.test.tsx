@@ -15,6 +15,13 @@ import { AssetMetrics } from '@/types/assets'
 
 describe('AssetMetricsDisplay', () => {
   const mockOnFilterStatusChange = jest.fn()
+  const mockOnCategoriesChange = jest.fn()
+
+  const defaultProps = {
+    assets: [] as { id: number; name: string; category?: { id: number; name: string } }[],
+    selectedCategories: [] as string[],
+    onCategoriesChange: mockOnCategoriesChange,
+  }
 
   const mockMetrics: AssetMetrics = {
     total: 100,
@@ -37,6 +44,7 @@ describe('AssetMetricsDisplay', () => {
         metrics={mockMetrics}
         filterStatus={null}
         onFilterStatusChange={mockOnFilterStatusChange}
+        {...defaultProps}
       />
     )
 
@@ -61,6 +69,7 @@ describe('AssetMetricsDisplay', () => {
         metrics={mockMetrics}
         filterStatus="active"
         onFilterStatusChange={mockOnFilterStatusChange}
+        {...defaultProps}
       />
     )
 
@@ -76,6 +85,7 @@ describe('AssetMetricsDisplay', () => {
         metrics={mockMetrics}
         filterStatus={null}
         onFilterStatusChange={mockOnFilterStatusChange}
+        {...defaultProps}
       />
     )
 
@@ -92,6 +102,7 @@ describe('AssetMetricsDisplay', () => {
         metrics={mockMetrics}
         filterStatus="active"
         onFilterStatusChange={mockOnFilterStatusChange}
+        {...defaultProps}
       />
     )
 
@@ -114,6 +125,7 @@ describe('AssetMetricsDisplay', () => {
         metrics={mockMetrics}
         filterStatus={null}
         onFilterStatusChange={mockOnFilterStatusChange}
+        {...defaultProps}
       />
     )
 
@@ -137,6 +149,7 @@ describe('AssetMetricsDisplay', () => {
         metrics={zeroMetrics}
         filterStatus={null}
         onFilterStatusChange={mockOnFilterStatusChange}
+        {...defaultProps}
       />
     )
 
@@ -156,6 +169,7 @@ describe('AssetMetricsDisplay', () => {
         metrics={mockMetrics}
         filterStatus={null}
         onFilterStatusChange={mockOnFilterStatusChange}
+        {...defaultProps}
       />
     )
 

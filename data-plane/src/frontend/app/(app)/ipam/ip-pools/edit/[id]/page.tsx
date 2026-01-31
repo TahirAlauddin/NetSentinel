@@ -5,26 +5,29 @@ import { useRouter, useParams } from "next/navigation";
 import { IpamHeader } from "@/components/ipam/ipam-header";
 import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
 import { IpPoolForm } from "@/components/ipam/ip-pool-form";
+import { Button } from "@/components/ui/button";
 import { IPPool } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
+import { validateRouteIdString } from "@/lib/security/input-validation";
 
 const ipamApi = new IpamApiClient();
 
 export default function EditIpPoolPage() {
   const router = useRouter();
   const params = useParams();
-  const id = params.id as string;
+  const id = validateRouteIdString(params.id);
   const [pool, setPool] = useState<IPPool | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(id !== null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (id === null) return;
     const loadPool = async () => {
       try {
         setLoading(true);
         const response = await ipamApi.getIPPool(id);
-        
+
         if (response.error) {
           throw new Error(response.error);
         }
@@ -39,12 +42,11 @@ export default function EditIpPoolPage() {
       }
     };
 
-    if (id) {
-      loadPool();
-    }
+    loadPool();
   }, [id]);
 
   const handleSubmit = async (data: Partial<IPPool>) => {
+    if (id === null) return;
     try {
       setSaving(true);
       const response = await ipamApi.updateIPPool(id, data);
@@ -63,6 +65,21 @@ export default function EditIpPoolPage() {
   const handleCancel = () => {
     router.push("/ipam/ip-pools");
   };
+
+  if (id === null) {
+    return (
+      <div className="space-y-6">
+        <IpamHeader currentPage="Edit IP Pool" />
+        <IpamNavTabs />
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded text-amber-800">
+          Invalid IP pool ID. Please use a valid link or go back to the list.
+        </div>
+        <Button variant="outline" onClick={() => router.push("/ipam/ip-pools")}>
+          Back to IP pools
+        </Button>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

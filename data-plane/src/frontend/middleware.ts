@@ -1,5 +1,6 @@
 import { withAuth } from "next-auth/middleware"
 import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 import type { JWT } from "next-auth/jwt"
 import { isProtectedRoute, isAuthRoute } from "@/constants/routes"
 
@@ -10,8 +11,59 @@ function hasTokenError(token: JWT | null | undefined): token is JWT & { error: s
   return token !== null && token !== undefined && token.error === 'RefreshAccessTokenError'
 }
 
+/** Generate a cryptographically random nonce for CSP (Edge-compatible). */
+function generateNonce(): string {
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+/** Build CSP header and request headers with nonce so Next.js can apply it to inline scripts. */
+function applyNonceCsp(req: NextRequest): { requestHeaders: Headers; cspHeader: string } {
+  const nonce = generateNonce()
+  const isDev = process.env.NODE_ENV === 'development'
+  let apiOrigin = 'http://localhost:8000'
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    try {
+      apiOrigin = new URL(process.env.NEXT_PUBLIC_API_URL).origin
+    } catch {
+      // keep default
+    }
+  }
+  const connectSrc = isDev
+    ? `'self' ${apiOrigin} ws://localhost:* http://localhost:*`
+    : "'self'"
+  // script-src: no 'unsafe-inline' / 'unsafe-eval'; nonce + 'strict-dynamic' allow our scripts only
+  const scriptSrc = isDev
+    ? `'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval'`
+    : `'self' 'nonce-${nonce}' 'strict-dynamic'`
+  const cspParts = [
+    "default-src 'self'",
+    `script-src ${scriptSrc}`,
+    `style-src 'self' 'nonce-${nonce}'`,
+    "img-src 'self' data: https: blob:",
+    "font-src 'self' data:",
+    `connect-src ${connectSrc}`,
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ]
+  const cspHeader = cspParts.join("; ").replace(/\s{2,}/g, ' ').trim()
+  const requestHeaders = new Headers(req.headers)
+  requestHeaders.set('x-nonce', nonce)
+  requestHeaders.set('Content-Security-Policy', cspHeader)
+  return { requestHeaders, cspHeader }
+}
+
+function setCspOnResponse(response: NextResponse, cspHeader: string): NextResponse {
+  response.headers.set('Content-Security-Policy', cspHeader)
+  return response
+}
+
 export default withAuth(
   function middleware(req) {
+    const { requestHeaders, cspHeader } = applyNonceCsp(req)
     const { pathname, searchParams } = req.nextUrl
     const token = req.nextauth.token
 
@@ -30,34 +82,37 @@ export default withAuth(
     if (isOnLoginPage) {
       const callbackUrl = searchParams.get('callbackUrl')
       if (callbackUrl && callbackUrl.includes('/login')) {
-        // Nested callbackUrl detected - redirect to clean login URL
-        return NextResponse.redirect(new URL('/login', req.url))
+        const res = NextResponse.redirect(new URL('/login', req.url))
+        return setCspOnResponse(res, cspHeader)
       }
     }
     
     // If token has an error, we need to redirect to login
     // But only if we're not already there (prevent loops)
     if (tokenHasError && !isOnLoginPage) {
-      // Redirect to login without callbackUrl to break the loop
-      // The session error handler will handle sign out
-      return NextResponse.redirect(new URL('/login', req.url))
+      const res = NextResponse.redirect(new URL('/login', req.url))
+      return setCspOnResponse(res, cspHeader)
     }
     
     // If accessing auth routes while authenticated (and no error), redirect to dashboard
     if (isCurrentAuthRoute && token && !tokenHasError) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
+      const res = NextResponse.redirect(new URL('/dashboard', req.url))
+      return setCspOnResponse(res, cspHeader)
     }
     
     // For the root path, redirect appropriately
     if (pathname === '/') {
       if (token && !tokenHasError) {
-        return NextResponse.redirect(new URL('/dashboard', req.url))
+        const res = NextResponse.redirect(new URL('/dashboard', req.url))
+        return setCspOnResponse(res, cspHeader)
       } else {
-        return NextResponse.redirect(new URL('/login', req.url))
+        const res = NextResponse.redirect(new URL('/login', req.url))
+        return setCspOnResponse(res, cspHeader)
       }
     }
 
-    return NextResponse.next()
+    const res = NextResponse.next({ request: { headers: requestHeaders } })
+    return setCspOnResponse(res, cspHeader)
   },
   {
     callbacks: {

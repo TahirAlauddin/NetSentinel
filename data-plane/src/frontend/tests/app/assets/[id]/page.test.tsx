@@ -14,6 +14,7 @@ jest.mock("@/lib/api-client/asset", () => ({
 
 jest.mock("next/navigation", () => ({
   useParams: jest.fn(() => ({ id: "1" })),
+  useRouter: jest.fn(() => ({ push: jest.fn() })),
 }));
 
 jest.mock("@/components/layout/app-shell", () => ({
@@ -131,7 +132,7 @@ describe("AssetDetailPage", () => {
     render(<AssetDetailPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("Asset ID is required")).toBeInTheDocument();
+      expect(screen.getByText("Invalid asset ID. Please use a valid link or go back to the list.")).toBeInTheDocument();
     });
   });
 });

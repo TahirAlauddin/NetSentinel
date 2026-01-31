@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { IpamHeader } from "@/components/ipam/ipam-header";
 import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
 import { SubnetTable } from "@/components/ipam/subnet-table";
+import { SubnetFindDialog } from "@/components/ipam/subnet-find-dialog";
 import { Subnet } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { extractIpamArrayData } from "@/lib/ipam-utils";
@@ -21,6 +22,7 @@ export default function SubnetsPage() {
   const [subnets, setSubnets] = useState<Subnet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [findDialogOpen, setFindDialogOpen] = useState(false);
 
   const loadSubnets = async () => {
     try {
@@ -77,7 +79,7 @@ export default function SubnetsPage() {
   };
 
   const handleFind = () => {
-    // TODO: Implement find subnet functionality
+    setFindDialogOpen(true);
   };
 
   const handleToggleFavorite = async (subnet: Subnet) => {
@@ -145,6 +147,9 @@ export default function SubnetsPage() {
           )}
         </div>
       </div>
+
+      {/* Find Subnet Dialog */}
+      <SubnetFindDialog open={findDialogOpen} onOpenChange={setFindDialogOpen} />
     </div>
   );
 }

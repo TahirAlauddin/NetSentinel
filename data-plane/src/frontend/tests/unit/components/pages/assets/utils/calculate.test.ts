@@ -136,9 +136,9 @@ describe('Asset Calculate Utils', () => {
       const distribution = calculateCategoryDistribution(assets);
       
       expect(distribution).toHaveLength(3);
-      expect(distribution).toContainEqual({ name: "Laptop", value: 3 });
-      expect(distribution).toContainEqual({ name: "Desktop", value: 1 });
-      expect(distribution).toContainEqual({ name: "Server", value: 1 });
+      expect(distribution).toContainEqual({ id: "1", name: "Laptop", value: 3 });
+      expect(distribution).toContainEqual({ id: "2", name: "Desktop", value: 1 });
+      expect(distribution).toContainEqual({ id: "3", name: "Server", value: 1 });
     });
 
     it('should handle assets with null category as "Uncategorized"', () => {
@@ -153,8 +153,8 @@ describe('Asset Calculate Utils', () => {
       const distribution = calculateCategoryDistribution(assets);
       
       expect(distribution).toHaveLength(2);
-      expect(distribution).toContainEqual({ name: "Test Category", value: 1 });
-      expect(distribution).toContainEqual({ name: "Uncategorized", value: 2 });
+      expect(distribution).toContainEqual({ id: "1", name: "Test Category", value: 1 });
+      expect(distribution).toContainEqual({ id: undefined, name: "Uncategorized", value: 2 });
     });
 
     it('should handle assets with category without name', () => {
@@ -166,7 +166,7 @@ describe('Asset Calculate Utils', () => {
 
       const distribution = calculateCategoryDistribution(assets);
       
-      expect(distribution).toContainEqual({ name: "Uncategorized", value: 1 });
+      expect(distribution).toContainEqual({ id: "1", name: "Uncategorized", value: 1 });
     });
   });
 })

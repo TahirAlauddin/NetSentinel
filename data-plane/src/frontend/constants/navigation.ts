@@ -121,6 +121,26 @@ export const monitoringSubmenuColumns: SubmenuColumn[] = [
   },
 ];
 
+// Assets submenu links
+export const assetsMainSubmenuLinks = [
+  { label: "Overview", href: "/assets" },
+  { label: "All Assets", href: "/assets/list" },
+  { label: "Reporting", href: "/assets/reporting" },
+];
+
+export const assetsReportingSubmenuLinks = [
+  { label: "Operating System", href: "/assets/reporting/operating-system" },
+  { label: "Applications", href: "/assets/reporting/applications" },
+  { label: "Availability", href: "/assets/reporting/availability" },
+  { label: "Location", href: "/assets/reporting/location" },
+  { label: "Warranty", href: "/assets/reporting/warranty" },
+  { label: "Model", href: "/assets/reporting/model" },
+  { label: "Asset Type", href: "/assets/reporting/asset-type" },
+  { label: "Department", href: "/assets/reporting/department" },
+  { label: "Cost", href: "/assets/reporting/cost" },
+  { label: "Firmware", href: "/assets/reporting/firmware" },
+];
+
 // IPAM submenu links
 export const ipamMainSubmenuLinks = [
   { label: "Dashboard", href: "/ipam" },
@@ -175,7 +195,22 @@ export const ipamToolsSubmenuLinks = [
 export const navigationItems: NavigationItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { label: "Site Surveys", icon: Map, href: "/site-surveys" },
-  { label: "Assets", icon: Boxes, href: "/assets" },
+  {
+    label: "Assets",
+    icon: Boxes,
+    href: "/assets",
+    hasSubmenu: true,
+    submenuColumns: [
+      {
+        title: "Main",
+        links: assetsMainSubmenuLinks,
+      },
+      {
+        title: "Reporting",
+        links: assetsReportingSubmenuLinks,
+      },
+    ],
+  },
   { label: "Contracts", icon: FileText, href: "/contracts" },
   { label: "Vendors/SaaS", icon: Building2, href: "/vendors-saas" },
   {

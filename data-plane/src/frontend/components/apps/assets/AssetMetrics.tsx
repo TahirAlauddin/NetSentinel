@@ -1,10 +1,13 @@
 "use client"
 
+import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Filter, X } from "lucide-react"
 import { AssetMetrics } from "@/types/assets"
+import { Asset } from "@/types/assets"
+import { AssetCategoryFilterDialog } from "./AssetCategoryFilterDialog"
 
 interface AssetMetricsProps {
   /**
@@ -19,6 +22,18 @@ interface AssetMetricsProps {
    * Callback when status filter changes
    */
   onFilterStatusChange: (status: string | null) => void
+  /**
+   * All assets for category filtering
+   */
+  assets: Asset[]
+  /**
+   * Selected category IDs
+   */
+  selectedCategories: string[]
+  /**
+   * Callback when category filter changes
+   */
+  onCategoriesChange: (categories: string[]) => void
 }
 
 /**
@@ -29,7 +44,47 @@ export function AssetMetricsDisplay({
   metrics,
   filterStatus,
   onFilterStatusChange,
+  assets,
+  selectedCategories,
+  onCategoriesChange,
 }: AssetMetricsProps) {
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false)
+
+  const safeAssets = assets ?? []
+  const safeSelectedCategories = selectedCategories ?? []
+
+  // Get category names for display
+  const getCategoryNames = () => {
+    const categoryMap = new Map(
+      safeAssets
+        .map((asset) => asset.category)
+        .filter((cat) => cat)
+        .map((cat) => [cat.id.toString(), cat.name])
+    )
+    return safeSelectedCategories.map((id) => categoryMap.get(id) || id)
+  }
+
+  const categoryNames = getCategoryNames()
+  const hasCategoryFilters = safeSelectedCategories.length > 0
+  const allCategories = Array.from(
+    new Map(
+      safeAssets
+        .map((asset) => asset.category)
+        .filter((cat) => cat)
+        .map((cat) => [cat.id, cat])
+    ).values()
+  )
+  // With reversed logic, we show filters when categories ARE selected (not when all are selected)
+  const shouldShowCategoryFilters = hasCategoryFilters
+
+  const handleRemoveCategoryFilter = (categoryId: string) => {
+    onCategoriesChange(safeSelectedCategories.filter((id) => id !== categoryId))
+  }
+
+  const handleRemoveAllCategoryFilters = () => {
+    onCategoriesChange([])
+  }
+
   return (
     <div className="mb-8">
       <h2 className="text-lg font-semibold text-gray-900 mb-4">At a glance</h2>
@@ -56,9 +111,9 @@ export function AssetMetricsDisplay({
         </Card>
       </div>
 
-      {/* Status Filter */}
+      {/* Filters */}
       <div className="flex justify-between items-center mb-6">
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           {filterStatus && (
             <Badge variant="secondary" className="gap-2">
               Status: {filterStatus}
@@ -68,12 +123,61 @@ export function AssetMetricsDisplay({
               />
             </Badge>
           )}
+          {shouldShowCategoryFilters && (
+            <>
+              {categoryNames.length <= 2 ? (
+                categoryNames.map((name, index) => {
+                  const categoryId = selectedCategories[index]
+                  return (
+                    <Badge key={categoryId} variant="secondary" className="gap-2">
+                      Type: {name}
+                      <X
+                        className="w-3 h-3 cursor-pointer"
+                        onClick={() => handleRemoveCategoryFilter(categoryId)}
+                      />
+                    </Badge>
+                  )
+                })
+              ) : (
+                <Badge variant="secondary" className="gap-2">
+                  Type: {categoryNames[0]}, {categoryNames[1]} or {categoryNames.length - 2} More
+                  <X
+                    className="w-3 h-3 cursor-pointer"
+                    onClick={handleRemoveAllCategoryFilters}
+                  />
+                </Badge>
+              )}
+            </>
+          )}
         </div>
-        <Button variant="outline" className="gap-2 bg-transparent">
+        <Button
+          variant="outline"
+          className="gap-2 bg-transparent"
+          onClick={() => setFilterDialogOpen(true)}
+        >
           <Filter className="w-4 h-4" />
           Filters
+          {(() => {
+            const statusFilterCount = filterStatus ? 1 : 0;
+            const categoryFilterCount = hasCategoryFilters ? selectedCategories.length : 0;
+            const totalFilters = statusFilterCount + categoryFilterCount;
+            return totalFilters > 0 ? (
+              <span className="ml-1 px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+                {totalFilters}
+              </span>
+            ) : null;
+          })()}
         </Button>
       </div>
+
+      {/* Category Filter Dialog */}
+      <AssetCategoryFilterDialog
+        open={filterDialogOpen}
+        onOpenChange={setFilterDialogOpen}
+        assets={assets}
+        selectedCategories={selectedCategories}
+        onCategoriesChange={onCategoriesChange}
+      />
     </div>
   )
 }

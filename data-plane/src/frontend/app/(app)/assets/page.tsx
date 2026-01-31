@@ -4,12 +4,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, BarChart3 } from "lucide-react";
 import { Asset } from "@/types/assets";
 import { listAssets, deleteAsset } from "./actions/index";
-import { AssetTable } from "@/components/apps/assets/AssetTable";
 import { AssetMetricsDisplay } from "@/components/apps/assets/AssetMetrics";
 import { AssetChart } from "@/components/apps/assets/AssetChart";
+import { AssetsDashboardNav } from "@/components/apps/assets/AssetsDashboardNav";
 import { calculateAssetMetrics, filterAssets } from "@/components/apps/assets/utils";
 
 /**
@@ -27,8 +27,8 @@ export default function AssetsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [_editingAsset, setEditingAsset] = useState<Asset | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // ==================== Data Loading ====================
 
@@ -87,10 +87,24 @@ export default function AssetsPage() {
     }
   };
 
+  /**
+   * Handle category label click in chart - adds category to selection
+   * If already selected, removes it. Only selected categories will be shown in chart.
+   */
+  const handleCategoryClick = (categoryId: string, _categoryName: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
   // ==================== Computed Values ====================
 
+  // Don't initialize with all categories - start with empty selection
+  // Users will click labels to select which categories to show
+
   const metrics = calculateAssetMetrics(assets);
-  const filteredAssets = filterAssets(assets, searchTerm, filterStatus);
 
   // ==================== Render ====================
 
@@ -101,7 +115,7 @@ export default function AssetsPage() {
           {/* Header */}
           <div className="mb-8">
             <div className="text-sm text-gray-600 mb-2">Assets</div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-6">
               <h1 className="text-3xl font-bold text-gray-900">Asset Management</h1>
               <div className="flex gap-3">
                 <Button variant="outline" className="gap-2 bg-transparent">
@@ -117,6 +131,9 @@ export default function AssetsPage() {
                 </Button>
               </div>
             </div>
+
+            {/* Dashboard Navigation */}
+            <AssetsDashboardNav />
           </div>
 
           {/* Error Message */}
@@ -138,18 +155,17 @@ export default function AssetsPage() {
                 metrics={metrics}
                 filterStatus={filterStatus}
                 onFilterStatusChange={setFilterStatus}
+                assets={assets}
+                selectedCategories={selectedCategories}
+                onCategoriesChange={setSelectedCategories}
               />
 
               {/* Asset Category Distribution Chart */}
-              <AssetChart assets={assets} totalAssets={assets.length} />
-
-              {/* Assets Table */}
-              <AssetTable
-                assets={filteredAssets}
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                onEditClick={handleEditAsset}
-                onDeleteClick={handleDeleteAsset}
+              <AssetChart
+                assets={assets}
+                totalAssets={assets.length}
+                selectedCategories={selectedCategories}
+                onCategoryClick={handleCategoryClick}
               />
             </>
           )}

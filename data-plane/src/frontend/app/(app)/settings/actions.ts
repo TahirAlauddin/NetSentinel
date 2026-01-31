@@ -6,12 +6,12 @@ import { serverApi } from "@/lib/server-api"
 import { UserRecord } from "@/types/users"
 import { GroupRecord, PermissionRecord } from "@/types/groups"
 import {
-  validateString,
-  validateEmail,
-  validateId,
-  validateIdArray,
-  validateFormDataField,
-} from "@/lib/security/input-validation"
+  createUserSchema,
+  groupSchema,
+  idSchema,
+  parseFormData,
+  validateData,
+} from "@/lib/security/validation-schemas"
 
 export async function listUsers(): Promise<UserRecord[]> {
   const session = await getServerSession(authOptions)
@@ -43,45 +43,27 @@ export async function listUsers(): Promise<UserRecord[]> {
 }
 
 export async function addUser(formData: FormData) {
+  // Check authentication inside the action
   const session = await getServerSession(authOptions)
   if (!session?.user?.isSuperuser) {
     return { success: false, error: 'Not authorized to create users' }
   }
 
-  // Validate and sanitize all inputs
-  const username = validateFormDataField(formData, "username", {
-    required: true,
-    maxLength: 150,
-    pattern: /^[a-zA-Z0-9@.+\-_]+$/,
-  })
-  
-  const email = validateEmail(formData.get("email"))
-  const password = validateFormDataField(formData, "password", {
-    required: true,
-    maxLength: 128,
-    minLength: 8,
-  })
-  const re_password = validateFormDataField(formData, "re_password", {
-    required: true,
-    maxLength: 128,
-    minLength: 8,
-  })
-
-  if (!username || !email || !password || !re_password) {
-    return { success: false, error: 'Invalid input. Please check all fields.' }
+  // Validate inputs with Zod - never trust form data
+  const validation = parseFormData(formData, createUserSchema)
+  if (!validation.success) {
+    return { success: false, error: validation.error }
   }
 
-  if (password !== re_password) {
-    return { success: false, error: 'Passwords do not match' }
-  }
+  const { username, email, password, re_password, first_name, last_name } = validation.data
 
   const response = await serverApi.post('/auth/users/', {
     username,
     email,
     password,
     re_password,
-    first_name: username, // Use username as first name for now
-    last_name: '', // Empty last name for now
+    first_name: first_name || username,
+    last_name: last_name || '',
   })
 
   if (response.error) {
@@ -146,30 +128,21 @@ export async function listPermissions(): Promise<PermissionRecord[]> {
 }
 
 export async function createGroup(name: string, permissionIds: number[]) {
+  // Check authentication inside the action
   const session = await getServerSession(authOptions)
   if (!session?.user?.isSuperuser) {
     return { success: false, error: 'Not authorized to create groups' }
   }
 
-  // Validate and sanitize inputs
-  const validatedName = validateString(name, {
-    allowEmpty: false,
-    maxLength: 150,
-    minLength: 1,
-  })
-
-  if (!validatedName) {
-    return { success: false, error: 'Group name is required and must be valid' }
-  }
-
-  const validatedPermissionIds = validateIdArray(permissionIds)
-  if (validatedPermissionIds === null) {
-    return { success: false, error: 'Invalid permission IDs' }
+  // Validate inputs with Zod - never trust form data
+  const validation = validateData({ name, permissionIds }, groupSchema)
+  if (!validation.success) {
+    return { success: false, error: validation.error }
   }
 
   const response = await serverApi.post('/groups/', {
-    name: validatedName,
-    permissions: validatedPermissionIds,
+    name: validation.data.name,
+    permissions: validation.data.permissionIds,
   })
 
   if (response.error) {
@@ -180,35 +153,27 @@ export async function createGroup(name: string, permissionIds: number[]) {
 }
 
 export async function updateGroup(id: number, name: string, permissionIds: number[]) {
+  // Check authentication inside the action
   const session = await getServerSession(authOptions)
   if (!session?.user?.isSuperuser) {
     return { success: false, error: 'Not authorized to update groups' }
   }
 
-  // Validate and sanitize inputs
-  const validatedId = validateId(id)
-  if (!validatedId) {
+  // Validate ID with Zod
+  const idValidation = validateData(id, idSchema)
+  if (!idValidation.success) {
     return { success: false, error: 'Invalid group ID' }
   }
 
-  const validatedName = validateString(name, {
-    allowEmpty: false,
-    maxLength: 150,
-    minLength: 1,
-  })
-
-  if (!validatedName) {
-    return { success: false, error: 'Group name is required and must be valid' }
+  // Validate group data with Zod - never trust form data
+  const validation = validateData({ name, permissionIds }, groupSchema)
+  if (!validation.success) {
+    return { success: false, error: validation.error }
   }
 
-  const validatedPermissionIds = validateIdArray(permissionIds)
-  if (validatedPermissionIds === null) {
-    return { success: false, error: 'Invalid permission IDs' }
-  }
-
-  const response = await serverApi.put(`/groups/${validatedId}/`, {
-    name: validatedName,
-    permissions: validatedPermissionIds,
+  const response = await serverApi.put(`/groups/${idValidation.data}/`, {
+    name: validation.data.name,
+    permissions: validation.data.permissionIds,
   })
 
   if (response.error) {
@@ -219,18 +184,19 @@ export async function updateGroup(id: number, name: string, permissionIds: numbe
 }
 
 export async function deleteGroup(id: number) {
+  // Check authentication inside the action
   const session = await getServerSession(authOptions)
   if (!session?.user?.isSuperuser) {
     return { success: false, error: 'Not authorized to delete groups' }
   }
 
-  // Validate ID
-  const validatedId = validateId(id)
-  if (!validatedId) {
+  // Validate ID with Zod - never trust form data
+  const validation = validateData(id, idSchema)
+  if (!validation.success) {
     return { success: false, error: 'Invalid group ID' }
   }
 
-  const response = await serverApi.delete(`/groups/${validatedId}/`)
+  const response = await serverApi.delete(`/groups/${validation.data}/`)
 
   if (response.error) {
     return { success: false, error: response.error || 'Failed to delete group' }
