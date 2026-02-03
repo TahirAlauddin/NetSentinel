@@ -294,35 +294,45 @@ export const authOptions = {
     strategy: 'jwt' as const,
     maxAge: 7 * 24 * 60 * 60, // 7 days
   },
-  cookies: {
-    sessionToken: {
-      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
+  // Use secure cookies only when NEXTAUTH_URL is HTTPS. In Docker dev we run with NODE_ENV=production
+  // but serve over HTTP (localhost); secure cookies are not sent over HTTP, so the session would be
+  // lost after login and the middleware would redirect back to /login.
+  cookies: (() => {
+    const url = authConfig.url
+    // TODO: Possibly update the check from https to an environment variable, especially for production
+    // Staging is https, so it works.
+    const useSecureCookies =
+      typeof url === 'string' && url.length > 0 && url.toLowerCase().startsWith('https://')
+    return {
+      sessionToken: {
+        name: `${useSecureCookies ? '__Secure-' : ''}next-auth.session-token`,
+        options: {
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+          secure: useSecureCookies,
+        },
       },
-    },
-    callbackUrl: {
-      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.callback-url`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
+      callbackUrl: {
+        name: `${useSecureCookies ? '__Secure-' : ''}next-auth.callback-url`,
+        options: {
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+          secure: useSecureCookies,
+        },
       },
-    },
-    csrfToken: {
-      name: `${process.env.NODE_ENV === 'production' ? '__Host-' : ''}next-auth.csrf-token`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
+      csrfToken: {
+        name: `${useSecureCookies ? '__Host-' : ''}next-auth.csrf-token`,
+        options: {
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+          secure: useSecureCookies,
+        },
       },
-    },
-  },
+    }
+  })(),
   secret: authConfig.secret,
   // Set the base URL for NextAuth in production
   url: authConfig.url,
