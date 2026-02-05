@@ -48,6 +48,7 @@ urlpatterns = [
     path("api/v1/assets/", include("assets.urls")),
     path("api/v1/telecom/", include("telecom.urls")),
     path("api/v1/ipam/", include("ipam.urls")),
+    path("api/v1/contracts/", include("contracts.urls")),
     # Djoser endpoints for authentication and user management
     path("api/v1/auth/", include("djoser.urls")),
     path("api/v1/auth/", include("djoser.urls.jwt")),

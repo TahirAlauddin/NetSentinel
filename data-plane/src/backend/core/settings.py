@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     "assets",  # Assets management app (assets)
     "telecom",  # Telecom management app (providers, data circuits)
     "ipam",  # IPAM management app (IP addresses, subnets, etc.)
+    "contracts",  # Contract management (carrier contracts, NRC/MRC, dates)
 ]
 
 MIDDLEWARE = [
