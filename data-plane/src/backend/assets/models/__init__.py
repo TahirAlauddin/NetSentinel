@@ -2,6 +2,11 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from assets.validators import (
+    asset_image_upload_to,
+    validate_asset_image_extension,
+    validate_asset_image_size,
+)
 from infrastructure.models import Department, Location
 from users.models import User
 
@@ -359,9 +364,18 @@ class CalendarAlert(models.Model):
 class AssetImage(models.Model):
     """
     Image model for asset images.
+
+    Uploads are validated for allowed image types and max size; stored with
+    a safe UUID-based filename to prevent path traversal and overwrites.
     """
 
-    image = models.ImageField(upload_to="assets/images/")
+    image = models.ImageField(
+        upload_to=asset_image_upload_to,
+        validators=[
+            validate_asset_image_extension,
+            validate_asset_image_size,
+        ],
+    )
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="images")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
