@@ -121,6 +121,12 @@ export const monitoringSubmenuColumns: SubmenuColumn[] = [
   },
 ];
 
+// Contracts submenu links
+export const contractsMainSubmenuLinks = [
+  { label: "Overview", href: "/contracts" },
+  { label: "All Contracts", href: "/contracts/list" },
+];
+
 // Assets submenu links
 export const assetsMainSubmenuLinks = [
   { label: "Overview", href: "/assets" },
@@ -211,7 +217,18 @@ export const navigationItems: NavigationItem[] = [
       },
     ],
   },
-  { label: "Contracts", icon: FileText, href: "/contracts" },
+  {
+    label: "Contracts",
+    icon: FileText,
+    href: "/contracts",
+    hasSubmenu: true,
+    submenuColumns: [
+      {
+        title: "Main",
+        links: contractsMainSubmenuLinks,
+      },
+    ],
+  },
   { label: "Vendors/SaaS", icon: Building2, href: "/vendors-saas" },
   {
     label: "Telecom Expense Management",

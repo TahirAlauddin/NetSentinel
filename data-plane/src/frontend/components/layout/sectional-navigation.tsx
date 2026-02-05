@@ -87,6 +87,14 @@ const ASSETS_NAV_ITEMS = [
 ];
 
 /**
+ * Contracts Navigation Items
+ */
+const CONTRACTS_NAV_ITEMS = [
+  { href: "/contracts", label: "Overview" },
+  { href: "/contracts/list", label: "All Contracts" },
+];
+
+/**
  * Sectional Navigation Component
  * Displays contextual navigation items based on the current route.
  * Shows IPAM navigation when on IPAM routes, Settings navigation when on Settings routes,
@@ -97,6 +105,7 @@ export function SectionalNavigation() {
   const isIpamRoute = pathname.startsWith("/ipam");
   const isSettingsRoute = pathname.startsWith("/settings");
   const isAssetsRoute = pathname.startsWith("/assets");
+  const isContractsRoute = pathname.startsWith("/contracts");
 
   // Show IPAM navigation when on IPAM routes
   if (isIpamRoute) {
@@ -111,6 +120,11 @@ export function SectionalNavigation() {
   // Show Assets navigation when on Assets routes
   if (isAssetsRoute) {
     return <AssetsNavigation pathname={pathname} />;
+  }
+
+  // Show Contracts navigation when on Contracts routes
+  if (isContractsRoute) {
+    return <ContractsNavigation pathname={pathname} />;
   }
 
   // Default navigation for other routes
@@ -253,6 +267,41 @@ function AssetsNavigation({ pathname }: { pathname: string }) {
   return (
     <ul className="flex items-center gap-2 sm:gap-4 lg:gap-6 py-2 sm:py-3 text-xs sm:text-sm overflow-x-auto">
       {ASSETS_NAV_ITEMS.map((item) => {
+        const active = isActive(item.href);
+        return (
+          <li key={item.href} className="flex-shrink-0">
+            <Link
+              href={item.href}
+              className={cn(
+                "hover:underline whitespace-nowrap transition-colors",
+                active
+                  ? "text-primary font-semibold underline"
+                  : "text-secondary-foreground hover:text-foreground"
+              )}
+            >
+              {item.label}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/**
+ * Contracts Navigation Component
+ */
+function ContractsNavigation({ pathname }: { pathname: string }) {
+  const isActive = (href: string) => {
+    if (href === "/contracts") {
+      return pathname === "/contracts" || pathname === "/contracts/";
+    }
+    return pathname.startsWith(href);
+  };
+
+  return (
+    <ul className="flex items-center gap-2 sm:gap-4 lg:gap-6 py-2 sm:py-3 text-xs sm:text-sm overflow-x-auto">
+      {CONTRACTS_NAV_ITEMS.map((item) => {
         const active = isActive(item.href);
         return (
           <li key={item.href} className="flex-shrink-0">

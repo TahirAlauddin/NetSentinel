@@ -5,7 +5,7 @@
 /**
  * Routes that require authentication
  */
-export const protectedRoutes = ['/dashboard', '/profile', '/settings'] as const
+export const protectedRoutes = ['/dashboard', '/profile', '/settings', '/contracts'] as const
 
 /**
  * Routes that are authentication-related (login, register, etc.)
