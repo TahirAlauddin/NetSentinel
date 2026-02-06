@@ -2,10 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, X, Upload } from "lucide-react";
+import { ArrowLeft, ChevronDown, X, Upload } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 
 // Shared input styles matching asset form: rounded-lg, smooth focus ring, transition
 const inputClass =
@@ -39,20 +46,24 @@ const categories = [
   "Uncategorized",
 ];
 
+// Available contacts to select (would come from API in production)
+const availableContacts = [
+  { id: "1", name: "Jane Smith", email: "jane.smith@company.com", phone: "(555) 111-2222" },
+  { id: "2", name: "John Doe", email: "john.doe@company.com", phone: "(555) 222-3333" },
+  { id: "3", name: "Maria Garcia", email: "maria.garcia@company.com", phone: "(555) 333-4444" },
+  { id: "4", name: "David Chen", email: "david.chen@company.com", phone: "(555) 444-5555" },
+  { id: "5", name: "Sarah Wilson", email: "sarah.wilson@company.com", phone: "(555) 555-6666" },
+];
+
 export default function NewContractPage() {
   const router = useRouter();
-  const [contacts, setContacts] = useState<
-    Array<{ name: string; email: string; phone: string }>
-  >([{ name: "", email: "", phone: "" }]);
+  const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
+  const [contactsOpen, setContactsOpen] = useState(false);
 
-  const addContact = () => {
-    setContacts([...contacts, { name: "", email: "", phone: "" }]);
-  };
-
-  const removeContact = (index: number) => {
-    if (contacts.length > 1) {
-      setContacts(contacts.filter((_, i) => i !== index));
-    }
+  const toggleContact = (id: string) => {
+    setSelectedContactIds((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -317,68 +328,73 @@ export default function NewContractPage() {
 
           {/* Contacts */}
           <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl">Contacts</h2>
-              <button
-                type="button"
-                onClick={addContact}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Add Contact
-              </button>
-            </div>
-
-            {contacts.map((contact, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-3 gap-6 mb-6 pb-6 border-b border-gray-200 last:border-b-0 last:mb-0 last:pb-0"
-              >
-                <div>
-                  <Label className={labelClass}>
-                    Name {index === 0 && <span className="text-red-500">*</span>}
-                  </Label>
-                  <Input
-                    type="text"
-                    required={index === 0}
-                    className={inputClass}
-                    placeholder="Contact name"
-                  />
-                </div>
-
-                <div>
-                  <Label className={labelClass}>
-                    Email {index === 0 && <span className="text-red-500">*</span>}
-                  </Label>
-                  <Input
-                    type="email"
-                    required={index === 0}
-                    className={inputClass}
-                    placeholder="contact@example.com"
-                  />
-                </div>
-
-                <div>
-                  <Label className={labelClass}>Phone</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="tel"
-                      className={`flex-1 ${inputClass}`}
-                      placeholder="(555) 123-4567"
-                    />
-                    {index > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => removeContact(index)}
-                        className="px-3 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
+            <h2 className="text-2xl mb-6">Contacts</h2>
+            <div>
+              <Label className={labelClass}>Select contacts</Label>
+              <Popover open={contactsOpen} onOpenChange={setContactsOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      "w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-left flex items-center justify-between gap-2",
+                      "shadow-xs transition-[color,box-shadow] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
+                      "hover:border-gray-400"
                     )}
-                  </div>
+                  >
+                    <span className={selectedContactIds.length === 0 ? "text-gray-500" : "text-gray-900"}>
+                      {selectedContactIds.length === 0
+                        ? "Select contacts..."
+                        : `${selectedContactIds.length} contact${selectedContactIds.length === 1 ? "" : "s"} selected`}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-h-64 overflow-y-auto p-2" align="start">
+                  {availableContacts.map((contact) => {
+                    const isSelected = selectedContactIds.includes(contact.id);
+                    return (
+                      <label
+                        key={contact.id}
+                        className="flex items-center gap-3 px-2 py-2 rounded-md cursor-pointer hover:bg-gray-100"
+                      >
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleContact(contact.id)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">{contact.name}</div>
+                          <div className="text-xs text-gray-500 truncate">{contact.email}</div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </PopoverContent>
+              </Popover>
+              {selectedContactIds.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {selectedContactIds.map((id) => {
+                    const contact = availableContacts.find((c) => c.id === id);
+                    if (!contact) return null;
+                    return (
+                      <span
+                        key={id}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-100 text-sm text-gray-700"
+                      >
+                        {contact.name}
+                        <button
+                          type="button"
+                          onClick={() => toggleContact(id)}
+                          className="p-0.5 rounded hover:bg-gray-200"
+                          aria-label={`Remove ${contact.name}`}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </span>
+                    );
+                  })}
                 </div>
-              </div>
-            ))}
+              )}
+            </div>
           </div>
 
           {/* Notifications & Alerts */}
