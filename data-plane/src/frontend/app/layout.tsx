@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/components/auth-provider";
 import { ErrorBoundary } from "@/components/feedback/error-boundary";
 import { Toaster } from "sonner";
@@ -31,7 +30,6 @@ export default async function RootLayout({
             {children}
           </AuthProvider>
           <Toaster />
-          <Analytics />
         </ErrorBoundary>
       </body>
     </html>
