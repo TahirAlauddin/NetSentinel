@@ -2,73 +2,110 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronDown, X, Upload } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import { useState, useCallback, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FileUploadZone } from "@/components/contracts/file-upload-zone";
+import { ContractApiClient } from "@/lib/api-client/contract";
+import { parseApiError } from "@/lib/api-client/error-parser";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
+  validateContractForm,
+  hasContractFormErrors,
+  type ContractFormErrors,
+} from "@/lib/contracts/validation";
+import type { ContractCreatePayload } from "@/types/contracts";
 import { cn } from "@/lib/utils";
 
-// Shared input styles matching asset form: rounded-lg, smooth focus ring, transition
 const inputClass =
   "w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
-const selectClass =
-  "w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm appearance-none pr-10 transition-[color,box-shadow] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
-const textareaClass =
-  "w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm transition-[color,box-shadow] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-y min-h-24";
 const labelClass = "block text-sm font-medium text-gray-900 mb-2";
 
-const categories = [
-  "Advertising",
-  "Analytics",
-  "Cloud",
-  "Customer Support",
-  "Developer Tools",
-  "DevOps",
-  "Facilities",
-  "Finance and Accounting",
-  "General",
-  "HR",
-  "Infrastructure",
-  "IT and Security",
-  "Marketing",
-  "Onboarding/Offboarding",
-  "Other",
-  "Product and Design",
-  "Productivity",
-  "Sales and Business",
-  "Telecom",
-  "Uncategorized",
-];
-
-// Available contacts to select (would come from API in production)
-const availableContacts = [
-  { id: "1", name: "Jane Smith", email: "jane.smith@company.com", phone: "(555) 111-2222" },
-  { id: "2", name: "John Doe", email: "john.doe@company.com", phone: "(555) 222-3333" },
-  { id: "3", name: "Maria Garcia", email: "maria.garcia@company.com", phone: "(555) 333-4444" },
-  { id: "4", name: "David Chen", email: "david.chen@company.com", phone: "(555) 444-5555" },
-  { id: "5", name: "Sarah Wilson", email: "sarah.wilson@company.com", phone: "(555) 555-6666" },
-];
+const defaultPayload: ContractCreatePayload = {
+  carrier: "",
+  contract_number: "",
+  date: null,
+  nrc: 0,
+  mrc: 0,
+  start_date: "",
+  end_date: null,
+  document: null,
+};
 
 export default function NewContractPage() {
   const router = useRouter();
-  const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
-  const [contactsOpen, setContactsOpen] = useState(false);
+  const [payload, setPayload] = useState<ContractCreatePayload>(defaultPayload);
+  const [fieldErrors, setFieldErrors] = useState<ContractFormErrors>({});
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const toggleContact = (id: string) => {
-    setSelectedContactIds((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
-    );
-  };
+  const contractApiClient = useMemo(() => new ContractApiClient(), []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  /**
+   * Updates form state with new values and clears validation errors for those fields.
+   * Used so that individual field errors disappear when the user starts correcting them.
+   */
+  const updateFormFields = useCallback(
+    (updates: Partial<ContractCreatePayload>) => {
+      // Merge updates into the current form state
+      setPayload((prev) => ({ ...prev, ...updates }));
+      // Clear any API-level error
+      setApiError(null);
+      // Remove errors for updated fields
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        for (const key of Object.keys(updates)) {
+          delete next[key as keyof ContractFormErrors];
+        }
+        return next;
+      });
+    },
+    []
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push("/contracts/list");
+    const errors = validateContractForm(payload);
+    if (hasContractFormErrors(errors)) {
+      setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors({});
+    setApiError(null);
+    setSubmitting(true);
+
+    const toSend: ContractCreatePayload = {
+      carrier: payload.carrier.trim(),
+      contract_number: payload.contract_number.trim(),
+      date: payload.date || null,
+      nrc: payload.nrc === "" ? 0 : Number(payload.nrc),
+      mrc: payload.mrc === "" ? 0 : Number(payload.mrc),
+      start_date: payload.start_date,
+      end_date: payload.end_date || null,
+      document: payload.document ?? undefined,
+    };
+
+    const response = await contractApiClient.createContract(toSend);
+    setSubmitting(false);
+
+    if (response.error) {
+      const parsed = parseApiError(response.errorData);
+      setApiError(parsed.message);
+      if (parsed.fieldErrors) {
+        const mapped: ContractFormErrors = {};
+        for (const [k, v] of Object.entries(parsed.fieldErrors)) {
+          mapped[k as keyof ContractFormErrors] = v?.[0];
+        }
+        setFieldErrors((prev) => ({ ...prev, ...mapped }));
+      }
+      return;
+    }
+
+    if (response.data?.id) {
+      router.push(`/contracts/${response.data.id}`);
+    } else {
+      router.push("/contracts/list");
+    }
   };
 
   return (
@@ -105,64 +142,57 @@ export default function NewContractPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          {/* Basic Information */}
+          {/* Basic info */}
           <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
             <h2 className="text-2xl mb-8">Basic Information</h2>
-
             <div className="grid grid-cols-2 gap-8">
               <div>
                 <Label className={labelClass}>
-                  Contract Name <span className="text-red-500">*</span>
+                  Carrier / Vendor <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   type="text"
-                  required
-                  className={inputClass}
-                  placeholder="Enter contract name"
+                  className={cn(inputClass, fieldErrors.carrier && "border-red-500")}
+                  placeholder="e.g. AT&T, Verizon"
+                  value={payload.carrier}
+                  onChange={(e) => updateFormFields({ carrier: e.target.value })}
                 />
+                {fieldErrors.carrier && (
+                  <p className="text-sm text-red-600 mt-1">{fieldErrors.carrier}</p>
+                )}
               </div>
-
               <div>
                 <Label className={labelClass}>
-                  Vendor <span className="text-red-500">*</span>
+                  Contract Number <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   type="text"
-                  required
-                  className={inputClass}
-                  placeholder="Enter vendor name"
+                  className={cn(inputClass, fieldErrors.contract_number && "border-red-500")}
+                  placeholder="Carrier or internal contract ID"
+                  value={payload.contract_number}
+                  onChange={(e) => updateFormFields({ contract_number: e.target.value })}
                 />
+                {fieldErrors.contract_number && (
+                  <p className="text-sm text-red-600 mt-1">{fieldErrors.contract_number}</p>
+                )}
               </div>
-
               <div>
-                <Label className={labelClass}>
-                  Category <span className="text-red-500">*</span>
-                </Label>
-                <select required className={selectClass}>
-                  <option value="">Select a category</option>
-                  {categories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <Label className={labelClass}>Product/Service</Label>
+                <Label className={labelClass}>Signing / Reference Date</Label>
                 <Input
-                  type="text"
+                  type="date"
                   className={inputClass}
-                  placeholder="Enter product or service name"
+                  value={payload.date ?? ""}
+                  onChange={(e) =>
+                    updateFormFields({ date: e.target.value ? e.target.value : null })
+                  }
                 />
               </div>
             </div>
           </div>
 
-          {/* Contract Terms */}
+          {/* Terms */}
           <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
             <h2 className="text-2xl mb-8">Contract Terms</h2>
-
             <div className="grid grid-cols-2 gap-8">
               <div>
                 <Label className={labelClass}>
@@ -170,288 +200,82 @@ export default function NewContractPage() {
                 </Label>
                 <Input
                   type="date"
-                  required
-                  className={inputClass}
+                  className={cn(inputClass, fieldErrors.start_date && "border-red-500")}
+                  value={payload.start_date}
+                  onChange={(e) => updateFormFields({ start_date: e.target.value })}
                 />
+                {fieldErrors.start_date && (
+                  <p className="text-sm text-red-600 mt-1">{fieldErrors.start_date}</p>
+                )}
               </div>
-
               <div>
-                <Label className={labelClass}>
-                  End Date <span className="text-red-500">*</span>
-                </Label>
+                <Label className={labelClass}>End Date</Label>
                 <Input
                   type="date"
-                  required
-                  className={inputClass}
+                  className={cn(inputClass, fieldErrors.end_date && "border-red-500")}
+                  value={payload.end_date ?? ""}
+                  onChange={(e) =>
+                    updateFormFields({ end_date: e.target.value ? e.target.value : null })
+                  }
                 />
-              </div>
-
-              <div>
-                <Label className={labelClass}>
-                  Contract Type <span className="text-red-500">*</span>
-                </Label>
-                <select required className={selectClass}>
-                  <option value="">Select type</option>
-                  <option value="fixed">Fixed term</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="annual">Annual</option>
-                  <option value="perpetual">Perpetual</option>
-                </select>
-              </div>
-
-              <div>
-                <Label className={labelClass}>Renewal Notice Period</Label>
-                <div className="flex gap-3">
-                  <Input
-                    type="number"
-                    className={`flex-1 ${inputClass}`}
-                    placeholder="60"
-                  />
-                  <select className={`min-w-[100px] ${selectClass}`}>
-                    <option value="days">Days</option>
-                    <option value="months">Months</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <Label className={labelClass}>Auto-Renewal</Label>
-                <div className="flex items-center gap-6 mt-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="autoRenewal"
-                      value="yes"
-                      className="w-4 h-4 rounded-full border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500/20"
-                    />
-                    <span className="text-sm">Yes</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="autoRenewal"
-                      value="no"
-                      className="w-4 h-4 rounded-full border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500/20"
-                      defaultChecked
-                    />
-                    <span className="text-sm">No</span>
-                  </label>
-                </div>
+                {fieldErrors.end_date && (
+                  <p className="text-sm text-red-600 mt-1">{fieldErrors.end_date}</p>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Financial Details */}
+          {/* Financial */}
           <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
             <h2 className="text-2xl mb-8">Financial Details</h2>
-
             <div className="grid grid-cols-2 gap-8">
               <div>
-                <Label className={labelClass}>
-                  Total Contract Value <span className="text-red-500">*</span>
-                </Label>
+                <Label className={labelClass}>NRC (Non-Recurring Charge)</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
                     $
                   </span>
                   <Input
                     type="number"
-                    required
+                    min={0}
                     step="0.01"
-                    className={`pl-7 ${inputClass}`}
+                    className={cn("pl-7", inputClass, fieldErrors.nrc && "border-red-500")}
                     placeholder="0.00"
+                    value={payload.nrc === 0 ? "" : payload.nrc}
+                    onChange={(e) =>
+                      updateFormFields({
+                        nrc: e.target.value === "" ? 0 : e.target.value,
+                      })
+                    }
                   />
                 </div>
+                {fieldErrors.nrc && (
+                  <p className="text-sm text-red-600 mt-1">{fieldErrors.nrc}</p>
+                )}
               </div>
-
               <div>
-                <Label className={labelClass}>Monthly Cost</Label>
+                <Label className={labelClass}>MRC (Monthly Recurring Charge)</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
                     $
                   </span>
                   <Input
                     type="number"
+                    min={0}
                     step="0.01"
-                    className={`pl-7 ${inputClass}`}
+                    className={cn("pl-7", inputClass, fieldErrors.mrc && "border-red-500")}
                     placeholder="0.00"
+                    value={payload.mrc === 0 ? "" : payload.mrc}
+                    onChange={(e) =>
+                      updateFormFields({
+                        mrc: e.target.value === "" ? 0 : e.target.value,
+                      })
+                    }
                   />
                 </div>
-              </div>
-
-              <div>
-                <Label className={labelClass}>Payment Frequency</Label>
-                <select className={selectClass}>
-                  <option value="">Select frequency</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="quarterly">Quarterly</option>
-                  <option value="annual">Annual</option>
-                  <option value="one-time">One-time</option>
-                </select>
-              </div>
-
-              <div>
-                <Label className={labelClass}>Track Spending</Label>
-                <div className="flex items-center gap-6 mt-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="trackSpending"
-                      value="yes"
-                      className="w-4 h-4 rounded-full border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500/20"
-                    />
-                    <span className="text-sm">Yes</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="trackSpending"
-                      value="no"
-                      className="w-4 h-4 rounded-full border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500/20"
-                      defaultChecked
-                    />
-                    <span className="text-sm">No</span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="col-span-2">
-                <Label className={labelClass}>Payment Terms</Label>
-                <textarea
-                  rows={3}
-                  className={`${textareaClass} min-h-[80px]`}
-                  placeholder="Enter payment terms and conditions"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Contacts */}
-          <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-            <h2 className="text-2xl mb-6">Contacts</h2>
-            <div>
-              <Label className={labelClass}>Select contacts</Label>
-              <Popover open={contactsOpen} onOpenChange={setContactsOpen}>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    className={cn(
-                      "w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-left flex items-center justify-between gap-2",
-                      "shadow-xs transition-[color,box-shadow] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
-                      "hover:border-gray-400"
-                    )}
-                  >
-                    <span className={selectedContactIds.length === 0 ? "text-gray-500" : "text-gray-900"}>
-                      {selectedContactIds.length === 0
-                        ? "Select contacts..."
-                        : `${selectedContactIds.length} contact${selectedContactIds.length === 1 ? "" : "s"} selected`}
-                    </span>
-                    <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-h-64 overflow-y-auto p-2" align="start">
-                  {availableContacts.map((contact) => {
-                    const isSelected = selectedContactIds.includes(contact.id);
-                    return (
-                      <label
-                        key={contact.id}
-                        className="flex items-center gap-3 px-2 py-2 rounded-md cursor-pointer hover:bg-gray-100"
-                      >
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => toggleContact(contact.id)}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">{contact.name}</div>
-                          <div className="text-xs text-gray-500 truncate">{contact.email}</div>
-                        </div>
-                      </label>
-                    );
-                  })}
-                </PopoverContent>
-              </Popover>
-              {selectedContactIds.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {selectedContactIds.map((id) => {
-                    const contact = availableContacts.find((c) => c.id === id);
-                    if (!contact) return null;
-                    return (
-                      <span
-                        key={id}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-100 text-sm text-gray-700"
-                      >
-                        {contact.name}
-                        <button
-                          type="button"
-                          onClick={() => toggleContact(id)}
-                          className="p-0.5 rounded hover:bg-gray-200"
-                          aria-label={`Remove ${contact.name}`}
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Notifications & Alerts */}
-          <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-            <h2 className="text-2xl mb-8">Notifications & Alerts</h2>
-
-            <div className="space-y-6">
-              <div className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  className="w-5 h-5 mt-1"
-                  defaultChecked
-                />
-                <div>
-                  <div className="text-base text-gray-900 font-medium">
-                    Expiration Alerts
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    Send notifications before contract expires
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <input type="checkbox" className="w-5 h-5 mt-1" />
-                <div>
-                  <div className="text-base text-gray-900 font-medium">
-                    Renewal Reminders
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    Get reminded during renewal notice period
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <input type="checkbox" className="w-5 h-5 mt-1" />
-                <div>
-                  <div className="text-base text-gray-900 font-medium">
-                    Payment Due Alerts
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    Notify when payments are due
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <input type="checkbox" className="w-5 h-5 mt-1" />
-                <div>
-                  <div className="text-base text-gray-900 font-medium">
-                    Budget Threshold Alerts
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    Alert when spending exceeds threshold
-                  </div>
-                </div>
+                {fieldErrors.mrc && (
+                  <p className="text-sm text-red-600 mt-1">{fieldErrors.mrc}</p>
+                )}
               </div>
             </div>
           </div>
@@ -459,74 +283,21 @@ export default function NewContractPage() {
           {/* Documents */}
           <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
             <h2 className="text-2xl mb-8">Documents</h2>
-
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-blue-400 hover:bg-blue-50/30 transition-colors cursor-pointer">
-              <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <div className="text-base text-gray-700 mb-2">
-                <label className="text-blue-600 cursor-pointer hover:underline">
-                  Click to upload
-                  <input
-                    type="file"
-                    className="hidden"
-                    multiple
-                    accept=".pdf,.doc,.docx"
-                  />
-                </label>{" "}
-                or drag and drop
-              </div>
-              <div className="text-sm text-gray-500">
-                PDF, DOC, DOCX up to 10MB
-              </div>
-            </div>
+            <FileUploadZone
+              value={payload.document ?? null}
+              onChange={(file) => updateFormFields({ document: file ?? null })}
+            />
           </div>
 
-          {/* Additional Information */}
-          <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-            <h2 className="text-2xl mb-8">Additional Information</h2>
-
-            <div className="space-y-6">
-              <div>
-                <Label className={labelClass}>Tags</Label>
-                <Input
-                  type="text"
-                  className={inputClass}
-                  placeholder="Add tags separated by commas"
-                />
-                <div className="text-sm text-gray-500 mt-2">
-                  e.g., critical, annual-review, high-priority
-                </div>
-              </div>
-
-              <div>
-                <Label className={labelClass}>Notes</Label>
-                <textarea
-                  rows={5}
-                  className={`${textareaClass} min-h-[120px]`}
-                  placeholder="Add any additional notes or details about this contract"
-                />
-              </div>
-
-              <div>
-                <Label className={labelClass}>Departments</Label>
-                <Input
-                  type="text"
-                  className={inputClass}
-                  placeholder="e.g., Engineering, Marketing, Sales"
-                />
-              </div>
-
-              <div>
-                <Label className={labelClass}>Locations</Label>
-                <Input
-                  type="text"
-                  className={inputClass}
-                  placeholder="e.g., New York Office, Remote"
-                />
-              </div>
+          {apiError && (
+            <div
+              className="mb-8 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm"
+              role="alert"
+            >
+              {apiError}
             </div>
-          </div>
+          )}
 
-          {/* Action Buttons */}
           <div className="flex items-center justify-end gap-4">
             <Link
               href="/contracts"
@@ -535,16 +306,11 @@ export default function NewContractPage() {
               Cancel
             </Link>
             <button
-              type="button"
-              className="px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Save as Draft
-            </button>
-            <button
               type="submit"
-              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+              disabled={submitting}
+              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Create Contract
+              {submitting ? "Creating…" : "Create Contract"}
             </button>
           </div>
         </form>

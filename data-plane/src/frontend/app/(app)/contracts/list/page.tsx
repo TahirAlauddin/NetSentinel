@@ -1,189 +1,121 @@
 "use client";
 
-import { Search, SlidersHorizontal, LayoutGrid, List } from "lucide-react";
+import { Search, Trash2, Plus } from "lucide-react";
 import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ContractApiClient } from "@/lib/api-client/contract";
+import type { Contract, ContractListResponse } from "@/types/contracts";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-const contracts = [
-  {
-    id: 1,
-    name: "Design/Prototyping",
-    category: "Product and Design",
-    totalCost: "$9,600.00",
-    icon: "🎨",
-    color: "bg-yellow-400",
-  },
-  {
-    id: 2,
-    name: "Gnsto HR",
-    category: "HR",
-    totalCost: "$30,600.00",
-    icon: "G",
-    color: "bg-orange-500",
-  },
-  {
-    id: 3,
-    name: "DIA Fiber HQ",
-    category: "Telecom",
-    totalCost: "$46,080.00",
-    icon: "📡",
-    color: "bg-orange-600",
-  },
-  {
-    id: 4,
-    name: "Rise Digital Ads",
-    category: "Advertising",
-    totalCost: "$39,984.00",
-    icon: "R",
-    color: "bg-gray-800",
-  },
-  {
-    id: 5,
-    name: "Sales Tracking",
-    category: "Sales and Business De...",
-    totalCost: "$28,800.00",
-    icon: "📊",
-    color: "bg-gray-700",
-  },
-  {
-    id: 6,
-    name: "Agreement Management Software",
-    category: "General",
-    totalCost: "$82,560.00",
-    icon: "📄",
-    color: "bg-purple-600",
-  },
-  {
-    id: 7,
-    name: "CoPlot",
-    category: "Productivity",
-    totalCost: "$57,600.00",
-    icon: "▣",
-    color: "bg-blue-500",
-  },
-  {
-    id: 8,
-    name: "Intlect",
-    category: "Finance and Accounting",
-    totalCost: "$36,000.00",
-    icon: "▼",
-    color: "bg-black",
-  },
-  {
-    id: 9,
-    name: "Azure",
-    category: "Cloud",
-    totalCost: "$195,254.40",
-    icon: "▣",
-    color: "bg-blue-500",
-  },
-  {
-    id: 10,
-    name: "Internet Circuit",
-    category: "Telecom",
-    totalCost: "$48,000.00",
-    icon: "━",
-    color: "bg-gray-600",
-  },
-  {
-    id: 11,
-    name: "DIA Data Circuit",
-    category: "IT and Security",
-    totalCost: "$42,200.00",
-    icon: "━",
-    color: "bg-gray-600",
-  },
-  {
-    id: 12,
-    name: "Teams Phone Service",
-    category: "Telecom",
-    totalCost: "$22,200.00",
-    icon: "▣",
-    color: "bg-blue-500",
-  },
-  {
-    id: 13,
-    name: "Security Awareness",
-    category: "IT and Security",
-    totalCost: "$54,000.00",
-    icon: "⊚",
-    color: "bg-red-600",
-  },
-  {
-    id: 14,
-    name: "Atlassian Jira",
-    category: "Developer Tools",
-    totalCost: "$7,680.00",
-    icon: "△",
-    color: "bg-blue-600",
-  },
-  {
-    id: 15,
-    name: "Chicago Office Rent",
-    category: "Facilities",
-    totalCost: "$39,000.00",
-    icon: "▣",
-    color: "bg-blue-700",
-  },
-  {
-    id: 16,
-    name: "New York Office",
-    category: "Facilities",
-    totalCost: "$50,823.36",
-    icon: "W",
-    color: "bg-gray-600",
-  },
-  {
-    id: 17,
-    name: "Zendesk Customer Support",
-    category: "Customer Support",
-    totalCost: "$32,400.00",
-    icon: "▣",
-    color: "bg-black",
-  },
-  {
-    id: 18,
-    name: "Google Adwords",
-    category: "Marketing",
-    totalCost: "$35,193.60",
-    icon: "G",
-    color: "bg-blue-500",
-  },
-  {
-    id: 19,
-    name: "Project Management",
-    category: "General",
-    totalCost: "$54,120.00",
-    icon: "▲",
-    color: "bg-red-500",
-  },
-  {
-    id: 20,
-    name: "Email Marketing Platform",
-    category: "Marketing",
-    totalCost: "$64,800.00",
-    icon: "▣",
-    color: "bg-blue-900",
-  },
-  {
-    id: 21,
-    name: "Avanan",
-    category: "IT and Security",
-    totalCost: "$24,000.00",
-    icon: "◢",
-    color: "bg-red-500",
-  },
-];
+/** Format currency for display */
+function formatCurrency(value: string | number): string {
+  const n = typeof value === "string" ? parseFloat(value) : value;
+  if (Number.isNaN(n)) return "—";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+  }).format(n);
+}
 
-export default function ContractList() {
+/** First two chars of carrier for avatar */
+function initials(carrier: string): string {
+  const parts = carrier.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return carrier.slice(0, 2).toUpperCase() || "—";
+}
+
+export default function ContractListPage() {
+  const [data, setData] = useState<ContractListResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const contractApiClient = useMemo(() => new ContractApiClient(), []);
+
+  const fetchContracts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const res = await contractApiClient.getContracts<ContractListResponse>({
+      search: search || undefined,
+      ordering: "carrier",
+    });
+    setLoading(false);
+    if (res.error) {
+      setError(res.error);
+      setData(null);
+      return;
+    }
+    if (res.data) {
+      if (Array.isArray(res.data)) {
+        setData({
+          count: res.data.length,
+          next: null,
+          previous: null,
+          results: res.data,
+        });
+      } else {
+        setData(res.data as ContractListResponse);
+      }
+    } else {
+      setData({ count: 0, next: null, previous: null, results: [] });
+    }
+  }, [search, contractApiClient]);
+
+  useEffect(() => {
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      void fetchContracts();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchContracts]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearch(searchInput.trim());
+  };
+
+  const handleDeleteClick = (id: number) => setDeleteId(id);
+  const handleDeleteCancel = () => setDeleteId(null);
+
+  const handleDeleteConfirm = async () => {
+    if (deleteId == null) return;
+    setDeleting(true);
+    const res = await contractApiClient.deleteContract(deleteId);
+    setDeleting(false);
+    setDeleteId(null);
+    if (res.error) {
+      setError(res.error);
+      return;
+    }
+    fetchContracts();
+  };
+
+  const contracts = data?.results ?? [];
+  const total = data?.count ?? 0;
+
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
-      {/* Breadcrumb */}
       <div className="bg-white px-8 py-4 border-b border-gray-200">
         <div className="text-base text-gray-500">
-          <Link
-            href="/contracts"
-            className="text-blue-600 hover:underline"
-          >
+          <Link href="/contracts" className="text-blue-600 hover:underline">
             Contracts
           </Link>
           <span className="mx-2">&gt;</span>
@@ -191,90 +123,123 @@ export default function ContractList() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="p-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-5xl mb-4">Contract Management</h1>
         </div>
 
-        {/* Contracts Section */}
         <div className="bg-white rounded-lg border border-gray-200">
-          {/* Toolbar */}
           <div className="bg-gray-900 text-white px-6 py-4 rounded-t-lg flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-base">Contracts</span>
-              <span className="text-sm text-gray-400">(Showing 23 of 23)</span>
+              <span className="text-sm text-gray-400">
+                {loading ? "…" : `(Showing ${contracts.length} of ${total})`}
+              </span>
             </div>
-            <div className="flex items-center gap-3">
-              <button className="px-4 py-2.5 bg-gray-700 hover:bg-gray-600 rounded text-base flex items-center gap-2">
-                <SlidersHorizontal className="w-5 h-5" />
-                Filters
-              </button>
-              <button className="p-2.5 hover:bg-gray-700 rounded">
-                <List className="w-5 h-5" />
-              </button>
-              <button className="p-2.5 hover:bg-gray-700 rounded">
-                <LayoutGrid className="w-5 h-5" />
-              </button>
-            </div>
+            <Link
+              href="/contracts/new"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add contract
+            </Link>
           </div>
 
-          {/* Search */}
           <div className="bg-gray-100 p-6 border-b border-gray-200">
-            <div className="relative">
-              <Search className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <form onSubmit={handleSearchSubmit} className="relative">
+              <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search your contracts by name or vendor"
+                placeholder="Search by carrier or contract number"
                 className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
               />
-            </div>
-            <div className="mt-3 flex items-center justify-between text-base">
-              <div className="text-gray-600">Results per page:</div>
-              <select className="border border-gray-300 rounded px-3 py-2 text-base">
-                <option>25</option>
-                <option>50</option>
-                <option>100</option>
-              </select>
-            </div>
+            </form>
           </div>
 
-          {/* Contract Grid */}
-          <div className="grid grid-cols-3 gap-6 p-8">
-            {contracts.map((contract) => (
-              <Link
-                key={contract.id}
-                href={`/contracts/${contract.id}`}
-                className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start gap-4">
-                  <div
-                    className={`w-12 h-12 ${contract.color} rounded flex items-center justify-center text-white text-lg flex-shrink-0`}
-                  >
-                    {contract.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-medium text-gray-900 mb-2 truncate">
-                      {contract.name}
-                    </h3>
-                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-                      <span className="inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
-                      <span className="truncate">{contract.category}</span>
+          {error && (
+            <div className="p-6 border-b border-gray-200 bg-red-50 text-red-800 text-sm">
+              {error}
+            </div>
+          )}
+
+          {loading ? (
+            <div className="p-12 text-center text-gray-500">Loading contracts…</div>
+          ) : contracts.length === 0 ? (
+            <div className="p-12 text-center text-gray-500">
+              No contracts found.{" "}
+              <Link href="/contracts/new" className="text-blue-600 hover:underline">
+                Add a contract
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-6 p-8">
+              {contracts.map((contract: Contract) => (
+                <div
+                  key={contract.id}
+                  className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow flex flex-col"
+                >
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="w-12 h-12 bg-blue-600 rounded flex items-center justify-center text-white text-lg flex-shrink-0">
+                      {initials(contract.carrier)}
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm text-gray-500">Total Cost</div>
-                      <div className="text-base font-semibold text-gray-900">
-                        {contract.totalCost}
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        href={`/contracts/${contract.id}`}
+                        className="block font-medium text-gray-900 mb-2 truncate hover:text-blue-600"
+                      >
+                        {contract.carrier} – {contract.contract_number}
+                      </Link>
+                      <div className="text-sm text-gray-500 mb-3">
+                        {contract.start_date}
+                        {contract.end_date ? ` – ${contract.end_date}` : ""}
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-500">MRC</div>
+                        <div className="text-base font-semibold text-gray-900">
+                          {formatCurrency(contract.mrc)}
+                        </div>
                       </div>
                     </div>
                   </div>
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteClick(contract.id)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                      aria-label={`Delete ${contract.contract_number}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              </Link>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
+
+      <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && handleDeleteCancel()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete contract?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The contract will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeleteCancel}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
