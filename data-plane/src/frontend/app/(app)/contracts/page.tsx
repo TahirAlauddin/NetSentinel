@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, SlidersHorizontal, Plus, Trash2 } from "lucide-react";
+import { Search, SlidersHorizontal, Plus, Trash2, LayoutGrid, List } from "lucide-react";
 import { ContractsBreadcrumb } from "@/components/contracts/contracts-breadcrumb";
 import {
   PieChart,
@@ -49,6 +49,7 @@ export default function ContractsPage() {
   const [deleting, setDeleting] = useState(false);
   const [overview, setOverview] = useState<ContractOverviewResponse>(DEFAULT_CONTRACT_OVERVIEW);
   const [overviewLoading, setOverviewLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const contractApiClient = useMemo(() => new ContractApiClient(), []);
 
@@ -352,6 +353,34 @@ export default function ContractsPage() {
               <span className="text-sm text-gray-400">
                 {loading ? "…" : `(Showing ${contracts.length} of ${total})`}
               </span>
+              <div
+                className="flex rounded-lg border border-gray-600 overflow-hidden"
+                role="group"
+                aria-label="View mode"
+              >
+                <button
+                  type="button"
+                  onClick={() => setViewMode("grid")}
+                  className={`p-2 transition-colors ${
+                    viewMode === "grid" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700"
+                  }`}
+                  aria-pressed={viewMode === "grid"}
+                  aria-label="Grid view"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("list")}
+                  className={`p-2 transition-colors ${
+                    viewMode === "list" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700"
+                  }`}
+                  aria-pressed={viewMode === "list"}
+                  aria-label="List view"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             <Link
               href="/contracts/new"
@@ -403,50 +432,106 @@ export default function ContractsPage() {
                 Add a contract
               </Link>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 p-6">
+          ) : viewMode === "grid" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
               {contracts.map((contract: Contract) => (
                 <div
                   key={contract.id}
-                  className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow flex flex-col"
+                  className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow flex items-center gap-3"
                 >
-                  <div className="flex items-start gap-4 flex-1">
-                    <ContractLogoThumb
-                      contractId={contract.id}
-                      carrier={contract.carrier}
-                      hasLogo={Boolean(contract.logo)}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <Link
-                        href={`/contracts/${contract.id}`}
-                        className="block font-medium text-gray-900 mb-2 truncate hover:text-blue-600"
-                      >
-                        {contract.carrier} – {contract.contract_number}
-                      </Link>
-                      <div className="text-sm text-gray-500 mb-3">
-                        {contract.start_date}
-                        {contract.end_date
-                          ? ` – ${contract.end_date}`
-                          : ""}
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-gray-500">MRC</div>
-                        <div className="text-base font-semibold text-gray-900">
-                          {formatContractCurrency(contract.mrc)}
-                        </div>
-                      </div>
+                  <ContractLogoThumb
+                    contractId={contract.id}
+                    carrier={contract.carrier}
+                    hasLogo={Boolean(contract.logo)}
+                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm flex-shrink-0 overflow-hidden bg-gray-100"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <Link
+                      href={`/contracts/${contract.id}`}
+                      className="block font-medium text-gray-900 text-sm truncate hover:text-blue-600"
+                    >
+                      {contract.carrier} – {contract.contract_number}
+                    </Link>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="text-sm font-semibold text-gray-900">
+                        {formatContractCurrency(contract.mrc)}
+                      </span>
+                      {contract.expiry_label && (
+                        <span
+                          className={
+                            contract.expiry_status === "expired"
+                              ? "rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800"
+                              : "rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-800"
+                          }
+                        >
+                          {contract.expiry_label}
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="mt-3 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteClick(contract.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                      aria-label={`Delete ${contract.contract_number}`}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteClick(contract.id)}
+                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg shrink-0"
+                    aria-label={`Delete ${contract.contract_number}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 px-6 py-2.5 text-sm font-medium text-gray-500 bg-gray-50">
+                <span className="w-10" />
+                <span>Name</span>
+                <span className="text-right">MRC</span>
+                <span className="text-right">Status</span>
+                <span className="w-10" />
+              </div>
+              {contracts.map((contract: Contract) => (
+                <div
+                  key={contract.id}
+                  className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 px-6 py-2.5 items-center hover:bg-gray-50 transition-colors"
+                >
+                  <ContractLogoThumb
+                    contractId={contract.id}
+                    carrier={contract.carrier}
+                    hasLogo={Boolean(contract.logo)}
+                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm flex-shrink-0 overflow-hidden bg-gray-100"
+                  />
+                  <Link
+                    href={`/contracts/${contract.id}`}
+                    className="font-medium text-gray-900 truncate hover:text-blue-600"
+                  >
+                    {contract.carrier} – {contract.contract_number}
+                  </Link>
+                  <span className="text-right font-semibold text-gray-900">
+                    {formatContractCurrency(contract.mrc)}
+                  </span>
+                  <div className="text-right">
+                    {contract.expiry_label ? (
+                      <span
+                        className={
+                          contract.expiry_status === "expired"
+                            ? "rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800"
+                            : "rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-800"
+                        }
+                      >
+                        {contract.expiry_label}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-xs">—</span>
+                    )}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteClick(contract.id)}
+                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                    aria-label={`Delete ${contract.contract_number}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               ))}
             </div>

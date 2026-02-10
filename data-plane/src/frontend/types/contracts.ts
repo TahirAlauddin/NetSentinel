@@ -18,6 +18,9 @@ export interface Contract {
   category: number | null;
   created_at: string;
   updated_at: string;
+  /** Server-computed; only set when contract is expired or expiring in 0–90 days */
+  expiry_label?: string | null;
+  expiry_status?: "expired" | "expiring_30" | "expiring_60" | "expiring_90" | null;
 }
 
 /** Overview API response (at_glance, charts, categories) */
