@@ -76,8 +76,20 @@ export default function ContractDetailPage() {
   const [documentLoading, setDocumentLoading] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const logoUrlRef = useRef<string | null>(null);
+  const [categories, setCategories] = useState<Array<{ id: number; name: string }>>([]);
 
   const contractApiClient = useMemo(() => new ContractApiClient(), []);
+
+  useEffect(() => {
+    let cancelled = false;
+    contractApiClient.getContractCategories().then((res) => {
+      if (cancelled || res.error || !res.data) return;
+      setCategories(res.data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [contractApiClient]);
 
   const fetchContract = useCallback(async () => {
     if (!id) return;
@@ -143,6 +155,7 @@ export default function ContractDetailPage() {
       end_date: contract.end_date ?? null,
       document: null,
       logo: null,
+      category: contract.category ?? undefined,
     });
     setFieldErrors({});
     setApiError(null);
@@ -177,6 +190,7 @@ export default function ContractDetailPage() {
       nrc: editPayload.nrc === "" ? 0 : Number(editPayload.nrc),
       mrc: editPayload.mrc === "" ? 0 : Number(editPayload.mrc),
       logo: editPayload.logo ?? undefined,
+      category: editPayload.category ?? undefined,
     };
 
     const res = await contractApiClient.updateContract(id, toSend);
@@ -372,6 +386,25 @@ export default function ContractDetailPage() {
                       updateEdit({ date: e.target.value || null })
                     }
                   />
+                </div>
+                <div>
+                  <Label className={labelClass}>Category</Label>
+                  <select
+                    className={inputClass}
+                    value={editPayload.category ?? ""}
+                    onChange={(e) =>
+                      updateEdit({
+                        category: e.target.value ? Number(e.target.value) : null,
+                      })
+                    }
+                  >
+                    <option value="">No category</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <Label className={labelClass}>Start Date</Label>

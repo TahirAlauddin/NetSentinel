@@ -25,6 +25,17 @@ export class ContractApiClient extends BaseApiClient {
   }
 
   /**
+   * List contract categories (id, name) for dropdowns.
+   */
+  async getContractCategories(): Promise<
+    BaseApiResponse<Array<{ id: number; name: string }>>
+  > {
+    return this.get<Array<{ id: number; name: string }>>(
+      `${this.endpoint}categories/`
+    );
+  }
+
+  /**
    * Get all contracts
    */
   async getContracts<T = ContractListResponse>(

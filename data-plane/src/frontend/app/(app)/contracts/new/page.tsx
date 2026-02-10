@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileUploadZone } from "@/components/contracts/file-upload-zone";
@@ -32,6 +32,7 @@ const defaultPayload: ContractCreatePayload = {
   end_date: null,
   document: null,
   logo: null,
+  category: null,
 };
 
 export default function NewContractPage() {
@@ -40,8 +41,20 @@ export default function NewContractPage() {
   const [fieldErrors, setFieldErrors] = useState<ContractFormErrors>({});
   const [apiError, setApiError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [categories, setCategories] = useState<Array<{ id: number; name: string }>>([]);
 
   const contractApiClient = useMemo(() => new ContractApiClient(), []);
+
+  useEffect(() => {
+    let cancelled = false;
+    contractApiClient.getContractCategories().then((res) => {
+      if (cancelled || res.error || !res.data) return;
+      setCategories(res.data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [contractApiClient]);
 
   /**
    * Updates form state with new values and clears validation errors for those fields.
@@ -86,6 +99,7 @@ export default function NewContractPage() {
       end_date: payload.end_date || null,
       document: payload.document ?? undefined,
       logo: payload.logo ?? undefined,
+      category: payload.category ?? undefined,
     };
 
     const response = await contractApiClient.createContract(toSend);
@@ -188,6 +202,25 @@ export default function NewContractPage() {
                     updateFormFields({ date: e.target.value ? e.target.value : null })
                   }
                 />
+              </div>
+              <div>
+                <Label className={labelClass}>Category</Label>
+                <select
+                  className={inputClass}
+                  value={payload.category ?? ""}
+                  onChange={(e) =>
+                    updateFormFields({
+                      category: e.target.value ? Number(e.target.value) : null,
+                    })
+                  }
+                >
+                  <option value="">No category</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
