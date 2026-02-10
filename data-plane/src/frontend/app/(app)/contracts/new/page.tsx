@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { useState, useCallback, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileUploadZone } from "@/components/contracts/file-upload-zone";
+import { ContractLogoPreview } from "@/components/contracts/contract-logo-preview";
+import { ContractsBreadcrumb } from "@/components/contracts/contracts-breadcrumb";
 import { ContractApiClient } from "@/lib/api-client/contract";
 import { parseApiError } from "@/lib/api-client/error-parser";
 import {
@@ -30,6 +31,7 @@ const defaultPayload: ContractCreatePayload = {
   start_date: "",
   end_date: null,
   document: null,
+  logo: null,
 };
 
 export default function NewContractPage() {
@@ -83,6 +85,7 @@ export default function NewContractPage() {
       start_date: payload.start_date,
       end_date: payload.end_date || null,
       document: payload.document ?? undefined,
+      logo: payload.logo ?? undefined,
     };
 
     const response = await contractApiClient.createContract(toSend);
@@ -104,48 +107,47 @@ export default function NewContractPage() {
     if (response.data?.id) {
       router.push(`/contracts/${response.data.id}`);
     } else {
-      router.push("/contracts/list");
+      router.push("/contracts");
     }
   };
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
-      {/* Breadcrumb */}
-      <div className="bg-white px-8 py-4 border-b border-gray-200">
-        <div className="text-base text-gray-500">
-          <Link href="/contracts" className="text-blue-600 hover:underline">
-            Contracts
-          </Link>
-          <span className="mx-2">&gt;</span>
-          <span>New Contract</span>
-        </div>
-      </div>
+      <ContractsBreadcrumb
+        items={[
+          { label: "Home", href: "/dashboard" },
+          { label: "Contracts", href: "/contracts" },
+          { label: "New Contract" },
+        ]}
+      />
 
       {/* Main Content */}
-      <div className="p-8">
-        {/* Back Button */}
-        <Link
-          href="/contracts"
-          className="inline-flex items-center gap-2 text-base text-gray-600 hover:text-gray-900 mb-6"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to overview
-        </Link>
-
-        {/* Header */}
+      <div className="p-6 lg:p-8 max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-5xl mb-4">Add New Contract</h1>
+          <h1 className="text-3xl font-semibold text-gray-900 mb-1">
+            Add New Contract
+          </h1>
           <p className="text-base text-gray-600">
             Fill in the details below to create a new contract
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Logo preview on top */}
+          <div className="bg-white rounded-xl border border-gray-200 p-8 flex flex-col items-center">
+            <ContractLogoPreview
+              value={payload.logo ?? null}
+              onChange={(file) => updateFormFields({ logo: file ?? null })}
+            />
+          </div>
+
           {/* Basic info */}
-          <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-            <h2 className="text-2xl mb-8">Basic Information</h2>
-            <div className="grid grid-cols-2 gap-8">
+          <div className="bg-white rounded-xl border border-gray-200 p-6 lg:p-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">
+              Basic Information
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <Label className={labelClass}>
                   Carrier / Vendor <span className="text-red-500">*</span>
@@ -191,9 +193,11 @@ export default function NewContractPage() {
           </div>
 
           {/* Terms */}
-          <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-            <h2 className="text-2xl mb-8">Contract Terms</h2>
-            <div className="grid grid-cols-2 gap-8">
+          <div className="bg-white rounded-xl border border-gray-200 p-6 lg:p-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">
+              Contract Terms
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <Label className={labelClass}>
                   Start Date <span className="text-red-500">*</span>
@@ -226,9 +230,11 @@ export default function NewContractPage() {
           </div>
 
           {/* Financial */}
-          <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-            <h2 className="text-2xl mb-8">Financial Details</h2>
-            <div className="grid grid-cols-2 gap-8">
+          <div className="bg-white rounded-xl border border-gray-200 p-6 lg:p-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">
+              Financial Details
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <Label className={labelClass}>NRC (Non-Recurring Charge)</Label>
                 <div className="relative">
@@ -239,7 +245,7 @@ export default function NewContractPage() {
                     type="number"
                     min={0}
                     step="0.01"
-                    className={cn("pl-7", inputClass, fieldErrors.nrc && "border-red-500")}
+                    className={cn(inputClass, fieldErrors.nrc && "border-red-500", "pl-6")}
                     placeholder="0.00"
                     value={payload.nrc === 0 ? "" : payload.nrc}
                     onChange={(e) =>
@@ -263,7 +269,7 @@ export default function NewContractPage() {
                     type="number"
                     min={0}
                     step="0.01"
-                    className={cn("pl-7", inputClass, fieldErrors.mrc && "border-red-500")}
+                    className={cn(inputClass, fieldErrors.mrc && "border-red-500", "pl-6")}
                     placeholder="0.00"
                     value={payload.mrc === 0 ? "" : payload.mrc}
                     onChange={(e) =>
@@ -280,9 +286,12 @@ export default function NewContractPage() {
             </div>
           </div>
 
-          {/* Documents */}
-          <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-            <h2 className="text-2xl mb-8">Documents</h2>
+          {/* Documents - same as before */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 lg:p-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">
+              Documents
+            </h2>
+            <Label className={labelClass}>Contract document</Label>
             <FileUploadZone
               value={payload.document ?? null}
               onChange={(file) => updateFormFields({ document: file ?? null })}
@@ -291,14 +300,14 @@ export default function NewContractPage() {
 
           {apiError && (
             <div
-              className="mb-8 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm"
+              className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm"
               role="alert"
             >
               {apiError}
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-4">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-2">
             <Link
               href="/contracts"
               className="px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"

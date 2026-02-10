@@ -32,12 +32,13 @@ export class ContractApiClient extends BaseApiClient {
   }
 
   /**
-   * Create a new contract. Sends FormData when payload includes a document file.
+   * Create a new contract. Sends FormData when payload includes document or logo file.
    */
   async createContract<T = Contract>(
     data: ContractCreatePayload
   ): Promise<BaseApiResponse<T>> {
-    const hasFile = data.document instanceof File;
+    const hasFile =
+      data.document instanceof File || data.logo instanceof File;
     if (hasFile) {
       const formData = buildContractFormData(data);
       return this.requestForm<T>(this.endpoint, formData, "POST");
@@ -52,13 +53,14 @@ export class ContractApiClient extends BaseApiClient {
   }
 
   /**
-   * Update a contract by ID. Sends FormData when payload includes a document file.
+   * Update a contract by ID. Sends FormData when payload includes document or logo file.
    */
   async updateContract<T = Contract>(
     id: number | string,
     data: ContractUpdatePayload
   ): Promise<BaseApiResponse<T>> {
-    const hasFile = data.document instanceof File;
+    const hasFile =
+      data.document instanceof File || data.logo instanceof File;
     if (hasFile) {
       const formData = buildContractFormData(data);
       return this.requestForm<T>(`${this.endpoint}${id}/`, formData, "PATCH");
@@ -109,6 +111,44 @@ export class ContractApiClient extends BaseApiClient {
         if (match) filename = (match[1] ?? match[2] ?? "").trim() || undefined;
       }
       return { data, status: response.status, filename };
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : "Network error",
+        status: 0,
+      };
+    }
+  }
+
+  /**
+   * Fetch contract logo as blob (authenticated). Use for img src or download.
+   */
+  async getContractLogo(
+    id: number | string
+  ): Promise<BaseApiResponse<Blob> & { url?: string }> {
+    const session = await this.getSession();
+    if (!session?.accessToken) {
+      return { error: "No access token available", status: 401 };
+    }
+    const url = this.buildUrl(`${this.endpoint}${id}/logo/`);
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${session.accessToken}` },
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        let errorMessage = `Request failed with status ${response.status}`;
+        try {
+          const data = JSON.parse(text);
+          errorMessage = data.detail ?? data.message ?? errorMessage;
+        } catch {
+          // use default
+        }
+        return { error: errorMessage, status: response.status };
+      }
+      const data = await response.blob();
+      const objectUrl = URL.createObjectURL(data);
+      return { data, status: response.status, url: objectUrl };
     } catch (error) {
       return {
         error: error instanceof Error ? error.message : "Network error",

@@ -121,10 +121,9 @@ export const monitoringSubmenuColumns: SubmenuColumn[] = [
   },
 ];
 
-// Contracts submenu links
+// Contracts submenu links (list and overview are the same page at /contracts)
 export const contractsMainSubmenuLinks = [
-  { label: "Overview", href: "/contracts" },
-  { label: "All Contracts", href: "/contracts/list" },
+  { label: "Contracts", href: "/contracts" },
 ];
 
 // Assets submenu links

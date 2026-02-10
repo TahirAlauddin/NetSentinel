@@ -90,8 +90,7 @@ const ASSETS_NAV_ITEMS = [
  * Contracts Navigation Items
  */
 const CONTRACTS_NAV_ITEMS = [
-  { href: "/contracts", label: "Overview" },
-  { href: "/contracts/list", label: "All Contracts" },
+  { href: "/contracts", label: "Contracts" },
 ];
 
 /**

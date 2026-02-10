@@ -3,10 +3,12 @@
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Trash2, Pencil, Download, ExternalLink } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { ContractsBreadcrumb } from "@/components/contracts/contracts-breadcrumb";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileUploadZone } from "@/components/contracts/file-upload-zone";
+import { LogoUploadZone } from "@/components/contracts/logo-upload-zone";
 import { ContractApiClient } from "@/lib/api-client/contract";
 import { parseApiError } from "@/lib/api-client/error-parser";
 import {
@@ -72,6 +74,8 @@ export default function ContractDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [documentLoading, setDocumentLoading] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const logoUrlRef = useRef<string | null>(null);
 
   const contractApiClient = useMemo(() => new ContractApiClient(), []);
 
@@ -100,6 +104,33 @@ export default function ContractDetailPage() {
     };
   }, [fetchContract]);
 
+  // Load logo as blob URL when contract has logo (revoke on unmount or when contract changes)
+  useEffect(() => {
+    if (!contract?.logo || !id) {
+      if (logoUrlRef.current) {
+        URL.revokeObjectURL(logoUrlRef.current);
+        logoUrlRef.current = null;
+        setLogoUrl(null);
+      }
+      return;
+    }
+    let cancelled = false;
+    contractApiClient.getContractLogo(id).then((res) => {
+      if (cancelled || res.error || !res.url) return;
+      if (logoUrlRef.current) URL.revokeObjectURL(logoUrlRef.current);
+      logoUrlRef.current = res.url;
+      setLogoUrl(res.url);
+    });
+    return () => {
+      cancelled = true;
+      if (logoUrlRef.current) {
+        URL.revokeObjectURL(logoUrlRef.current);
+        logoUrlRef.current = null;
+        setLogoUrl(null);
+      }
+    };
+  }, [contract?.logo, id, contractApiClient]);
+
   const startEdit = () => {
     if (!contract) return;
     setEditPayload({
@@ -111,6 +142,7 @@ export default function ContractDetailPage() {
       start_date: contract.start_date,
       end_date: contract.end_date ?? null,
       document: null,
+      logo: null,
     });
     setFieldErrors({});
     setApiError(null);
@@ -144,6 +176,7 @@ export default function ContractDetailPage() {
       ...editPayload,
       nrc: editPayload.nrc === "" ? 0 : Number(editPayload.nrc),
       mrc: editPayload.mrc === "" ? 0 : Number(editPayload.mrc),
+      logo: editPayload.logo ?? undefined,
     };
 
     const res = await contractApiClient.updateContract(id, toSend);
@@ -196,7 +229,7 @@ export default function ContractDetailPage() {
       setError(res.error);
       return;
     }
-    router.push("/contracts/list");
+    router.push("/contracts");
   };
 
   if (loading) {
@@ -213,8 +246,8 @@ export default function ContractDetailPage() {
         <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
           {error ?? "Contract not found"}
         </div>
-        <Link href="/contracts/list" className="mt-4 inline-block text-blue-600 hover:underline">
-          Back to list
+        <Link href="/contracts" className="mt-4 inline-block text-blue-600 hover:underline">
+          Back to contracts
         </Link>
       </div>
     );
@@ -224,29 +257,39 @@ export default function ContractDetailPage() {
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
-      <div className="bg-white px-8 py-4 border-b border-gray-200">
-        <div className="text-base text-gray-500">
-          <Link href="/contracts" className="text-blue-600 hover:underline">
-            Contracts
-          </Link>
-          <span className="mx-2">&gt;</span>
-          <span>{contract.carrier}</span>
-        </div>
-      </div>
+      <ContractsBreadcrumb
+        items={[
+          { label: "Home", href: "/dashboard" },
+          { label: "Contracts", href: "/contracts" },
+          {
+            label: editing
+              ? `Edit: ${contract.carrier} – ${contract.contract_number}`
+              : `${contract.carrier} – ${contract.contract_number}`,
+          },
+        ]}
+      />
 
-      <div className="p-8">
+      <div className="p-6 lg:p-8">
         <Link
-          href="/contracts/list"
-          className="inline-flex items-center gap-2 text-base text-gray-600 hover:text-gray-900 mb-6"
+          href="/contracts"
+          className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6 transition-colors"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
           Back to all contracts
         </Link>
 
         <div className="mb-8 flex items-start justify-between gap-6">
           <div className="flex items-start gap-6">
-            <div className="w-20 h-20 bg-blue-600 rounded-lg flex items-center justify-center text-3xl text-white">
-              {initials(contract.carrier)}
+            <div className="w-20 h-20 rounded-lg border border-gray-200 overflow-hidden bg-gray-100 flex items-center justify-center text-3xl text-gray-600 shrink-0">
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt=""
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                initials(contract.carrier)
+              )}
             </div>
             <div>
               <h1 className="text-5xl mb-2">
@@ -389,12 +432,22 @@ export default function ContractDetailPage() {
                   )}
                 </div>
               </div>
-              <div className="mt-8">
-                <Label className={labelClass}>Replace document (optional)</Label>
-                <FileUploadZone
-                  value={editPayload.document ?? null}
-                  onChange={(file) => updateEdit({ document: file ?? null })}
-                />
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <Label className={labelClass}>Logo (optional)</Label>
+                  <LogoUploadZone
+                    value={editPayload.logo ?? null}
+                    previewUrl={logoUrl}
+                    onChange={(file) => updateEdit({ logo: file ?? null })}
+                  />
+                </div>
+                <div>
+                  <Label className={labelClass}>Replace document (optional)</Label>
+                  <FileUploadZone
+                    value={editPayload.document ?? null}
+                    onChange={(file) => updateEdit({ document: file ?? null })}
+                  />
+                </div>
               </div>
             </div>
             {apiError && (

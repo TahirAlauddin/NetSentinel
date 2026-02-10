@@ -5,7 +5,7 @@ import type {
 
 /**
  * Build FormData for contract create/update. Omits undefined; appends document
- * only when it's a File; sends empty string for null scalar fields.
+ * and logo only when they are File; sends empty string for null scalar fields.
  */
 export function buildContractFormData(
   payload: ContractCreatePayload | ContractUpdatePayload
@@ -14,7 +14,7 @@ export function buildContractFormData(
   const record = payload as Record<string, unknown>;
   for (const [key, value] of Object.entries(record)) {
     if (value === undefined) continue;
-    if (key === "document") {
+    if (key === "document" || key === "logo") {
       if (value instanceof File) form.append(key, value);
       continue;
     }

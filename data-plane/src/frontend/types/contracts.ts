@@ -14,11 +14,12 @@ export interface Contract {
   start_date: string;
   end_date: string | null;
   document: string | null;
+  logo: string | null;
   created_at: string;
   updated_at: string;
 }
 
-/** Payload for creating a contract (document optional; when present use FormData) */
+/** Payload for creating a contract (document/logo optional; when any file present use FormData) */
 export interface ContractCreatePayload {
   carrier: string;
   contract_number: string;
@@ -28,9 +29,10 @@ export interface ContractCreatePayload {
   start_date: string;
   end_date?: string | null;
   document?: File | null;
+  logo?: File | null;
 }
 
-/** Payload for updating a contract (partial; document optional) */
+/** Payload for updating a contract (partial; document/logo optional) */
 export interface ContractUpdatePayload {
   carrier?: string;
   contract_number?: string;
@@ -40,6 +42,7 @@ export interface ContractUpdatePayload {
   start_date?: string;
   end_date?: string | null;
   document?: File | null;
+  logo?: File | null;
 }
 
 /** Paginated list response from DRF */
@@ -65,3 +68,14 @@ export const CONTRACT_ALLOWED_EXTENSIONS = [
 ] as const;
 export const CONTRACT_ALLOWED_ACCEPT =
   ".pdf,.doc,.docx,.odt,.txt,.png,.jpg,.jpeg,.gif";
+
+/** Logo: image-only, 2 MB max (match backend) */
+export const CONTRACT_LOGO_MAX_SIZE_BYTES = 2 * 1024 * 1024;
+export const CONTRACT_LOGO_ALLOWED_EXTENSIONS = [
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".webp",
+] as const;
+export const CONTRACT_LOGO_ACCEPT = "image/png,image/jpeg,image/gif,image/webp";
