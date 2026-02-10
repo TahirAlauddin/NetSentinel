@@ -232,8 +232,8 @@ export default function ContractsPage() {
                       data={overview.spending_by_category}
                       cx="50%"
                       cy="50%"
-                      innerRadius={80}
-                      outerRadius={120}
+                      innerRadius={100}
+                      outerRadius={140}
                       paddingAngle={0}
                       dataKey="value"
                     >
@@ -247,7 +247,7 @@ export default function ContractsPage() {
                   className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10"
                   aria-hidden
                 >
-                  <div className="text-3xl font-semibold text-gray-900">
+                  <div className="text-2xl font-semibold text-gray-900">
                     {overviewLoading
                       ? "—"
                       : formatContractCurrency(overview.total_spend)}
@@ -443,7 +443,7 @@ export default function ContractsPage() {
                     contractId={contract.id}
                     carrier={contract.carrier}
                     hasLogo={Boolean(contract.logo)}
-                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm flex-shrink-0 overflow-hidden bg-gray-100"
+                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm flex-shrink-0 overflow-hidden bg-gray-300"
                   />
                   <div className="flex-1 min-w-0">
                     <Link
