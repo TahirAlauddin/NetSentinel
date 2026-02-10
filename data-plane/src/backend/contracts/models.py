@@ -80,13 +80,23 @@ class Contract(models.Model):
         validators=[MinValueValidator(0)],
         help_text="Monthly Recurring Charge.",
     )
+    CONTRACT_TYPE_CHOICES = [
+        ("fixed_term", "Fixed Term"),
+        ("monthly", "Monthly"),
+    ]
+    contract_type = models.CharField(
+        max_length=20,
+        choices=CONTRACT_TYPE_CHOICES,
+        default="fixed_term",
+        help_text="Fixed Term has defined end date; Monthly is ongoing.",
+    )
     start_date = models.DateField(
         help_text="Contract term start date.",
     )
     end_date = models.DateField(
         blank=True,
         null=True,
-        help_text="Contract term end date. Null for ongoing contracts.",
+        help_text="Contract term end date. Required for Fixed Term; optional for Monthly.",
     )
     document = models.FileField(
         upload_to=contract_document_upload_to,

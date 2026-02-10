@@ -26,7 +26,7 @@ class ContractViewSet(viewsets.ModelViewSet):
     Queryset is ordered by carrier then contract_number.
     """
 
-    queryset = Contract.objects.all()
+    queryset = Contract.objects.select_related("category")
     serializer_class = ContractSerializer
     search_fields = ("carrier", "contract_number")
     ordering_fields = ("carrier", "contract_number", "start_date", "end_date")

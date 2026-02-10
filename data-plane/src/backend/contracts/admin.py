@@ -16,6 +16,7 @@ class ContractAdmin(admin.ModelAdmin):
     list_display = (
         "carrier",
         "contract_number",
+        "contract_type",
         "category",
         "start_date",
         "end_date",
@@ -23,7 +24,7 @@ class ContractAdmin(admin.ModelAdmin):
         "mrc",
         "document",
     )
-    list_filter = ("carrier", "category")
+    list_filter = ("carrier", "contract_type", "category")
     search_fields = ("carrier", "contract_number")
     readonly_fields = ("created_at", "updated_at")
     date_hierarchy = "start_date"
