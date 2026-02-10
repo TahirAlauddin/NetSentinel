@@ -104,7 +104,7 @@ const GroupForm = ({
         <button
           type="submit"
           disabled={submitting || !name.trim()}
-          className="px-4 py-2 rounded-md bg-[oklch(0.62_0.25_27.3)] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          className="px-4 py-2 rounded-md bg-red-500 text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
         >
           {submitting ? "Saving..." : submitLabel}
         </button>

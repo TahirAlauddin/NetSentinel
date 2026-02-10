@@ -271,7 +271,7 @@ export default function ProvidersPage() {
               <h1 className="text-2xl font-semibold">Providers</h1>
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="px-4 py-2 rounded-md bg-[oklch(0.62_0.25_27.3)] text-white hover:opacity-90 text-sm flex items-center gap-2"
+                className="px-4 py-2 rounded-md bg-red-500 text-white hover:opacity-90 text-sm flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 {showAddForm ? "Cancel" : "Add Provider"}
@@ -466,7 +466,7 @@ export default function ProvidersPage() {
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="px-4 py-2 rounded-md bg-[oklch(0.62_0.25_27.3)] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                      className="px-4 py-2 rounded-md bg-red-500 text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                     >
                       {submitting ? "Adding..." : "Add Provider"}
                     </button>
@@ -671,7 +671,7 @@ export default function ProvidersPage() {
                                         href={safeWebsiteUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-[oklch(0.62_0.25_27.3)] hover:underline"
+                                        className="text-red-500 hover:underline"
                                       >
                                         {provider.website}
                                       </a>

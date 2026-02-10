@@ -160,7 +160,7 @@ export default function ContractsPage() {
             </button>
             <Link
               href="/contracts/new"
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg text-base flex items-center gap-3 hover:bg-blue-700 transition-colors"
+              className="px-6 py-3 bg-red-500 text-white rounded-lg text-base flex items-center gap-3 hover:bg-red-700 transition-colors"
             >
               <Plus className="w-5 h-5" />
               Add Contract
@@ -362,7 +362,7 @@ export default function ContractsPage() {
                   type="button"
                   onClick={() => setViewMode("grid")}
                   className={`p-2 transition-colors ${
-                    viewMode === "grid" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700"
+                    viewMode === "grid" ? "bg-red-500 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700"
                   }`}
                   aria-pressed={viewMode === "grid"}
                   aria-label="Grid view"
@@ -373,7 +373,7 @@ export default function ContractsPage() {
                   type="button"
                   onClick={() => setViewMode("list")}
                   className={`p-2 transition-colors ${
-                    viewMode === "list" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700"
+                    viewMode === "list" ? "bg-red-500 text-white" : "text-gray-400 hover:text-white hover:bg-gray-700"
                   }`}
                   aria-pressed={viewMode === "list"}
                   aria-label="List view"
@@ -384,7 +384,7 @@ export default function ContractsPage() {
             </div>
             <Link
               href="/contracts/new"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium flex items-center gap-2"
+              className="px-4 py-2 bg-red-500 hover:bg-red-700 rounded-lg text-sm font-medium flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add contract
@@ -392,7 +392,7 @@ export default function ContractsPage() {
           </div>
 
           <div className="bg-gray-100 p-6 border-b border-gray-200">
-            <form onSubmit={handleSearchSubmit} className="relative flex rounded-lg overflow-hidden border border-gray-300 bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+            <form onSubmit={handleSearchSubmit} className="relative flex rounded-lg overflow-hidden border border-gray-300 bg-white shadow-sm focus-within:ring-2 focus-within:ring-red-500 focus-within:border-red-500">
               <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" aria-hidden />
               <input
                 type="text"
@@ -404,7 +404,7 @@ export default function ContractsPage() {
               />
               <button
                 type="submit"
-                className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shrink-0"
+                className="flex items-center gap-2 px-4 py-3 bg-red-500 text-white text-sm font-medium hover:bg-red-700 active:bg-red-800 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shrink-0"
               >
                 <Search className="w-4 h-4" aria-hidden />
                 Search
@@ -427,7 +427,7 @@ export default function ContractsPage() {
               No contracts found.{" "}
               <Link
                 href="/contracts/new"
-                className="text-blue-600 hover:underline"
+                className="text-red-600 hover:underline"
               >
                 Add a contract
               </Link>
@@ -448,7 +448,7 @@ export default function ContractsPage() {
                   <div className="flex-1 min-w-0">
                     <Link
                       href={`/contracts/${contract.id}`}
-                      className="block font-medium text-gray-900 text-sm truncate hover:text-blue-600"
+                      className="block font-medium text-gray-900 text-sm truncate hover:text-red-600"
                     >
                       {contract.carrier} – {contract.contract_number}
                     </Link>
@@ -511,7 +511,7 @@ export default function ContractsPage() {
                   />
                   <Link
                     href={`/contracts/${contract.id}`}
-                    className="font-medium text-gray-900 truncate hover:text-blue-600"
+                    className="font-medium text-gray-900 truncate hover:text-red-600"
                   >
                     {contract.carrier} – {contract.contract_number}
                   </Link>
