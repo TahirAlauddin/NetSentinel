@@ -398,15 +398,23 @@ export default function ContractsPage() {
           </div>
 
           <div className="bg-gray-100 p-6 border-b border-gray-200">
-            <form onSubmit={handleSearchSubmit} className="relative">
-              <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+            <form onSubmit={handleSearchSubmit} className="relative flex rounded-lg overflow-hidden border border-gray-300 bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+              <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" aria-hidden />
               <input
                 type="text"
                 placeholder="Search by carrier or contract number"
-                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 pl-12 pr-2 py-3 text-base focus:outline-none min-w-0"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
+                aria-label="Search contracts by carrier or contract number"
               />
+              <button
+                type="submit"
+                className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shrink-0"
+              >
+                <Search className="w-4 h-4" aria-hidden />
+                Search
+              </button>
             </form>
           </div>
 
