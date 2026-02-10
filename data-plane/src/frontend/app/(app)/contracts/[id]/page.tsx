@@ -10,14 +10,26 @@ import { Label } from "@/components/ui/label";
 import { FileUploadZone } from "@/components/contracts/file-upload-zone";
 import { LogoUploadZone } from "@/components/contracts/logo-upload-zone";
 import { ContractApiClient } from "@/lib/api-client/contract";
-import { parseApiError } from "@/lib/api-client/error-parser";
+import {
+  CONTRACT_INPUT_CLASS,
+  CONTRACT_LABEL_CLASS,
+} from "@/lib/contracts/constants";
+import { getContractApiError } from "@/lib/contracts/api-errors";
 import {
   validateContractForm,
   hasContractFormErrors,
+  clearContractFieldErrors,
   type ContractFormErrors,
 } from "@/lib/contracts/validation";
+import {
+  formatContractCurrency,
+  contractCarrierInitials,
+  contractDocumentUrl,
+  normalizeContractUpdatePayload,
+} from "@/lib/contracts/utils";
 import type { Contract, ContractUpdatePayload } from "@/types/contracts";
 import { apiConfig } from "@/lib/config";
+import { useContractCategories } from "@/hooks/use-contract-categories";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -29,34 +41,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-const inputClass =
-  "w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
-const labelClass = "block text-sm font-medium text-gray-900 mb-2";
-
-function formatCurrency(value: string | number): string {
-  const n = typeof value === "string" ? parseFloat(value) : value;
-  if (Number.isNaN(n)) return "—";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(n);
-}
-
-/** Build full URL for document download (API may return relative path) */
-function documentUrl(path: string | null): string | null {
-  if (!path) return null;
-  if (path.startsWith("http")) return path;
-  const base = apiConfig.clientBaseUrl.replace(/\/api\/v1\/?$/, "");
-  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
-}
-
-function initials(carrier: string): string {
-  const parts = carrier.trim().split(/\s+/);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return carrier.slice(0, 2).toUpperCase() || "—";
-}
 
 export default function ContractDetailPage() {
   const params = useParams();
@@ -76,20 +60,8 @@ export default function ContractDetailPage() {
   const [documentLoading, setDocumentLoading] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const logoUrlRef = useRef<string | null>(null);
-  const [categories, setCategories] = useState<Array<{ id: number; name: string }>>([]);
-
+  const { categories } = useContractCategories();
   const contractApiClient = useMemo(() => new ContractApiClient(), []);
-
-  useEffect(() => {
-    let cancelled = false;
-    contractApiClient.getContractCategories().then((res) => {
-      if (cancelled || res.error || !res.data) return;
-      setCategories(res.data);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [contractApiClient]);
 
   const fetchContract = useCallback(async () => {
     if (!id) return;
@@ -165,13 +137,7 @@ export default function ContractDetailPage() {
   const updateEdit = (updates: Partial<ContractUpdatePayload>) => {
     setEditPayload((prev) => ({ ...prev, ...updates }));
     setApiError(null);
-    setFieldErrors((prev) => {
-      const next = { ...prev };
-      for (const key of Object.keys(updates)) {
-        delete next[key as keyof ContractFormErrors];
-      }
-      return next;
-    });
+    setFieldErrors((prev) => clearContractFieldErrors(prev, Object.keys(updates)));
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -185,27 +151,14 @@ export default function ContractDetailPage() {
     setApiError(null);
     setSaving(true);
 
-    const toSend: ContractUpdatePayload = {
-      ...editPayload,
-      nrc: editPayload.nrc === "" ? 0 : Number(editPayload.nrc),
-      mrc: editPayload.mrc === "" ? 0 : Number(editPayload.mrc),
-      logo: editPayload.logo ?? undefined,
-      category: editPayload.category ?? undefined,
-    };
-
+    const toSend = normalizeContractUpdatePayload(editPayload);
     const res = await contractApiClient.updateContract(id, toSend);
     setSaving(false);
 
     if (res.error) {
-      const parsed = parseApiError(res.errorData);
-      setApiError(parsed.message);
-      if (parsed.fieldErrors) {
-        const mapped: ContractFormErrors = {};
-        for (const [k, v] of Object.entries(parsed.fieldErrors)) {
-          mapped[k as keyof ContractFormErrors] = v?.[0];
-        }
-        setFieldErrors((prev) => ({ ...prev, ...mapped }));
-      }
+      const { message, fieldErrors: nextErrors } = getContractApiError(res);
+      setApiError(message);
+      setFieldErrors((prev) => ({ ...prev, ...nextErrors }));
       return;
     }
 
@@ -267,7 +220,7 @@ export default function ContractDetailPage() {
     );
   }
 
-  const docUrl = documentUrl(contract.document);
+  const docUrl = contractDocumentUrl(contract.document, apiConfig.clientBaseUrl);
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
@@ -302,7 +255,7 @@ export default function ContractDetailPage() {
                   className="w-full h-full object-contain"
                 />
               ) : (
-                initials(contract.carrier)
+                contractCarrierInitials(contract.carrier)
               )}
             </div>
             <div>
@@ -353,10 +306,10 @@ export default function ContractDetailPage() {
               <h2 className="text-2xl mb-8">Edit Contract</h2>
               <div className="grid grid-cols-2 gap-8">
                 <div>
-                  <Label className={labelClass}>Carrier</Label>
+                  <Label className={CONTRACT_LABEL_CLASS}>Carrier</Label>
                   <Input
                     type="text"
-                    className={cn(inputClass, fieldErrors.carrier && "border-red-500")}
+                    className={cn(CONTRACT_INPUT_CLASS, fieldErrors.carrier && "border-red-500")}
                     value={editPayload.carrier ?? ""}
                     onChange={(e) => updateEdit({ carrier: e.target.value })}
                   />
@@ -365,10 +318,10 @@ export default function ContractDetailPage() {
                   )}
                 </div>
                 <div>
-                  <Label className={labelClass}>Contract Number</Label>
+                  <Label className={CONTRACT_LABEL_CLASS}>Contract Number</Label>
                   <Input
                     type="text"
-                    className={cn(inputClass, fieldErrors.contract_number && "border-red-500")}
+                    className={cn(CONTRACT_INPUT_CLASS, fieldErrors.contract_number && "border-red-500")}
                     value={editPayload.contract_number ?? ""}
                     onChange={(e) => updateEdit({ contract_number: e.target.value })}
                   />
@@ -377,10 +330,10 @@ export default function ContractDetailPage() {
                   )}
                 </div>
                 <div>
-                  <Label className={labelClass}>Signing Date</Label>
+                  <Label className={CONTRACT_LABEL_CLASS}>Signing Date</Label>
                   <Input
                     type="date"
-                    className={inputClass}
+                    className={CONTRACT_INPUT_CLASS}
                     value={editPayload.date ?? ""}
                     onChange={(e) =>
                       updateEdit({ date: e.target.value || null })
@@ -388,9 +341,9 @@ export default function ContractDetailPage() {
                   />
                 </div>
                 <div>
-                  <Label className={labelClass}>Category</Label>
+                  <Label className={CONTRACT_LABEL_CLASS}>Category</Label>
                   <select
-                    className={inputClass}
+                    className={CONTRACT_INPUT_CLASS}
                     value={editPayload.category ?? ""}
                     onChange={(e) =>
                       updateEdit({
@@ -407,10 +360,10 @@ export default function ContractDetailPage() {
                   </select>
                 </div>
                 <div>
-                  <Label className={labelClass}>Start Date</Label>
+                  <Label className={CONTRACT_LABEL_CLASS}>Start Date</Label>
                   <Input
                     type="date"
-                    className={cn(inputClass, fieldErrors.start_date && "border-red-500")}
+                    className={cn(CONTRACT_INPUT_CLASS, fieldErrors.start_date && "border-red-500")}
                     value={editPayload.start_date ?? ""}
                     onChange={(e) => updateEdit({ start_date: e.target.value })}
                   />
@@ -419,10 +372,10 @@ export default function ContractDetailPage() {
                   )}
                 </div>
                 <div>
-                  <Label className={labelClass}>End Date</Label>
+                  <Label className={CONTRACT_LABEL_CLASS}>End Date</Label>
                   <Input
                     type="date"
-                    className={cn(inputClass, fieldErrors.end_date && "border-red-500")}
+                    className={cn(CONTRACT_INPUT_CLASS, fieldErrors.end_date && "border-red-500")}
                     value={editPayload.end_date ?? ""}
                     onChange={(e) =>
                       updateEdit({ end_date: e.target.value || null })
@@ -433,12 +386,12 @@ export default function ContractDetailPage() {
                   )}
                 </div>
                 <div>
-                  <Label className={labelClass}>NRC ($)</Label>
+                  <Label className={CONTRACT_LABEL_CLASS}>NRC ($)</Label>
                   <Input
                     type="number"
                     min={0}
                     step="0.01"
-                    className={cn(inputClass, fieldErrors.nrc && "border-red-500")}
+                    className={cn(CONTRACT_INPUT_CLASS, fieldErrors.nrc && "border-red-500")}
                     value={editPayload.nrc ?? ""}
                     onChange={(e) =>
                       updateEdit({ nrc: e.target.value === "" ? "" : e.target.value })
@@ -449,12 +402,12 @@ export default function ContractDetailPage() {
                   )}
                 </div>
                 <div>
-                  <Label className={labelClass}>MRC ($)</Label>
+                  <Label className={CONTRACT_LABEL_CLASS}>MRC ($)</Label>
                   <Input
                     type="number"
                     min={0}
                     step="0.01"
-                    className={cn(inputClass, fieldErrors.mrc && "border-red-500")}
+                    className={cn(CONTRACT_INPUT_CLASS, fieldErrors.mrc && "border-red-500")}
                     value={editPayload.mrc ?? ""}
                     onChange={(e) =>
                       updateEdit({ mrc: e.target.value === "" ? "" : e.target.value })
@@ -467,7 +420,7 @@ export default function ContractDetailPage() {
               </div>
               <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
-                  <Label className={labelClass}>Logo (optional)</Label>
+                  <Label className={CONTRACT_LABEL_CLASS}>Logo (optional)</Label>
                   <LogoUploadZone
                     value={editPayload.logo ?? null}
                     previewUrl={logoUrl}
@@ -475,7 +428,7 @@ export default function ContractDetailPage() {
                   />
                 </div>
                 <div>
-                  <Label className={labelClass}>Replace document (optional)</Label>
+                  <Label className={CONTRACT_LABEL_CLASS}>Replace document (optional)</Label>
                   <FileUploadZone
                     value={editPayload.document ?? null}
                     onChange={(file) => updateEdit({ document: file ?? null })}
@@ -505,11 +458,11 @@ export default function ContractDetailPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
                 <div>
                   <div className="text-sm text-gray-600 mb-1">NRC</div>
-                  <div className="text-xl font-semibold">{formatCurrency(contract.nrc)}</div>
+                  <div className="text-xl font-semibold">{formatContractCurrency(contract.nrc)}</div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600 mb-1">MRC</div>
-                  <div className="text-xl font-semibold">{formatCurrency(contract.mrc)}</div>
+                  <div className="text-xl font-semibold">{formatContractCurrency(contract.mrc)}</div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600 mb-1">Start date</div>

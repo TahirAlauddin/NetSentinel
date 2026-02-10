@@ -2,25 +2,28 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileUploadZone } from "@/components/contracts/file-upload-zone";
 import { ContractLogoPreview } from "@/components/contracts/contract-logo-preview";
 import { ContractsBreadcrumb } from "@/components/contracts/contracts-breadcrumb";
 import { ContractApiClient } from "@/lib/api-client/contract";
-import { parseApiError } from "@/lib/api-client/error-parser";
+import {
+  CONTRACT_INPUT_CLASS,
+  CONTRACT_LABEL_CLASS,
+} from "@/lib/contracts/constants";
+import { getContractApiError } from "@/lib/contracts/api-errors";
 import {
   validateContractForm,
   hasContractFormErrors,
+  clearContractFieldErrors,
   type ContractFormErrors,
 } from "@/lib/contracts/validation";
+import { normalizeContractCreatePayload } from "@/lib/contracts/utils";
 import type { ContractCreatePayload } from "@/types/contracts";
+import { useContractCategories } from "@/hooks/use-contract-categories";
 import { cn } from "@/lib/utils";
-
-const inputClass =
-  "w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
-const labelClass = "block text-sm font-medium text-gray-900 mb-2";
 
 const defaultPayload: ContractCreatePayload = {
   carrier: "",
@@ -41,39 +44,14 @@ export default function NewContractPage() {
   const [fieldErrors, setFieldErrors] = useState<ContractFormErrors>({});
   const [apiError, setApiError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [categories, setCategories] = useState<Array<{ id: number; name: string }>>([]);
-
+  const { categories } = useContractCategories();
   const contractApiClient = useMemo(() => new ContractApiClient(), []);
 
-  useEffect(() => {
-    let cancelled = false;
-    contractApiClient.getContractCategories().then((res) => {
-      if (cancelled || res.error || !res.data) return;
-      setCategories(res.data);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [contractApiClient]);
-
-  /**
-   * Updates form state with new values and clears validation errors for those fields.
-   * Used so that individual field errors disappear when the user starts correcting them.
-   */
   const updateFormFields = useCallback(
     (updates: Partial<ContractCreatePayload>) => {
-      // Merge updates into the current form state
       setPayload((prev) => ({ ...prev, ...updates }));
-      // Clear any API-level error
       setApiError(null);
-      // Remove errors for updated fields
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        for (const key of Object.keys(updates)) {
-          delete next[key as keyof ContractFormErrors];
-        }
-        return next;
-      });
+      setFieldErrors((prev) => clearContractFieldErrors(prev, Object.keys(updates)));
     },
     []
   );
@@ -89,32 +67,14 @@ export default function NewContractPage() {
     setApiError(null);
     setSubmitting(true);
 
-    const toSend: ContractCreatePayload = {
-      carrier: payload.carrier.trim(),
-      contract_number: payload.contract_number.trim(),
-      date: payload.date || null,
-      nrc: payload.nrc === "" ? 0 : Number(payload.nrc),
-      mrc: payload.mrc === "" ? 0 : Number(payload.mrc),
-      start_date: payload.start_date,
-      end_date: payload.end_date || null,
-      document: payload.document ?? undefined,
-      logo: payload.logo ?? undefined,
-      category: payload.category ?? undefined,
-    };
-
+    const toSend = normalizeContractCreatePayload(payload);
     const response = await contractApiClient.createContract(toSend);
     setSubmitting(false);
 
     if (response.error) {
-      const parsed = parseApiError(response.errorData);
-      setApiError(parsed.message);
-      if (parsed.fieldErrors) {
-        const mapped: ContractFormErrors = {};
-        for (const [k, v] of Object.entries(parsed.fieldErrors)) {
-          mapped[k as keyof ContractFormErrors] = v?.[0];
-        }
-        setFieldErrors((prev) => ({ ...prev, ...mapped }));
-      }
+      const { message, fieldErrors: nextErrors } = getContractApiError(response);
+      setApiError(message);
+      setFieldErrors((prev) => ({ ...prev, ...nextErrors }));
       return;
     }
 
@@ -163,12 +123,12 @@ export default function NewContractPage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <Label className={labelClass}>
+                <Label className={CONTRACT_LABEL_CLASS}>
                   Carrier / Vendor <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   type="text"
-                  className={cn(inputClass, fieldErrors.carrier && "border-red-500")}
+                  className={cn(CONTRACT_INPUT_CLASS, fieldErrors.carrier && "border-red-500")}
                   placeholder="e.g. AT&T, Verizon"
                   value={payload.carrier}
                   onChange={(e) => updateFormFields({ carrier: e.target.value })}
@@ -178,12 +138,12 @@ export default function NewContractPage() {
                 )}
               </div>
               <div>
-                <Label className={labelClass}>
+                <Label className={CONTRACT_LABEL_CLASS}>
                   Contract Number <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   type="text"
-                  className={cn(inputClass, fieldErrors.contract_number && "border-red-500")}
+                  className={cn(CONTRACT_INPUT_CLASS, fieldErrors.contract_number && "border-red-500")}
                   placeholder="Carrier or internal contract ID"
                   value={payload.contract_number}
                   onChange={(e) => updateFormFields({ contract_number: e.target.value })}
@@ -193,10 +153,10 @@ export default function NewContractPage() {
                 )}
               </div>
               <div>
-                <Label className={labelClass}>Signing / Reference Date</Label>
+                <Label className={CONTRACT_LABEL_CLASS}>Signing / Reference Date</Label>
                 <Input
                   type="date"
-                  className={inputClass}
+                  className={CONTRACT_INPUT_CLASS}
                   value={payload.date ?? ""}
                   onChange={(e) =>
                     updateFormFields({ date: e.target.value ? e.target.value : null })
@@ -204,9 +164,9 @@ export default function NewContractPage() {
                 />
               </div>
               <div>
-                <Label className={labelClass}>Category</Label>
+                <Label className={CONTRACT_LABEL_CLASS}>Category</Label>
                 <select
-                  className={inputClass}
+                  className={CONTRACT_INPUT_CLASS}
                   value={payload.category ?? ""}
                   onChange={(e) =>
                     updateFormFields({
@@ -232,12 +192,12 @@ export default function NewContractPage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <Label className={labelClass}>
+                <Label className={CONTRACT_LABEL_CLASS}>
                   Start Date <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   type="date"
-                  className={cn(inputClass, fieldErrors.start_date && "border-red-500")}
+                  className={cn(CONTRACT_INPUT_CLASS, fieldErrors.start_date && "border-red-500")}
                   value={payload.start_date}
                   onChange={(e) => updateFormFields({ start_date: e.target.value })}
                 />
@@ -246,10 +206,10 @@ export default function NewContractPage() {
                 )}
               </div>
               <div>
-                <Label className={labelClass}>End Date</Label>
+                <Label className={CONTRACT_LABEL_CLASS}>End Date</Label>
                 <Input
                   type="date"
-                  className={cn(inputClass, fieldErrors.end_date && "border-red-500")}
+                  className={cn(CONTRACT_INPUT_CLASS, fieldErrors.end_date && "border-red-500")}
                   value={payload.end_date ?? ""}
                   onChange={(e) =>
                     updateFormFields({ end_date: e.target.value ? e.target.value : null })
@@ -269,7 +229,7 @@ export default function NewContractPage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <Label className={labelClass}>NRC (Non-Recurring Charge)</Label>
+                <Label className={CONTRACT_LABEL_CLASS}>NRC (Non-Recurring Charge)</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
                     $
@@ -278,7 +238,7 @@ export default function NewContractPage() {
                     type="number"
                     min={0}
                     step="0.01"
-                    className={cn(inputClass, fieldErrors.nrc && "border-red-500", "pl-6")}
+                    className={cn(CONTRACT_INPUT_CLASS, fieldErrors.nrc && "border-red-500", "pl-6")}
                     placeholder="0.00"
                     value={payload.nrc === 0 ? "" : payload.nrc}
                     onChange={(e) =>
@@ -293,7 +253,7 @@ export default function NewContractPage() {
                 )}
               </div>
               <div>
-                <Label className={labelClass}>MRC (Monthly Recurring Charge)</Label>
+                <Label className={CONTRACT_LABEL_CLASS}>MRC (Monthly Recurring Charge)</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
                     $
@@ -302,7 +262,7 @@ export default function NewContractPage() {
                     type="number"
                     min={0}
                     step="0.01"
-                    className={cn(inputClass, fieldErrors.mrc && "border-red-500", "pl-6")}
+                    className={cn(CONTRACT_INPUT_CLASS, fieldErrors.mrc && "border-red-500", "pl-6")}
                     placeholder="0.00"
                     value={payload.mrc === 0 ? "" : payload.mrc}
                     onChange={(e) =>
@@ -324,7 +284,7 @@ export default function NewContractPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-6">
               Documents
             </h2>
-            <Label className={labelClass}>Contract document</Label>
+            <Label className={CONTRACT_LABEL_CLASS}>Contract document</Label>
             <FileUploadZone
               value={payload.document ?? null}
               onChange={(file) => updateFormFields({ document: file ?? null })}

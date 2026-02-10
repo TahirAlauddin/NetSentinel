@@ -52,3 +52,18 @@ export function validateContractForm(
 export function hasContractFormErrors(errors: ContractFormErrors): boolean {
   return Object.keys(errors).length > 0;
 }
+
+/**
+ * Return a copy of field errors with the given keys removed.
+ * Use when the user updates a field so its error can be cleared.
+ */
+export function clearContractFieldErrors(
+  errors: ContractFormErrors,
+  keys: ReadonlyArray<string>
+): ContractFormErrors {
+  const next = { ...errors };
+  for (const key of keys) {
+    delete next[key as keyof ContractFormErrors];
+  }
+  return next;
+}

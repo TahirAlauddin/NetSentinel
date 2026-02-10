@@ -33,46 +33,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-const AT_GLANCE_LABELS: Array<{
-  key: keyof ContractOverviewResponse["at_glance"];
-  label: string;
-  color: string;
-}> = [
-  { key: "total", label: "Total", color: "text-gray-900" },
-  { key: "active", label: "Active", color: "text-green-600" },
-  { key: "expired", label: "Expired", color: "text-gray-400" },
-  { key: "expiring_30", label: "Expiring < 30 days", color: "text-gray-400" },
-  { key: "expiring_60", label: "Expiring < 60 days", color: "text-blue-600" },
-  { key: "expiring_90", label: "Expiring < 90 days", color: "text-blue-600" },
-  { key: "monthly", label: "Monthly", color: "text-gray-400" },
-];
-
-function formatCurrency(value: string | number): string {
-  const n = typeof value === "string" ? parseFloat(value) : value;
-  if (Number.isNaN(n)) return "—";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(n);
-}
-
-const defaultOverview: ContractOverviewResponse = {
-  at_glance: {
-    total: 0,
-    active: 0,
-    expired: 0,
-    expiring_30: 0,
-    expiring_60: 0,
-    expiring_90: 0,
-    monthly: 0,
-  },
-  spending_by_category: [],
-  top_contracts: [],
-  categories: [],
-  total_spend: 0,
-};
+import {
+  AT_GLANCE_LABELS,
+  DEFAULT_CONTRACT_OVERVIEW,
+} from "@/lib/contracts/constants";
+import { formatContractCurrency } from "@/lib/contracts/utils";
 
 export default function ContractsPage() {
   const [data, setData] = useState<ContractListResponse | null>(null);
@@ -82,7 +47,7 @@ export default function ContractsPage() {
   const [searchInput, setSearchInput] = useState("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [overview, setOverview] = useState<ContractOverviewResponse>(defaultOverview);
+  const [overview, setOverview] = useState<ContractOverviewResponse>(DEFAULT_CONTRACT_OVERVIEW);
   const [overviewLoading, setOverviewLoading] = useState(true);
 
   const contractApiClient = useMemo(() => new ContractApiClient(), []);
@@ -284,7 +249,7 @@ export default function ContractsPage() {
                   <div className="text-3xl font-semibold text-gray-900">
                     {overviewLoading
                       ? "—"
-                      : formatCurrency(overview.total_spend)}
+                      : formatContractCurrency(overview.total_spend)}
                   </div>
                   <div className="text-base text-gray-600 mt-1">
                     Contracts Spend (annual)
@@ -467,7 +432,7 @@ export default function ContractsPage() {
                       <div className="text-right">
                         <div className="text-sm text-gray-500">MRC</div>
                         <div className="text-base font-semibold text-gray-900">
-                          {formatCurrency(contract.mrc)}
+                          {formatContractCurrency(contract.mrc)}
                         </div>
                       </div>
                     </div>
