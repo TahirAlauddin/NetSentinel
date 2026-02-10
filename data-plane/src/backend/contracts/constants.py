@@ -1,6 +1,11 @@
 """
-Constants for the contracts app (charts, file streaming, etc.).
+Constants for the contracts app (charts, expiry buckets, etc.).
 """
+
+# Expiry bucket boundaries (days from today); used by overview counts and per-contract label
+EXPIRY_DAYS_30 = 30
+EXPIRY_DAYS_60 = 60
+EXPIRY_DAYS_90 = 90
 
 # Chart colors for overview spending-by-category pie and top-contracts bar
 CATEGORY_CHART_COLORS = [

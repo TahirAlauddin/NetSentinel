@@ -6,12 +6,13 @@ top_contracts, categories, total_spend. The view calls get_contract_overview()
 which delegates to these helpers.
 """
 
-from datetime import date, timedelta
+from datetime import date
 from decimal import Decimal
 
 from django.db.models import Q, QuerySet, Sum
 
 from .constants import BAR_CHART_COLORS, CATEGORY_CHART_COLORS
+from .expiry import get_expiry_boundary_dates
 from .models import Contract, ContractCategory
 
 
@@ -19,9 +20,7 @@ def get_at_glance(
     qs: QuerySet[Contract], active_qs: QuerySet[Contract], today: date
 ) -> dict[str, int]:
     """Counts for at-a-glance cards: total, active, expired, expiring in 30/60/90 days."""
-    d30 = today + timedelta(days=30)
-    d60 = today + timedelta(days=60)
-    d90 = today + timedelta(days=90)
+    d30, d60, d90 = get_expiry_boundary_dates(today)
     return {
         "total": qs.count(),
         "active": active_qs.count(),

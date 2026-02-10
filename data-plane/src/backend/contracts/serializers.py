@@ -8,6 +8,7 @@ Document uploads are optional; extension and size are validated by the model val
 
 from rest_framework import serializers
 
+from .expiry import get_contract_expiry_status
 from .models import Contract
 
 
@@ -16,8 +17,11 @@ class ContractSerializer(serializers.ModelSerializer):
     Serializer for Contract.
 
     Exposes all Contract fields for list/detail and create/update.
-    NRC and MRC are validated as non-negative via the model validators.
+    expiry_label is computed server-side (single source of truth); no client date logic.
     """
+
+    expiry_label = serializers.SerializerMethodField()
+    expiry_status = serializers.SerializerMethodField()
 
     class Meta:
         model = Contract
@@ -35,5 +39,21 @@ class ContractSerializer(serializers.ModelSerializer):
             "category",
             "created_at",
             "updated_at",
+            "expiry_label",
+            "expiry_status",
         ]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_at", "updated_at", "expiry_label", "expiry_status"]
+
+    def get_expiry_label(self, obj: Contract) -> str | None:
+        end_date = getattr(obj, "end_date", None)
+        if end_date is None:
+            return None
+        status = get_contract_expiry_status(end_date)
+        return status["label"] if status else None
+
+    def get_expiry_status(self, obj: Contract) -> str | None:
+        end_date = getattr(obj, "end_date", None)
+        if end_date is None:
+            return None
+        status = get_contract_expiry_status(end_date)
+        return status["status"] if status else None
