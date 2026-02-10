@@ -19,6 +19,7 @@ const nextConfig = {
     dangerouslyAllowSVG: false,
     contentDispositionType: 'attachment',
   },
+  devIndicators: false,
   
   // Security headers (CSP with nonce is set in middleware for script/style nonces)
   async headers() {

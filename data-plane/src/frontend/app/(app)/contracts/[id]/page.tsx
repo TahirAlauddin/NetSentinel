@@ -122,7 +122,7 @@ export default function ContractDetailPage() {
       if (logoUrlRef.current) {
         URL.revokeObjectURL(logoUrlRef.current);
         logoUrlRef.current = null;
-        setLogoUrl(null);
+        queueMicrotask(() => setLogoUrl(null));
       }
       return;
     }
@@ -131,14 +131,14 @@ export default function ContractDetailPage() {
       if (cancelled || res.error || !res.url) return;
       if (logoUrlRef.current) URL.revokeObjectURL(logoUrlRef.current);
       logoUrlRef.current = res.url;
-      setLogoUrl(res.url);
+      queueMicrotask(() => setLogoUrl(res.url ?? null));
     });
     return () => {
       cancelled = true;
       if (logoUrlRef.current) {
         URL.revokeObjectURL(logoUrlRef.current);
         logoUrlRef.current = null;
-        setLogoUrl(null);
+        queueMicrotask(() => setLogoUrl(null));
       }
     };
   }, [contract?.logo, id, contractApiClient]);
