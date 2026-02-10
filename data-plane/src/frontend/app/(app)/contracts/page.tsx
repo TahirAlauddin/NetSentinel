@@ -18,7 +18,11 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ContractApiClient } from "@/lib/api-client/contract";
 import { ContractLogoThumb } from "@/components/contracts/contract-logo-thumb";
-import type { Contract, ContractListResponse } from "@/types/contracts";
+import type {
+  Contract,
+  ContractListResponse,
+  ContractOverviewResponse,
+} from "@/types/contracts";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,54 +34,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const atGlanceData = [
-  { label: "Total", value: 23, color: "text-gray-900" },
-  { label: "Active", value: 22, color: "text-green-600" },
-  { label: "Expired", value: 0, color: "text-gray-400" },
-  { label: "Expiring < 30 days", value: 0, color: "text-gray-400" },
-  { label: "Expiring < 60 days", value: 1, color: "text-blue-600" },
-  { label: "Expiring < 90 days", value: 1, color: "text-blue-600" },
-  { label: "Monthly", value: 0, color: "text-gray-400" },
-];
-
-const pieData = [
-  { name: "IT and Security", value: 3, color: "#10b981" },
-  { name: "Marketing", value: 2, color: "#3b82f6" },
-  { name: "Telecom", value: 3, color: "#f59e0b" },
-  { name: "Product and Design", value: 1, color: "#ec4899" },
-  { name: "Cloud", value: 1, color: "#8b5cf6" },
-  { name: "Other", value: 2, color: "#6366f1" },
-];
-
-const barData = [
-  { name: "Azure", value: 195254, color: "#93c5fd" },
-  { name: "Agreement Manag.", value: 82560, color: "#2563eb" },
-  { name: "Email Marketing", value: 64800, color: "#14b8a6" },
-  { name: "CoPilot", value: 57600, color: "#5eead4" },
-  { name: "Project Managem.", value: 54120, color: "#99f6e4" },
-];
-
-const categories = [
-  { name: "Advertising", count: 1 },
-  { name: "Analytics", count: 0 },
-  { name: "Cloud", count: 1 },
-  { name: "Customer Support", count: 1 },
-  { name: "Developer Tools", count: 2 },
-  { name: "DevOps", count: 0 },
-  { name: "Facilities", count: 1 },
-  { name: "Finance and Accounting", count: 1 },
-  { name: "General", count: 2 },
-  { name: "HR", count: 1 },
-  { name: "Infrastructure", count: 0 },
-  { name: "IT and Security", count: 3 },
-  { name: "Marketing", count: 2 },
-  { name: "Onboarding/Offboarding", count: 0 },
-  { name: "Other", count: 0 },
-  { name: "Product and Design", count: 1 },
-  { name: "Productivity", count: 2 },
-  { name: "Sales and Business", count: 1 },
-  { name: "Telecom", count: 3 },
-  { name: "Uncategorized", count: 0 },
+const AT_GLANCE_LABELS: Array<{
+  key: keyof ContractOverviewResponse["at_glance"];
+  label: string;
+  color: string;
+}> = [
+  { key: "total", label: "Total", color: "text-gray-900" },
+  { key: "active", label: "Active", color: "text-green-600" },
+  { key: "expired", label: "Expired", color: "text-gray-400" },
+  { key: "expiring_30", label: "Expiring < 30 days", color: "text-gray-400" },
+  { key: "expiring_60", label: "Expiring < 60 days", color: "text-blue-600" },
+  { key: "expiring_90", label: "Expiring < 90 days", color: "text-blue-600" },
+  { key: "monthly", label: "Monthly", color: "text-gray-400" },
 ];
 
 function formatCurrency(value: string | number): string {
@@ -90,6 +58,22 @@ function formatCurrency(value: string | number): string {
   }).format(n);
 }
 
+const defaultOverview: ContractOverviewResponse = {
+  at_glance: {
+    total: 0,
+    active: 0,
+    expired: 0,
+    expiring_30: 0,
+    expiring_60: 0,
+    expiring_90: 0,
+    monthly: 0,
+  },
+  spending_by_category: [],
+  top_contracts: [],
+  categories: [],
+  total_spend: 0,
+};
+
 export default function ContractsPage() {
   const [data, setData] = useState<ContractListResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -98,6 +82,8 @@ export default function ContractsPage() {
   const [searchInput, setSearchInput] = useState("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [overview, setOverview] = useState<ContractOverviewResponse>(defaultOverview);
+  const [overviewLoading, setOverviewLoading] = useState(true);
 
   const contractApiClient = useMemo(() => new ContractApiClient(), []);
 
@@ -130,6 +116,13 @@ export default function ContractsPage() {
     }
   }, [search, contractApiClient]);
 
+  const fetchOverview = useCallback(async () => {
+    setOverviewLoading(true);
+    const res = await contractApiClient.getContractOverview();
+    setOverviewLoading(false);
+    if (!res.error && res.data) setOverview(res.data as ContractOverviewResponse);
+  }, [contractApiClient]);
+
   useEffect(() => {
     let cancelled = false;
     queueMicrotask(() => {
@@ -140,6 +133,17 @@ export default function ContractsPage() {
       cancelled = true;
     };
   }, [fetchContracts]);
+
+  useEffect(() => {
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      void fetchOverview();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchOverview]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,6 +164,7 @@ export default function ContractsPage() {
       return;
     }
     fetchContracts();
+    fetchOverview();
   };
 
   const contracts = data?.results ?? [];
@@ -202,17 +207,33 @@ export default function ContractsPage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
             At a glance
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-6">
-            {atGlanceData.map((item) => (
-              <div
-                key={item.label}
-                className="bg-white rounded-lg p-6 border border-gray-200"
-              >
-                <div className="text-base text-gray-600 mb-2">{item.label}</div>
-                <div className={`text-4xl ${item.color}`}>{item.value}</div>
-              </div>
-            ))}
-          </div>
+          {overviewLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-6">
+              {AT_GLANCE_LABELS.map(({ label }) => (
+                <div
+                  key={label}
+                  className="bg-white rounded-lg p-6 border border-gray-200 animate-pulse"
+                >
+                  <div className="text-base text-gray-400 mb-2">{label}</div>
+                  <div className="text-4xl text-gray-300">—</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-6">
+              {AT_GLANCE_LABELS.map(({ key, label, color }) => (
+                <div
+                  key={key}
+                  className="bg-white rounded-lg p-6 border border-gray-200"
+                >
+                  <div className="text-base text-gray-600 mb-2">{label}</div>
+                  <div className={`text-4xl ${color}`}>
+                    {overview.at_glance[key]}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Category breakdown */}
@@ -242,7 +263,7 @@ export default function ContractsPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={pieData}
+                      data={overview.spending_by_category}
                       cx="50%"
                       cy="50%"
                       innerRadius={80}
@@ -250,7 +271,7 @@ export default function ContractsPage() {
                       paddingAngle={0}
                       dataKey="value"
                     >
-                      {pieData.map((entry, index) => (
+                      {overview.spending_by_category.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -261,10 +282,12 @@ export default function ContractsPage() {
                   aria-hidden
                 >
                   <div className="text-3xl font-semibold text-gray-900">
-                    $1.07m
+                    {overviewLoading
+                      ? "—"
+                      : formatCurrency(overview.total_spend)}
                   </div>
                   <div className="text-base text-gray-600 mt-1">
-                    Contracts Spend
+                    Contracts Spend (annual)
                   </div>
                 </div>
               </div>
@@ -276,7 +299,7 @@ export default function ContractsPage() {
               </h3>
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart
-                  data={barData}
+                  data={overview.top_contracts}
                   margin={{ top: 8, right: 16, left: 12, bottom: 8 }}
                 >
                   <CartesianGrid
@@ -301,12 +324,15 @@ export default function ContractsPage() {
                       position: "insideLeft",
                       style: { textAnchor: "middle", fontSize: 11 },
                     }}
-                    domain={[0, 200000]}
-                    tickFormatter={(v) => `$${v.toLocaleString()}`}
-                    ticks={[
-                      0, 20000, 40000, 60000, 80000, 100000, 120000, 140000,
-                      160000, 180000, 200000,
+                    domain={[
+                      0,
+                      (() => {
+                        const vals = overview.top_contracts.map((c) => c.value);
+                        const max = vals.length ? Math.max(...vals) : 1;
+                        return max * 1.1;
+                      })(),
                     ]}
+                    tickFormatter={(v) => `$${Number(v).toLocaleString()}`}
                     tick={{ fontSize: 11 }}
                     axisLine={{ stroke: "#d1d5db" }}
                     tickLine={false}
@@ -323,7 +349,7 @@ export default function ContractsPage() {
                     radius={[4, 4, 0, 0]}
                     maxBarSize={60}
                   >
-                    {barData.map((entry, index) => (
+                    {overview.top_contracts.map((entry, index) => (
                       <Cell key={`bar-${index}`} fill={entry.color} />
                     ))}
                   </Bar>
@@ -337,7 +363,7 @@ export default function ContractsPage() {
               Contract categories
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-x-12 gap-y-3">
-              {categories.map((category) => (
+              {(overviewLoading ? [] : overview.categories).map((category) => (
                 <div
                   key={category.name}
                   className="flex items-center justify-between text-base py-2"

@@ -15,8 +15,26 @@ export interface Contract {
   end_date: string | null;
   document: string | null;
   logo: string | null;
+  category: number | null;
   created_at: string;
   updated_at: string;
+}
+
+/** Overview API response (at_glance, charts, categories) */
+export interface ContractOverviewResponse {
+  at_glance: {
+    total: number;
+    active: number;
+    expired: number;
+    expiring_30: number;
+    expiring_60: number;
+    expiring_90: number;
+    monthly: number;
+  };
+  spending_by_category: Array<{ name: string; value: number; color: string }>;
+  top_contracts: Array<{ name: string; value: number; color: string }>;
+  categories: Array<{ name: string; count: number }>;
+  total_spend: number;
 }
 
 /** Payload for creating a contract (document/logo optional; when any file present use FormData) */
@@ -30,6 +48,7 @@ export interface ContractCreatePayload {
   end_date?: string | null;
   document?: File | null;
   logo?: File | null;
+  category?: number | null;
 }
 
 /** Payload for updating a contract (partial; document/logo optional) */
@@ -43,6 +62,7 @@ export interface ContractUpdatePayload {
   end_date?: string | null;
   document?: File | null;
   logo?: File | null;
+  category?: number | null;
 }
 
 /** Paginated list response from DRF */

@@ -9,10 +9,20 @@ import type {
   ContractListResponse,
   ContractCreatePayload,
   ContractUpdatePayload,
+  ContractOverviewResponse,
 } from "@/types/contracts";
 
 export class ContractApiClient extends BaseApiClient {
   private readonly endpoint = "/contracts/";
+
+  /**
+   * Get overview stats and chart data for the contracts page.
+   */
+  async getContractOverview<T = ContractOverviewResponse>(): Promise<
+    BaseApiResponse<T>
+  > {
+    return this.get<T>(`${this.endpoint}overview/`);
+  }
 
   /**
    * Get all contracts
