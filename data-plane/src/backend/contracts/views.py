@@ -24,11 +24,14 @@ class ContractViewSet(viewsets.ModelViewSet):
     ViewSet for managing contracts.
 
     Supports list, create, retrieve, update, partial_update, destroy.
+    List supports ?search= (carrier, contract_number) and ?ordering=.
     Queryset is ordered by carrier then contract_number.
     """
 
     queryset = Contract.objects.all()
     serializer_class = ContractSerializer
+    search_fields = ("carrier", "contract_number")
+    ordering_fields = ("carrier", "contract_number", "start_date", "end_date")
 
     @action(detail=True, methods=["get"], url_path="document")
     def document(self, request, pk=None):
