@@ -36,11 +36,12 @@ export function normalizeContractCreatePayload(
   return {
     carrier: payload.carrier.trim(),
     contract_number: payload.contract_number.trim(),
+    contract_type: payload.contract_type ?? "fixed_term",
     date: payload.date ?? null,
     nrc: payload.nrc === "" ? 0 : Number(payload.nrc),
     mrc: payload.mrc === "" ? 0 : Number(payload.mrc),
     start_date: payload.start_date,
-    end_date: payload.end_date ?? null,
+    end_date: payload.end_date || null,
     document: payload.document ?? undefined,
     logo: payload.logo ?? undefined,
     category: payload.category ?? undefined,
@@ -52,8 +53,10 @@ export function normalizeContractUpdatePayload(
   payload: ContractUpdatePayload
 ): ContractUpdatePayload {
   const next = { ...payload };
+  if (payload.contract_type !== undefined) next.contract_type = payload.contract_type;
   if (payload.nrc !== undefined) next.nrc = payload.nrc === "" ? 0 : Number(payload.nrc);
   if (payload.mrc !== undefined) next.mrc = payload.mrc === "" ? 0 : Number(payload.mrc);
+  if (payload.end_date !== undefined) next.end_date = payload.end_date || null;
   if (payload.logo !== undefined) next.logo = payload.logo ?? undefined;
   if (payload.category !== undefined) next.category = payload.category ?? undefined;
   return next;

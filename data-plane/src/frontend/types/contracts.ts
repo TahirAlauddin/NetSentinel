@@ -3,11 +3,15 @@
  * Backend: carrier, contract_number, date, nrc, mrc, start_date, end_date, document.
  */
 
+export type ContractType = "fixed_term" | "monthly";
+
 /** Single contract as returned by the API */
 export interface Contract {
   id: number;
   carrier: string;
   contract_number: string;
+  contract_type: ContractType;
+  contract_type_display?: string | null;
   date: string | null;
   nrc: string;
   mrc: string;
@@ -16,6 +20,8 @@ export interface Contract {
   document: string | null;
   logo: string | null;
   category: number | null;
+  category_name?: string | null;
+  total_cost?: number | null;
   created_at: string;
   updated_at: string;
   /** Server-computed; only set when contract is expired or expiring in 0–90 days */
@@ -44,6 +50,7 @@ export interface ContractOverviewResponse {
 export interface ContractCreatePayload {
   carrier: string;
   contract_number: string;
+  contract_type?: ContractType;
   date?: string | null;
   nrc?: number | string;
   mrc?: number | string;
@@ -58,6 +65,7 @@ export interface ContractCreatePayload {
 export interface ContractUpdatePayload {
   carrier?: string;
   contract_number?: string;
+  contract_type?: ContractType;
   date?: string | null;
   nrc?: number | string;
   mrc?: number | string;

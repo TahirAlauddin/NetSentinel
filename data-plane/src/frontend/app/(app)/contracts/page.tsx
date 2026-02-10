@@ -452,9 +452,16 @@ export default function ContractsPage() {
                     >
                       {contract.carrier} – {contract.contract_number}
                     </Link>
+                    {contract.category_name && (
+                      <div className="text-xs text-gray-500 truncate">
+                        • {contract.category_name}
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className="text-sm font-semibold text-gray-900">
-                        {formatContractCurrency(contract.mrc)}
+                        {contract.total_cost != null
+                          ? formatContractCurrency(contract.total_cost)
+                          : "Ongoing"}
                       </span>
                       {contract.expiry_label && (
                         <span
@@ -482,17 +489,19 @@ export default function ContractsPage() {
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
-              <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 px-6 py-2.5 text-sm font-medium text-gray-500 bg-gray-50">
+              <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto_auto] gap-4 px-6 py-2.5 text-sm font-medium text-gray-500 bg-gray-50">
                 <span className="w-10" />
                 <span>Name</span>
-                <span className="text-right">MRC</span>
+                <span>Category</span>
+                <span>Type</span>
+                <span className="text-right">Total Cost</span>
                 <span className="text-right">Status</span>
                 <span className="w-10" />
               </div>
               {contracts.map((contract: Contract) => (
                 <div
                   key={contract.id}
-                  className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 px-6 py-2.5 items-center hover:bg-gray-50 transition-colors"
+                  className="grid grid-cols-[auto_1fr_auto_auto_auto_auto_auto] gap-4 px-6 py-2.5 items-center hover:bg-gray-50 transition-colors"
                 >
                   <ContractLogoThumb
                     contractId={contract.id}
@@ -506,8 +515,16 @@ export default function ContractsPage() {
                   >
                     {contract.carrier} – {contract.contract_number}
                   </Link>
+                  <span className="text-sm text-gray-600 truncate">
+                    {contract.category_name ?? "—"}
+                  </span>
+                  <span className="text-sm text-gray-600">
+                    {contract.contract_type_display ?? contract.contract_type ?? "Fixed Term"}
+                  </span>
                   <span className="text-right font-semibold text-gray-900">
-                    {formatContractCurrency(contract.mrc)}
+                    {contract.total_cost != null
+                      ? formatContractCurrency(contract.total_cost)
+                      : "Ongoing"}
                   </span>
                   <div className="text-right">
                     {contract.expiry_label ? (

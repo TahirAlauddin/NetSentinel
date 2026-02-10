@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 const defaultPayload: ContractCreatePayload = {
   carrier: "",
   contract_number: "",
+  contract_type: "fixed_term",
   date: null,
   nrc: 0,
   mrc: 0,
@@ -193,6 +194,24 @@ export default function NewContractPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <Label className={CONTRACT_LABEL_CLASS}>
+                  Contract Type <span className="text-red-500">*</span>
+                </Label>
+                <select
+                  className={CONTRACT_INPUT_CLASS}
+                  value={payload.contract_type ?? "fixed_term"}
+                  onChange={(e) =>
+                    updateFormFields({
+                      contract_type: e.target.value as "fixed_term" | "monthly",
+                      ...(e.target.value === "monthly" ? { end_date: null } : {}),
+                    })
+                  }
+                >
+                  <option value="fixed_term">Fixed Term</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+              <div>
+                <Label className={CONTRACT_LABEL_CLASS}>
                   Start Date <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -206,7 +225,9 @@ export default function NewContractPage() {
                 )}
               </div>
               <div>
-                <Label className={CONTRACT_LABEL_CLASS}>End Date</Label>
+                <Label className={CONTRACT_LABEL_CLASS}>
+                  End Date {(payload.contract_type ?? "fixed_term") === "fixed_term" && <span className="text-red-500">*</span>}
+                </Label>
                 <Input
                   type="date"
                   className={cn(CONTRACT_INPUT_CLASS, fieldErrors.end_date && "border-red-500")}
@@ -214,6 +235,7 @@ export default function NewContractPage() {
                   onChange={(e) =>
                     updateFormFields({ end_date: e.target.value ? e.target.value : null })
                   }
+                  disabled={(payload.contract_type ?? "fixed_term") === "monthly"}
                 />
                 {fieldErrors.end_date && (
                   <p className="text-sm text-red-600 mt-1">{fieldErrors.end_date}</p>

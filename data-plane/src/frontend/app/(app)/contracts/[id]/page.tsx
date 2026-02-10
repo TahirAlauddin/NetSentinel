@@ -120,6 +120,7 @@ export default function ContractDetailPage() {
     setEditPayload({
       carrier: contract.carrier,
       contract_number: contract.contract_number,
+      contract_type: contract.contract_type ?? "fixed_term",
       date: contract.date ?? null,
       nrc: contract.nrc,
       mrc: contract.mrc,
@@ -360,6 +361,23 @@ export default function ContractDetailPage() {
                   </select>
                 </div>
                 <div>
+                  <Label className={CONTRACT_LABEL_CLASS}>Contract Type</Label>
+                  <select
+                    className={CONTRACT_INPUT_CLASS}
+                    value={editPayload.contract_type ?? "fixed_term"}
+                    onChange={(e) => {
+                      const val = e.target.value as "fixed_term" | "monthly";
+                      updateEdit({
+                        contract_type: val,
+                        ...(val === "monthly" ? { end_date: null } : {}),
+                      });
+                    }}
+                  >
+                    <option value="fixed_term">Fixed Term</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                <div>
                   <Label className={CONTRACT_LABEL_CLASS}>Start Date</Label>
                   <Input
                     type="date"
@@ -372,14 +390,17 @@ export default function ContractDetailPage() {
                   )}
                 </div>
                 <div>
-                  <Label className={CONTRACT_LABEL_CLASS}>End Date</Label>
+                  <Label className={CONTRACT_LABEL_CLASS}>
+                    End Date {(editPayload.contract_type ?? "fixed_term") === "fixed_term" && <span className="text-red-500">*</span>}
+                  </Label>
                   <Input
                     type="date"
                     className={cn(CONTRACT_INPUT_CLASS, fieldErrors.end_date && "border-red-500")}
                     value={editPayload.end_date ?? ""}
                     onChange={(e) =>
-                      updateEdit({ end_date: e.target.value || null })
+                      updateEdit({ end_date: e.target.value ? e.target.value : null })
                     }
+                    disabled={(editPayload.contract_type ?? "fixed_term") === "monthly"}
                   />
                   {fieldErrors.end_date && (
                     <p className="text-sm text-red-600 mt-1">{fieldErrors.end_date}</p>
@@ -457,6 +478,20 @@ export default function ContractDetailPage() {
               <h2 className="text-2xl mb-8">Contract Information</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
                 <div>
+                  <div className="text-sm text-gray-600 mb-1">Contract type</div>
+                  <div className="text-base text-gray-900">
+                    {contract.contract_type_display ?? (contract.contract_type === "monthly" ? "Monthly" : "Fixed Term")}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600 mb-1">Total cost</div>
+                  <div className="text-xl font-semibold">
+                    {contract.total_cost != null
+                      ? formatContractCurrency(contract.total_cost)
+                      : "Ongoing"}
+                  </div>
+                </div>
+                <div>
                   <div className="text-sm text-gray-600 mb-1">NRC</div>
                   <div className="text-xl font-semibold">{formatContractCurrency(contract.nrc)}</div>
                 </div>
@@ -470,7 +505,9 @@ export default function ContractDetailPage() {
                 </div>
                 <div>
                   <div className="text-sm text-gray-600 mb-1">End date</div>
-                  <div className="text-base text-gray-900">{contract.end_date ?? "—"}</div>
+                  <div className="text-base text-gray-900">
+                    {contract.end_date ?? (contract.contract_type === "monthly" ? "Ongoing" : "—")}
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-8">

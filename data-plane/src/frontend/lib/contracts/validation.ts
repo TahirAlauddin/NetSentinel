@@ -39,9 +39,11 @@ export function validateContractForm(
   const startDate = payload.start_date?.trim();
   if (!startDate) errors.start_date = "Start date is required.";
 
+  const contractType = payload.contract_type ?? "fixed_term";
   const endDate = payload.end_date?.trim();
-  if (startDate && endDate) {
-    if (new Date(endDate) < new Date(startDate)) {
+  if (contractType === "fixed_term") {
+    if (!endDate) errors.end_date = "End date is required for Fixed Term contracts.";
+    else if (startDate && new Date(endDate) < new Date(startDate)) {
       errors.end_date = "End date must be on or after start date.";
     }
   }
