@@ -45,3 +45,27 @@ class ContractViewSet(viewsets.ModelViewSet):
         response = HttpResponse(content, content_type="application/octet-stream")
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
+
+    @action(detail=True, methods=["get"], url_path="logo")
+    def logo(self, request, pk=None):
+        """
+        Stream the contract logo image. Requires authentication.
+        """
+        contract = self.get_object()
+        if not contract.logo:
+            raise Http404("No logo attached to this contract.")
+        path = contract.logo.path
+        if not path or not os.path.isfile(path):
+            raise Http404("Logo file not found.")
+        ext = os.path.splitext(contract.logo.name)[1].lower()
+        content_types = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".gif": "image/gif",
+            ".webp": "image/webp",
+        }
+        content_type = content_types.get(ext, "image/png")
+        with open(path, "rb") as f:
+            content = f.read()
+        return HttpResponse(content, content_type=content_type)

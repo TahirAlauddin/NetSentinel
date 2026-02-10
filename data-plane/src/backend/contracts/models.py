@@ -19,8 +19,11 @@ from django.db import models
 
 from .validators import (
     contract_document_upload_to,
+    contract_logo_upload_to,
     validate_contract_file_extension,
     validate_contract_file_size,
+    validate_contract_logo_extension,
+    validate_contract_logo_size,
 )
 
 
@@ -74,6 +77,13 @@ class Contract(models.Model):
         null=True,
         validators=[validate_contract_file_extension, validate_contract_file_size],
         help_text="Contract document (PDF, DOC, etc.). Max 10 MB. Stored with a safe filename.",
+    )
+    logo = models.ImageField(
+        upload_to=contract_logo_upload_to,
+        blank=True,
+        null=True,
+        validators=[validate_contract_logo_extension, validate_contract_logo_size],
+        help_text="Contract/carrier logo image. PNG, JPG, GIF, WebP. Max 2 MB.",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -31,6 +31,7 @@ class ContractSerializer(serializers.ModelSerializer):
             "start_date",
             "end_date",
             "document",
+            "logo",
             "created_at",
             "updated_at",
         ]
