@@ -27,6 +27,23 @@ from .validators import (
 )
 
 
+class ContractCategory(models.Model):
+    """
+    Category for contract classification (e.g. Telecom, IT and Security).
+    Seeded via management command; contracts can optionally be assigned one.
+    """
+
+    name = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        verbose_name = "Contract category"
+        verbose_name_plural = "Contract categories"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class Contract(models.Model):
     """
     Contract model representing carrier service agreements.
@@ -84,6 +101,14 @@ class Contract(models.Model):
         null=True,
         validators=[validate_contract_logo_extension, validate_contract_logo_size],
         help_text="Contract/carrier logo image. PNG, JPG, GIF, WebP. Max 2 MB.",
+    )
+    category = models.ForeignKey(
+        ContractCategory,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="contracts",
+        help_text="Contract category (e.g. Telecom, IT and Security).",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
