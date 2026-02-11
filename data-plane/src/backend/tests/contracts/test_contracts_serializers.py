@@ -87,11 +87,13 @@ class TestContractSerializer:
             contract_number="OLD-001",
             start_date=date(2024, 1, 1),
             mrc=10.00,
+            end_date=date(2025, 12, 31),
         )
         payload = {
             "carrier": "New Carrier",
             "contract_number": "NEW-001",
             "start_date": "2024-01-01",
+            "end_date": "2025-12-31",
             "mrc": "25.00",
         }
         serializer = ContractSerializer(contract, data=payload, partial=False)
@@ -108,6 +110,7 @@ class TestContractSerializer:
             contract_number="CN-001",
             start_date=date(2024, 1, 1),
             mrc=50.00,
+            end_date=date(2025, 12, 31),
         )
         serializer = ContractSerializer(contract, data={"mrc": "99.99"}, partial=True)
         assert serializer.is_valid(), serializer.errors

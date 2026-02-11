@@ -76,11 +76,13 @@ class TestContractViewSet:
             carrier="Old Carrier",
             contract_number="OLD-001",
             start_date=date(2024, 1, 1),
+            end_date=date(2025, 12, 31),
         )
         data = {
             "carrier": "Updated Carrier",
             "contract_number": "UPD-001",
             "start_date": "2024-01-01",
+            "end_date": "2025-12-31",
             "nrc": "0",
             "mrc": "0",
         }
@@ -100,6 +102,7 @@ class TestContractViewSet:
             contract_number="CN-001",
             start_date=date(2024, 1, 1),
             mrc=25.00,
+            end_date=date(2025, 12, 31),
         )
         response = authenticated_api_client.patch(
             f"/api/v1/contracts/{contract.id}/",
