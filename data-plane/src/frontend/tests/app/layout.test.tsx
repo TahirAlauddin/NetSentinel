@@ -1,6 +1,6 @@
 /**
  * Component tests for app/layout.tsx
- * 
+ *
  * Tests cover:
  * - Root layout rendering
  * - ErrorBoundary integration
@@ -8,8 +8,13 @@
  * - Children rendering
  */
 
-import { render, screen } from '@/tests/__utils__/test-utils'
+import { renderToStaticMarkup } from 'react-dom/server'
 import RootLayout from '@/app/layout'
+
+// Mock next/server so layout does not load Node/Request-dependent code
+jest.mock('next/server', () => ({
+  connection: jest.fn().mockResolvedValue(undefined),
+}))
 
 // Mock components
 jest.mock('@/components/feedback/error-boundary', () => ({
@@ -28,59 +33,32 @@ jest.mock('sonner', () => ({
   Toaster: () => <div data-testid="toaster">Toaster</div>,
 }))
 
-jest.mock('@vercel/analytics/next', () => ({
-  Analytics: () => <div data-testid="analytics">Analytics</div>,
-}))
-
 describe('RootLayout', () => {
-  it('should render children', () => {
-    render(
-      <RootLayout>
-        <div>Test Content</div>
-      </RootLayout>
-    )
+  const getLayoutMarkup = async () => {
+    const element = await RootLayout({
+      children: <div>Test Content</div>,
+    })
+    return renderToStaticMarkup(element)
+  }
 
-    expect(screen.getByText('Test Content')).toBeInTheDocument()
+  it('should render children', async () => {
+    const html = await getLayoutMarkup()
+    expect(html).toContain('Test Content')
   })
 
-  it('should include ErrorBoundary', () => {
-    render(
-      <RootLayout>
-        <div>Test Content</div>
-      </RootLayout>
-    )
-
-    expect(screen.getByTestId('error-boundary')).toBeInTheDocument()
+  it('should include ErrorBoundary', async () => {
+    const html = await getLayoutMarkup()
+    expect(html).toContain('data-testid="error-boundary"')
   })
 
-  it('should include AuthProvider', () => {
-    render(
-      <RootLayout>
-        <div>Test Content</div>
-      </RootLayout>
-    )
-
-    expect(screen.getByTestId('auth-provider')).toBeInTheDocument()
+  it('should include AuthProvider', async () => {
+    const html = await getLayoutMarkup()
+    expect(html).toContain('data-testid="auth-provider"')
   })
 
-  it('should include Toaster', () => {
-    render(
-      <RootLayout>
-        <div>Test Content</div>
-      </RootLayout>
-    )
-
-    expect(screen.getByTestId('toaster')).toBeInTheDocument()
-  })
-
-  it('should include Analytics', () => {
-    render(
-      <RootLayout>
-        <div>Test Content</div>
-      </RootLayout>
-    )
-
-    expect(screen.getByTestId('analytics')).toBeInTheDocument()
+  it('should include Toaster', async () => {
+    const html = await getLayoutMarkup()
+    expect(html).toContain('data-testid="toaster"')
   })
 })
 

@@ -11,12 +11,19 @@
 import { NextRequest, NextResponse } from "next/server";
 
 jest.mock("next/server", () => {
-  // Define mocks inside the factory function to avoid hoisting issues
-  const mockNextFn = jest.fn(() => ({ type: "next" }));
-  const mockRedirectFn = jest.fn((url: URL | string, _init?: ResponseInit) => ({
-    type: "redirect",
-    url: url instanceof URL ? url.toString() : url,
-  }));
+  // Response-like objects must have headers.set so middleware setCspOnResponse() does not throw
+  const createMockResponse = (type: "next" | "redirect", url?: URL | string) => ({
+    type,
+    url: url ? (url instanceof URL ? url.toString() : url) : undefined,
+    headers: {
+      set: jest.fn(),
+      get: jest.fn(),
+    },
+  });
+  const mockNextFn = jest.fn(() => createMockResponse("next"));
+  const mockRedirectFn = jest.fn((url: URL | string, _init?: ResponseInit) =>
+    createMockResponse("redirect", url)
+  );
 
   // Store references globally so tests can access them
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,7 +31,6 @@ jest.mock("next/server", () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (global as any).__mockRedirect = mockRedirectFn;
 
-  // Mock NextResponse without requiring the actual module (avoids Request polyfill issues)
   return {
     NextResponse: {
       next: mockNextFn,

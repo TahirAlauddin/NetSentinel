@@ -60,6 +60,22 @@ global.ResizeObserver = jest.fn().mockImplementation(() => ({
   disconnect: jest.fn(),
 }))
 
+// Polyfills for Next.js / React server code in jsdom
+if (typeof global.Request === 'undefined') {
+  global.Request = class Request {}
+}
+if (typeof global.MessageChannel === 'undefined') {
+  try {
+    const { MessageChannel } = require('worker_threads')
+    global.MessageChannel = MessageChannel
+  } catch (_) {}
+}
+if (typeof global.TextEncoder === 'undefined' || typeof global.TextDecoder === 'undefined') {
+  const { TextEncoder: TE, TextDecoder: TD } = require('util')
+  if (typeof global.TextEncoder === 'undefined') global.TextEncoder = TE
+  if (typeof global.TextDecoder === 'undefined') global.TextDecoder = TD
+}
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
