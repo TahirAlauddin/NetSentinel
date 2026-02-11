@@ -393,7 +393,7 @@ export default function DataCircuitsPage() {
               <h1 className="text-2xl font-semibold">Data Circuits</h1>
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="px-4 py-2 rounded-md bg-[oklch(0.62_0.25_27.3)] text-white hover:opacity-90 text-sm flex items-center gap-2"
+                className="px-4 py-2 rounded-md bg-red-500 text-white hover:opacity-90 text-sm flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 {showAddForm ? "Cancel" : "Add Data Circuit"}
@@ -705,7 +705,7 @@ export default function DataCircuitsPage() {
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="px-4 py-2 rounded-md bg-[oklch(0.62_0.25_27.3)] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                      className="px-4 py-2 rounded-md bg-red-500 text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                     >
                       {submitting ? "Adding..." : "Add Data Circuit"}
                     </button>

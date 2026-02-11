@@ -61,7 +61,7 @@ const AddUserForm = ({ handleAddUser, submitting }: { handleAddUser: (e: React.F
       <button
         type="submit"
         disabled={submitting}
-        className="mt-2 h-9 sm:h-10 rounded-md bg-[oklch(0.62_0.25_27.3)] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+        className="mt-2 h-9 sm:h-10 rounded-md bg-red-500 text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
       >
         {submitting ? "Adding User..." : "Add User"}
       </button>

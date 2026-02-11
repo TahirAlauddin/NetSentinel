@@ -14,7 +14,7 @@
  * - Time updates
  */
 
-import { render, screen, waitFor, act } from '@testing-library/react'
+import { render, screen, waitFor, act, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Topbar } from '@/components/layout/topbar'
 import { useSession, signOut } from 'next-auth/react'
@@ -60,6 +60,7 @@ describe('Topbar', () => {
   })
 
   afterEach(() => {
+    cleanup()
     act(() => {
       jest.runOnlyPendingTimers()
     })

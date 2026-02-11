@@ -1,0 +1,9 @@
+from django.apps import AppConfig
+
+
+class ContractsConfig(AppConfig):
+    """App configuration for the contracts app."""
+
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "contracts"
+    verbose_name = "Contracts"

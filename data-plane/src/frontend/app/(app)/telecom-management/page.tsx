@@ -85,37 +85,37 @@ export default function TelecomExpenseManagementPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <Link
                 href="/telecom-management/providers"
-                className="bg-card border border-border rounded-lg p-4 hover:border-[oklch(0.62_0.25_27.3)] transition-colors group"
+                className="bg-card border border-border rounded-lg p-4 hover:border-red-500 transition-colors group"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-[oklch(0.62_0.25_27.3)]/10">
-                      <Building2 className="w-5 h-5 text-[oklch(0.62_0.25_27.3)]" />
+                    <div className="p-2 rounded-md bg-red-500/10">
+                      <Building2 className="w-5 h-5 text-red-500" />
                     </div>
                     <div>
                       <h3 className="font-semibold text-sm">Providers</h3>
                       <p className="text-xs text-muted-foreground">Manage providers</p>
                     </div>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-[oklch(0.62_0.25_27.3)] transition-colors" />
+                  <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-red-500 transition-colors" />
                 </div>
               </Link>
 
               <Link
                 href="/telecom-management/data-circuits"
-                className="bg-card border border-border rounded-lg p-4 hover:border-[oklch(0.62_0.25_27.3)] transition-colors group"
+                className="bg-card border border-border rounded-lg p-4 hover:border-red-500 transition-colors group"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-[oklch(0.62_0.25_27.3)]/10">
-                      <Network className="w-5 h-5 text-[oklch(0.62_0.25_27.3)]" />
+                    <div className="p-2 rounded-md bg-red-500/10">
+                      <Network className="w-5 h-5 text-red-500" />
                     </div>
                     <div>
                       <h3 className="font-semibold text-sm">Data Circuits</h3>
                       <p className="text-xs text-muted-foreground">Manage circuits</p>
                     </div>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-[oklch(0.62_0.25_27.3)] transition-colors" />
+                  <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-red-500 transition-colors" />
                 </div>
               </Link>
 
@@ -143,7 +143,7 @@ export default function TelecomExpenseManagementPage() {
                 </div>
                 <Link
                   href="/telecom-management/data-circuits"
-                  className="text-sm text-[oklch(0.62_0.25_27.3)] hover:underline flex items-center gap-1"
+                  className="text-sm text-red-500 hover:underline flex items-center gap-1"
                 >
                   View All
                   <ExternalLink className="w-3 h-3" />
@@ -210,7 +210,7 @@ export default function TelecomExpenseManagementPage() {
                   <p className="mb-2">No data circuits found</p>
                   <Link
                     href="/telecom-management/data-circuits"
-                    className="text-[oklch(0.62_0.25_27.3)] hover:underline"
+                    className="text-red-500 hover:underline"
                   >
                     Create your first data circuit
                   </Link>

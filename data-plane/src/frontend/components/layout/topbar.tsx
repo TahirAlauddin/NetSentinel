@@ -26,6 +26,9 @@ export function Topbar({ onMenuToggle }: { onMenuToggle: () => void }) {
     }
     tick()
     const id = setInterval(tick, 1000 * 30)
+    if (typeof (id as NodeJS.Timeout).unref === "function") {
+      (id as NodeJS.Timeout).unref()
+    }
     return () => clearInterval(id)
   }, [])
 
@@ -60,12 +63,12 @@ export function Topbar({ onMenuToggle }: { onMenuToggle: () => void }) {
             {session ? (
               <button 
                 onClick={handleLogout}
-                className="px-3 py-1 rounded bg-[oklch(0.62_0.25_27.3)] text-white hover:opacity-90 cursor-pointer"
+                className="px-3 py-1 rounded bg-red-500 text-white hover:opacity-90 cursor-pointer"
               >
                 Logout
               </button>
             ) : (
-              <Link href="/login" className="px-3 py-1 rounded bg-[oklch(0.62_0.25_27.3)] text-white hover:opacity-90 cursor-pointer">
+              <Link href="/login" className="px-3 py-1 rounded bg-red-500 text-white hover:opacity-90 cursor-pointer">
                 Login
               </Link>
             )}

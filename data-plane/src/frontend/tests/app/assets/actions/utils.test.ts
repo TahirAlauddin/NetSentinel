@@ -123,8 +123,10 @@ describe("AssetActionUtils", () => {
 
     it("should return null when not authenticated", async () => {
       mockGetServerSession.mockResolvedValue(null);
+      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
       const result = await AssetActionUtils.findOrCreateAssetTag("Test Tag");
       expect(result).toBeNull();
+      consoleSpy.mockRestore();
     });
 
     it("should return existing tag ID when tag exists", async () => {

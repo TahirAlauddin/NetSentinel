@@ -149,6 +149,36 @@ class BaseApiClient extends BaseApiClientCore {
   ): Promise<BaseApiResponse<T>> {
     return this.request<T>(endpoint, { ...options, method: "DELETE" });
   }
+
+  /**
+   * Send FormData (e.g. file upload) without Content-Type so the browser sets multipart boundary.
+   */
+  async requestForm<T = unknown>(
+    endpoint: string,
+    body: FormData,
+    method: "POST" | "PUT" | "PATCH" = "POST"
+  ): Promise<BaseApiResponse<T>> {
+    const session = await this.getSession();
+    if (!session?.accessToken) {
+      return { error: "No access token available", status: 401 };
+    }
+    const url = this.buildUrl(endpoint);
+    const headers: HeadersInit = {
+      Authorization: `Bearer ${session.accessToken}`,
+    };
+    try {
+      const response = await fetch(url, { method, body, headers });
+      if (!response.ok) {
+        return await this.handleErrorResponse<T>(response);
+      }
+      return await this.handleSuccessResponse<T>(response);
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : "Network error",
+        status: 0,
+      };
+    }
+  }
 }
 
 // Export a singleton instance

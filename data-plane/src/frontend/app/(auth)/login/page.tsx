@@ -115,7 +115,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full h-10 rounded-md bg-[oklch(0.62_0.25_27.3)] text-white hover:opacity-90 disabled:opacity-50"
+            className="w-full h-10 rounded-md bg-red-500 text-white hover:opacity-90 disabled:opacity-50"
           >
             {isLoading ? "Signing In..." : "Sign In"}
           </button>
