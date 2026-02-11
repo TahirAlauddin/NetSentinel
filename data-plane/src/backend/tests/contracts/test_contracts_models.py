@@ -62,8 +62,6 @@ class TestContractModel:
 
     def test_contract_ordering(self):
         """Test that contracts are ordered by carrier then contract_number."""
-        from datetime import date
-
         Contract.objects.create(**_contract_kwargs(carrier="Carrier B", contract_number="CN-002"))
         Contract.objects.create(**_contract_kwargs(carrier="Carrier A", contract_number="CN-002"))
         Contract.objects.create(**_contract_kwargs(carrier="Carrier A", contract_number="CN-001"))

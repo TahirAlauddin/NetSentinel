@@ -87,14 +87,14 @@ def get_subnet_mask_info(prefix_length: int, is_ipv6: bool = False) -> Dict:
 def _ipv4_to_binary(ip: ipaddress.IPv4Address) -> str:
     """Convert IPv4 address to binary string with dots."""
     binary_str = format(int(ip), "032b")
-    return ".".join([binary_str[i : i + 8] for i in range(0, 32, 8)])
+    return ".".join([binary_str[i: i + 8] for i in range(0, 32, 8)])
 
 
 def _ipv6_to_binary(ip: ipaddress.IPv6Address) -> str:
     """Convert IPv6 address to binary string with colons (hex format for readability)."""
     # For IPv6, show hex representation instead of full binary (too long)
     hex_str = format(int(ip), "032x")
-    return ":".join([hex_str[i : i + 4] for i in range(0, 32, 4)])
+    return ":".join([hex_str[i: i + 4] for i in range(0, 32, 4)])
 
 
 def get_all_subnet_masks(
