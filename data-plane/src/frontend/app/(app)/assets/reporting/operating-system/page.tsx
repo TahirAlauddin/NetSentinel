@@ -47,7 +47,7 @@ export default function OperatingSystemDetailPage() {
 
   const handleExport = () => {
     // TODO: Implement export functionality
-    console.log("Exporting operating system data...");
+    console.warn("Exporting operating system data...");
   };
 
   return (

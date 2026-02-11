@@ -45,7 +45,7 @@ export default function AvailabilityDetailPage() {
 
   const handleExport = () => {
     // TODO: Implement export functionality
-    console.log("Exporting availability data...");
+    console.warn("Exporting availability data...");
   };
 
   return (

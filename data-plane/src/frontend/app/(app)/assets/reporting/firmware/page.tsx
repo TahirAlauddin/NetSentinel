@@ -44,7 +44,7 @@ export default function FirmwareDetailPage() {
   const distribution = calculateFirmwareDistribution(assets);
 
   const handleExport = () => {
-    console.log("Exporting firmware data...");
+    console.warn("Exporting firmware data...");
   };
 
   return (

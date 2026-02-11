@@ -44,7 +44,7 @@ export default function WarrantyDetailPage() {
   const distribution = calculateWarrantyDistribution(assets);
 
   const handleExport = () => {
-    console.log("Exporting warranty data...");
+    console.warn("Exporting warranty data...");
   };
 
   return (

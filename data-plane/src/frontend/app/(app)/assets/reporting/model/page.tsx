@@ -44,7 +44,7 @@ export default function ModelDetailPage() {
   const distribution = calculateModelDistribution(assets);
 
   const handleExport = () => {
-    console.log("Exporting model data...");
+    console.warn("Exporting model data...");
   };
 
   return (

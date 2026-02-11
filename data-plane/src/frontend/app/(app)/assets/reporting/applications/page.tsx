@@ -45,7 +45,7 @@ export default function ApplicationsDetailPage() {
 
   const handleExport = () => {
     // TODO: Implement export functionality
-    console.log("Exporting applications data...");
+    console.warn("Exporting applications data...");
   };
 
   return (

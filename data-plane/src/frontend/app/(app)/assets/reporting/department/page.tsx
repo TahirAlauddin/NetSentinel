@@ -44,7 +44,7 @@ export default function DepartmentDetailPage() {
   const distribution = calculateDepartmentDistribution(assets);
 
   const handleExport = () => {
-    console.log("Exporting department data...");
+    console.warn("Exporting department data...");
   };
 
   return (

@@ -2,7 +2,6 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { Boxes, ArrowRight } from "lucide-react"
 
 // const COLORS = [
