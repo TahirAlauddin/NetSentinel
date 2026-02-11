@@ -37,9 +37,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write("Creating contract categories...")
         for name in CONTRACT_CATEGORY_NAMES:
-            _, created = ContractCategory.objects.get_or_create(
-                name=name, defaults={"name": name}
-            )
+            _, created = ContractCategory.objects.get_or_create(name=name, defaults={"name": name})
             status = "Created" if created else "Already exists"
             self.stdout.write(self.style.SUCCESS(f"  {status}: {name}"))
         self.stdout.write(
