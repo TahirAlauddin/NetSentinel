@@ -1,5 +1,8 @@
 // Learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom'
+import { cleanup } from '@testing-library/react'
+
+afterEach(cleanup)
 
 // Mock Next.js router - using shared mocks from __mocks__ folder
 jest.mock('next/navigation', () => {

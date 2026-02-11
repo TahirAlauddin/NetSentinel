@@ -120,7 +120,10 @@ export function Navigation({ items }: NavigationProps) {
         setHoveredItem(null)
         setExpandedItems(new Set())
         leaveTimeoutRef.current = null
-      }, 500)
+      }, 500) as NodeJS.Timeout
+      if (typeof leaveTimeoutRef.current?.unref === "function") {
+        leaveTimeoutRef.current.unref()
+      }
     }
   }, [isDesktop])
 
@@ -151,7 +154,10 @@ export function Navigation({ items }: NavigationProps) {
           setHoveredItem(null)
           setExpandedItems(new Set())
           navigationLeaveTimeoutRef.current = null
-        }, 500)
+        }, 500) as NodeJS.Timeout
+        if (typeof navigationLeaveTimeoutRef.current?.unref === "function") {
+          navigationLeaveTimeoutRef.current.unref()
+        }
       }
     }
   }, [isDesktop])

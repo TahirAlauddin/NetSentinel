@@ -26,6 +26,9 @@ export function Topbar({ onMenuToggle }: { onMenuToggle: () => void }) {
     }
     tick()
     const id = setInterval(tick, 1000 * 30)
+    if (typeof (id as NodeJS.Timeout).unref === "function") {
+      (id as NodeJS.Timeout).unref()
+    }
     return () => clearInterval(id)
   }, [])
 
