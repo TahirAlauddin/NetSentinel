@@ -29,9 +29,9 @@ import {
   telecomDonutData,
 } from "@/lib/api-client/telecom-helpers";
 import { ProviderRecord } from "@/types/providers";
-import { DataCircuitRecord } from "@/types/data-circuits";
+import { ServiceRecord } from "@/types/services";
 import { getSafeAbsoluteUrl } from "@/lib/security/url";
-import { Search, X } from "lucide-react";
+import { Search, X, Phone, Zap, Building2, Cable } from "lucide-react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 
 const COLORS = ["#2E7CF6", "#16A085", "#8B6FD9"];
@@ -46,13 +46,13 @@ async function listProviders(): Promise<ProviderRecord[]> {
   return Array.isArray(d) ? d : [];
 }
 
-async function listDataCircuits(): Promise<DataCircuitRecord[]> {
+async function listServices(): Promise<ServiceRecord[]> {
   const api = new TelecomApiClient();
-  const res = await api.getDataCircuits<DataCircuitRecord[] | { results: DataCircuitRecord[] }>();
+  const res = await api.getServices<ServiceRecord[] | { results: ServiceRecord[] }>();
   if (res.status === 401 || res.error || !res.data) return [];
   const d = res.data;
-  if (d && typeof d === "object" && "results" in d && Array.isArray((d as { results: DataCircuitRecord[] }).results))
-    return (d as { results: DataCircuitRecord[] }).results;
+  if (d && typeof d === "object" && "results" in d && Array.isArray((d as { results: ServiceRecord[] }).results))
+    return (d as { results: ServiceRecord[] }).results;
   return Array.isArray(d) ? d : [];
 }
 
@@ -68,7 +68,7 @@ function formatCurrency(value: number): string {
 export default function TelecomExpenseManagementPage() {
   const { data: session } = useSession();
   const [providers, setProviders] = useState<ProviderRecord[]>([]);
-  const [circuits, setCircuits] = useState<DataCircuitRecord[]>([]);
+  const [services, setServices] = useState<ServiceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchTerm, setSearchTerm] = useState("");
@@ -82,18 +82,18 @@ export default function TelecomExpenseManagementPage() {
     (async () => {
       setLoading(true);
       try {
-        const [pList, cList] = await Promise.all([
+        const [pList, sList] = await Promise.all([
           listProviders(),
-          listDataCircuits(),
+          listServices(),
         ]);
         if (!cancelled) {
           setProviders(pList);
-          setCircuits(cList);
+          setServices(sList);
         }
       } catch (_e) {
         if (!cancelled) {
           setProviders([]);
-          setCircuits([]);
+          setServices([]);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -103,38 +103,37 @@ export default function TelecomExpenseManagementPage() {
   }, [session]);
 
   const kpis = useMemo(
-    () => computeTelecomKpis(providers, circuits),
-    [providers, circuits]
+    () => computeTelecomKpis(providers, services),
+    [providers, services]
   );
   const donutData = useMemo(() => telecomDonutData(kpis), [kpis]);
 
-  const filteredCircuits = useMemo(() => {
-    let list = circuits;
+  const filteredServices = useMemo(() => {
+    let list = services;
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
       list = list.filter(
-        (c) =>
-          (c.circuit_id && c.circuit_id.toLowerCase().includes(q)) ||
-          (c.alternate_cid && c.alternate_cid.toLowerCase().includes(q)) ||
-          (c.provider_name && c.provider_name.toLowerCase().includes(q)) ||
-          (c.account_number && c.account_number.toLowerCase().includes(q)) ||
-          (c.carrier && c.carrier.toLowerCase().includes(q))
+        (s) =>
+          (s.name && s.name.toLowerCase().includes(q)) ||
+          (s.provider_name && s.provider_name.toLowerCase().includes(q)) ||
+          (s.account_number && s.account_number.toLowerCase().includes(q)) ||
+          (s.location_name && s.location_name.toLowerCase().includes(q))
       );
     }
     if (statusFilter) {
-      // Data circuits don't have status in type; this filter is reserved for future extension.
+      // Reserved for future extension.
     }
     return list;
-  }, [circuits, searchTerm, statusFilter]);
+  }, [services, searchTerm, statusFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredCircuits.length / itemsPerPage));
-  const paginatedCircuits = useMemo(
+  const totalPages = Math.max(1, Math.ceil(filteredServices.length / itemsPerPage));
+  const paginatedServices = useMemo(
     () =>
-      filteredCircuits.slice(
+      filteredServices.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
       ),
-    [filteredCircuits, currentPage, itemsPerPage]
+    [filteredServices, currentPage, itemsPerPage]
   );
 
   const providerMap = useMemo(() => {
@@ -161,10 +160,38 @@ export default function TelecomExpenseManagementPage() {
             </p>
           </div>
 
+          {/* Quick links to main sections */}
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/telecom-management/providers" className="gap-2">
+                <Building2 className="w-4 h-4" />
+                Providers
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/telecom-management/services" className="gap-2">
+                <Zap className="w-4 h-4" />
+                Services
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/telecom-management/phone-numbers" className="gap-2">
+                <Phone className="w-4 h-4" />
+                Phone Numbers
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/telecom-management/data-circuits" className="gap-2">
+                <Cable className="w-4 h-4" />
+                Data Circuits
+              </Link>
+            </Button>
+          </div>
+
           {/* At a glance - KPI cards */}
           <div>
             <h2 className="text-lg font-semibold mb-3">At a glance</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
               <Card>
                 <CardContent className="px-3 py-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -175,15 +202,18 @@ export default function TelecomExpenseManagementPage() {
                   </p>
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="px-3 py-3">
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                    Phone Numbers
-                  </p>
-                  <p className="text-3xl font-semibold leading-tight mt-1">
-                    {kpis.phoneNumberCount}
-                  </p>
-                </CardContent>
+              <Card className="transition-colors hover:bg-muted/50">
+                <Link href="/telecom-management/phone-numbers">
+                  <CardContent className="px-3 py-3 cursor-pointer">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                      Phone Numbers
+                    </p>
+                    <p className="text-3xl font-semibold leading-tight mt-1">
+                      {kpis.phoneNumberCount}
+                    </p>
+                    <p className="text-xs text-primary mt-1">View all →</p>
+                  </CardContent>
+                </Link>
               </Card>
               <Card>
                 <CardContent className="px-3 py-3">
@@ -217,6 +247,19 @@ export default function TelecomExpenseManagementPage() {
                   </p>
                   <p className="text-[11px] text-muted-foreground">/month</p>
                 </CardContent>
+              </Card>
+              <Card className="transition-colors hover:bg-muted/50">
+                <Link href="/telecom-management/data-circuits">
+                  <CardContent className="px-3 py-3 cursor-pointer">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                      Data Circuits
+                    </p>
+                    <p className="text-xl font-semibold leading-tight mt-1 text-muted-foreground">
+                      —
+                    </p>
+                    <p className="text-xs text-primary mt-1">View all →</p>
+                  </CardContent>
+                </Link>
               </Card>
             </div>
 
@@ -314,7 +357,7 @@ export default function TelecomExpenseManagementPage() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search by name, provider, or account number..."
+                    placeholder="Search by service name, provider, or account..."
                     value={searchTerm}
                     onChange={(e) => {
                       setSearchTerm(e.target.value);
@@ -360,7 +403,7 @@ export default function TelecomExpenseManagementPage() {
                 <div className="py-12 text-center text-muted-foreground">
                   Loading...
                 </div>
-              ) : paginatedCircuits.length === 0 ? (
+              ) : paginatedServices.length === 0 ? (
                 <div className="py-12 text-center text-muted-foreground">
                   No services found.{" "}
                   <Link
@@ -380,24 +423,20 @@ export default function TelecomExpenseManagementPage() {
                 </div>
               ) : viewMode === "grid" ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {paginatedCircuits.map((circuit) => {
-                    const provider = circuit.provider
-                      ? providerMap.get(circuit.provider)
+                  {paginatedServices.map((svc) => {
+                    const provider = svc.provider
+                      ? providerMap.get(svc.provider)
                       : null;
                     const logoUrl = getSafeAbsoluteUrl(provider?.logo_url);
-                    const name =
-                      circuit.circuit_id ||
-                      circuit.alternate_cid ||
-                      `Circuit #${circuit.id}`;
                     const typeLabel =
-                      circuit.circuit_type_display || "Data";
-                    const monthly = circuit.monthly_cost
-                      ? formatCurrency(parseFloat(circuit.monthly_cost))
+                      svc.service_type_display || svc.service_category_display || "Service";
+                    const monthly = svc.monthly_cost
+                      ? formatCurrency(parseFloat(svc.monthly_cost))
                       : null;
                     return (
                       <Link
-                        key={circuit.id}
-                        href={`/telecom-management/services/${circuit.id}`}
+                        key={svc.id}
+                        href={`/telecom-management/services/${svc.id}`}
                         className="block border rounded-lg p-4 hover:border-primary hover:bg-muted/30 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -405,20 +444,18 @@ export default function TelecomExpenseManagementPage() {
                             {logoUrl ? (
                               <img
                                 src={logoUrl}
-                                alt={circuit.provider_name || "Provider"}
+                                alt={svc.provider_name || "Provider"}
                                 className="w-10 h-10 object-contain rounded flex-shrink-0"
                               />
                             ) : (
                               <div className="w-10 h-10 rounded bg-muted flex items-center justify-center text-lg font-semibold text-muted-foreground flex-shrink-0">
-                                {(circuit.provider_name || "?")[0]}
+                                {(svc.name || "?")[0]}
                               </div>
                             )}
                             <div className="min-w-0">
-                              <p className="font-semibold truncate">
-                                {circuit.provider_name || "Unknown provider"}
-                              </p>
+                              <p className="font-semibold truncate">{svc.name}</p>
                               <p className="text-sm text-muted-foreground truncate">
-                                {name}
+                                {svc.provider_name || "—"}
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 • {typeLabel}
@@ -437,29 +474,23 @@ export default function TelecomExpenseManagementPage() {
                 </div>
               ) : (
                 <ul className="divide-y">
-                  {paginatedCircuits.map((circuit) => {
-                    const name =
-                      circuit.circuit_id ||
-                      circuit.alternate_cid ||
-                      `Circuit #${circuit.id}`;
-                    const monthly = circuit.monthly_cost
-                      ? formatCurrency(parseFloat(circuit.monthly_cost))
+                  {paginatedServices.map((svc) => {
+                    const monthly = svc.monthly_cost
+                      ? formatCurrency(parseFloat(svc.monthly_cost))
                       : "—";
                     return (
-                      <li key={circuit.id}>
+                      <li key={svc.id}>
                         <Link
-                          href={`/telecom-management/services/${circuit.id}`}
+                          href={`/telecom-management/services/${svc.id}`}
                           className="flex items-center justify-between py-3 px-2 hover:bg-muted/30 rounded-md"
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <span className="font-medium truncate">
-                              {circuit.provider_name || "—"}
-                            </span>
+                            <span className="font-medium truncate">{svc.name}</span>
                             <span className="text-muted-foreground truncate">
-                              {name}
+                              {svc.provider_name || "—"}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              {circuit.circuit_type_display || "Data"}
+                              {svc.service_type_display || svc.service_category_display || "—"}
                             </span>
                           </div>
                           <span className="font-medium">{monthly} /mon</span>
@@ -477,9 +508,9 @@ export default function TelecomExpenseManagementPage() {
                     {(currentPage - 1) * itemsPerPage + 1}-
                     {Math.min(
                       currentPage * itemsPerPage,
-                      filteredCircuits.length
+                      filteredServices.length
                     )}{" "}
-                    of {filteredCircuits.length}
+                    of {filteredServices.length}
                   </p>
                   <div className="flex gap-2">
                     <Button

@@ -2,6 +2,7 @@
 
 import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
+import { TelecomBreadcrumb } from "@/components/telecom/telecom-breadcrumb";
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
@@ -387,9 +388,14 @@ export default function DataCircuitsPage() {
   return (
     <ProtectedRoute>
       <AppShell>
-        <div className="flex-1 p-8">
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
+        <div className="flex-1 p-6 space-y-6">
+          <TelecomBreadcrumb
+            items={[
+              { label: "Telecom", href: "/telecom-management" },
+              { label: "Data Circuits" },
+            ]}
+          />
+          <div className="flex items-center justify-between">
               <h1 className="text-2xl font-semibold">Data Circuits</h1>
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
@@ -715,9 +721,6 @@ export default function DataCircuitsPage() {
             )}
 
             <div>
-              <h2 className="text-lg font-semibold mb-4">
-                Data Circuits
-              </h2>
               <div className="border border-border rounded-lg overflow-hidden bg-card">
                 {dataCircuits.length > 0 ? (
                   <div className="divide-y divide-border">
@@ -1126,7 +1129,6 @@ export default function DataCircuitsPage() {
                 )}
               </div>
             </div>
-          </div>
         </div>
       </AppShell>
     </ProtectedRoute>

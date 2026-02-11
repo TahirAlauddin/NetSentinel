@@ -9,7 +9,7 @@ import { TelecomBreadcrumb } from "@/components/telecom/telecom-breadcrumb";
 import { ServiceForm } from "@/components/telecom/service-form";
 import { TelecomApiClient } from "@/lib/api-client/telecom";
 import { InfrastructureApiClient } from "@/lib/api-client/infrastructure";
-import type { DataCircuitCreateDto, DataCircuitRecord } from "@/types/data-circuits";
+import type { ServiceCreateDto } from "@/types/services";
 import type { ProviderRecord } from "@/types/providers";
 import type { LocationRecord } from "@/types/locations";
 import { toast } from "sonner";
@@ -35,9 +35,9 @@ async function listLocations(): Promise<LocationRecord[]> {
   return Array.isArray(d) ? d : [];
 }
 
-async function createService(data: DataCircuitCreateDto): Promise<{ success: boolean; message?: string; error?: string }> {
+async function createService(data: ServiceCreateDto): Promise<{ success: boolean; message?: string; error?: string }> {
   const api = new TelecomApiClient();
-  const res = await api.createDataCircuit(data);
+  const res = await api.createService(data);
   if (res.error || !res.data) return { success: false, error: res.error || "Failed to create service" };
   return { success: true, message: "Service created successfully" };
 }
@@ -69,7 +69,7 @@ export default function NewServicePage() {
     })();
   }, [session]);
 
-  const handleSubmit = async (data: DataCircuitCreateDto) => {
+  const handleSubmit = async (data: ServiceCreateDto) => {
     setSubmitting(true);
     try {
       const result = await createService(data);
@@ -89,8 +89,9 @@ export default function NewServicePage() {
   };
 
   const defaultProvider = preselectedProviderId ? parseInt(preselectedProviderId, 10) : NaN;
-  const defaultValues =
-    Number.isFinite(defaultProvider) ? ({ provider: defaultProvider } as Partial<DataCircuitRecord>) : undefined;
+  const defaultValues = Number.isFinite(defaultProvider)
+    ? { provider: defaultProvider }
+    : undefined;
 
   if (loading) {
     return (
@@ -116,7 +117,7 @@ export default function NewServicePage() {
           <div>
             <h1 className="text-2xl font-semibold">Add Service</h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Create a new telecom service (data circuit).
+              Create a new business-facing service (distinct from data circuits).
             </p>
           </div>
           <Card>
@@ -125,7 +126,7 @@ export default function NewServicePage() {
             </CardHeader>
             <CardContent>
               <ServiceForm
-                defaultValues={defaultValues as { provider?: number }}
+                defaultValues={defaultValues}
                 providers={providers}
                 locations={locations}
                 onSubmit={handleSubmit}
