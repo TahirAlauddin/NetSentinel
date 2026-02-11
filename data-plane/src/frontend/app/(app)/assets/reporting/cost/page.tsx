@@ -44,7 +44,7 @@ export default function CostDetailPage() {
   const distribution = calculateCostDistribution(assets);
 
   const handleExport = () => {
-    console.log("Exporting cost data...");
+    console.warn("Exporting cost data...");
   };
 
   return (

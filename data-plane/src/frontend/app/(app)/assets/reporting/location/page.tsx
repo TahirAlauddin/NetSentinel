@@ -44,7 +44,7 @@ export default function LocationDetailPage() {
   const distribution = calculateLocationDistribution(assets);
 
   const handleExport = () => {
-    console.log("Exporting location data...");
+    console.warn("Exporting location data...");
   };
 
   return (

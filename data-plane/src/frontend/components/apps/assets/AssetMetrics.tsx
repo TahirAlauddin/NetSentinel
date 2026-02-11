@@ -66,7 +66,7 @@ export function AssetMetricsDisplay({
 
   const categoryNames = getCategoryNames()
   const hasCategoryFilters = safeSelectedCategories.length > 0
-  const allCategories = Array.from(
+  const _allCategories = Array.from(
     new Map(
       safeAssets
         .map((asset) => asset.category)

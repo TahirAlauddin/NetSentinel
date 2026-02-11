@@ -4,13 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, BarChart3 } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Asset } from "@/types/assets";
 import { listAssets, deleteAsset } from "./actions/index";
 import { AssetMetricsDisplay } from "@/components/apps/assets/AssetMetrics";
 import { AssetChart } from "@/components/apps/assets/AssetChart";
 import { AssetsDashboardNav } from "@/components/apps/assets/AssetsDashboardNav";
-import { calculateAssetMetrics, filterAssets } from "@/components/apps/assets/utils";
+import { calculateAssetMetrics } from "@/components/apps/assets/utils";
 
 /**
  * AssetsPage component - Main page for asset management
@@ -58,7 +58,7 @@ export default function AssetsPage() {
   /**
    * Handle editing an existing asset
    */
-  const handleEditAsset = (asset: Asset) => {
+  const _handleEditAsset = (asset: Asset) => {
     setEditingAsset(asset);
     router.push(`/assets/edit/${asset.id}`);
   };
@@ -66,7 +66,7 @@ export default function AssetsPage() {
   /**
    * Handle deleting an asset
    */
-  const handleDeleteAsset = async (id: number) => {
+  const _handleDeleteAsset = async (id: number) => {
     if (!confirm("Are you sure you want to delete this asset?")) {
       return;
     }

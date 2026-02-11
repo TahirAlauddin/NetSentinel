@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Asset } from "@/types/assets";
-import { X } from "lucide-react";
 
 interface AssetFilterDialogProps {
   open: boolean;

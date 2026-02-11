@@ -44,7 +44,9 @@ export const settingsDataSubmenuLinks = [
 
 // Telecom Expense Management submenu links
 export const telecomManagementSubmenuLinks = [
+  { label: "Overview", href: "/telecom-management" },
   { label: "Providers", href: "/telecom-management/providers" },
+  { label: "Services", href: "/telecom-management/services" },
   { label: "Data Circuits", href: "/telecom-management/data-circuits" },
 ];
 

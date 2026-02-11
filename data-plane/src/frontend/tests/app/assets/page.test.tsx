@@ -5,7 +5,7 @@
 import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AssetsPage from "@/app/(app)/assets/page";
-import { listAssets, deleteAsset } from "@/app/(app)/assets/actions/index";
+import { listAssets, deleteAsset as _deleteAsset } from "@/app/(app)/assets/actions/index";
 import { useRouter } from "next/navigation";
 
 // Mock dependencies
@@ -59,7 +59,6 @@ global.confirm = jest.fn(() => true);
 
 describe("AssetsPage", () => {
   const mockListAssets = listAssets as jest.MockedFunction<typeof listAssets>;
-  const mockDeleteAsset = deleteAsset as jest.MockedFunction<typeof deleteAsset>;
   const mockRouterPush = jest.fn();
   const mockUseRouter = jest.mocked(useRouter);
 
@@ -68,6 +67,11 @@ describe("AssetsPage", () => {
     global.confirm = jest.fn(() => true);
     mockUseRouter.mockReturnValue({
       push: mockRouterPush,
+      back: jest.fn(),
+      forward: jest.fn(),
+      refresh: jest.fn(),
+      replace: jest.fn(),
+      prefetch: jest.fn(),
     } as ReturnType<typeof useRouter>);
   });
 
@@ -82,7 +86,7 @@ describe("AssetsPage", () => {
     const mockAssets = [
       { id: 1, name: "Asset 1", status: "active" },
       { id: 2, name: "Asset 2", status: "retired" },
-    ];
+    ] as Asset[];
 
     mockListAssets.mockResolvedValue(mockAssets);
 

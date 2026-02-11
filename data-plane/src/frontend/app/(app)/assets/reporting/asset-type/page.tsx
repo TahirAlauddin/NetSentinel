@@ -57,7 +57,7 @@ export default function AssetTypeDetailPage() {
   const distribution = convertCategoryDistribution(categoryDist, assets);
 
   const handleExport = () => {
-    console.log("Exporting asset type data...");
+    console.warn("Exporting asset type data...");
   };
 
   return (

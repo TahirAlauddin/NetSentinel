@@ -80,7 +80,7 @@ export default function AssetReportingPage() {
     "#a4de6c",
   ];
 
-  const getColor = (index: number, total: number) => {
+  const getColor = (index: number, _total: number) => {
     return COLORS[index % COLORS.length];
   };
 
@@ -282,7 +282,7 @@ export default function AssetReportingPage() {
                   <div className="grid grid-cols-3 gap-8">
                     {renderDonutChart(categoryDistribution, totalAssets, "Assets")}
                     <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                      {categoryDistribution.slice(0, 10).map((item, index) => (
+                      {categoryDistribution.slice(0, 10).map((item, _index) => (
                         <div key={item.name} className="flex justify-between items-center">
                           <span className="text-sm text-gray-700">{item.name}</span>
                           <span className="text-sm font-semibold text-gray-900">{item.value}</span>

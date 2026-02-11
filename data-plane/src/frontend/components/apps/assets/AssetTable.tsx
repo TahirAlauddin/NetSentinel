@@ -14,7 +14,7 @@ import {
 } from "./utils";
 import { useRouter } from "next/navigation";
 
-interface AssetTableProps {
+export interface AssetTableProps {
   /**
    * Array of asset records to display
    */
