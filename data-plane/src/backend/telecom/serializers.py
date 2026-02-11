@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import DataCircuit, Provider
+from .models import DataCircuit, PhoneNumber, Provider, Service
 
 
 class ProviderSerializer(serializers.ModelSerializer):
@@ -38,6 +38,43 @@ class ProviderSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
+class ServiceSerializer(serializers.ModelSerializer):
+    """Serializer for Service (business-facing; distinct from DataCircuit)."""
+
+    provider_name = serializers.CharField(source="provider.name", read_only=True)
+    location_name = serializers.CharField(source="location.name", read_only=True)
+    service_category_display = serializers.CharField(
+        source="get_service_category_display", read_only=True
+    )
+    service_type_display = serializers.CharField(
+        source="get_service_type_display", read_only=True
+    )
+
+    class Meta:
+        model = Service
+        fields = [
+            "id",
+            "name",
+            "provider",
+            "provider_name",
+            "location",
+            "location_name",
+            "service_category",
+            "service_category_display",
+            "service_type",
+            "service_type_display",
+            "associated_product",
+            "account_number",
+            "security_code",
+            "contract_id",
+            "monthly_cost",
+            "notes",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
 class DataCircuitSerializer(serializers.ModelSerializer):
     """Serializer for Data Circuit."""
 
@@ -50,12 +87,15 @@ class DataCircuitSerializer(serializers.ModelSerializer):
     connector_type_display = serializers.CharField(
         source="get_connector_type_display", read_only=True
     )
+    service_name = serializers.CharField(source="service.name", read_only=True)
 
     class Meta:
         model = DataCircuit
         fields = [
             "id",
             "provider",
+            "service",
+            "service_name",
             "provider_name",
             "location",
             "location_name",
@@ -80,6 +120,37 @@ class DataCircuitSerializer(serializers.ModelSerializer):
             "foc_date",
             "ttu_date",
             "monthly_cost",
+            "notes",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class PhoneNumberSerializer(serializers.ModelSerializer):
+    """Serializer for PhoneNumber."""
+
+    provider_name = serializers.CharField(source="provider.name", read_only=True)
+    service_display = serializers.SerializerMethodField()
+    location_name = serializers.CharField(source="location.name", read_only=True)
+
+    def get_service_display(self, obj):
+        if not obj.service:
+            return None
+        return obj.service.name
+
+    class Meta:
+        model = PhoneNumber
+        fields = [
+            "id",
+            "number",
+            "friendly_name",
+            "provider",
+            "provider_name",
+            "service",
+            "service_display",
+            "location",
+            "location_name",
             "notes",
             "created_at",
             "updated_at",

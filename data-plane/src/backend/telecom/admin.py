@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import DataCircuit, Provider
+from .models import DataCircuit, PhoneNumber, Provider, Service
 
 
 @admin.register(Provider)
@@ -27,6 +27,33 @@ class ProviderAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     ]
+
+
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = [
+        "name",
+        "provider",
+        "location",
+        "service_category",
+        "service_type",
+        "monthly_cost",
+        "created_at",
+    ]
+    search_fields = [
+        "name",
+        "provider__name",
+        "location__name",
+        "account_number",
+        "contract_id",
+    ]
+    list_filter = [
+        "service_category",
+        "service_type",
+        "created_at",
+        "updated_at",
+    ]
+    raw_id_fields = ["provider", "location"]
 
 
 @admin.register(DataCircuit)
@@ -63,4 +90,24 @@ class DataCircuitAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     ]
-    raw_id_fields = ["provider", "location"]
+    raw_id_fields = ["provider", "location", "service"]
+
+
+@admin.register(PhoneNumber)
+class PhoneNumberAdmin(admin.ModelAdmin):
+    list_display = [
+        "number",
+        "friendly_name",
+        "provider",
+        "service",
+        "location",
+        "created_at",
+    ]
+    search_fields = [
+        "number",
+        "friendly_name",
+        "provider__name",
+        "notes",
+    ]
+    list_filter = ["provider", "created_at", "updated_at"]
+    raw_id_fields = ["provider", "service", "location"]  # service is FK to Service
