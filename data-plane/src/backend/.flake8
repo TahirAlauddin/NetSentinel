@@ -1,4 +1,6 @@
 [flake8]
+# E203: whitespace before ':' — Black allows it (e.g. in slices); prefer Black.
+ignore = E203,W503
 exclude =
     venv,
     */migrations/*,

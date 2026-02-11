@@ -91,7 +91,7 @@ def detect_duplicate_subnets() -> List[Dict]:
 
         overlaps = []
 
-        for subnet2 in subnet_list[i + 1:]:
+        for subnet2 in subnet_list[i + 1 :]:
             try:
                 network2 = ipaddress.ip_network(subnet2.network, strict=False)
             except (ValueError, AttributeError):
