@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,9 +31,6 @@ export function ServiceForm({
 }: ServiceFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [handoffType, setHandoffType] = useState(defaultValues?.handoff_type ?? "");
-  useEffect(() => {
-    setHandoffType(defaultValues?.handoff_type ?? "");
-  }, [defaultValues?.handoff_type]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

@@ -73,7 +73,7 @@ export default function ServicesPage() {
         ]);
         setCircuits(cList);
         setProviders(pList);
-      } catch (e) {
+      } catch (_e) {
         setCircuits([]);
         setProviders([]);
       } finally {

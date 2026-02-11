@@ -49,7 +49,7 @@ export default function EditProviderPage() {
       try {
         const p = await getProvider(id);
         setProvider(p ?? null);
-      } catch (e) {
+      } catch {
         setProvider(null);
       } finally {
         setLoading(false);
@@ -72,8 +72,8 @@ export default function EditProviderPage() {
       } else {
         toast.error(result.error);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (_e) {
+      console.error(_e);
       toast.error("An unexpected error occurred");
     } finally {
       setSubmitting(false);

@@ -14,8 +14,6 @@ import type { ProviderRecord } from "@/types/providers";
 import type { LocationRecord } from "@/types/locations";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 async function listProviders(): Promise<ProviderRecord[]> {
   const api = new TelecomApiClient();
@@ -62,7 +60,7 @@ export default function NewServicePage() {
         const [pList, lList] = await Promise.all([listProviders(), listLocations()]);
         setProviders(pList);
         setLocations(lList);
-      } catch (e) {
+      } catch (_e) {
         setProviders([]);
         setLocations([]);
       } finally {
@@ -82,8 +80,8 @@ export default function NewServicePage() {
       } else {
         toast.error(result.error);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (_e) {
+      console.error(_e);
       toast.error("An unexpected error occurred");
     } finally {
       setSubmitting(false);

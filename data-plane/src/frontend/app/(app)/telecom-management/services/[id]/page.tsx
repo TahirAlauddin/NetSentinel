@@ -43,7 +43,7 @@ export default function ServiceDetailPage() {
       try {
         const s = await getDataCircuit(id);
         setService(s ?? null);
-      } catch (e) {
+      } catch (_e) {
         setService(null);
       } finally {
         setLoading(false);

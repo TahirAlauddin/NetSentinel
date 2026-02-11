@@ -72,7 +72,7 @@ export default function ProviderDetailPage() {
           const list = await getProviderCircuits(p.id);
           setCircuits(list);
         }
-      } catch (e) {
+      } catch (_e) {
         setProvider(null);
         setCircuits([]);
       } finally {

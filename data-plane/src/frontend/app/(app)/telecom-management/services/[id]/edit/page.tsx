@@ -78,7 +78,7 @@ export default function EditServicePage() {
         setService(s ?? null);
         setProviders(pList);
         setLocations(lList);
-      } catch (e) {
+      } catch (_e) {
         setService(null);
         setProviders([]);
         setLocations([]);
@@ -99,8 +99,8 @@ export default function EditServicePage() {
       } else {
         toast.error(result.error);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (_e) {
+      console.error(_e);
       toast.error("An unexpected error occurred");
     } finally {
       setSubmitting(false);
@@ -158,6 +158,7 @@ export default function EditServicePage() {
             </CardHeader>
             <CardContent>
               <ServiceForm
+                key={service.id}
                 defaultValues={{
                   provider: service.provider,
                   location: service.location,
