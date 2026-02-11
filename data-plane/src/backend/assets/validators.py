@@ -12,7 +12,6 @@ import uuid
 
 from django.core.exceptions import ValidationError
 
-
 # Image extensions only (for AssetImage)
 ALLOWED_IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".gif", ".webp"})
 

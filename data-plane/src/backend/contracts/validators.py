@@ -13,7 +13,6 @@ import uuid
 
 from django.core.exceptions import ValidationError
 
-
 # Whitelist: only these extensions are allowed. No executables, scripts, or HTML.
 ALLOWED_CONTRACT_EXTENSIONS = frozenset(
     {

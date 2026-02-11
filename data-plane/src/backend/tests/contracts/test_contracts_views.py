@@ -2,9 +2,9 @@
 Tests for Contract API views.
 """
 
-import pytest
 from datetime import date
 
+import pytest
 from rest_framework import status
 
 from contracts.models import Contract

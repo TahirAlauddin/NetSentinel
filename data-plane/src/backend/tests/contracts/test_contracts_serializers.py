@@ -2,9 +2,10 @@
 Tests for Contract serializer.
 """
 
-import pytest
 from datetime import date
 from decimal import Decimal
+
+import pytest
 
 from contracts.models import Contract
 from contracts.serializers import ContractSerializer
