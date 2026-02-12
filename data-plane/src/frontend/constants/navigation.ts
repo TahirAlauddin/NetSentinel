@@ -47,6 +47,7 @@ export const telecomManagementSubmenuLinks = [
   { label: "Overview", href: "/telecom-management" },
   { label: "Providers", href: "/telecom-management/providers" },
   { label: "Services", href: "/telecom-management/services" },
+  { label: "Phone Numbers", href: "/telecom-management/phone-numbers" },
   { label: "Data Circuits", href: "/telecom-management/data-circuits" },
 ];
 

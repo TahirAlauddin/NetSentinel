@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { TelecomApiClient } from "@/lib/api-client/telecom";
 import { ProviderRecord } from "@/types/providers";
-import { DataCircuitRecord } from "@/types/data-circuits";
+import { ServiceRecord } from "@/types/services";
 import { getSafeAbsoluteUrl } from "@/lib/security/url";
 import { Search } from "lucide-react";
 
@@ -33,13 +33,13 @@ async function listProviders(): Promise<ProviderRecord[]> {
   return Array.isArray(d) ? d : [];
 }
 
-async function listDataCircuits(): Promise<DataCircuitRecord[]> {
+async function listServices(): Promise<ServiceRecord[]> {
   const api = new TelecomApiClient();
-  const res = await api.getDataCircuits<DataCircuitRecord[] | { results: DataCircuitRecord[] }>();
+  const res = await api.getServices<ServiceRecord[] | { results: ServiceRecord[] }>();
   if (res.error || !res.data) return [];
   const d = res.data;
-  if (d && typeof d === "object" && "results" in d && Array.isArray((d as { results: DataCircuitRecord[] }).results))
-    return (d as { results: DataCircuitRecord[] }).results;
+  if (d && typeof d === "object" && "results" in d && Array.isArray((d as { results: ServiceRecord[] }).results))
+    return (d as { results: ServiceRecord[] }).results;
   return Array.isArray(d) ? d : [];
 }
 
@@ -54,7 +54,7 @@ function formatCurrency(value: number): string {
 
 export default function ServicesPage() {
   const { data: session } = useSession();
-  const [circuits, setCircuits] = useState<DataCircuitRecord[]>([]);
+  const [services, setServices] = useState<ServiceRecord[]>([]);
   const [providers, setProviders] = useState<ProviderRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -67,14 +67,14 @@ export default function ServicesPage() {
     (async () => {
       setLoading(true);
       try {
-        const [cList, pList] = await Promise.all([
-          listDataCircuits(),
+        const [sList, pList] = await Promise.all([
+          listServices(),
           listProviders(),
         ]);
-        setCircuits(cList);
+        setServices(sList);
         setProviders(pList);
       } catch (_e) {
-        setCircuits([]);
+        setServices([]);
         setProviders([]);
       } finally {
         setLoading(false);
@@ -89,17 +89,16 @@ export default function ServicesPage() {
   }, [providers]);
 
   const filtered = useMemo(() => {
-    if (!searchTerm.trim()) return circuits;
+    if (!searchTerm.trim()) return services;
     const q = searchTerm.toLowerCase();
-    return circuits.filter(
-      (c) =>
-        (c.circuit_id && c.circuit_id.toLowerCase().includes(q)) ||
-        (c.alternate_cid && c.alternate_cid.toLowerCase().includes(q)) ||
-        (c.provider_name && c.provider_name.toLowerCase().includes(q)) ||
-        (c.account_number && c.account_number.toLowerCase().includes(q)) ||
-        (c.carrier && c.carrier.toLowerCase().includes(q))
+    return services.filter(
+      (s) =>
+        (s.name && s.name.toLowerCase().includes(q)) ||
+        (s.provider_name && s.provider_name.toLowerCase().includes(q)) ||
+        (s.account_number && s.account_number.toLowerCase().includes(q)) ||
+        (s.location_name && s.location_name.toLowerCase().includes(q))
     );
-  }, [circuits, searchTerm]);
+  }, [services, searchTerm]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
   const paginated = useMemo(
@@ -142,7 +141,7 @@ export default function ServicesPage() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search by name, provider, or account number..."
+                    placeholder="Search by service name, provider, or account..."
                     value={searchTerm}
                     onChange={(e) => {
                       setSearchTerm(e.target.value);
@@ -185,19 +184,17 @@ export default function ServicesPage() {
                 </div>
               ) : viewMode === "grid" ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {paginated.map((circuit) => {
-                    const provider = circuit.provider ? providerMap.get(circuit.provider) : null;
+                  {paginated.map((svc) => {
+                    const provider = svc.provider ? providerMap.get(svc.provider) : null;
                     const logoUrl = getSafeAbsoluteUrl(provider?.logo_url);
-                    const name =
-                      circuit.circuit_id || circuit.alternate_cid || `Circuit #${circuit.id}`;
-                    const typeLabel = circuit.circuit_type_display || "Data";
-                    const monthly = circuit.monthly_cost
-                      ? formatCurrency(parseFloat(circuit.monthly_cost))
+                    const typeLabel = svc.service_type_display || svc.service_category_display || "Service";
+                    const monthly = svc.monthly_cost
+                      ? formatCurrency(parseFloat(svc.monthly_cost))
                       : null;
                     return (
                       <Link
-                        key={circuit.id}
-                        href={`/telecom-management/services/${circuit.id}`}
+                        key={svc.id}
+                        href={`/telecom-management/services/${svc.id}`}
                         className="block border rounded-lg p-4 hover:border-primary hover:bg-muted/30 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -205,19 +202,19 @@ export default function ServicesPage() {
                             {logoUrl ? (
                               <img
                                 src={logoUrl}
-                                alt={circuit.provider_name || "Provider"}
+                                alt={svc.provider_name || "Provider"}
                                 className="w-10 h-10 object-contain rounded flex-shrink-0"
                               />
                             ) : (
                               <div className="w-10 h-10 rounded bg-muted flex items-center justify-center text-lg font-semibold text-muted-foreground flex-shrink-0">
-                                {(circuit.provider_name || "?")[0]}
+                                {(svc.name || "?")[0]}
                               </div>
                             )}
                             <div className="min-w-0">
-                              <p className="font-semibold truncate">
-                                {circuit.provider_name || "Unknown provider"}
+                              <p className="font-semibold truncate">{svc.name}</p>
+                              <p className="text-sm text-muted-foreground truncate">
+                                {svc.provider_name || "—"}
                               </p>
-                              <p className="text-sm text-muted-foreground truncate">{name}</p>
                               <p className="text-xs text-muted-foreground">• {typeLabel}</p>
                             </div>
                           </div>
@@ -231,25 +228,23 @@ export default function ServicesPage() {
                 </div>
               ) : (
                 <ul className="divide-y">
-                  {paginated.map((circuit) => {
-                    const name =
-                      circuit.circuit_id || circuit.alternate_cid || `Circuit #${circuit.id}`;
-                    const monthly = circuit.monthly_cost
-                      ? formatCurrency(parseFloat(circuit.monthly_cost))
+                  {paginated.map((svc) => {
+                    const monthly = svc.monthly_cost
+                      ? formatCurrency(parseFloat(svc.monthly_cost))
                       : "—";
                     return (
-                      <li key={circuit.id}>
+                      <li key={svc.id}>
                         <Link
-                          href={`/telecom-management/services/${circuit.id}`}
+                          href={`/telecom-management/services/${svc.id}`}
                           className="flex items-center justify-between py-3 px-2 hover:bg-muted/30 rounded-md"
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <span className="font-medium truncate">
-                              {circuit.provider_name || "—"}
+                            <span className="font-medium truncate">{svc.name}</span>
+                            <span className="text-muted-foreground truncate">
+                              {svc.provider_name || "—"}
                             </span>
-                            <span className="text-muted-foreground truncate">{name}</span>
                             <span className="text-xs text-muted-foreground">
-                              {circuit.circuit_type_display || "Data"}
+                              {svc.service_type_display || svc.service_category_display || "—"}
                             </span>
                           </div>
                           <span className="font-medium">{monthly} /mon</span>

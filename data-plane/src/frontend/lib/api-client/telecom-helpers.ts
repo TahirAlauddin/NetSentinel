@@ -1,10 +1,11 @@
 /**
  * Shared helpers for Telecom Expense Management (listing, KPIs).
  * Use from server or client via TelecomApiClient.
+ * Services are business-facing; data circuits are technical (separate).
  */
 
 import type { ProviderRecord } from "@/types/providers";
-import type { DataCircuitRecord } from "@/types/data-circuits";
+import type { ServiceRecord } from "@/types/services";
 
 export type ServiceCategory = "data" | "voice" | "consolidated";
 
@@ -24,21 +25,21 @@ function parseCost(value: string | null | undefined): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-function providerCategory(serviceType: string | null | undefined): ServiceCategory {
-  if (!serviceType) return "data";
-  const t = serviceType.toLowerCase();
+function serviceCategory(category: string | null | undefined): ServiceCategory {
+  if (!category) return "data";
+  const t = category.toLowerCase();
   if (t === "voice") return "voice";
   if (t === "consolidated") return "consolidated";
-  return "data"; // data, internet, mobile
+  return "data";
 }
 
 /**
- * Compute KPIs from providers and data circuits.
+ * Compute KPIs from providers and services (business-facing).
  * IP/Phone counts are placeholders (0) unless we have a future source.
  */
 export function computeTelecomKpis(
   providers: ProviderRecord[],
-  circuits: DataCircuitRecord[]
+  services: ServiceRecord[]
 ): TelecomKpis {
   let voiceMonthly = 0;
   let dataMonthly = 0;
@@ -49,7 +50,7 @@ export function computeTelecomKpis(
 
   for (const p of providers) {
     const cost = parseCost(p.monthly_cost);
-    const cat = providerCategory(p.service_type);
+    const cat = serviceCategory(p.service_type);
     if (cat === "voice") {
       voiceMonthly += cost;
       voiceCount += 1;
@@ -62,9 +63,19 @@ export function computeTelecomKpis(
     }
   }
 
-  for (const c of circuits) {
-    dataMonthly += parseCost(c.monthly_cost);
-    dataCount += 1;
+  for (const s of services) {
+    const cost = parseCost(s.monthly_cost);
+    const cat = serviceCategory(s.service_category);
+    if (cat === "voice") {
+      voiceMonthly += cost;
+      voiceCount += 1;
+    } else if (cat === "consolidated") {
+      consolidatedMonthly += cost;
+      consolidatedCount += 1;
+    } else {
+      dataMonthly += cost;
+      dataCount += 1;
+    }
   }
 
   return {

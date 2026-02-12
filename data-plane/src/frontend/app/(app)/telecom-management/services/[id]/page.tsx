@@ -8,16 +8,16 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { TelecomBreadcrumb } from "@/components/telecom/telecom-breadcrumb";
 import { TelecomApiClient } from "@/lib/api-client/telecom";
-import { DataCircuitRecord } from "@/types/data-circuits";
+import { ServiceRecord } from "@/types/services";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Edit2 } from "lucide-react";
 
-async function getDataCircuit(id: string): Promise<DataCircuitRecord | null> {
+async function getService(id: string): Promise<ServiceRecord | null> {
   const api = new TelecomApiClient();
-  const res = await api.getDataCircuit<DataCircuitRecord>(id);
+  const res = await api.getService<ServiceRecord>(id);
   if (res.error || !res.data) return null;
-  return res.data as DataCircuitRecord;
+  return res.data as ServiceRecord;
 }
 
 function formatCurrency(value: number): string {
@@ -33,7 +33,7 @@ export default function ServiceDetailPage() {
   const params = useParams();
   const id = params?.id as string;
   const { data: session } = useSession();
-  const [service, setService] = useState<DataCircuitRecord | null>(null);
+  const [service, setService] = useState<ServiceRecord | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function ServiceDetailPage() {
     (async () => {
       setLoading(true);
       try {
-        const s = await getDataCircuit(id);
+        const s = await getService(id);
         setService(s ?? null);
       } catch (_e) {
         setService(null);
@@ -76,8 +76,6 @@ export default function ServiceDetailPage() {
     );
   }
 
-  const displayName =
-    service.circuit_id || service.alternate_cid || `Service #${service.id}`;
   const monthlyCost = service.monthly_cost
     ? formatCurrency(parseFloat(service.monthly_cost))
     : null;
@@ -90,13 +88,13 @@ export default function ServiceDetailPage() {
             items={[
               { label: "Telecom", href: "/telecom-management" },
               { label: "Services", href: "/telecom-management/services" },
-              { label: displayName },
+              { label: service.name },
             ]}
           />
 
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold">{displayName}</h1>
+              <h1 className="text-2xl font-bold">{service.name}</h1>
               {service.provider_name && (
                 <p className="text-muted-foreground text-sm mt-1">
                   {service.provider_name}
@@ -127,12 +125,16 @@ export default function ServiceDetailPage() {
                 </div>
               )}
               <div>
+                <p className="text-sm font-medium text-muted-foreground">Associated Product</p>
+                <p>{service.associated_product ?? "—"}</p>
+              </div>
+              <div>
                 <p className="text-sm font-medium text-muted-foreground">Service Category</p>
-                <p>{service.circuit_type_display ?? "—"}</p>
+                <p>{service.service_category_display ?? "—"}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Service Type</p>
-                <p>{service.circuit_type_display ?? "—"}</p>
+                <p>{service.service_type_display ?? "—"}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Locations</p>
@@ -164,43 +166,6 @@ export default function ServiceDetailPage() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Contract</p>
                 <p>{service.contract_id ?? "—"}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Advanced Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Advanced Information</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Connection</p>
-                <p>{service.handoff_type_display ?? service.handoff_type ?? "—"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Equipment</p>
-                <p>{service.carrier ?? "—"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Circuit ID</p>
-                <p>{service.circuit_id ?? service.alternate_cid ?? "—"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Line Speed</p>
-                <p>{service.line_speed_display ?? service.line_speed ?? "—"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Port Speed</p>
-                <p>{service.port_speed ?? "—"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Fiber Type</p>
-                <p>{service.fiber_type_display ?? service.fiber_type ?? "—"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Connector Type</p>
-                <p>{service.connector_type_display ?? service.connector_type ?? "—"}</p>
               </div>
             </CardContent>
           </Card>

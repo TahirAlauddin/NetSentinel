@@ -51,6 +51,84 @@ class Provider(models.Model):
         return self.name
 
 
+class Service(models.Model):
+    """
+    Business-facing service record (e.g. "DevOps Main Data", "HQ Internet").
+    Distinct from DataCircuit: a Service may have zero or more data circuits
+    (technical records). Phone numbers and contracts typically reference a Service.
+    """
+
+    SERVICE_CATEGORY_CHOICES = [
+        ("data", "Data"),
+        ("voice", "Voice"),
+        ("internet", "Internet"),
+        ("mobile", "Mobile"),
+        ("consolidated", "Consolidated"),
+    ]
+
+    SERVICE_TYPE_CHOICES = [
+        ("broadband", "Broadband"),
+        ("dia", "DIA"),
+        ("satellite", "Satellite"),
+        ("lte_wireless", "LTE Wireless"),
+        ("ptp_wireless", "PTP Wireless"),
+        ("mpls", "MPLS"),
+        ("pri", "PRI"),
+        ("sip", "SIP"),
+        ("other", "Other"),
+    ]
+
+    name = models.CharField(max_length=255, help_text="Display name for the service")
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.SET_NULL,
+        related_name="services",
+        blank=True,
+        null=True,
+    )
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.SET_NULL,
+        related_name="telecom_services",
+        blank=True,
+        null=True,
+    )
+    service_category = models.CharField(
+        max_length=20,
+        choices=SERVICE_CATEGORY_CHOICES,
+        blank=True,
+        null=True,
+    )
+    service_type = models.CharField(
+        max_length=20,
+        choices=SERVICE_TYPE_CHOICES,
+        blank=True,
+        null=True,
+    )
+    associated_product = models.CharField(max_length=255, blank=True, null=True)
+    account_number = models.CharField(max_length=255, blank=True, null=True)
+    security_code = models.CharField(max_length=255, blank=True, null=True, help_text="Pin")
+    contract_id = models.CharField(max_length=255, blank=True, null=True)
+    monthly_cost = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Monthly cost in dollars",
+    )
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Service"
+        verbose_name_plural = "Services"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class DataCircuit(models.Model):
     """
     Data Circuit model representing data network circuits with comprehensive details.
@@ -96,6 +174,14 @@ class DataCircuit(models.Model):
     location = models.ForeignKey(
         Location, on_delete=models.SET_NULL, related_name="data_circuits", blank=True, null=True
     )
+    service = models.ForeignKey(
+        "Service",
+        on_delete=models.SET_NULL,
+        related_name="data_circuits",
+        blank=True,
+        null=True,
+        help_text="Business service this circuit supports (if any)",
+    )
     circuit_id = models.CharField(
         max_length=255, blank=True, null=True, help_text="Primary circuit identifier"
     )
@@ -137,3 +223,49 @@ class DataCircuit(models.Model):
         circuit_display = self.circuit_id or self.alternate_cid or "Unknown"
         carrier_display = f" - {self.carrier}" if self.carrier else ""
         return f"{circuit_display}{carrier_display}"
+
+
+class PhoneNumber(models.Model):
+    """
+    Phone number record for Telecom Expense Management.
+    Links a phone number to a provider, optional service (data circuit), and location.
+    """
+
+    number = models.CharField(
+        max_length=32,
+        help_text="Phone number (e.g. +1-312-273-2048 or E.164)",
+    )
+    friendly_name = models.CharField(max_length=255, blank=True, null=True)
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.SET_NULL,
+        related_name="phone_numbers",
+        blank=True,
+        null=True,
+    )
+    service = models.ForeignKey(
+        "Service",
+        on_delete=models.SET_NULL,
+        related_name="phone_numbers",
+        blank=True,
+        null=True,
+        help_text="Associated business service",
+    )
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.SET_NULL,
+        related_name="telecom_phone_numbers",
+        blank=True,
+        null=True,
+    )
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Phone Number"
+        verbose_name_plural = "Phone Numbers"
+        ordering = ["number"]
+
+    def __str__(self):
+        return self.friendly_name or self.number

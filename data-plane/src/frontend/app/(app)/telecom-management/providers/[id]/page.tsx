@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { TelecomBreadcrumb } from "@/components/telecom/telecom-breadcrumb";
 import { TelecomApiClient } from "@/lib/api-client/telecom";
 import { ProviderRecord } from "@/types/providers";
-import { DataCircuitRecord } from "@/types/data-circuits";
+import { ServiceRecord } from "@/types/services";
 import { getSafeAbsoluteUrl } from "@/lib/security/url";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,16 +23,15 @@ async function getProvider(id: string): Promise<ProviderRecord | null> {
   return res.data as ProviderRecord;
 }
 
-async function getProviderCircuits(providerId: number): Promise<DataCircuitRecord[]> {
+async function getProviderServices(providerId: number): Promise<ServiceRecord[]> {
   const api = new TelecomApiClient();
-  const res = await api.getDataCircuits<DataCircuitRecord[] | { results: DataCircuitRecord[] }>({
-    provider: providerId,
-  });
+  const res = await api.getServices<ServiceRecord[] | { results: ServiceRecord[] }>({});
   if (res.error || !res.data) return [];
   const d = res.data;
-  if (d && typeof d === "object" && "results" in d && Array.isArray((d as { results: DataCircuitRecord[] }).results))
-    return (d as { results: DataCircuitRecord[] }).results;
-  return Array.isArray(d) ? d : [];
+  const list = (d && typeof d === "object" && "results" in d && Array.isArray((d as { results: ServiceRecord[] }).results))
+    ? (d as { results: ServiceRecord[] }).results
+    : Array.isArray(d) ? d : [];
+  return list.filter((s) => s.provider === providerId);
 }
 
 function formatCurrency(value: number): string {
@@ -58,7 +57,7 @@ export default function ProviderDetailPage() {
   const tab = (["overview", "services", "ip-addresses"].includes(tabParam) ? tabParam : "overview") as "overview" | "services" | "ip-addresses";
   const { data: session } = useSession();
   const [provider, setProvider] = useState<ProviderRecord | null>(null);
-  const [circuits, setCircuits] = useState<DataCircuitRecord[]>([]);
+  const [services, setServices] = useState<ServiceRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -69,12 +68,12 @@ export default function ProviderDetailPage() {
         const p = await getProvider(id);
         setProvider(p ?? null);
         if (p) {
-          const list = await getProviderCircuits(p.id);
-          setCircuits(list);
+          const list = await getProviderServices(p.id);
+          setServices(list);
         }
       } catch (_e) {
         setProvider(null);
-        setCircuits([]);
+        setServices([]);
       } finally {
         setLoading(false);
       }
@@ -82,8 +81,8 @@ export default function ProviderDetailPage() {
   }, [session, id]);
 
   const monthlyCost = provider?.monthly_cost ? parseFloat(provider.monthly_cost) : 0;
-  const circuitsMonthly = circuits.reduce((sum, c) => sum + (c.monthly_cost ? parseFloat(c.monthly_cost) : 0), 0);
-  const totalMonthly = monthlyCost + circuitsMonthly;
+  const servicesMonthly = services.reduce((sum, s) => sum + (s.monthly_cost ? parseFloat(s.monthly_cost) : 0), 0);
+  const totalMonthly = monthlyCost + servicesMonthly;
   const avgMonthly = totalMonthly;
   const mtd = totalMonthly;
   const ytd = totalMonthly * 12;
@@ -296,7 +295,7 @@ export default function ProviderDetailPage() {
                     </Button>
                   </CardHeader>
                   <CardContent>
-                    {circuits.length === 0 ? (
+                    {services.length === 0 ? (
                       <p className="text-muted-foreground text-sm py-4">
                         No services linked to this provider.{" "}
                         <Link
@@ -308,18 +307,16 @@ export default function ProviderDetailPage() {
                       </p>
                     ) : (
                       <ul className="divide-y">
-                        {circuits.map((c) => (
-                          <li key={c.id}>
+                        {services.map((s) => (
+                          <li key={s.id}>
                             <Link
-                              href={`/telecom-management/services/${c.id}`}
+                              href={`/telecom-management/services/${s.id}`}
                               className="flex items-center justify-between py-3 hover:bg-muted/30 rounded-md px-2"
                             >
-                              <span className="font-medium">
-                                {c.circuit_id || c.alternate_cid || `Circuit #${c.id}`}
-                              </span>
+                              <span className="font-medium">{s.name}</span>
                               <span className="text-muted-foreground text-sm">
-                                {c.monthly_cost
-                                  ? formatCurrency(parseFloat(c.monthly_cost)) + " /mon"
+                                {s.monthly_cost
+                                  ? formatCurrency(parseFloat(s.monthly_cost)) + " /mon"
                                   : "—"}
                               </span>
                             </Link>

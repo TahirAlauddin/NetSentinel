@@ -46,23 +46,6 @@ function MetricCard({ label, amount }: { label: string; amount: string }) {
 export function DashboardContent() {
   return (
     <div className="space-y-6">
-      {/* Quick Links */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Link href="/assets/list">
-          <div className="rounded-md border border-border bg-card p-4 hover:bg-accent transition-colors cursor-pointer">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Boxes className="h-5 w-5 text-[oklch(0.40_0.15_249)]" />
-                <div>
-                  <div className="font-semibold">Assets</div>
-                  <div className="text-sm text-muted-foreground">View all assets</div>
-                </div>
-              </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </div>
-        </Link>
-      </section>
 
       {/* Metric tiles */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
