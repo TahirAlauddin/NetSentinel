@@ -2,12 +2,24 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { IpamHeader } from "@/components/ipam/ipam-header";
 import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, ExternalLink } from "lucide-react";
+import {
+  Heart,
+  ExternalLink,
+  Network,
+  FolderTree,
+  Users,
+  Layers,
+  Router,
+  Server,
+  FileCheck,
+  Phone,
+} from "lucide-react";
 import { Subnet } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { extractIpamArrayData } from "@/lib/ipam-utils";
@@ -51,6 +63,58 @@ export default function IpamDashboardPage() {
     <div className="space-y-6">
       <IpamHeader currentPage="IPAM Dashboard" />
       <IpamNavTabs />
+
+      {/* Quick links to main sections */}
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/ipam/subnets" className="gap-2">
+            <Network className="w-4 h-4" />
+            Subnets
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/ipam/subnet-groups" className="gap-2">
+            <FolderTree className="w-4 h-4" />
+            Subnet Groups
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/ipam/customers" className="gap-2">
+            <Users className="w-4 h-4" />
+            Customers
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/ipam/vlans" className="gap-2">
+            <Layers className="w-4 h-4" />
+            VLAN
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/ipam/vrfs" className="gap-2">
+            <Router className="w-4 h-4" />
+            VRF
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/ipam/devices" className="gap-2">
+            <Server className="w-4 h-4" />
+            Devices
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/ipam/ip-requests" className="gap-2">
+            <FileCheck className="w-4 h-4" />
+            IP Requests
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/ipam/phone-numbers" className="gap-2">
+            <Phone className="w-4 h-4" />
+            Phone Numbers
+          </Link>
+        </Button>
+      </div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
