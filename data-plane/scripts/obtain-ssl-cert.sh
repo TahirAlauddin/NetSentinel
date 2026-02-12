@@ -1,5 +1,12 @@
 #!/bin/bash
-# Script to obtain Let's Encrypt SSL certificate
+# Obtain Let's Encrypt SSL certificate for a fresh VM (or re-issue after expiry).
+#
+# Prerequisites:
+# - Domain must point to this server's public IP (A record).
+# - Use staging compose so nginx has certbot volumes and port 80 is open.
+# - nginx/conf.d.stag/site.conf must include netsentinel-http.conf (HTTP-only)
+#   so nginx starts without existing certs.
+#
 # Usage: ./obtain-ssl-cert.sh <email> <domain>
 # Example: ./obtain-ssl-cert.sh admin@example.com staging.netsentinel.io
 
@@ -16,41 +23,44 @@ fi
 
 echo "Obtaining SSL certificate for $DOMAIN..."
 echo "Email: $EMAIL"
+echo ""
 
-# Make sure nginx is running
-echo "Starting nginx..."
-docker-compose up -d nginx
+# Ensure we're using the staging compose (has certbot and port 80/443)
+echo "1. Starting stack with docker compose (stag) so nginx and certbot are up..."
+docker compose -f docker-compose.stag.yml up -d nginx
 
-# Wait for nginx to be ready
-echo "Waiting for nginx to be ready..."
+echo ""
+echo "2. Waiting for nginx to be ready..."
 sleep 5
 
-# Obtain certificate using certbot
-# Override entrypoint to run certonly instead of renew loop
-echo "Obtaining certificate from Let's Encrypt..."
-docker compose run --rm --entrypoint "" certbot certbot certonly \
+# Obtain certificate using certbot (webroot; nginx serves /.well-known/acme-challenge/)
+echo ""
+echo "3. Requesting certificate from Let's Encrypt..."
+docker compose -f docker-compose.stag.yml run --rm --entrypoint "" certbot certbot certonly \
     --webroot \
     --webroot-path=/var/www/certbot \
-    --email $EMAIL \
+    --email "$EMAIL" \
     --agree-tos \
     --no-eff-email \
-    -d $DOMAIN
+    -d "$DOMAIN"
 
 if [ $? -eq 0 ]; then
     echo ""
     echo "Certificate obtained successfully!"
     echo ""
-    echo "IMPORTANT: Update nginx configuration with your domain name:"
-    echo "  1. Replace 'YOUR_DOMAIN' in nginx/conf.d/netsentinel.conf with: $DOMAIN"
-    echo "  2. Update server_name from '_' to '$DOMAIN'"
+    echo "4. Switch nginx to HTTPS:"
+    echo "   - Edit nginx/conf.d.stag/site.conf and change the include line to:"
+    echo "     include /etc/nginx/conf.d/includes/netsentinel-ssl.conf;"
+    echo "   - Edit nginx/conf.d.stag/includes/netsentinel-ssl.conf and replace every"
+    echo "     YOUR_DOMAIN with: $DOMAIN"
     echo ""
-    echo "After updating, reload nginx:"
-    echo "  docker-compose exec nginx nginx -t  # Test configuration"
-    echo "  docker-compose exec nginx nginx -s reload  # Reload nginx"
+    echo "5. Reload nginx:"
+    echo "   docker compose -f docker-compose.stag.yml exec nginx nginx -t"
+    echo "   docker compose -f docker-compose.stag.yml exec nginx nginx -s reload"
     echo ""
-    echo "SSL certificate setup complete!"
+    echo "SSL setup complete."
 else
     echo ""
-    echo "Failed to obtain certificate. Please check the error messages above."
+    echo "Failed to obtain certificate. Check errors above (e.g. domain DNS, firewall)."
     exit 1
 fi
