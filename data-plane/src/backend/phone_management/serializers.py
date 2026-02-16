@@ -4,7 +4,7 @@ from .models import ManagedPhoneNumber, ManagedPhoneNumberBlock
 
 
 class ManagedPhoneNumberSerializer(serializers.ModelSerializer):
-    phone_number_value = serializers.CharField(source="phone_number.number", read_only=True)
+    phone_number_value = serializers.CharField(source="number", read_only=True)
     location_name = serializers.CharField(source="location.name", read_only=True)
     assigned_user_name = serializers.CharField(source="assigned_user.get_full_name", read_only=True)
     service_type_display = serializers.CharField(source="get_service_type_display", read_only=True)
@@ -13,7 +13,7 @@ class ManagedPhoneNumberSerializer(serializers.ModelSerializer):
         model = ManagedPhoneNumber
         fields = [
             "id",
-            "phone_number",
+            "number",
             "phone_number_value",
             "location",
             "location_name",
@@ -25,7 +25,6 @@ class ManagedPhoneNumberSerializer(serializers.ModelSerializer):
             "service_type_display",
             "did_enabled",
             "did_external_number",
-            "is_static_assignment",
             "notes",
             "created_at",
             "updated_at",

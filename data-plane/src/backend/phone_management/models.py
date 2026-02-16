@@ -14,7 +14,7 @@ extension_validator = RegexValidator(
 class ManagedPhoneNumber(models.Model):
     """
     Management record for an individual phone number.
-    Reuses existing telecom.PhoneNumber as the source of truth for the number.
+    The number is stored here; optionally link to telecom.PhoneNumber for billing/TEM context.
     """
 
     SERVICE_TYPE_CHOICES = [
@@ -25,10 +25,10 @@ class ManagedPhoneNumber(models.Model):
         ("extension", "Extension"),
     ]
 
-    phone_number = models.OneToOneField(
-        "telecom.PhoneNumber",
-        on_delete=models.CASCADE,
-        related_name="management_record",
+    number = models.CharField(
+        max_length=32,
+        unique=True,
+        help_text="Phone number (e.g. +1-312-273-2048 or E.164).",
     )
     location = models.ForeignKey(
         Location,
@@ -67,16 +67,17 @@ class ManagedPhoneNumber(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["location__name", "name", "phone_number__number"]
+        ordering = ["location__name", "name", "number"]
         verbose_name = "Managed Phone Number"
         verbose_name_plural = "Managed Phone Numbers"
         indexes = [
             models.Index(fields=["location", "service_type"]),
             models.Index(fields=["extension_number"]),
+            models.Index(fields=["number"]),
         ]
 
     def __str__(self):
-        return f"{self.name} ({self.phone_number.number})"
+        return f"{self.name} ({self.number})"
 
 
 class ManagedPhoneNumberBlock(models.Model):

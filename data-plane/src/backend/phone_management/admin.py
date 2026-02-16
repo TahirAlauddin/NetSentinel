@@ -7,17 +7,16 @@ from .models import ManagedPhoneNumber, ManagedPhoneNumberBlock
 class ManagedPhoneNumberAdmin(admin.ModelAdmin):
     list_display = [
         "name",
-        "phone_number",
+        "number",
         "location",
         "assigned_user",
         "extension_number",
         "service_type",
         "did_enabled",
-        "is_static_assignment",
     ]
-    search_fields = ["name", "phone_number__number", "extension_number", "assigned_user__email"]
-    list_filter = ["service_type", "did_enabled", "is_static_assignment", "location"]
-    raw_id_fields = ["phone_number", "location", "assigned_user"]
+    search_fields = ["name", "number", "extension_number", "assigned_user__email"]
+    list_filter = ["service_type", "did_enabled", "location"]
+    raw_id_fields = ["location", "assigned_user"]
 
 
 @admin.register(ManagedPhoneNumberBlock)

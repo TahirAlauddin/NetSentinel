@@ -6,13 +6,12 @@ from .serializers import ManagedPhoneNumberBlockSerializer, ManagedPhoneNumberSe
 
 class ManagedPhoneNumberViewSet(viewsets.ModelViewSet):
     queryset = ManagedPhoneNumber.objects.select_related(
-        "phone_number",
         "location",
         "assigned_user",
     ).all()
     serializer_class = ManagedPhoneNumberSerializer
-    search_fields = ("name", "extension_number", "phone_number__number")
-    ordering_fields = ("name", "extension_number", "phone_number__number", "created_at")
+    search_fields = ("name", "extension_number", "number")
+    ordering_fields = ("name", "extension_number", "number", "created_at")
 
 
 class ManagedPhoneNumberBlockViewSet(viewsets.ModelViewSet):
