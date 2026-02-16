@@ -25,11 +25,18 @@ class ManagedPhoneNumberSerializer(serializers.ModelSerializer):
             "service_type_display",
             "did_enabled",
             "did_external_number",
+            "service_config",
             "notes",
             "created_at",
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if data.get("service_config") is None:
+            data["service_config"] = {}
+        return data
 
     def validate(self, attrs):
         service_type = attrs.get("service_type")
@@ -59,6 +66,12 @@ class ManagedPhoneNumberSerializer(serializers.ModelSerializer):
         if did_enabled and not did_external_number:
             raise serializers.ValidationError(
                 {"did_external_number": "External DID number is required when DID is enabled."}
+            )
+
+        service_config = attrs.get("service_config")
+        if service_config is not None and not isinstance(service_config, dict):
+            raise serializers.ValidationError(
+                {"service_config": "Must be a JSON object."}
             )
 
         return attrs
