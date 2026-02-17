@@ -196,27 +196,6 @@ class Command(BaseCommand):
             ext = str(100 + (i % 900)) if random.random() > 0.3 else None
             did_enabled = random.choice([True, False])
             service_type = random.choice(SERVICE_TYPES)
-            service_config = {}
-            if service_type == "ivr" and random.random() > 0.5:
-                service_config = {
-                    "welcome_message": "Thank you for calling. Press 1 for Sales, 2 for Support.",
-                    "timeout_seconds": 10,
-                    "timeout_action": "voicemail",
-                    "menu": [
-                        {"key": "1", "label": "Sales", "action": "transfer:101"},
-                        {"key": "2", "label": "Support", "action": "transfer:102"},
-                    ],
-                }
-            elif service_type == "forwarder" and random.random() > 0.5:
-                service_config = {"destination": f"+1-{area}-555-{random.randint(1000, 9999)}"}
-            elif service_type == "ring_group" and random.random() > 0.5:
-                service_config = {
-                    "member_extensions": ["101", "102", "103"],
-                    "strategy": random.choice(["sequential", "simultaneous"]),
-                    "timeout_seconds": 20,
-                }
-            elif service_type == "fax" and random.random() > 0.5:
-                service_config = {"retry_count": 3}
             ManagedPhoneNumber.objects.create(
                 number=number,
                 location=location,
@@ -226,7 +205,6 @@ class Command(BaseCommand):
                 service_type=service_type,
                 did_enabled=did_enabled,
                 did_external_number=number if did_enabled and random.random() > 0.5 else None,
-                service_config=service_config,
                 notes=random.choice(FAKE_NOTES),
             )
             created += 1
