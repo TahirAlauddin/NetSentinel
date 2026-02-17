@@ -16,7 +16,7 @@ export class PhoneManagementApiClient extends BaseApiClient {
     params?: Record<string, unknown>
   ): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/phone-management/numbers${queryString}/`);
+    return this.get<T>(`/phone-management/numbers${queryString ? `/${queryString}` : "/"}`);
   }
 
   /**
@@ -63,7 +63,7 @@ export class PhoneManagementApiClient extends BaseApiClient {
     params?: Record<string, unknown>
   ): Promise<BaseApiResponse<T>> {
     const queryString = this.buildQueryString(params);
-    return this.get<T>(`/phone-management/blocks${queryString}/`);
+    return this.get<T>(`/phone-management/blocks${queryString ? `/${queryString}` : "/"}`);
   }
 
   /**
