@@ -64,6 +64,13 @@ export const telecomReportsSubmenuLinks = [
   { label: "Reports", href: "/telecom-management/reports" },
 ];
 
+// Phone Management submenu links
+export const phoneManagementSubmenuLinks = [
+  { label: "Overview", href: "/phone-management" },
+  { label: "Managed Numbers", href: "/phone-management/numbers" },
+  { label: "Number Blocks", href: "/phone-management/blocks" },
+];
+
 // Notifications submenu links
 export const notificationsAlertTypesSubmenuLinks = [
   { label: "System Alerts", href: "/notifications/system-alerts" },
@@ -280,7 +287,18 @@ export const navigationItems: NavigationItem[] = [
     ],
   },
   { label: "VM Management", icon: Server, href: "#" },
-  { label: "Phone Management", icon: Phone, href: "#" },
+  {
+    label: "Phone Management",
+    icon: Phone,
+    href: "/phone-management",
+    hasSubmenu: true,
+    submenuColumns: [
+      {
+        title: "Management",
+        links: phoneManagementSubmenuLinks,
+      },
+    ],
+  },
   { label: "API Management", icon: Api, href: "#" },
   {
     label: "IPAM",
