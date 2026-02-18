@@ -4,7 +4,6 @@ from django.db import models
 
 from infrastructure.models import Location
 
-
 extension_validator = RegexValidator(
     regex=r"^\d{1,10}$",
     message="Extension number must be 1 to 10 digits.",

@@ -48,9 +48,7 @@ class ManagedPhoneNumberSerializer(serializers.ModelSerializer):
         if self.instance:
             service_type = service_type or self.instance.service_type
             extension_number = (
-                extension_number
-                if "extension_number" in attrs
-                else self.instance.extension_number
+                extension_number if "extension_number" in attrs else self.instance.extension_number
             )
             did_enabled = did_enabled if "did_enabled" in attrs else self.instance.did_enabled
             did_external_number = (

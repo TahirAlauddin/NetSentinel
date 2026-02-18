@@ -41,9 +41,7 @@ class PhoneNumberViewSet(viewsets.ModelViewSet):
     ViewSet for managing phone numbers (Telecom Expense Management).
     """
 
-    queryset = PhoneNumber.objects.select_related(
-        "provider", "service", "location"
-    ).all()
+    queryset = PhoneNumber.objects.select_related("provider", "service", "location").all()
     serializer_class = PhoneNumberSerializer
     search_fields = ["number", "friendly_name"]
     ordering_fields = ["number", "friendly_name"]

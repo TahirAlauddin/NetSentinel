@@ -16,7 +16,6 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 
 from infrastructure.models import Location
-
 from phone_management.models import ManagedPhoneNumber, ManagedPhoneNumberBlock
 
 # Static fake data (no Faker dependency)

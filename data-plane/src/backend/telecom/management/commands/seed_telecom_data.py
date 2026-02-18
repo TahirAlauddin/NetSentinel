@@ -20,20 +20,31 @@ from telecom.models import DataCircuit, PhoneNumber, Provider, Service
 
 # Static fake data (no Faker dependency)
 FAKE_COMPANIES = [
-    "Acme Telecom", "MetroNet Solutions", "FiberFirst Inc", "DataStream Corp",
-    "ClearLink Communications", "SwiftBand Networks", "NorthStar Telecom",
-    "Pacific Wave", "Summit Data Co", "Horizon Broadband",
+    "Acme Telecom",
+    "MetroNet Solutions",
+    "FiberFirst Inc",
+    "DataStream Corp",
+    "ClearLink Communications",
+    "SwiftBand Networks",
+    "NorthStar Telecom",
+    "Pacific Wave",
+    "Summit Data Co",
+    "Horizon Broadband",
 ]
 FAKE_FIRST_NAMES = ["Jamie", "Morgan", "Casey", "Riley", "Quinn", "Alex", "Jordan"]
 FAKE_LAST_NAMES = ["Smith", "Chen", "Williams", "Brown", "Davis", "Wilson"]
 FAKE_SENTENCES = [
-    "Primary circuit for HQ.", "Backup link.", "Branch office connection.",
-    "Dedicated internet access.", "MPLS endpoint.",
+    "Primary circuit for HQ.",
+    "Backup link.",
+    "Branch office connection.",
+    "Dedicated internet access.",
+    "MPLS endpoint.",
 ]
 
 
 class Command(BaseCommand):
-    help = "Seed dummy providers, services, data circuits, and phone numbers for Telecom Expense Management"
+    help = "Seed dummy providers, services, data circuits, "
+    "and phone numbers for Telecom Expense Management"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -165,18 +176,26 @@ class Command(BaseCommand):
                 description=random.choice(FAKE_SENTENCES) if random.random() > 0.5 else None,
                 service_type=random.choice(service_types),
                 status=random.choice(statuses),
-                account_number=f"ACC{random.randint(100000, 999999)}" if random.random() > 0.4 else None,
-                contact_name=f"{random.choice(FAKE_FIRST_NAMES)} {random.choice(FAKE_LAST_NAMES)}"
-                if random.random() > 0.5
-                else None,
+                account_number=(
+                    f"ACC{random.randint(100000, 999999)}" if random.random() > 0.4 else None
+                ),
+                contact_name=(
+                    f"{random.choice(FAKE_FIRST_NAMES)} {random.choice(FAKE_LAST_NAMES)}"
+                    if random.random() > 0.5
+                    else None
+                ),
                 contact_email=f"contact{i}@example.com" if random.random() > 0.5 else None,
-                contact_phone=f"555-{random.randint(100, 999)}-{random.randint(1000, 9999)}"
-                if random.random() > 0.5
-                else None,
+                contact_phone=(
+                    f"555-{random.randint(100, 999)}-{random.randint(1000, 9999)}"
+                    if random.random() > 0.5
+                    else None
+                ),
                 website=f"https://example-{i}.com" if random.random() > 0.6 else None,
-                monthly_cost=Decimal(str(round(random.uniform(200, 5000), 2)))
-                if random.random() > 0.3
-                else None,
+                monthly_cost=(
+                    Decimal(str(round(random.uniform(200, 5000), 2)))
+                    if random.random() > 0.3
+                    else None
+                ),
                 notes=random.choice(FAKE_SENTENCES) if random.random() > 0.7 else None,
             )
             providers.append(provider)
@@ -214,7 +233,9 @@ class Command(BaseCommand):
                 service_type=random.choice(service_types),
                 account_number=provider.account_number or f"ACC{random.randint(100000, 999999)}",
                 security_code=f"SC{random.randint(1000, 9999)}" if random.random() > 0.7 else None,
-                contract_id=f"CON-{random.randint(100000, 999999)}" if random.random() > 0.6 else None,
+                contract_id=(
+                    f"CON-{random.randint(100000, 999999)}" if random.random() > 0.6 else None
+                ),
                 monthly_cost=Decimal(str(round(random.uniform(100, 3000), 2))),
                 notes=random.choice(FAKE_SENTENCES) if random.random() > 0.8 else None,
             )
@@ -243,7 +264,9 @@ class Command(BaseCommand):
                 location=location,
                 service=service,
                 circuit_id=circuit_id,
-                alternate_cid=f"ALT-{random.randint(100000, 999999)}" if random.random() > 0.6 else None,
+                alternate_cid=(
+                    f"ALT-{random.randint(100000, 999999)}" if random.random() > 0.6 else None
+                ),
                 carrier=provider.name,
                 account_number=provider.account_number or f"ACC{random.randint(100000, 999999)}",
                 security_code=f"SC{random.randint(1000, 9999)}" if random.random() > 0.7 else None,
@@ -254,13 +277,19 @@ class Command(BaseCommand):
                 fiber_type=random.choice(fiber_types) if handoff == "fiber" else None,
                 connector_type=random.choice(connector_types) if handoff == "fiber" else None,
                 quote_id=f"Q-{random.randint(100000, 999999)}" if random.random() > 0.7 else None,
-                contract_id=f"CON-{random.randint(100000, 999999)}" if random.random() > 0.6 else None,
-                foc_date=date.today() - timedelta(days=random.randint(30, 365))
-                if random.random() > 0.5
-                else None,
-                ttu_date=date.today() - timedelta(days=random.randint(0, 180))
-                if random.random() > 0.5
-                else None,
+                contract_id=(
+                    f"CON-{random.randint(100000, 999999)}" if random.random() > 0.6 else None
+                ),
+                foc_date=(
+                    date.today() - timedelta(days=random.randint(30, 365))
+                    if random.random() > 0.5
+                    else None
+                ),
+                ttu_date=(
+                    date.today() - timedelta(days=random.randint(0, 180))
+                    if random.random() > 0.5
+                    else None
+                ),
                 monthly_cost=Decimal(str(round(random.uniform(100, 3000), 2))),
                 notes=random.choice(FAKE_SENTENCES) if random.random() > 0.8 else None,
             )
@@ -285,9 +314,7 @@ class Command(BaseCommand):
                 "Conference",
                 "Reception",
             ]
-            friendly = (
-                random.choice(friendly_names) if random.random() > 0.3 else None
-            )
+            friendly = random.choice(friendly_names) if random.random() > 0.3 else None
             PhoneNumber.objects.create(
                 number=number,
                 friendly_name=friendly,
