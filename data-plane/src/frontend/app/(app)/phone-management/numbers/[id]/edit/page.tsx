@@ -92,6 +92,11 @@ export default function EditManagedNumberPage() {
       toast.error("Name is required");
       return;
     }
+    const locationId = Number(fd.get("location"));
+    if (!locationId || Number.isNaN(locationId)) {
+      toast.error("Location is required so we know where this phone is located.");
+      return;
+    }
     setSubmitting(true);
     try {
       const api = new PhoneManagementApiClient();
@@ -158,7 +163,9 @@ export default function EditManagedNumberPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
+                    <Label htmlFor="location">
+                      Location <span className="text-destructive">*</span>
+                    </Label>
                     <select
                       id="location"
                       name="location"
@@ -166,6 +173,7 @@ export default function EditManagedNumberPage() {
                       defaultValue={record.location}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     >
+                      <option value="">Select location</option>
                       {locations.map((loc) => (
                         <option key={loc.id} value={loc.id}>
                           {loc.name}

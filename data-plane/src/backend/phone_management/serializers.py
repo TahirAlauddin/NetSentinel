@@ -32,6 +32,14 @@ class ManagedPhoneNumberSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def validate(self, attrs):
+        location = attrs.get("location")
+        if self.instance and location is None:
+            location = self.instance.location_id
+        if not location:
+            raise serializers.ValidationError(
+                {"location": "Location is required so we know where this phone is located."}
+            )
+
         service_type = attrs.get("service_type")
         extension_number = attrs.get("extension_number")
         did_enabled = attrs.get("did_enabled")

@@ -80,7 +80,7 @@ export default function NewManagedNumberPage() {
       return;
     }
     if (!data.number || !data.location) {
-      toast.error("Phone number and location are required");
+      toast.error("Phone number and location are required. Location indicates where the phone is based.");
       return;
     }
     setSubmitting(true);
