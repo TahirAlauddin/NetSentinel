@@ -101,6 +101,15 @@ const TELECOM_NAV_ITEMS = [
   { href: "/telecom-management/services", label: "Services" },
 ];
 
+/**
+ * Phone Management Navigation Items
+ */
+const PHONE_MANAGEMENT_NAV_ITEMS = [
+  { href: "/phone-management", label: "Overview" },
+  { href: "/phone-management/numbers", label: "Managed Numbers" },
+  { href: "/phone-management/blocks", label: "Number Blocks" },
+];
+
 
 /**
  * Sectional Navigation Component
@@ -115,6 +124,7 @@ export function SectionalNavigation() {
   const isAssetsRoute = pathname.startsWith("/assets");
   const isContractsRoute = pathname.startsWith("/contracts");
   const isTelecomRoute = pathname.startsWith("/telecom-management");
+  const isPhoneManagementRoute = pathname.startsWith("/phone-management");
 
   // Show IPAM navigation when on IPAM routes
   if (isIpamRoute) {
@@ -139,6 +149,11 @@ export function SectionalNavigation() {
   // Show Telecom navigation when on Telecom routes
   if (isTelecomRoute) {
     return <TelecomNavigation pathname={pathname} />;
+  }
+
+  // Show Phone Management navigation when on Phone Management routes
+  if (isPhoneManagementRoute) {
+    return <PhoneManagementNavigation pathname={pathname} />;
   }
 
   // Default navigation for other routes
@@ -351,6 +366,41 @@ function TelecomNavigation({ pathname }: { pathname: string }) {
   return (
     <ul className="flex items-center gap-2 sm:gap-4 lg:gap-6 py-2 sm:py-3 text-xs sm:text-sm overflow-x-auto">
       {TELECOM_NAV_ITEMS.map((item) => {
+        const active = isActive(item.href);
+        return (
+          <li key={item.href} className="flex-shrink-0">
+            <Link
+              href={item.href}
+              className={cn(
+                "hover:underline whitespace-nowrap transition-colors",
+                active
+                  ? "text-primary font-semibold underline"
+                  : "text-secondary-foreground hover:text-foreground"
+              )}
+            >
+              {item.label}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/**
+ * Phone Management Navigation Component
+ */
+function PhoneManagementNavigation({ pathname }: { pathname: string }) {
+  const isActive = (href: string) => {
+    if (href === "/phone-management") {
+      return pathname === "/phone-management" || pathname === "/phone-management/";
+    }
+    return pathname.startsWith(href);
+  };
+
+  return (
+    <ul className="flex items-center gap-2 sm:gap-4 lg:gap-6 py-2 sm:py-3 text-xs sm:text-sm overflow-x-auto">
+      {PHONE_MANAGEMENT_NAV_ITEMS.map((item) => {
         const active = isActive(item.href);
         return (
           <li key={item.href} className="flex-shrink-0">

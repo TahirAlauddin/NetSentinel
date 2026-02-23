@@ -1,8 +1,6 @@
 "use client"
 
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts"
-import Link from "next/link"
-import { Boxes, ArrowRight } from "lucide-react"
 
 // const COLORS = [
 //   "oklch(0.696 0.17 162.48)", // teal-like

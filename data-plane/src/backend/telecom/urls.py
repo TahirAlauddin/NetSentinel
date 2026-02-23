@@ -1,12 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import (
-    DataCircuitViewSet,
-    PhoneNumberViewSet,
-    ProviderViewSet,
-    ServiceViewSet,
-)
+from .views import DataCircuitViewSet, PhoneNumberViewSet, ProviderViewSet, ServiceViewSet
 
 router = DefaultRouter()
 router.register(r"providers", ProviderViewSet, basename="provider")

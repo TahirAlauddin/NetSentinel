@@ -46,9 +46,7 @@ class ServiceSerializer(serializers.ModelSerializer):
     service_category_display = serializers.CharField(
         source="get_service_category_display", read_only=True
     )
-    service_type_display = serializers.CharField(
-        source="get_service_type_display", read_only=True
-    )
+    service_type_display = serializers.CharField(source="get_service_type_display", read_only=True)
 
     class Meta:
         model = Service
