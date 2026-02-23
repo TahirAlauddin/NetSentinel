@@ -45,6 +45,7 @@ export default function NewManagedNumberPage() {
   const [locations, setLocations] = useState<LocationRecord[]>([]);
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [didEnabled, setDidEnabled] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -221,17 +222,24 @@ export default function NewManagedNumberPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Checkbox id="did_enabled" name="did_enabled" />
+                  <Checkbox
+                    id="did_enabled"
+                    name="did_enabled"
+                    checked={didEnabled}
+                    onCheckedChange={(checked) => setDidEnabled(checked === true)}
+                  />
                   <Label htmlFor="did_enabled">DID enabled</Label>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="did_external_number">DID external number</Label>
-                  <Input
-                    id="did_external_number"
-                    name="did_external_number"
-                    placeholder="When DID is enabled"
-                  />
-                </div>
+                {didEnabled && (
+                  <div className="space-y-2">
+                    <Label htmlFor="did_external_number">DID external number</Label>
+                    <Input
+                      id="did_external_number"
+                      name="did_external_number"
+                      placeholder="When DID is enabled"
+                    />
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="notes">Notes</Label>
                   <Textarea id="notes" name="notes" rows={3} />
