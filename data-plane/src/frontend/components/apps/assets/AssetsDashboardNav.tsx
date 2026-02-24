@@ -1,14 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Card } from "@/components/ui/card";
 import {
   LayoutDashboard,
   List,
   BarChart3,
   Monitor,
   Smartphone,
-  HardDrive,
   MapPin,
   Shield,
   Package,
@@ -59,12 +57,6 @@ const reportingNavItems: NavItem[] = [
     href: "/assets/reporting/applications",
     icon: Smartphone,
     description: "Application inventory",
-  },
-  {
-    label: "Availability",
-    href: "/assets/reporting/availability",
-    icon: HardDrive,
-    description: "Asset status overview",
   },
   {
     label: "Location",
@@ -163,50 +155,31 @@ export function AssetsDashboardNav() {
       {/* Reporting Navigation - Only show if on reporting pages */}
       {isReportingPage && (
         <div>
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-3">
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Reporting Insights
             </span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="flex flex-wrap gap-2">
             {reportingNavItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
               return (
-                <Card
+                <button
                   key={item.href}
-                  className={cn(
-                    "p-4 cursor-pointer transition-all hover:shadow-md hover:border-primary/50",
-                    active
-                      ? "border-primary bg-primary/5 shadow-sm"
-                      : "hover:bg-accent/50"
-                  )}
                   onClick={() => handleNavClick(item.href)}
+                  className={cn(
+                    "inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
+                    "hover:bg-accent/50",
+                    active
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-card text-foreground border border-border hover:border-primary/50"
+                  )}
                 >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={cn(
-                        "p-2 rounded-md flex-shrink-0",
-                        active
-                          ? "bg-primary/10 text-primary"
-                          : "bg-muted text-muted-foreground"
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4
-                        className={cn(
-                          "font-medium text-sm",
-                          active ? "text-primary" : "text-foreground"
-                        )}
-                      >
-                        {item.label}
-                      </h4>
-                    </div>
-                  </div>
-                </Card>
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </button>
               );
             })}
           </div>
