@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Asset } from "@/types/assets";
 import { listAssets } from "../actions/index";
 import { AssetsDashboardNav } from "@/components/apps/assets/AssetsDashboardNav";
 import { ReportingInsightsSection } from "@/components/apps/assets/reporting/ReportingInsightsSection";
+import { InsightDetailModal } from "@/components/apps/assets/reporting/InsightDetailModal";
 import {
   calculateCategoryDistribution,
   calculateOSDistribution,
@@ -18,6 +19,29 @@ import {
   calculateFirmwareDistribution,
 } from "@/components/apps/assets/utils/calculate";
 
+type InsightTitle =
+  | "Operating System"
+  | "Applications"
+  | "Location"
+  | "Warranty"
+  | "Model"
+  | "Asset Type"
+  | "Department"
+  | "Cost"
+  | "Firmware";
+
+const INSIGHT_TOTAL_LABEL: Record<InsightTitle, string> = {
+  "Operating System": "OS",
+  Applications: "Applications",
+  Location: "Assets",
+  Warranty: "Assets",
+  Model: "Assets",
+  "Asset Type": "Assets",
+  Department: "Assets",
+  Cost: "Assets",
+  Firmware: "Assets",
+};
+
 /**
  * Asset Reporting Page - Main reporting dashboard with insights
  */
@@ -25,6 +49,7 @@ export default function AssetReportingPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"insights" | "analytics">("insights");
+  const [openInsight, setOpenInsight] = useState<InsightTitle | null>(null);
 
   useEffect(() => {
     const loadAssets = async () => {
@@ -59,6 +84,50 @@ export default function AssetReportingPage() {
     0
   );
 
+  const categoryDistributionWithAssets = useMemo(
+    () =>
+      categoryDistribution.map((c) => ({
+        name: c.name,
+        value: c.value,
+        assets: assets.filter(
+          (a) =>
+            (c.id != null && a.category?.id?.toString() === c.id) ||
+            ((c.id == null || c.id === "") &&
+              (a.category?.name ?? "Uncategorized") === c.name)
+        ),
+      })),
+    [categoryDistribution, assets]
+  );
+
+  const getDistributionForModal = (insight: string) => {
+    switch (insight) {
+      case "Operating System":
+        return osDistribution;
+      case "Applications":
+        return applicationsDistribution;
+      case "Location":
+        return locationDistribution;
+      case "Warranty":
+        return warrantyDistribution;
+      case "Model":
+        return modelDistribution;
+      case "Asset Type":
+        return categoryDistributionWithAssets;
+      case "Department":
+        return departmentDistribution;
+      case "Cost":
+        return costDistribution;
+      case "Firmware":
+        return firmwareDistribution;
+      default:
+        return [];
+    }
+  };
+
+  const handleExport = () => {
+    console.warn("Export not implemented");
+  };
+
   if (loading) {
     return (
       <AppShell>
@@ -84,7 +153,10 @@ export default function AssetReportingPage() {
               <h1 className="text-3xl font-bold">Asset Reporting</h1>
             </div>
 
-            <AssetsDashboardNav />
+            <AssetsDashboardNav
+              onOpenReportingInsight={(title) => setOpenInsight(title as InsightTitle)}
+              activeReportingInsight={openInsight}
+            />
           </div>
 
           {/* Tabs */}
@@ -114,21 +186,34 @@ export default function AssetReportingPage() {
           </div>
 
           {activeTab === "insights" && (
-            <ReportingInsightsSection
-              assets={assets}
-              categoryDistribution={categoryDistribution}
-              osDistribution={osDistribution}
-              applicationsDistribution={applicationsDistribution}
-              locationDistribution={locationDistribution}
-              warrantyDistribution={warrantyDistribution}
-              modelDistribution={modelDistribution}
-              departmentDistribution={departmentDistribution}
-              costDistribution={costDistribution}
-              firmwareDistribution={firmwareDistribution}
-              totalAssets={totalAssets}
-              totalOS={totalOS}
-              totalApplications={totalApplications}
-            />
+            <>
+              <ReportingInsightsSection
+                assets={assets}
+                categoryDistribution={categoryDistribution}
+                osDistribution={osDistribution}
+                applicationsDistribution={applicationsDistribution}
+                locationDistribution={locationDistribution}
+                warrantyDistribution={warrantyDistribution}
+                modelDistribution={modelDistribution}
+                departmentDistribution={departmentDistribution}
+                costDistribution={costDistribution}
+                firmwareDistribution={firmwareDistribution}
+                totalAssets={totalAssets}
+                totalOS={totalOS}
+                totalApplications={totalApplications}
+                onOpenInsight={(attr) => setOpenInsight(attr as InsightTitle)}
+              />
+              {openInsight && (
+                <InsightDetailModal
+                  open={true}
+                  onOpenChange={(open) => !open && setOpenInsight(null)}
+                  title={openInsight}
+                  distribution={getDistributionForModal(openInsight)}
+                  totalLabel={INSIGHT_TOTAL_LABEL[openInsight]}
+                  onExport={handleExport}
+                />
+              )}
+            </>
           )}
 
           {activeTab === "analytics" && (

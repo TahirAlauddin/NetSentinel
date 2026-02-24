@@ -45,6 +45,18 @@ const mainNavItems: NavItem[] = [
   },
 ];
 
+const HREF_TO_INSIGHT: Record<string, string> = {
+  "/assets/reporting/operating-system": "Operating System",
+  "/assets/reporting/applications": "Applications",
+  "/assets/reporting/location": "Location",
+  "/assets/reporting/warranty": "Warranty",
+  "/assets/reporting/model": "Model",
+  "/assets/reporting/asset-type": "Asset Type",
+  "/assets/reporting/department": "Department",
+  "/assets/reporting/cost": "Cost",
+  "/assets/reporting/firmware": "Firmware",
+};
+
 const reportingNavItems: NavItem[] = [
   {
     label: "Operating System",
@@ -102,13 +114,33 @@ const reportingNavItems: NavItem[] = [
   },
 ];
 
-export function AssetsDashboardNav() {
+export interface AssetsDashboardNavProps {
+  /** When provided, reporting insight clicks open a modal instead of navigating. */
+  onOpenReportingInsight?: (insightTitle: string) => void;
+  /** When set, the reporting insight with this title is shown as active (e.g. modal open). */
+  activeReportingInsight?: string | null;
+}
+
+export function AssetsDashboardNav({
+  onOpenReportingInsight,
+  activeReportingInsight,
+}: AssetsDashboardNavProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
   const isReportingPage = pathname.startsWith("/assets/reporting");
 
   const handleNavClick = (href: string) => {
+    const insightTitle = HREF_TO_INSIGHT[href];
+    if (isReportingPage && insightTitle && onOpenReportingInsight) {
+      onOpenReportingInsight(insightTitle);
+      return;
+    }
     router.push(href);
+  };
+
+  const isReportingInsightActive = (href: string) => {
+    const title = HREF_TO_INSIGHT[href];
+    return title != null && title === activeReportingInsight;
   };
 
   const isActive = (href: string) => {
@@ -164,7 +196,7 @@ export function AssetsDashboardNav() {
           <div className="flex flex-wrap gap-2">
             {reportingNavItems.map((item) => {
               const Icon = item.icon;
-              const active = isActive(item.href);
+              const active = isActive(item.href) || isReportingInsightActive(item.href);
               return (
                 <button
                   key={item.href}

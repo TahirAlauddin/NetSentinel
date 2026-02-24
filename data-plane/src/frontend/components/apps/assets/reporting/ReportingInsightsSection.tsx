@@ -78,6 +78,8 @@ export interface ReportingInsightsSectionProps {
   totalAssets: number;
   totalOS: number;
   totalApplications: number;
+  /** When provided, "View All Details" and attribute clicks open this instead of navigating. */
+  onOpenInsight?: (attribute: string) => void;
 }
 
 function getColor(index: number) {
@@ -209,7 +211,13 @@ export function ReportingInsightsSection(props: ReportingInsightsSectionProps) {
           ))}
         </div>
       </div>
-      <Button variant="outline" className="w-full mt-4" onClick={() => router.push(route)}>
+      <Button
+        variant="outline"
+        className="w-full mt-4"
+        onClick={() =>
+          props.onOpenInsight ? props.onOpenInsight(title) : router.push(route)
+        }
+      >
         View All Details
       </Button>
     </Card>
@@ -268,7 +276,11 @@ export function ReportingInsightsSection(props: ReportingInsightsSectionProps) {
                     key={item.name}
                     type="button"
                     className="w-full flex items-center gap-2 p-2 bg-muted/50 rounded cursor-pointer hover:bg-muted transition-colors text-left"
-                    onClick={() => router.push(ATTRIBUTE_ROUTES[selectedAttribute] ?? "#")}
+                    onClick={() =>
+                      props.onOpenInsight
+                        ? props.onOpenInsight(selectedAttribute)
+                        : router.push(ATTRIBUTE_ROUTES[selectedAttribute] ?? "#")
+                    }
                   >
                     <div
                       className="w-2 h-8 rounded shrink-0"
@@ -284,7 +296,11 @@ export function ReportingInsightsSection(props: ReportingInsightsSectionProps) {
               <Button
                 variant="outline"
                 className="w-full mt-4"
-                onClick={() => router.push(ATTRIBUTE_ROUTES[selectedAttribute] ?? "#")}
+                onClick={() =>
+                  props.onOpenInsight
+                    ? props.onOpenInsight(selectedAttribute)
+                    : router.push(ATTRIBUTE_ROUTES[selectedAttribute] ?? "#")
+                }
               >
                 View All Details
               </Button>
