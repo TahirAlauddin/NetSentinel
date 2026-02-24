@@ -11,7 +11,7 @@ export {
   calculateCategoryDistribution,
 } from "./calculate";
 export { getWarrantyColor, formatWarrantyStatus, formatAssetStatus } from "./format";
-export { filterAssets } from "./filter";
+export { filterAssets, assetMatchesSearch } from "./filter";
 export {
   validateStep,
   validateStepForCreate,
