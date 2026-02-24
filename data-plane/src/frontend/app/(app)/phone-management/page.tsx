@@ -11,41 +11,13 @@ import type {
   ManagedPhoneNumberRecord,
   ManagedPhoneNumberBlockRecord,
 } from "@/types/phone-management";
-import {
-  computePhoneManagementOverview,
-  type PhoneManagementAtGlance,
-} from "@/lib/phone-management/overview";
-import { Card, CardContent } from "@/components/ui/card";
+import { computePhoneManagementOverview } from "@/lib/phone-management/overview";
 import { Button } from "@/components/ui/button";
-import { Phone, Layers, Plus } from "lucide-react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
-
-const AT_GLANCE_LABELS: Array<{
-  key: keyof PhoneManagementAtGlance;
-  label: string;
-  color: string;
-}> = [
-  { key: "total_numbers", label: "Managed numbers", color: "text-foreground" },
-  { key: "total_blocks", label: "Number blocks", color: "text-foreground" },
-  { key: "unassigned", label: "Unassigned", color: "text-muted-foreground" },
-  { key: "did_enabled", label: "DID enabled", color: "text-primary" },
-  {
-    key: "locations_with_numbers",
-    label: "Locations",
-    color: "text-muted-foreground",
-  },
-];
+import { Plus } from "lucide-react";
+import { PhoneManagementAtGlanceKpis } from "@/components/phone-management/phone-management-at-a-glance-kpis";
+import { PhoneManagementNumbersBreakdown } from "@/components/phone-management/phone-management-numbers-breakdown";
+import { PhoneManagementQuickLinks } from "@/components/phone-management/phone-management-quick-links";
+import { PhoneManagementFeatureCards } from "@/components/phone-management/phone-management-feature-cards";
 
 interface ListResponse<T> {
   count?: number;
@@ -114,8 +86,6 @@ export default function PhoneManagementPage() {
     [numbers, blocks]
   );
 
-  const at_glance = overview.at_glance;
-
   return (
     <ProtectedRoute>
       <AppShell>
@@ -147,238 +117,16 @@ export default function PhoneManagementPage() {
             </div>
           </div>
 
-          {/* At a glance - KPI cards */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">At a glance</h2>
-            {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                {AT_GLANCE_LABELS.map(({ label }) => (
-                  <Card key={label}>
-                    <CardContent className="p-6">
-                      <div className="text-sm text-muted-foreground mb-2">
-                        {label}
-                      </div>
-                      <div className="text-3xl font-semibold animate-pulse text-muted-foreground">
-                        —
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                {AT_GLANCE_LABELS.map(({ key, label, color }) => (
-                  <Card key={key}>
-                    <CardContent className="p-6">
-                      <div className="text-sm text-muted-foreground mb-2">
-                        {label}
-                      </div>
-                      <div className={`text-3xl font-semibold ${color}`}>
-                        {at_glance[key]}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
+          <PhoneManagementAtGlanceKpis
+            atGlance={overview.at_glance}
+            loading={loading}
+          />
 
-          {/* Charts: Service type (pie) + Numbers by location (bar) */}
-          <Card>
-            <CardContent className="p-6 pt-6">
-              <h2 className="text-xl font-semibold mb-6">
-                Numbers breakdown
-              </h2>
-              <div className="grid grid-cols-1 xl:grid-cols-[1fr_1.2fr] gap-10 min-w-0">
-                {/* Pie: by service type */}
-                <div className="min-w-0">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-4">
-                    By service type
-                  </h3>
-                  <div
-                    className="relative flex items-center justify-center"
-                    style={{ height: 320 }}
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={overview.by_service_type}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={80}
-                          outerRadius={120}
-                          paddingAngle={2}
-                          dataKey="value"
-                        >
-                          {overview.by_service_type.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip
-                          formatter={(value: number) => [value, "Count"]}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div
-                      className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10"
-                      aria-hidden
-                    >
-                      <div className="text-2xl font-semibold text-foreground">
-                        {loading ? "—" : overview.at_glance.total_numbers}
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        Total numbers
-                      </div>
-                    </div>
-                  </div>
-                </div>
+          <PhoneManagementNumbersBreakdown overview={overview} loading={loading} />
 
-                {/* Bar: by location (top 10) */}
-                <div className="min-w-0 min-h-[340px]">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-4">
-                    Top locations (managed numbers)
-                  </h3>
-                  {loading ? (
-                    <div
-                      className="flex items-center justify-center text-muted-foreground"
-                      style={{ height: 320 }}
-                    >
-                      —
-                    </div>
-                  ) : overview.by_location.length === 0 ? (
-                    <div
-                      className="flex items-center justify-center text-muted-foreground"
-                      style={{ height: 320 }}
-                    >
-                      No data
-                    </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={320}>
-                      <BarChart
-                        data={overview.by_location}
-                        margin={{ top: 8, right: 16, left: 8, bottom: 8 }}
-                        layout="vertical"
-                      >
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="hsl(var(--border))"
-                          horizontal={false}
-                          vertical
-                        />
-                        <XAxis
-                          type="number"
-                          tick={{ fontSize: 12 }}
-                          axisLine={{ stroke: "hsl(var(--border))" }}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          type="category"
-                          dataKey="name"
-                          width={120}
-                          tick={{ fontSize: 11 }}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <Tooltip
-                          formatter={(value: number) => [value, "Numbers"]}
-                        />
-                        <Bar
-                          dataKey="count"
-                          radius={[0, 4, 4, 0]}
-                          maxBarSize={32}
-                          fill="hsl(var(--primary))"
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-              </div>
+          <PhoneManagementQuickLinks />
 
-              {/* Service type legend */}
-              <div className="mt-8">
-                <h3 className="text-sm font-medium text-muted-foreground mb-4">
-                  Service types
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-2">
-                  {(loading ? [] : overview.service_type_categories).map(
-                    (cat) => {
-                      const slice = overview.by_service_type.find(
-                        (s) => s.name === cat.name
-                      );
-                      return (
-                        <div
-                          key={cat.name}
-                          className="flex items-center justify-between py-1.5"
-                        >
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-2.5 h-2.5 rounded-full shrink-0"
-                              style={{
-                                backgroundColor:
-                                  slice?.color ?? "hsl(var(--muted-foreground))",
-                              }}
-                            />
-                            <span className="text-sm">{cat.name}</span>
-                          </div>
-                          <span className="text-sm text-muted-foreground">
-                            {cat.count}
-                          </span>
-                        </div>
-                      );
-                    }
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick links */}
-          <div className="flex flex-wrap gap-4">
-            <Button variant="outline" size="lg" asChild className="gap-2">
-              <Link href="/phone-management/numbers">
-                <Phone className="w-5 h-5" />
-                Managed Numbers
-              </Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild className="gap-2">
-              <Link href="/phone-management/blocks">
-                <Layers className="w-5 h-5" />
-                Number Blocks
-              </Link>
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="transition-colors hover:bg-muted/50">
-              <Link href="/phone-management/numbers" className="block">
-                <CardContent className="pt-6">
-                  <h2 className="text-lg font-semibold flex items-center gap-2">
-                    <Phone className="w-5 h-5" />
-                    Managed Numbers
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Individual phone numbers with extension, service type, DID,
-                    and assignment.
-                  </p>
-                  <p className="text-xs text-primary mt-2">View all →</p>
-                </CardContent>
-              </Link>
-            </Card>
-            <Card className="transition-colors hover:bg-muted/50">
-              <Link href="/phone-management/blocks" className="block">
-                <CardContent className="pt-6">
-                  <h2 className="text-lg font-semibold flex items-center gap-2">
-                    <Layers className="w-5 h-5" />
-                    Number Blocks
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Ranges of numbers at a location for bulk management.
-                  </p>
-                  <p className="text-xs text-primary mt-2">View all →</p>
-                </CardContent>
-              </Link>
-            </Card>
-          </div>
+          <PhoneManagementFeatureCards />
         </div>
       </AppShell>
     </ProtectedRoute>
