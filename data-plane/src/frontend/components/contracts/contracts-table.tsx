@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Plus, Trash2, LayoutGrid, List } from "lucide-react";
+import { Search, Plus, Trash2, Pencil, LayoutGrid, List } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { ContractLogoThumb } from "@/components/contracts/contract-logo-thumb";
@@ -173,14 +173,23 @@ export function ContractsTable({
                   )}
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => onDeleteClick(contract.id)}
-                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg shrink-0"
-                aria-label={`Delete ${contract.contract_number}`}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                <Link
+                  href={`/contracts/edit/${contract.id}`}
+                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                  aria-label={`Edit ${contract.contract_number}`}
+                >
+                  <Pencil className="w-4 h-4" />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => onDeleteClick(contract.id)}
+                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg shrink-0"
+                  aria-label={`Delete ${contract.contract_number}`}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -193,7 +202,7 @@ export function ContractsTable({
             <span>Type</span>
             <span className="text-right">Total Cost</span>
             <span className="text-right">Status</span>
-            <span className="w-10" />
+            <span className="w-14" />
           </div>
           {contracts.map((contract: Contract) => (
             <div
@@ -240,14 +249,23 @@ export function ContractsTable({
                   <span className="text-gray-400 text-xs">—</span>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => onDeleteClick(contract.id)}
-                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                aria-label={`Delete ${contract.contract_number}`}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                <Link
+                  href={`/contracts/edit/${contract.id}`}
+                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                  aria-label={`Edit ${contract.contract_number}`}
+                >
+                  <Pencil className="w-4 h-4" />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => onDeleteClick(contract.id)}
+                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                  aria-label={`Delete ${contract.contract_number}`}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
