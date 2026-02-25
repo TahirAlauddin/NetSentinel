@@ -14,10 +14,10 @@ import type {
 import { computePhoneManagementOverview } from "@/lib/phone-management/overview";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { PhoneManagementAtGlanceKpis } from "@/components/phone-management/phone-management-at-a-glance-kpis";
-import { PhoneManagementNumbersBreakdown } from "@/components/phone-management/phone-management-numbers-breakdown";
-import { PhoneManagementQuickLinks } from "@/components/phone-management/phone-management-quick-links";
-import { PhoneManagementFeatureCards } from "@/components/phone-management/phone-management-feature-cards";
+import { PhoneManagementAtGlanceKpis } from "@/components/apps/phone-management/phone-management-at-a-glance-kpis";
+import { PhoneManagementNumbersBreakdown } from "@/components/apps/phone-management/phone-management-numbers-breakdown";
+import { PhoneManagementQuickLinks } from "@/components/apps/phone-management/phone-management-quick-links";
+import { PhoneManagementFeatureCards } from "@/components/apps/phone-management/phone-management-feature-cards";
 
 interface ListResponse<T> {
   count?: number;
