@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { IpamHeader } from "@/components/ipam/ipam-header";
-import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { SubnetMaskTable } from "@/components/ipam/subnet-mask-table";
+import { IpamHeader } from "@/components/apps/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
+import { SubnetMaskTable } from "@/components/apps/ipam/subnet-mask-table";
 import {
   getAllSubnetMasks,
   getCommonSubnetMasks,

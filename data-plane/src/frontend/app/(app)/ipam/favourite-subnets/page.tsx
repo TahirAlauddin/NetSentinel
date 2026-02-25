@@ -3,9 +3,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { IpamHeader } from "@/components/ipam/ipam-header";
-import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { SubnetTable } from "@/components/ipam/subnet-table";
+import { IpamHeader } from "@/components/apps/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
+import { SubnetTable } from "@/components/apps/ipam/subnet-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, Plus } from "lucide-react";

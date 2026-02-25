@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { IpamHeader } from "@/components/ipam/ipam-header";
-import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { VlanForm } from "@/components/ipam/vlan-form";
+import { IpamHeader } from "@/components/apps/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
+import { VlanForm } from "@/components/apps/ipam/vlan-form";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { VlanCreateUpdateDto } from "@/types/ipam/dto";
 

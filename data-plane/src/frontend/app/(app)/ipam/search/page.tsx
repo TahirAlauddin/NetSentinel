@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { IpamHeader } from "@/components/ipam/ipam-header";
-import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { IPSearchEnhanced } from "@/components/ipam/ip-search-enhanced";
-import { IPImportDialog } from "@/components/ipam/ip-import-dialog";
-import { IPExportDialog } from "@/components/ipam/ip-export-dialog";
+import { IpamHeader } from "@/components/apps/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
+import { IPSearchEnhanced } from "@/components/apps/ipam/ip-search-enhanced";
+import { IPImportDialog } from "@/components/apps/ipam/ip-import-dialog";
+import { IPExportDialog } from "@/components/apps/ipam/ip-export-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

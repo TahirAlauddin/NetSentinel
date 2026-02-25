@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { IpamHeader } from "@/components/ipam/ipam-header";
-import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { SubnetDetailsTabs } from "@/components/ipam/subnet-details-tabs";
+import { IpamHeader } from "@/components/apps/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
+import { SubnetDetailsTabs } from "@/components/apps/ipam/subnet-details-tabs";
 import { Button } from "@/components/ui/button";
 import { Subnet } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";

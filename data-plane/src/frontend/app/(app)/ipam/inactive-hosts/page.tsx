@@ -1,8 +1,8 @@
 "use client";
 
-import { IpamHeader } from "@/components/ipam/ipam-header";
-import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { InactiveHostsDashboard } from "@/components/ipam/inactive-hosts-dashboard";
+import { IpamHeader } from "@/components/apps/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
+import { InactiveHostsDashboard } from "@/components/apps/ipam/inactive-hosts-dashboard";
 
 export default function InactiveHostsPage() {
   return (

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { IpamHeader } from "@/components/ipam/ipam-header";
-import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { IPAuditLogViewer } from "@/components/ipam/ip-audit-log-viewer";
+import { IpamHeader } from "@/components/apps/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
+import { IPAuditLogViewer } from "@/components/apps/ipam/ip-audit-log-viewer";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

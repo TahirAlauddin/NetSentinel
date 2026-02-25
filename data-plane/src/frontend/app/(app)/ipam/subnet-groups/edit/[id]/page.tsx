@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { IpamHeader } from "@/components/ipam/ipam-header";
-import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { SubnetGroupForm } from "@/components/ipam/subnet-group-form";
+import { IpamHeader } from "@/components/apps/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
+import { SubnetGroupForm } from "@/components/apps/ipam/subnet-group-form";
 import { SubnetGroup } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { SubnetGroupCreateUpdateDto } from "@/types/ipam/dto";

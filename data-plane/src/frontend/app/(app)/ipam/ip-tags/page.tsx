@@ -1,8 +1,8 @@
 "use client";
 
-import { IpamHeader } from "@/components/ipam/ipam-header";
-import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { IPTagManager } from "@/components/ipam/ip-tag-manager";
+import { IpamHeader } from "@/components/apps/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
+import { IPTagManager } from "@/components/apps/ipam/ip-tag-manager";
 import { Card } from "@/components/ui/card";
 
 export default function IPTagsPage() {

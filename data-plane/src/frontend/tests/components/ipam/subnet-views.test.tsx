@@ -10,7 +10,7 @@
 
 import { render, screen } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
-import { SubnetViews } from '@/components/ipam/subnet-views'
+import { SubnetViews } from '@/components/apps/ipam/subnet-views'
 import { Subnet } from '@/types/ipam'
 
 // Mock next/link

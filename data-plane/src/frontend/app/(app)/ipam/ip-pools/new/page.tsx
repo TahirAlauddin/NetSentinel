@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { IpamHeader } from "@/components/ipam/ipam-header";
-import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { IpPoolForm } from "@/components/ipam/ip-pool-form";
+import { IpamHeader } from "@/components/apps/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
+import { IpPoolForm } from "@/components/apps/ipam/ip-pool-form";
 import { IPPool } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 

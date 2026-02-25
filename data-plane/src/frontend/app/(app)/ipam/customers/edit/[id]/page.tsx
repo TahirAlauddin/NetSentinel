@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { IpamHeader } from "@/components/ipam/ipam-header";
-import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { CustomerForm } from "@/components/ipam/customer-form";
+import { IpamHeader } from "@/components/apps/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
+import { CustomerForm } from "@/components/apps/ipam/customer-form";
 import { Customer } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { CustomerCreateUpdateDto } from "@/types/ipam/dto";

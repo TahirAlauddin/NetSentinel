@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { IpamHeader } from "@/components/ipam/ipam-header";
-import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { IPRequestQueue } from "@/components/ipam/ip-request-queue";
-import { IPRequestForm } from "@/components/ipam/ip-request-form";
+import { IpamHeader } from "@/components/apps/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
+import { IPRequestQueue } from "@/components/apps/ipam/ip-request-queue";
+import { IPRequestForm } from "@/components/apps/ipam/ip-request-form";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { IpamApiClient } from "@/lib/api-client/ipam";

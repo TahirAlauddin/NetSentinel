@@ -1,8 +1,8 @@
 "use client";
 
-import { IpamHeader } from "@/components/ipam/ipam-header";
-import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { SubnetThresholdDashboard } from "@/components/ipam/subnet-threshold-dashboard";
+import { IpamHeader } from "@/components/apps/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
+import { SubnetThresholdDashboard } from "@/components/apps/ipam/subnet-threshold-dashboard";
 import { Card } from "@/components/ui/card";
 
 export default function ThresholdsPage() {

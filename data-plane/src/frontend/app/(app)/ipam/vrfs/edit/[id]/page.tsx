@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { IpamHeader } from "@/components/ipam/ipam-header";
-import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { VrfForm } from "@/components/ipam/vrf-form";
+import { IpamHeader } from "@/components/apps/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
+import { VrfForm } from "@/components/apps/ipam/vrf-form";
 import { VRF } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { VrfCreateUpdateDto } from "@/types/ipam/dto";

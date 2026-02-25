@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { IpamHeader } from "@/components/ipam/ipam-header";
-import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { PhoneNumberTable } from "@/components/ipam/phone-number-table";
-import { PhoneNumberForm } from "@/components/ipam/phone-number-form";
+import { IpamHeader } from "@/components/apps/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
+import { PhoneNumberTable } from "@/components/apps/ipam/phone-number-table";
+import { PhoneNumberForm } from "@/components/apps/ipam/phone-number-form";
 import { PhoneNumberRange } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { extractIpamArrayData } from "@/lib/ipam-utils";

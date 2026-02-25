@@ -1,8 +1,8 @@
 "use client";
 
-import { IpamHeader } from "@/components/ipam/ipam-header";
-import { IpamNavTabs } from "@/components/ipam/ipam-nav-tabs";
-import { DuplicatesDashboard } from "@/components/ipam/duplicates-dashboard";
+import { IpamHeader } from "@/components/apps/ipam/ipam-header";
+import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
+import { DuplicatesDashboard } from "@/components/apps/ipam/duplicates-dashboard";
 
 export default function DuplicatesPage() {
   return (
