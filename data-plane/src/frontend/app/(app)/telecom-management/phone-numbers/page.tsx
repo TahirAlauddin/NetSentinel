@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
-import { TelecomBreadcrumb } from "@/components/telecom/telecom-breadcrumb";
+import { TelecomBreadcrumb } from "@/components/apps/telecom/telecom-breadcrumb";
 import { TelecomApiClient } from "@/lib/api-client/telecom";
 import type { PhoneNumberRecord } from "@/types/phone-numbers";
 import { Search, Plus } from "lucide-react";

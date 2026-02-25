@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
-import { TelecomBreadcrumb } from "@/components/telecom/telecom-breadcrumb";
-import { ProviderForm } from "@/components/telecom/provider-form";
+import { TelecomBreadcrumb } from "@/components/apps/telecom/telecom-breadcrumb";
+import { ProviderForm } from "@/components/apps/telecom/provider-form";
 import { TelecomApiClient } from "@/lib/api-client/telecom";
 import type { ProviderCreateDto } from "@/types/providers";
 import { useState } from "react";

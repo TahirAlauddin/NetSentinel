@@ -10,7 +10,7 @@ import { Trash2, Edit2, Plus } from "lucide-react";
 import { ProviderRecord } from "@/types/providers";
 import { TelecomApiClient } from "@/lib/api-client/telecom";
 import { getSafeAbsoluteUrl } from "@/lib/security/url";
-import { TelecomBreadcrumb } from "@/components/telecom/telecom-breadcrumb";
+import { TelecomBreadcrumb } from "@/components/apps/telecom/telecom-breadcrumb";
 import { ViewToggle, ViewMode } from "@/components/ui/view-toggle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

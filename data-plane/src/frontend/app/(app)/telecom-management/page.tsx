@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ViewToggle, ViewMode } from "@/components/ui/view-toggle";
-import { TelecomBreadcrumb } from "@/components/telecom/telecom-breadcrumb";
+import { TelecomBreadcrumb } from "@/components/apps/telecom/telecom-breadcrumb";
 import { TelecomApiClient } from "@/lib/api-client/telecom";
 import {
   computeTelecomKpis,

@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
-import { TelecomBreadcrumb } from "@/components/telecom/telecom-breadcrumb";
+import { TelecomBreadcrumb } from "@/components/apps/telecom/telecom-breadcrumb";
 import { ViewToggle, ViewMode } from "@/components/ui/view-toggle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

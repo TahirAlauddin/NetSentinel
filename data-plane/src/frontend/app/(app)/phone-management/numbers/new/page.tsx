@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
-import { TelecomBreadcrumb } from "@/components/telecom/telecom-breadcrumb";
+import { TelecomBreadcrumb } from "@/components/apps/telecom/telecom-breadcrumb";
 import { PhoneManagementApiClient } from "@/lib/api-client/phone-management";
 import { InfrastructureApiClient } from "@/lib/api-client/infrastructure";
 import { UserApiClient } from "@/lib/api-client/user";

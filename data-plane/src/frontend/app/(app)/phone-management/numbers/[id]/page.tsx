@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
-import { TelecomBreadcrumb } from "@/components/telecom/telecom-breadcrumb";
+import { TelecomBreadcrumb } from "@/components/apps/telecom/telecom-breadcrumb";
 import { PhoneManagementApiClient } from "@/lib/api-client/phone-management";
 import type { ManagedPhoneNumberRecord } from "@/types/phone-management";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

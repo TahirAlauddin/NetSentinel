@@ -6,7 +6,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { TelecomBreadcrumb } from "@/components/telecom/telecom-breadcrumb";
+import { TelecomBreadcrumb } from "@/components/apps/telecom/telecom-breadcrumb";
 import { TelecomApiClient } from "@/lib/api-client/telecom";
 import { ProviderRecord } from "@/types/providers";
 import { ServiceRecord } from "@/types/services";
