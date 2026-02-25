@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useState, useCallback, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileUploadZone } from "@/components/contracts/file-upload-zone";
-import { ContractLogoPreview } from "@/components/contracts/contract-logo-preview";
-import { ContractsBreadcrumb } from "@/components/contracts/contracts-breadcrumb";
+import { FileUploadZone } from "@/components/apps/contracts/file-upload-zone";
+import { ContractLogoPreview } from "@/components/apps/contracts/contract-logo-preview";
+import { ContractsBreadcrumb } from "@/components/apps/contracts/contracts-breadcrumb";
 import { ContractApiClient } from "@/lib/api-client/contract";
 import {
   CONTRACT_INPUT_CLASS,

@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileUploadZone } from "@/components/contracts/file-upload-zone";
-import { LogoUploadZone } from "@/components/contracts/logo-upload-zone";
+import { FileUploadZone } from "@/components/apps/contracts/file-upload-zone";
+import { LogoUploadZone } from "@/components/apps/contracts/logo-upload-zone";
 import {
   CONTRACT_INPUT_CLASS,
   CONTRACT_LABEL_CLASS,

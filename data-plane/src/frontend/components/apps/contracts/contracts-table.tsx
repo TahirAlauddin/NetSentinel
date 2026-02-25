@@ -3,7 +3,7 @@
 import { Search, Plus, Trash2, Pencil, LayoutGrid, List } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { ContractLogoThumb } from "@/components/contracts/contract-logo-thumb";
+import { ContractLogoThumb } from "@/components/apps/contracts/contract-logo-thumb";
 import type { Contract } from "@/types/contracts";
 import { formatContractCurrency } from "@/lib/contracts/utils";
 

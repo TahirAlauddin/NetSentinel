@@ -19,11 +19,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { DEFAULT_CONTRACT_OVERVIEW } from "@/lib/contracts/constants";
-import { ContractsBreadcrumb } from "@/components/contracts/contracts-breadcrumb";
-import { ContractsAtAGlanceKpis } from "@/components/contracts/contracts-at-a-glance-kpis";
-import { ContractsSpendingPieChart } from "@/components/contracts/contracts-spending-pie-chart";
-import { ContractsTopContractsBarChart } from "@/components/contracts/contracts-top-contracts-bar-chart";
-import { ContractsTable } from "@/components/contracts/contracts-table";
+import { ContractsBreadcrumb } from "@/components/apps/contracts/contracts-breadcrumb";
+import { ContractsAtAGlanceKpis } from "@/components/apps/contracts/contracts-at-a-glance-kpis";
+import { ContractsSpendingPieChart } from "@/components/apps/contracts/contracts-spending-pie-chart";
+import { ContractsTopContractsBarChart } from "@/components/apps/contracts/contracts-top-contracts-bar-chart";
+import { ContractsTable } from "@/components/apps/contracts/contracts-table";
 
 export default function ContractsPage() {
   const [data, setData] = useState<ContractListResponse | null>(null);

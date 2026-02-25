@@ -17,10 +17,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ContractsBreadcrumb } from "@/components/contracts/contracts-breadcrumb";
-import { ContractDetailHeader } from "@/components/contracts/contract-detail-header";
-import { ContractDetailInfo } from "@/components/contracts/contract-detail-info";
-import { ContractDetailMeta } from "@/components/contracts/contract-detail-meta";
+import { ContractsBreadcrumb } from "@/components/apps/contracts/contracts-breadcrumb";
+import { ContractDetailHeader } from "@/components/apps/contracts/contract-detail-header";
+import { ContractDetailInfo } from "@/components/apps/contracts/contract-detail-info";
+import { ContractDetailMeta } from "@/components/apps/contracts/contract-detail-meta";
 
 export default function ContractDetailPage() {
   const params = useParams();

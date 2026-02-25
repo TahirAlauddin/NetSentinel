@@ -15,8 +15,8 @@ import {
 import { normalizeContractUpdatePayload } from "@/lib/contracts/utils";
 import type { Contract, ContractUpdatePayload } from "@/types/contracts";
 import { useContractCategories } from "@/hooks/use-contract-categories";
-import { ContractsBreadcrumb } from "@/components/contracts/contracts-breadcrumb";
-import { ContractDetailEditForm } from "@/components/contracts/contract-detail-edit-form";
+import { ContractsBreadcrumb } from "@/components/apps/contracts/contracts-breadcrumb";
+import { ContractDetailEditForm } from "@/components/apps/contracts/contract-detail-edit-form";
 
 export default function ContractEditPage() {
   const params = useParams();
