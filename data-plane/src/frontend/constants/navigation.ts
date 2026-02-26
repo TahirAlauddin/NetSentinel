@@ -166,7 +166,6 @@ export const ipamMainSubmenuLinks = [
   { label: "VRF", href: "/ipam/vrfs" },
   { label: "Devices", href: "/ipam/devices" },
   { label: "IP Requests", href: "/ipam/ip-requests" },
-  { label: "Phone Numbers", href: "/ipam/phone-numbers" },
 ];
 
 export const ipamSubnetManagementSubmenuLinks = [

@@ -18,7 +18,6 @@ import {
   Router,
   Server,
   FileCheck,
-  Phone,
 } from "lucide-react";
 import { Subnet } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
@@ -106,12 +105,6 @@ export default function IpamDashboardPage() {
           <Link href="/ipam/ip-requests" className="gap-2">
             <FileCheck className="w-4 h-4" />
             IP Requests
-          </Link>
-        </Button>
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/ipam/phone-numbers" className="gap-2">
-            <Phone className="w-4 h-4" />
-            Phone Numbers
           </Link>
         </Button>
       </div>
