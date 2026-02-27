@@ -52,6 +52,7 @@ urlpatterns = [
     path("api/v1/ipam/", include("ipam.urls")),
     path("api/v1/contracts/", include("contracts.urls")),
     path("api/v1/phone-management/", include("phone_management.urls")),
+    path("api/v1/notifications/", include("notifications.urls")),
     # Djoser endpoints for authentication and user management
     path("api/v1/auth/", include("djoser.urls")),
     path("api/v1/auth/", include("djoser.urls.jwt")),

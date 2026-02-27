@@ -194,6 +194,29 @@ The subnet is now operating within normal utilization levels.
         threshold.last_alert_sent = timezone.now()
         threshold.save()
 
+        # Send to Slack/Discord if configured (system-wide config, no user)
+        try:
+            from notifications.models import InAppNotification
+            from notifications.services import send_notification
+
+            # Global in-app notification
+            InAppNotification.objects.create(
+                title=subject,
+                message=message.strip(),
+                type="critical" if alert_type == "critical" else "warning" if alert_type == "warning" else "success",
+                # Could later add a deep link into the UI, e.g. subnet detail page
+            )
+
+            # External channels (Slack/Discord)
+            send_notification(
+                title=subject,
+                message=message.strip(),
+                alert_type="critical" if alert_type == "critical" else "warning" if alert_type == "warning" else "recovery",
+                user=None,
+            )
+        except Exception as e:
+            print(f"Notification channels (in-app/Slack/Discord) failed: {e}")
+
         return True
     except Exception as e:
         # Log error but don't fail

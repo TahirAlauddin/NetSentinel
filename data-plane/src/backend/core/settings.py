@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     "ipam",  # IPAM management app (IP addresses, subnets, etc.)
     "contracts",  # Contract management (carrier contracts, NRC/MRC, dates)
     "phone_management",  # Phone management app (individual numbers and blocks)
+    "notifications",  # Notification channels (Slack, Discord, etc.)
 ]
 
 MIDDLEWARE = [
