@@ -9,6 +9,16 @@ export interface NotificationItem {
   link?: string;
 }
 
+/** In-app notification as returned by the API */
+export interface InAppNotificationDto {
+  id: number;
+  title: string;
+  message: string;
+  type: "info" | "warning" | "error" | "success";
+  link: string;
+  created_at: string; // ISO
+}
+
 /** Channel type for delivery */
 export type NotificationChannelType = "slack" | "discord" | "sms" | "voice";
 
