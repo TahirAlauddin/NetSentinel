@@ -71,30 +71,16 @@ export const phoneManagementSubmenuLinks = [
   { label: "Number Blocks", href: "/phone-management/blocks" },
 ];
 
-// Notifications submenu links
-export const notificationsAlertTypesSubmenuLinks = [
-  { label: "System Alerts", href: "/notifications/system-alerts" },
-  { label: "Performance Warnings", href: "/notifications/performance-warnings" },
-  { label: "Security Notifications", href: "/notifications/security" },
-  { label: "Maintenance Alerts", href: "/notifications/maintenance" },
-  { label: "Error Reports", href: "/notifications/error-reports" },
-  { label: "Status Updates", href: "/notifications/status-updates" },
-];
-
+// Notifications submenu links — channels and preferences
 export const notificationsChannelsSubmenuLinks = [
-  { label: "Email Notifications", href: "/notifications/email" },
-  { label: "SMS Alerts", href: "/notifications/sms" },
-  { label: "Push Notifications", href: "/notifications/push" },
-  { label: "Webhook Integration", href: "/notifications/webhook" },
-  { label: "Slack Integration", href: "/notifications/slack" },
-  { label: "Teams Integration", href: "/notifications/teams" },
+  { label: "Slack", href: "/notifications/slack" },
+  { label: "Discord", href: "/notifications/discord" },
+  { label: "SMS (coming soon)", href: "/notifications/sms" },
+  { label: "Voice (coming soon)", href: "/notifications/voice" },
 ];
 
 export const notificationsSettingsSubmenuLinks = [
-  { label: "Notification Preferences", href: "/notifications/preferences" },
-  { label: "Alert Thresholds", href: "/notifications/thresholds" },
-  { label: "Schedule Management", href: "/notifications/schedule" },
-  { label: "Escalation Rules", href: "/notifications/escalation" },
+  { label: "Preferences", href: "/notifications/preferences" },
 ];
 
 // Monitoring submenu links
@@ -271,10 +257,6 @@ export const navigationItems: NavigationItem[] = [
     href: "/notifications",
     hasSubmenu: true,
     submenuColumns: [
-      {
-        title: "Alert Types",
-        links: notificationsAlertTypesSubmenuLinks,
-      },
       {
         title: "Channels",
         links: notificationsChannelsSubmenuLinks,

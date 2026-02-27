@@ -5,6 +5,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { AuthProvider } from "@/components/auth-provider";
 import { ErrorBoundary } from "@/components/feedback/error-boundary";
+import { NotificationProvider } from "@/contexts/notification-context";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -27,7 +28,9 @@ export default async function RootLayout({
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <ErrorBoundary>
           <AuthProvider>
-            {children}
+            <NotificationProvider>
+              {children}
+            </NotificationProvider>
           </AuthProvider>
           <Toaster />
         </ErrorBoundary>
