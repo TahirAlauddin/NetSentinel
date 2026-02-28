@@ -1,9 +1,11 @@
+from django.db.models import Exists, OuterRef
+
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import InAppNotification, NotificationConfig
+from .models import InAppNotification, NotificationConfig, NotificationReadReceipt
 from .serializers import InAppNotificationSerializer, NotificationConfigSerializer
 from .services import send_notification
 
@@ -47,9 +49,29 @@ class NotificationConfigView(APIView):
         return Response(serializer.data)
 
 
+def _in_app_queryset(request, *, unread_only: bool = False, limit: int = 20):
+    """Base queryset for in-app notifications with read annotated for current user."""
+    read_receipts = NotificationReadReceipt.objects.filter(
+        user=request.user,
+        notification=OuterRef("pk"),
+    )
+    qs = (
+        InAppNotification.objects.all()
+        .order_by("-created_at")
+        .annotate(read=Exists(read_receipts))
+    )
+    if unread_only:
+        qs = qs.filter(read=False)
+    return qs[:limit]
+
+
 class InAppNotificationListView(APIView):
     """
-    GET: list recent in-app notifications (global, not per-user).
+    GET: list in-app notifications for the current user.
+
+    Query params:
+    - unread_only: if "true", only return notifications the user has not read.
+    - limit: max number to return (1-100). Default 20. Bell uses 5, view-all unread uses 50, history uses 50.
     """
 
     permission_classes = [IsAuthenticated]
@@ -60,22 +82,74 @@ class InAppNotificationListView(APIView):
         except ValueError:
             limit = 20
         limit = max(1, min(limit, 100))
+        unread_only = request.query_params.get("unread_only", "").lower() == "true"
 
-        qs = InAppNotification.objects.all().order_by("-created_at")[:limit]
-        serializer = InAppNotificationSerializer(qs, many=True)
+        qs = _in_app_queryset(request, unread_only=unread_only, limit=limit)
+        serializer = InAppNotificationSerializer(
+            qs, many=True, context={"request": request}
+        )
         return Response(serializer.data)
 
 
-class InAppNotificationTestView(APIView):
-    """
-    Deprecated: test in-app notification endpoint removed from frontend polling.
-    Kept temporarily for backward compatibility; consider removing if unused.
-    """
+class InAppNotificationMarkReadView(APIView):
+    """POST: mark a single in-app notification as read for the current user."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        notification = InAppNotification.objects.filter(pk=pk).first()
+        if not notification:
+            return Response(
+                {"detail": "Not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        NotificationReadReceipt.objects.get_or_create(
+            user=request.user,
+            notification=notification,
+        )
+        return Response({"ok": True})
+
+
+class InAppNotificationMarkUnreadView(APIView):
+    """POST: mark a single in-app notification as unread for the current user (removes read receipt)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        notification = InAppNotification.objects.filter(pk=pk).first()
+        if not notification:
+            return Response(
+                {"detail": "Not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        deleted, _ = NotificationReadReceipt.objects.filter(
+            user=request.user,
+            notification=notification,
+        ).delete()
+        return Response({"ok": True, "removed": deleted > 0})
+
+
+class InAppNotificationMarkAllReadView(APIView):
+    """POST: mark all in-app notifications as read for the current user."""
 
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        return Response(
-            {"detail": "In-app test endpoint is disabled."},
-            status=status.HTTP_410_GONE,
+        unread_ids = list(
+            _in_app_queryset(request, unread_only=True, limit=1000).values_list(
+                "id", flat=True
+            )
         )
+        existing = set(
+            NotificationReadReceipt.objects.filter(
+                user=request.user,
+                notification_id__in=unread_ids,
+            ).values_list("notification_id", flat=True)
+        )
+        to_create = [
+            NotificationReadReceipt(user=request.user, notification_id=nid)
+            for nid in unread_ids
+            if nid not in existing
+        ]
+        NotificationReadReceipt.objects.bulk_create(to_create)
+        return Response({"ok": True, "marked_count": len(to_create)})

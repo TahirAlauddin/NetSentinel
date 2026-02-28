@@ -83,3 +83,35 @@ class InAppNotification(models.Model):
 
     def __str__(self) -> str:
         return f"{self.type.upper()}: {self.title}"
+
+
+class NotificationReadReceipt(models.Model):
+    """
+    Tracks which user has read which in-app notification.
+    Used for bell (unread only) and view-all (unread), and history (read flag).
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="notification_read_receipts",
+    )
+    notification = models.ForeignKey(
+        InAppNotification,
+        on_delete=models.CASCADE,
+        related_name="read_receipts",
+    )
+    read_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Notification read receipt"
+        verbose_name_plural = "Notification read receipts"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "notification"],
+                name="notifications_readreceipt_user_notification_unique",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user} read {self.notification_id}"

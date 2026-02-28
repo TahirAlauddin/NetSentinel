@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import InAppNotification, NotificationConfig
+from .models import InAppNotification, NotificationConfig, NotificationReadReceipt
 
 
 class NotificationConfigSerializer(serializers.ModelSerializer):
@@ -23,6 +23,8 @@ class NotificationConfigSerializer(serializers.ModelSerializer):
 
 
 class InAppNotificationSerializer(serializers.ModelSerializer):
+    read = serializers.SerializerMethodField()
+
     class Meta:
         model = InAppNotification
         fields = [
@@ -32,4 +34,17 @@ class InAppNotificationSerializer(serializers.ModelSerializer):
             "type",
             "link",
             "created_at",
+            "read",
         ]
+
+    def get_read(self, obj) -> bool:
+        # Use annotated value from list view to avoid N+1
+        if hasattr(obj, "read"):
+            return bool(obj.read)
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return NotificationReadReceipt.objects.filter(
+            user=request.user,
+            notification=obj,
+        ).exists()
