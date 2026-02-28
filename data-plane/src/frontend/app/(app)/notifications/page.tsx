@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Bell, Smartphone, Phone, Settings } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Bell, Smartphone, Phone, Settings, Loader2, Inbox } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/contexts/notification-context";
+import { notificationClient } from "@/lib/notification-client";
+import type { InAppNotificationDto, NotificationItem } from "@/types/notifications";
 import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
 
 const channelCards = [
   {
@@ -38,8 +43,150 @@ const channelCards = [
   },
 ];
 
+const LIST_LIMIT = 50;
+
+function dtoToItem(dto: InAppNotificationDto): NotificationItem {
+  return {
+    id: String(dto.id),
+    title: dto.title,
+    message: dto.message || undefined,
+    type: dto.type,
+    read: dto.read,
+    createdAt: dto.created_at,
+    link: dto.link || undefined,
+  };
+}
+
+/** Sort: unread first, then by createdAt desc */
+function sortUnreadFirst(items: NotificationItem[]): NotificationItem[] {
+  return [...items].sort((a, b) => {
+    if (a.read !== b.read) return a.read ? 1 : -1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+}
+
+function NotificationRow({
+  n,
+  onMarkRead,
+  onMarkUnread,
+}: {
+  n: NotificationItem;
+  onMarkRead: (id: string) => void;
+  onMarkUnread: (id: string) => void;
+}) {
+  const content = (
+    <>
+      <span
+        className={cn(
+          "shrink-0 w-2 h-2 rounded-full mt-1.5",
+          n.type === "error" && "bg-destructive",
+          n.type === "warning" && "bg-amber-500",
+          n.type === "success" && "bg-green-500",
+          n.type === "info" && "bg-primary"
+        )}
+      />
+      <div className="min-w-0 flex-1">
+        <p className="font-medium text-sm">{n.title}</p>
+        {n.message && (
+          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
+        )}
+        <p className="text-xs text-muted-foreground mt-1">
+          {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
+        </p>
+      </div>
+    </>
+  );
+
+  return (
+    <li
+      className={cn(
+        "flex gap-3 items-start px-4 py-3 hover:bg-muted/50 transition-colors rounded-md",
+        !n.read && "bg-primary/5"
+      )}
+    >
+      {n.link ? (
+        <Link href={n.link} className="flex gap-3 min-w-0 flex-1">
+          {content}
+        </Link>
+      ) : (
+        <div className="flex gap-3 min-w-0 flex-1">{content}</div>
+      )}
+      <div className="shrink-0">
+        {n.read ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs h-7"
+            onClick={() => onMarkUnread(n.id)}
+          >
+            Mark unread
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs h-7"
+            onClick={() => onMarkRead(n.id)}
+          >
+            Mark read
+          </Button>
+        )}
+      </div>
+    </li>
+  );
+}
+
 export default function NotificationsPage() {
-  const { channelsConfig } = useNotifications();
+  const { channelsConfig, markAsRead, markAsUnread, markAllAsRead } = useNotifications();
+  const [list, setList] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    notificationClient
+      .getAll({ limit: LIST_LIMIT })
+      .then((data) => {
+        if (!cancelled) setList(data.map(dtoToItem));
+      })
+      .catch(() => {
+        if (!cancelled) setList([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const sortedList = useMemo(() => sortUnreadFirst(list), [list]);
+
+  const handleMarkRead = useCallback(
+    (id: string) => {
+      markAsRead(id);
+      setList((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      );
+    },
+    [markAsRead]
+  );
+
+  const handleMarkUnread = useCallback(
+    (id: string) => {
+      markAsUnread(id);
+      setList((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: false } : n))
+      );
+    },
+    [markAsUnread]
+  );
+
+  const handleMarkAllRead = useCallback(async () => {
+    await markAllAsRead();
+    setList((prev) => prev.map((n) => ({ ...n, read: true })));
+  }, [markAllAsRead]);
+
+  const unreadCount = list.filter((n) => !n.read).length;
 
   return (
     <div className="space-y-8">
@@ -49,6 +196,49 @@ export default function NotificationsPage() {
           Configure how you receive alerts — Slack, Discord, and more.
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Inbox className="h-5 w-5" />
+            Notifications
+          </CardTitle>
+          <CardDescription>
+            Unread at the top, read below. Mark items read or unread.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex items-center justify-center py-12 text-muted-foreground">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : list.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">
+              No notifications yet. Alerts from the system will appear here.
+            </p>
+          ) : (
+            <>
+              {unreadCount > 0 && (
+                <div className="flex justify-end mb-2">
+                  <Button variant="outline" size="sm" onClick={handleMarkAllRead}>
+                    Mark all read
+                  </Button>
+                </div>
+              )}
+              <ul className="divide-y divide-border rounded-md border">
+                {sortedList.map((n) => (
+                  <NotificationRow
+                    key={n.id}
+                    n={n}
+                    onMarkRead={handleMarkRead}
+                    onMarkUnread={handleMarkUnread}
+                  />
+                ))}
+              </ul>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

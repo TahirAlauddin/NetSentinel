@@ -9,7 +9,7 @@ export interface NotificationItem {
   link?: string;
 }
 
-/** In-app notification as returned by the API */
+/** In-app notification as returned by the API (read is per current user from backend) */
 export interface InAppNotificationDto {
   id: number;
   title: string;
@@ -17,6 +17,7 @@ export interface InAppNotificationDto {
   type: "info" | "warning" | "error" | "success";
   link: string;
   created_at: string; // ISO
+  read: boolean;
 }
 
 /** Channel type for delivery */

@@ -20,7 +20,7 @@ export enum ErrorType {
   SERVER = "SERVER",
   UNKNOWN = "UNKNOWN",
 }
-
+ 
 /**
  * Standardized error object
  */

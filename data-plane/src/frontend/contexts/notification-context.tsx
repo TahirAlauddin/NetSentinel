@@ -11,15 +11,16 @@ import {
   DEFAULT_CHANNELS_CONFIG,
   DEFAULT_PREFERENCES,
 } from "@/types/notifications";
-import { api } from "@/lib/utils";
+import { notificationClient } from "@/lib/notification-client";
 
 const STORAGE_KEYS = {
   channels: "netsentinel_notification_channels",
   preferences: "netsentinel_notification_preferences",
-  readIds: "netsentinel_notification_read_ids",
 } as const;
 
 const POLL_INTERVAL_MS = 60 * 1000; // 1 minute
+/** Fetch up to this many unread so the badge shows the real count; bell dropdown shows first 5. */
+const UNREAD_FETCH_LIMIT = 100;
 
 function loadJson<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -41,22 +42,13 @@ function saveJson(key: string, value: unknown): void {
   }
 }
 
-function loadReadIds(): Set<string> {
-  const arr = loadJson<string[]>(STORAGE_KEYS.readIds, []);
-  return new Set(Array.isArray(arr) ? arr : []);
-}
-
-function saveReadIds(ids: Set<string>): void {
-  saveJson(STORAGE_KEYS.readIds, Array.from(ids));
-}
-
-function dtoToItem(dto: InAppNotificationDto, read: boolean): NotificationItem {
+function dtoToItem(dto: InAppNotificationDto): NotificationItem {
   return {
     id: String(dto.id),
     title: dto.title,
     message: dto.message || undefined,
     type: dto.type,
-    read,
+    read: dto.read,
     createdAt: dto.created_at,
     link: dto.link || undefined,
   };
@@ -70,13 +62,12 @@ interface NotificationContextValue {
   setChannelsConfig: (config: NotificationChannelsConfig) => void;
   setPreferences: (prefs: NotificationPreferences) => void;
   markAsRead: (id: string) => void;
+  markAsUnread: (id: string) => void;
   markAllAsRead: () => void;
   playNotificationSound: () => void;
 }
 
 export const NotificationContext = createContext<NotificationContextValue | null>(null);
-
-const IN_APP_ENDPOINT = "/notifications/in-app/";
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -88,20 +79,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     loadJson(STORAGE_KEYS.preferences, DEFAULT_PREFERENCES)
   );
 
-  const mergeWithReadState = useCallback((dtos: InAppNotificationDto[]): NotificationItem[] => {
-    const readIds = loadReadIds();
-    return dtos.map((dto) => dtoToItem(dto, readIds.has(String(dto.id))));
-  }, []);
-
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
-        const res = await api.get<InAppNotificationDto[]>(IN_APP_ENDPOINT, { requireAuth: true });
+        const list = await notificationClient.getUnread({ limit: UNREAD_FETCH_LIMIT });
         if (cancelled) return;
-        const data = res.data ?? (Array.isArray(res) ? (res as InAppNotificationDto[]) : []);
-        const list = Array.isArray(data) ? data : [];
-        setNotifications(mergeWithReadState(list));
+        setNotifications(list.map(dtoToItem));
         list.forEach((dto) => knownIdsRef.current.add(String(dto.id)));
       } catch {
         // keep existing list on error
@@ -110,7 +94,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     return () => {
       cancelled = true;
     };
-  }, [mergeWithReadState]);
+  }, []);
 
   const setChannelsConfig = useCallback((config: NotificationChannelsConfig) => {
     setChannelsConfigState(config);
@@ -122,27 +106,35 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     saveJson(STORAGE_KEYS.preferences, prefs);
   }, []);
 
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => !n.read).length,
-    [notifications]
-  );
+  const unreadCount = useMemo(() => notifications.length, [notifications]);
 
-  const markAsRead = useCallback((id: string) => {
-    const readIds = loadReadIds();
-    readIds.add(id);
-    saveReadIds(readIds);
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+  const markAsRead = useCallback(async (id: string) => {
+    try {
+      await notificationClient.markRead(id);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    } catch {
+      // ignore
+    }
   }, []);
 
-  const markAllAsRead = useCallback(() => {
-    setNotifications((prev) => {
-      const readIds = loadReadIds();
-      prev.forEach((n) => readIds.add(n.id));
-      saveReadIds(readIds);
-      return prev.map((n) => ({ ...n, read: true }));
-    });
+  const markAsUnread = useCallback(async (id: string) => {
+    try {
+      await notificationClient.markUnread(id);
+      const list = await notificationClient.getUnread({ limit: UNREAD_FETCH_LIMIT });
+      setNotifications(list.map(dtoToItem));
+      list.forEach((dto) => knownIdsRef.current.add(String(dto.id)));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const markAllAsRead = useCallback(async () => {
+    try {
+      await notificationClient.markAllRead();
+      setNotifications([]);
+    } catch {
+      // ignore
+    }
   }, []);
 
   const playNotificationSound = useCallback(() => {
@@ -164,14 +156,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const res = await api.get<InAppNotificationDto[]>(IN_APP_ENDPOINT, { requireAuth: true });
-        const data = res.data ?? (Array.isArray(res) ? (res as InAppNotificationDto[]) : []);
-        const list = Array.isArray(data) ? data : [];
-        const merged = mergeWithReadState(list);
+        const list = await notificationClient.getUnread({ limit: UNREAD_FETCH_LIMIT });
         const prevIds = knownIdsRef.current;
-        const hasNewUnread = merged.some((n) => !n.read && !prevIds.has(n.id));
+        const hasNewUnread = list.some((dto) => !prevIds.has(String(dto.id)));
         list.forEach((dto) => prevIds.add(String(dto.id)));
-        setNotifications(merged);
+        setNotifications(list.map(dtoToItem));
         if (hasNewUnread) {
           playSoundRef.current();
         }
@@ -180,7 +169,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       }
     }, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [mergeWithReadState]);
+  }, []);
 
   const value: NotificationContextValue = useMemo(
     () => ({
@@ -191,6 +180,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setChannelsConfig,
       setPreferences,
       markAsRead,
+      markAsUnread,
       markAllAsRead,
       playNotificationSound,
     }),
@@ -202,6 +192,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setChannelsConfig,
       setPreferences,
       markAsRead,
+      markAsUnread,
       markAllAsRead,
       playNotificationSound,
     ]
