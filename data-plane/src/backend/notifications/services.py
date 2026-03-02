@@ -15,9 +15,21 @@ from .models import NotificationConfig
 logger = logging.getLogger(__name__)
 
 
+def _url_host(url: str) -> str:
+    """Return host part of URL for logging (no path or query)."""
+    try:
+        from urllib.parse import urlparse
+        p = urlparse(url)
+        return p.netloc or "(empty)"
+    except Exception:
+        return "(parse error)"
+
+
 def get_channel_config(user=None):
     """
     Get notification config: user-specific if user given, else system-wide.
+    When user is None and no system-wide config exists, use the most recently
+    updated config (so UI-saved webhooks are used for background alerts).
     """
     if user:
         try:
@@ -27,7 +39,16 @@ def get_channel_config(user=None):
     try:
         return NotificationConfig.objects.get(user__isnull=True)
     except NotificationConfig.DoesNotExist:
-        return None
+        pass
+    # Fallback: use most recently updated config so alerts use UI-saved webhooks
+    return NotificationConfig.objects.order_by("-updated_at").first()
+
+
+# User-Agent some webhook providers (e.g. Discord) reject default Python urllib
+_WEBHOOK_HEADERS = {
+    "Content-Type": "application/json",
+    "User-Agent": "NetSentinel-Webhook/1.0",
+}
 
 
 def _post_json(url: str, payload: dict, timeout: int = 10) -> bool:
@@ -35,11 +56,24 @@ def _post_json(url: str, payload: dict, timeout: int = 10) -> bool:
     if not url or not url.strip():
         return False
     data = json.dumps(payload).encode("utf-8")
-    req = Request(url, data=data, method="POST", headers={"Content-Type": "application/json"})
+    req = Request(url, data=data, method="POST", headers=_WEBHOOK_HEADERS)
     try:
         with urlopen(req, timeout=timeout) as r:
             return 200 <= r.status < 300
-    except (HTTPError, URLError, OSError) as e:
+    except HTTPError as e:
+        try:
+            body = e.read().decode("utf-8", errors="replace").strip()[:800]
+            logger.warning(
+                "Webhook POST failed: %s %s — %s (url host: %s)",
+                e.code,
+                e.reason,
+                body,
+                _url_host(url),
+            )
+        except Exception:
+            logger.warning("Webhook POST failed: %s", e)
+        return False
+    except (URLError, OSError) as e:
         logger.warning("Webhook POST failed: %s", e)
         return False
 
@@ -90,7 +124,7 @@ def send_notification(
             text = f":warning: {text}" if alert_type == "warning" else f":rotating_light: {text}"
         result["slack_ok"] = send_slack_message(config.slack_webhook_url, text)
 
-    # Discord
+    # Discord (content + embed so message is always visible)
     if config.discord_enabled and config.discord_webhook_url:
         color = 0x3498DB  # blue
         if alert_type == "warning":
@@ -99,6 +133,7 @@ def send_notification(
             color = 0xE74C3C
         elif alert_type in ("success", "recovery"):
             color = 0x2ECC71
+        content = f"**{title}**\n{message[:2000]}"
         embeds = [
             {
                 "title": title,
@@ -107,7 +142,7 @@ def send_notification(
             }
         ]
         result["discord_ok"] = send_discord_message(
-            config.discord_webhook_url, "", embeds=embeds
+            config.discord_webhook_url, content, embeds=embeds
         )
 
     return result
