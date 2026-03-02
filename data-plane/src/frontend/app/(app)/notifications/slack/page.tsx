@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useNotifications } from "@/contexts/notification-context";
+import { notificationClient } from "@/lib/notification-client";
 import { toast } from "sonner";
 
 export default function SlackNotificationsPage() {
@@ -37,23 +38,63 @@ function SlackForm({
   const [defaultChannel, setDefaultChannel] = useState(initial.defaultChannel ?? "");
   const [enabled, setEnabled] = useState(initial.enabled);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (enabled && !webhookUrl.trim()) {
       toast.error("Webhook URL is required when Slack is enabled.");
       return;
     }
     setSaving(true);
+    const nextSlack = {
+      enabled,
+      webhookUrl: webhookUrl.trim(),
+      defaultChannel: defaultChannel.trim() || undefined,
+    };
+    const updated = await notificationClient.patchConfig({
+      slack_enabled: nextSlack.enabled,
+      slack_webhook_url: nextSlack.webhookUrl,
+      slack_default_channel: nextSlack.defaultChannel ?? "",
+    });
     setChannelsConfig({
       ...channelsConfig,
-      slack: {
-        enabled,
-        webhookUrl: webhookUrl.trim(),
-        defaultChannel: defaultChannel.trim() || undefined,
-      },
+      slack: nextSlack,
     });
+    if (updated) {
+      toast.success("Slack settings saved. Alerts will use this webhook.");
+    } else {
+      toast.warning("Saved locally; could not reach server. Sign in and save again to use for alerts.");
+    }
     setSaving(false);
-    toast.success("Slack settings saved.");
+  };
+
+  const handleTest = async () => {
+    if (!webhookUrl.trim()) {
+      toast.error("Enter a webhook URL first.");
+      return;
+    }
+    setTesting(true);
+    const result = await notificationClient.sendTest({ channel: "slack" });
+    setTesting(false);
+    if (result === null) {
+      toast.error("Test request failed. Check you're signed in.");
+      return;
+    }
+    if (result.slack_ok) {
+      toast.success("Test message sent. Check your Slack channel.");
+      return;
+    }
+    const msg =
+      result.slack_error === "no_config"
+        ? "Save your Slack settings first, then send a test message."
+        : result.slack_error === "slack_disabled"
+          ? "Turn on “Enable Slack notifications”, then Save, and try again."
+          : result.slack_error === "no_webhook"
+            ? "Enter a webhook URL and Save, then try again."
+            : result.slack_error === "webhook_failed"
+              ? "Slack rejected the message. Check that the webhook URL is correct and the app is allowed in the channel."
+              : "Slack test failed. Enable Slack, save, then try again.";
+    toast.error(msg);
   };
 
   return (
@@ -87,18 +128,29 @@ function SlackForm({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="slack-enabled">Enable Slack notifications</Label>
-              <p className="text-sm text-muted-foreground">
-                When enabled, alerts will be sent to your webhook URL.
-              </p>
+          <div className="rounded-lg border-2 border-border bg-muted/80 p-4 space-y-3 shadow-sm">
+            <p className="text-sm font-medium text-foreground">Step 1: Enable and save</p>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label htmlFor="slack-enabled" className="text-base font-medium text-foreground">
+                  Enable Slack notifications
+                </Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Turn the switch on → then click <strong>Save</strong> below.
+                </p>
+              </div>
+              <div className="shrink-0 rounded-full p-1 ring-2 ring-border ring-offset-2 ring-offset-background bg-muted/50">
+                <Switch
+                  id="slack-enabled"
+                  checked={enabled}
+                  onCheckedChange={setEnabled}
+                  aria-describedby="slack-enabled-desc"
+                />
+              </div>
             </div>
-            <Switch
-              id="slack-enabled"
-              checked={enabled}
-              onCheckedChange={setEnabled}
-            />
+            <p id="slack-enabled-desc" className="text-xs text-muted-foreground">
+              {enabled ? "Slack is on — remember to click Save." : "Switch is off — turn it on, then Save."}
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -130,9 +182,23 @@ function SlackForm({
             </p>
           </div>
 
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : "Save"}
-          </Button>
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "Saving…" : "Save"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleTest}
+                disabled={testing || !webhookUrl.trim()}
+              >
+                {testing ? "Sending…" : "Send test message"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Save your settings first, then use &quot;Send test message&quot; to post a test alert to your channel.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

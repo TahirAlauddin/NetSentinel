@@ -4,6 +4,17 @@ import type { InAppNotificationDto } from "@/types/notifications";
 
 const BASE = "/notifications";
 
+/** Backend notification config (snake_case). Used for GET/PATCH /notifications/config/ */
+export interface BackendNotificationConfig {
+  id?: number;
+  slack_enabled: boolean;
+  slack_webhook_url: string;
+  slack_default_channel: string;
+  discord_enabled: boolean;
+  discord_webhook_url: string;
+  updated_at?: string;
+}
+
 export const notificationClient = {
   /**
    * Fetch only unread in-app notifications for the current user (for bell and "view all unread").
@@ -58,5 +69,59 @@ export const notificationClient = {
     );
     const data = handleApiResponse(res);
     return { marked_count: (data as { marked_count?: number }).marked_count ?? 0 };
+  },
+
+  /**
+   * Fetch current user's notification channel config (Slack, Discord) from the backend.
+   * Used so alerts (e.g. subnet threshold) use the same webhook URLs you configure in the UI.
+   */
+  async getConfig(): Promise<BackendNotificationConfig | null> {
+    const res = await api.get<BackendNotificationConfig>(`${BASE}/config/`, { requireAuth: true });
+    if (res.error) return null;
+    return (res.data as BackendNotificationConfig) ?? null;
+  },
+
+  /**
+   * Update notification channel config on the backend (partial update).
+   * Persists webhook URLs so the backend uses them when sending alerts.
+   */
+  async patchConfig(
+    data: Partial<Omit<BackendNotificationConfig, "id" | "updated_at">>
+  ): Promise<BackendNotificationConfig | null> {
+    const res = await api.patch<BackendNotificationConfig>(`${BASE}/config/`, data, {
+      requireAuth: true,
+    });
+    if (res.error) return null;
+    return (res.data as BackendNotificationConfig) ?? null;
+  },
+
+  /**
+   * Send a test notification to one channel only (slack or discord).
+   * Returns { slack_ok, discord_ok, slack_error?, discord_error? } or null on request failure.
+   * Error codes: no_config | slack_disabled | discord_disabled | no_webhook | webhook_failed
+   */
+  async sendTest(options: { channel: "slack" | "discord" }): Promise<{
+    slack_ok: boolean;
+    discord_ok: boolean;
+    slack_error?: string | null;
+    discord_error?: string | null;
+  } | null> {
+    const { channel } = options;
+    const res = await api.post<{
+      slack_ok: boolean;
+      discord_ok: boolean;
+      slack_error?: string | null;
+      discord_error?: string | null;
+    }>(`${BASE}/config/test/?channel=${channel}`, {}, { requireAuth: true });
+    if (res.error) return null;
+    const data = res.data as Record<string, unknown>;
+    return data
+      ? {
+          slack_ok: !!data.slack_ok,
+          discord_ok: !!data.discord_ok,
+          slack_error: (data.slack_error as string | null) ?? null,
+          discord_error: (data.discord_error as string | null) ?? null,
+        }
+      : null;
   },
 };

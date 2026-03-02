@@ -11,6 +11,7 @@ import {
   DEFAULT_CHANNELS_CONFIG,
   DEFAULT_PREFERENCES,
 } from "@/types/notifications";
+import type { BackendNotificationConfig } from "@/lib/notification-client";
 import { notificationClient } from "@/lib/notification-client";
 
 const STORAGE_KEYS = {
@@ -54,6 +55,20 @@ function dtoToItem(dto: InAppNotificationDto): NotificationItem {
   };
 }
 
+function backendConfigToChannels(b: BackendNotificationConfig): NotificationChannelsConfig {
+  return {
+    slack: {
+      enabled: b.slack_enabled,
+      webhookUrl: b.slack_webhook_url ?? "",
+      defaultChannel: b.slack_default_channel?.trim() || undefined,
+    },
+    discord: {
+      enabled: b.discord_enabled,
+      webhookUrl: b.discord_webhook_url ?? "",
+    },
+  };
+}
+
 interface NotificationContextValue {
   notifications: NotificationItem[];
   unreadCount: number;
@@ -89,6 +104,25 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         list.forEach((dto) => knownIdsRef.current.add(String(dto.id)));
       } catch {
         // keep existing list on error
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Hydrate channels config from backend so UI and backend stay in sync (e.g. webhook URLs used for alerts)
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const backend = await notificationClient.getConfig();
+        if (cancelled || !backend) return;
+        const config = backendConfigToChannels(backend);
+        setChannelsConfigState(config);
+        saveJson(STORAGE_KEYS.channels, config);
+      } catch {
+        // keep existing config (e.g. from localStorage) on error
       }
     })();
     return () => {

@@ -6,7 +6,7 @@ import { GeistMono } from "geist/font/mono";
 import { AuthProvider } from "@/components/auth-provider";
 import { ErrorBoundary } from "@/components/feedback/error-boundary";
 import { NotificationProvider } from "@/contexts/notification-context";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
