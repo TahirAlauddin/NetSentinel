@@ -13,6 +13,11 @@ import {
 } from "@/types/notifications";
 import type { BackendNotificationConfig } from "@/lib/notification-client";
 import { notificationClient } from "@/lib/notification-client";
+import {
+  canShowDesktopNotification,
+  showDesktopNotification,
+  isInDoNotDisturb,
+} from "@/lib/desktop-notifications";
 
 const STORAGE_KEYS = {
   channels: "netsentinel_notification_channels",
@@ -183,20 +188,31 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [preferences.soundEnabled, preferences.soundVolume]);
 
   const playSoundRef = useRef(playNotificationSound);
+  const preferencesRef = useRef(preferences);
   useEffect(() => {
     playSoundRef.current = playNotificationSound;
   }, [playNotificationSound]);
+  useEffect(() => {
+    preferencesRef.current = preferences;
+  }, [preferences]);
 
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
         const list = await notificationClient.getUnread({ limit: UNREAD_FETCH_LIMIT });
         const prevIds = knownIdsRef.current;
-        const hasNewUnread = list.some((dto) => !prevIds.has(String(dto.id)));
+        const newItems = list.filter((dto) => !prevIds.has(String(dto.id)));
+        const hasNewUnread = newItems.length > 0;
         list.forEach((dto) => prevIds.add(String(dto.id)));
         setNotifications(list.map(dtoToItem));
         if (hasNewUnread) {
-          playSoundRef.current();
+          const prefs = preferencesRef.current;
+          if (!isInDoNotDisturb(prefs)) {
+            playSoundRef.current();
+          }
+          if (canShowDesktopNotification(prefs)) {
+            newItems.forEach((dto) => showDesktopNotification(dtoToItem(dto)));
+          }
         }
       } catch {
         // keep existing list

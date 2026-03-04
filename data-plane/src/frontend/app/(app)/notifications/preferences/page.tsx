@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, Volume2, Monitor, Moon, Mail } from "lucide-react";
+import { ArrowLeft, Volume2, Monitor, Moon, Mail, Bell } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,16 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { useNotifications } from "@/contexts/notification-context";
+import {
+  requestNotificationPermission,
+  isDesktopNotificationSupported,
+  showDesktopNotification,
+  getNotificationPermission,
+} from "@/lib/desktop-notifications";
+import { notificationClient } from "@/lib/notification-client";
 import { toast } from "sonner";
+
+const AUTO_CREATE_INTERVAL_MS = 30 * 1000; // 30 seconds
 
 function formStateFromPreferences(preferences: ReturnType<typeof useNotifications>["preferences"]) {
   return {
@@ -55,6 +64,46 @@ function NotificationPreferencesForm({
 }) {
   const [form, setForm] = useState(() => formStateFromPreferences(initialPreferences));
   const [saving, setSaving] = useState(false);
+  const [autoCreateEnabled, setAutoCreateEnabled] = useState(false);
+  const [secondsUntilNext, setSecondsUntilNext] = useState<number | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Every 30s create a test notification when auto-create is on (for testing desktop + DND).
+  useEffect(() => {
+    if (!autoCreateEnabled) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      intervalRef.current = null;
+      countdownRef.current = null;
+      return;
+    }
+    const createOne = () => {
+      const now = new Date();
+      notificationClient
+        .createTestNotification({
+          title: "Test alert",
+          message: `Created at ${now.toLocaleTimeString()} — desktop/DND test`,
+          type: "info",
+          link: "/notifications",
+        })
+        .then((n) => {
+          if (n) toast.success("Test notification created. Bell will update on next poll.");
+        })
+        .catch(() => toast.error("Failed to create test notification."));
+    };
+    createOne();
+    intervalRef.current = setInterval(createOne, AUTO_CREATE_INTERVAL_MS);
+    countdownRef.current = setInterval(() => {
+      setSecondsUntilNext((s) => (s === null || s <= 1 ? 30 : s - 1));
+    }, 1000);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      intervalRef.current = null;
+      countdownRef.current = null;
+    };
+  }, [autoCreateEnabled]);
 
   const handleSave = () => {
     setSaving(true);
@@ -159,9 +208,81 @@ function NotificationPreferencesForm({
             <Switch
               id="desktop-enabled"
               checked={form.desktopNotifications}
-              onCheckedChange={(v) => setForm((p) => ({ ...p, desktopNotifications: v }))}
+              onCheckedChange={async (v) => {
+                setForm((p) => ({ ...p, desktopNotifications: v }));
+                if (v && isDesktopNotificationSupported()) {
+                  const permission = await requestNotificationPermission();
+                  if (permission === "granted") {
+                    toast.success("Desktop notifications enabled.");
+                  } else if (permission === "denied") {
+                    toast.error("Permission denied. Enable notifications in your browser settings.");
+                  }
+                }
+              }}
             />
           </div>
+          {form.desktopNotifications && isDesktopNotificationSupported() && (
+            <div className="mt-4 pt-4 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  let permission = getNotificationPermission();
+                  if (permission === "default") permission = await requestNotificationPermission();
+                  if (permission !== "granted") {
+                    toast.error("Allow notifications in your browser to test.");
+                    return;
+                  }
+                  showDesktopNotification({
+                    id: "test",
+                    title: "NetSentinel test",
+                    message: "Desktop notifications are working.",
+                    type: "info",
+                    read: false,
+                    createdAt: new Date().toISOString(),
+                    link: "/notifications",
+                  });
+                  toast.success("Test notification sent. Check your OS tray.");
+                }}
+              >
+                Test desktop notification
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Test real notifications
+          </CardTitle>
+          <CardDescription>
+            Create a test notification every 30 seconds so you can verify desktop notifications and
+            do-not-disturb. Enable desktop notifications above, then turn this on and watch for OS
+            toasts; enable DND to confirm sound and desktop are muted.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="auto-create">Create test notification every 30 seconds</Label>
+            <Switch
+              id="auto-create"
+              checked={autoCreateEnabled}
+              onCheckedChange={(v) => {
+                setAutoCreateEnabled(v);
+                if (!v) setSecondsUntilNext(null);
+                else setSecondsUntilNext(30);
+              }}
+            />
+          </div>
+          {autoCreateEnabled && secondsUntilNext !== null && (
+            <p className="text-sm text-muted-foreground">
+              Next notification in {secondsUntilNext} second{secondsUntilNext !== 1 ? "s" : ""}.
+            </p>
+          )}
         </CardContent>
       </Card>
 

@@ -96,6 +96,25 @@ export const notificationClient = {
   },
 
   /**
+   * Create a test in-app notification via the backend (for testing desktop notifications and DND).
+   * The notification will appear in the bell and trigger desktop/sound if preferences allow.
+   */
+  async createTestNotification(options?: {
+    title?: string;
+    message?: string;
+    type?: "info" | "warning" | "error" | "success";
+    link?: string;
+  }): Promise<InAppNotificationDto | null> {
+    const res = await api.post<InAppNotificationDto>(
+      `${BASE}/in-app/create-test/`,
+      options ?? {},
+      { requireAuth: true }
+    );
+    if (res.error) return null;
+    return (res.data as InAppNotificationDto) ?? null;
+  },
+
+  /**
    * Send a test notification to one channel only (slack or discord).
    * Returns { slack_ok, discord_ok, slack_error?, discord_error? } or null on request failure.
    * Error codes: no_config | slack_disabled | discord_disabled | no_webhook | webhook_failed

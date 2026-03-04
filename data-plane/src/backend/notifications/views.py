@@ -218,3 +218,31 @@ class InAppNotificationMarkAllReadView(APIView):
         ]
         NotificationReadReceipt.objects.bulk_create(to_create)
         return Response({"ok": True, "marked_count": len(to_create)})
+
+
+class InAppNotificationCreateTestView(APIView):
+    """
+    POST: create a single in-app notification for testing (desktop notifications, DND, etc.).
+    Body (optional): title, message, type (info|warning|error|success). Defaults: test title/message.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from django.utils import timezone
+
+        title = (request.data.get("title") or "Test notification").strip()[:255]
+        message = (request.data.get("message") or "").strip()[:2000]
+        notif_type = (request.data.get("type") or "info").strip().lower()
+        if notif_type not in ("info", "warning", "error", "success"):
+            notif_type = "info"
+        link = (request.data.get("link") or "").strip()[:2000]
+        notification = InAppNotification.objects.create(
+            title=title or "Test notification",
+            message=message or f"Created at {timezone.now().isoformat()} for testing.",
+            type=notif_type,
+            link=link or "",
+            user=request.user,
+        )
+        serializer = InAppNotificationSerializer(notification, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
