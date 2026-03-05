@@ -8,42 +8,25 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { GripVertical, Trash2, Edit2 } from "lucide-react";
+import { INFRASTRUCTURE } from "@/constants/api-paths";
+import { getFormString } from "@/lib/form-utils";
+import { api, normalizeListResponse } from "@/lib/utils";
 import { DepartmentRecord } from "@/types/departments";
-import { api } from "@/lib/utils";
 
 async function listDepartments(): Promise<DepartmentRecord[]> {
   const response = await api.get<
     DepartmentRecord[] | { results: DepartmentRecord[] }
-  >("/infrastructure/departments/");
+  >(INFRASTRUCTURE.DEPARTMENTS);
   if (response.error || !response.data) {
     throw new Error(response.error || "Failed to fetch departments");
   }
-
-  const data = response.data;
-
-  // Handle paginated response
-  if (
-    data &&
-    typeof data === "object" &&
-    "results" in data &&
-    Array.isArray((data as { results: DepartmentRecord[] }).results)
-  ) {
-    return (data as { results: DepartmentRecord[] }).results;
-  }
-
-  // Handle direct array response
-  if (Array.isArray(data)) {
-    return data;
-  }
-
-  console.warn("Unexpected departments data format:", data);
-  return [];
+  return normalizeListResponse(response.data);
 }
 
 async function createDepartment(
   name: string
 ): Promise<{ success: boolean; message?: string; error?: string }> {
-  const response = await api.post("/infrastructure/departments/", {
+  const response = await api.post(INFRASTRUCTURE.DEPARTMENTS, {
     name,
   });
 
@@ -63,7 +46,7 @@ async function createDepartment(
 async function deleteDepartment(
   id: number
 ): Promise<{ success: boolean; message?: string; error?: string }> {
-  const response = await api.delete(`/infrastructure/departments/${id}/`);
+  const response = await api.delete(`${INFRASTRUCTURE.DEPARTMENTS}${id}/`);
 
   if (response.error) {
     return {
@@ -82,7 +65,7 @@ async function updateDepartment(
   id: number,
   name: string
 ): Promise<{ success: boolean; message?: string; error?: string }> {
-  const response = await api.put(`/infrastructure/departments/${id}/`, {
+  const response = await api.put(`${INFRASTRUCTURE.DEPARTMENTS}${id}/`, {
     name,
   });
 
@@ -112,7 +95,7 @@ export default function DepartmentsPage() {
     e.preventDefault();
     setSubmitting(true);
     const formData = new FormData(e.currentTarget);
-    const name = (formData.get("name") as string)?.trim();
+    const name = getFormString(formData, "name");
 
     if (!name) {
       toast.error("Department name is required");

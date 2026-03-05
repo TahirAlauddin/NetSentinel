@@ -225,7 +225,8 @@ export default function NotificationsPage() {
                   </Button>
                 </div>
               )}
-              <ul className="divide-y divide-border rounded-md border">
+              <div className="min-h-[200px] max-h-[min(60vh,500px)] overflow-y-auto">
+                <ul className="divide-y divide-border rounded-md border">
                 {sortedList.map((n) => (
                   <NotificationRow
                     key={n.id}
@@ -234,7 +235,8 @@ export default function NotificationsPage() {
                     onMarkUnread={handleMarkUnread}
                   />
                 ))}
-              </ul>
+                </ul>
+              </div>
             </>
           )}
         </CardContent>

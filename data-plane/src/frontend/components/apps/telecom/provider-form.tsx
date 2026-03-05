@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { getFormString, getFormStringOrNull } from "@/lib/form-utils";
 import type { ProviderRecord, ProviderCreateDto } from "@/types/providers";
 
 interface ProviderFormProps {
@@ -31,18 +32,18 @@ export function ProviderForm({
     if (!form) return;
     const fd = new FormData(form);
     const data: ProviderCreateDto = {
-      name: (fd.get("name") as string)?.trim() || "",
-      description: (fd.get("description") as string)?.trim() || null,
-      service_type: (fd.get("service_type") as string) || null,
-      status: (fd.get("status") as string) || "active",
-      account_number: (fd.get("account_number") as string)?.trim() || null,
-      contact_name: (fd.get("contact_name") as string)?.trim() || null,
-      contact_email: (fd.get("contact_email") as string)?.trim() || null,
-      contact_phone: (fd.get("contact_phone") as string)?.trim() || null,
-      website: (fd.get("website") as string)?.trim() || null,
-      logo_url: (fd.get("logo_url") as string)?.trim() || null,
-      monthly_cost: (fd.get("monthly_cost") as string)?.trim() || null,
-      notes: (fd.get("notes") as string)?.trim() || null,
+      name: getFormString(fd, "name"),
+      description: getFormStringOrNull(fd, "description"),
+      service_type: getFormStringOrNull(fd, "service_type") ?? null,
+      status: getFormString(fd, "status", { default: "active" }),
+      account_number: getFormStringOrNull(fd, "account_number"),
+      contact_name: getFormStringOrNull(fd, "contact_name"),
+      contact_email: getFormStringOrNull(fd, "contact_email"),
+      contact_phone: getFormStringOrNull(fd, "contact_phone"),
+      website: getFormStringOrNull(fd, "website"),
+      logo_url: getFormStringOrNull(fd, "logo_url"),
+      monthly_cost: getFormStringOrNull(fd, "monthly_cost"),
+      notes: getFormStringOrNull(fd, "notes"),
     };
     await onSubmit(data);
   };

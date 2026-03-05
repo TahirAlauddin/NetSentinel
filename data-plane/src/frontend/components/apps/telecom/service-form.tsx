@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { getFormString, getFormStringOrNull, getFormNumberOrNull } from "@/lib/form-utils";
 import type { ServiceRecord, ServiceCreateDto } from "@/types/services";
 import type { ProviderRecord } from "@/types/providers";
 import type { LocationRecord } from "@/types/locations";
@@ -36,20 +37,18 @@ export function ServiceForm({
     const form = formRef.current;
     if (!form) return;
     const fd = new FormData(form);
-    const providerVal = (fd.get("provider") as string)?.trim();
-    const locationVal = (fd.get("location") as string)?.trim();
     const data: ServiceCreateDto = {
-      name: (fd.get("name") as string)?.trim() || "",
-      provider: providerVal ? parseInt(providerVal, 10) : null,
-      location: locationVal ? parseInt(locationVal, 10) : null,
-      service_category: (fd.get("service_category") as string) || null,
-      service_type: (fd.get("service_type") as string) || null,
-      associated_product: (fd.get("associated_product") as string)?.trim() || null,
-      account_number: (fd.get("account_number") as string)?.trim() || null,
-      security_code: (fd.get("security_code") as string)?.trim() || null,
-      contract_id: (fd.get("contract_id") as string)?.trim() || null,
-      monthly_cost: (fd.get("monthly_cost") as string)?.trim() || null,
-      notes: (fd.get("notes") as string)?.trim() || null,
+      name: getFormString(fd, "name"),
+      provider: getFormNumberOrNull(fd, "provider"),
+      location: getFormNumberOrNull(fd, "location"),
+      service_category: getFormStringOrNull(fd, "service_category") ?? null,
+      service_type: getFormStringOrNull(fd, "service_type") ?? null,
+      associated_product: getFormStringOrNull(fd, "associated_product"),
+      account_number: getFormStringOrNull(fd, "account_number"),
+      security_code: getFormStringOrNull(fd, "security_code"),
+      contract_id: getFormStringOrNull(fd, "contract_id"),
+      monthly_cost: getFormStringOrNull(fd, "monthly_cost"),
+      notes: getFormStringOrNull(fd, "notes"),
     };
     await onSubmit(data);
   };
