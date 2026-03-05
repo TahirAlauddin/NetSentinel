@@ -14,11 +14,11 @@ A checklist from a **code point of view**: refactoring, structure, consistency, 
 - [x] **Backend: shared serializers/validators** – Common validation and serialization logic in shared modules (`core.serializers.NameOnlyModelSerializer` for Department/Category)
 
 ### 1.2 Dead Code
-- [ ] **No unused exports** – All exported functions/components/types are used (or intentionally public API)
-- [ ] **No commented-out blocks** – Remove or replace with a short comment and ticket reference
-- [ ] **No unused imports** – Linter or IDE cleans unused imports
-- [ ] **No unused variables/parameters** – Prefix with underscore or remove; avoid silencing linter without reason
-- [ ] **No unreachable code** – No code after early returns that never runs
+- [ ] **No unused exports** – All exported functions/components/types are used (or intentionally public API); not fully audited
+- [x] **No commented-out blocks** – Removed or replaced with short TODO refs (dashboard-content, AssetManage, test_settings, api-client.test, form-submission.test, useFormActions.test)
+- [x] **No unused imports** – ESLint passes; unused imports cleaned by linter
+- [x] **No unused variables/parameters** – Unused params use `_` prefix (e.g. `_e` in catch); no silencing without reason
+- [x] **No unreachable code** – Spot-check: no code after early returns in edited files
 
 ### 1.3 Complexity & Size
 - [ ] **Functions stay focused** – Single responsibility; extract helpers when a function does multiple things
