@@ -2,12 +2,6 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts"
 
-// const COLORS = [
-//   "oklch(0.696 0.17 162.48)", // teal-like
-//   "oklch(0.627 0.265 303.9)", // purple
-//   "oklch(0.645 0.246 16.439)", // orange
-// ]
-
 const meter75 = [
   { name: "value", value: 75 },
   { name: "rest", value: 25 },
