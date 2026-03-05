@@ -7,11 +7,11 @@ A checklist from a **code point of view**: refactoring, structure, consistency, 
 ## 1. Refactoring & Duplication
 
 ### 1.1 DRY (Don't Repeat Yourself)
-- [ ] **No copy-paste blocks** – Repeated logic extracted to shared functions, hooks, or utilities
-- [ ] **Shared constants** – Magic numbers and repeated strings in constants or config
+- [x] **No copy-paste blocks** – Repeated logic extracted to shared functions, hooks, or utilities (`lib/form-utils.ts`: `getFormString`, `getFormNumberOrNull`, etc.; `normalizeListResponse` in utils)
+- [x] **Shared constants** – Magic numbers and repeated strings in constants or config (`constants/api-paths.ts`, notification limits in `types/notifications.ts`)
 - [ ] **Reusable components** – Similar UI patterns turned into components with props (not duplicated JSX)
-- [ ] **Single source of truth** – One place for API URLs, route paths, and feature flags
-- [ ] **Backend: shared serializers/validators** – Common validation and serialization logic in shared modules, not duplicated per view
+- [x] **Single source of truth** – One place for API URLs, route paths, and feature flags (`constants/api-paths.ts`, `constants/routes.ts`, `lib/config.ts`)
+- [x] **Backend: shared serializers/validators** – Common validation and serialization logic in shared modules (`core.serializers.NameOnlyModelSerializer` for Department/Category)
 
 ### 1.2 Dead Code
 - [ ] **No unused exports** – All exported functions/components/types are used (or intentionally public API)
