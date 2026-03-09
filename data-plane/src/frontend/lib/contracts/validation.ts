@@ -10,6 +10,20 @@ export interface ContractFormErrors {
   end_date?: string;
 }
 
+function validateNumericField(
+  value: string | number | null | undefined,
+  fieldName: string,
+  errors: ContractFormErrors,
+  key: keyof ContractFormErrors
+) {
+  if (value !== undefined && value !== null && value !== "") {
+    const n = Number(value);
+    if (Number.isNaN(n) || n < 0) {
+      errors[key] = `${fieldName} must be a non-negative number.`;
+    }
+  }
+}
+
 /**
  * Client-side validation for contract create/update. Returns an object of
  * field errors; empty object means valid.
@@ -24,17 +38,8 @@ export function validateContractForm(
   if (!carrier) errors.carrier = "Carrier is required.";
   if (!contractNumber) errors.contract_number = "Contract number is required.";
 
-  const nrc = payload.nrc;
-  if (nrc !== undefined && nrc !== null && nrc !== "") {
-    const n = Number(nrc);
-    if (Number.isNaN(n) || n < 0) errors.nrc = "NRC must be a non-negative number.";
-  }
-
-  const mrc = payload.mrc;
-  if (mrc !== undefined && mrc !== null && mrc !== "") {
-    const m = Number(mrc);
-    if (Number.isNaN(m) || m < 0) errors.mrc = "MRC must be a non-negative number.";
-  }
+  validateNumericField(payload.nrc, "NRC", errors, "nrc");
+  validateNumericField(payload.mrc, "MRC", errors, "mrc");
 
   const startDate = payload.start_date?.trim();
   if (!startDate) errors.start_date = "Start date is required.";

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  * IPAM TypeScript types
  * Type definitions for IP Address Management entities

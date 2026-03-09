@@ -12,9 +12,6 @@ import { AssetForm } from "./shared/form/AssetForm";
  * Supports both create and edit modes via URL search params
  */
 const AssetFormPage = ({ assetId }: { assetId?: number }) => {
-  // const searchParams = useSearchParams();
-  // const assetId = searchParams.get("id");
-
   const [loading, setLoading] = useState(!!assetId);
   const [error, setError] = useState<string | null>(null);
 

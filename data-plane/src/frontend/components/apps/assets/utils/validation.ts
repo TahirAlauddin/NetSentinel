@@ -146,6 +146,9 @@ export const isSelected = (value: string | number | object | null | undefined): 
 
 // ==================== Shared Validation Helpers ====================
 
+const isInvalidName = (name: unknown) => !name || (typeof name === "string" && name.trim() === "");
+const isInvalidCategory = (cat: unknown) => !cat || (typeof cat === "string" && cat.trim() === "") || (typeof cat === "number" && cat === 0);
+
 /**
  * Validates step 0 (Basic Details) - name and category
  */
@@ -156,39 +159,88 @@ const validateBasicDetails = (
   const fieldErrors: Record<string, string> = {}
 
   if (isCreate) {
-    // For create: name and category are required
-    if (!formData.name || (typeof formData.name === "string" && formData.name.trim() === "")) {
-      fieldErrors.name = "Asset name is required"
-    }
-    
-    // Validate category (required for create) - could be string ID, number ID, or object
-    if (!formData.category) {
-      fieldErrors.category = "Asset type (category) is required"
-    } else if (typeof formData.category === "string" && (formData.category as string).trim() === "") {
-      fieldErrors.category = "Asset type (category) is required"
-    } else if (typeof formData.category === "number" && formData.category === 0) {
-      fieldErrors.category = "Asset type (category) is required"
-    }
+    if (isInvalidName(formData.name)) fieldErrors.name = "Asset name is required";
+    if (isInvalidCategory(formData.category)) fieldErrors.category = "Asset type (category) is required";
   } else {
-    // For update: name and category are optional, but validate format if provided
-    if (formData.name !== undefined && formData.name !== null) {
-      if (typeof formData.name === "string" && formData.name.trim() === "") {
-        fieldErrors.name = "Asset name cannot be empty"
-      }
+    if (formData.name !== undefined && formData.name !== null && isInvalidName(formData.name)) {
+      fieldErrors.name = "Asset name cannot be empty";
     }
-    
-    // Validate category format if provided
-    if (formData.category !== undefined && formData.category !== null) {
-      if (typeof formData.category === "string" && (formData.category as string).trim() === "") {
-        fieldErrors.category = "Asset type (category) cannot be empty"
-      } else if (typeof formData.category === "number" && formData.category === 0) {
-        fieldErrors.category = "Asset type (category) cannot be zero"
-      }
+    if (formData.category !== undefined && formData.category !== null && isInvalidCategory(formData.category)) {
+      fieldErrors.category = "Asset type (category) cannot be empty";
     }
   }
 
   return fieldErrors
 }
+
+type FormDataT = AssetCreateDto | AssetUpdateDto | Partial<Asset>;
+
+const validateTechSpecs = (formData: FormDataT, fieldErrors: Record<string, string>) => {
+  if (formData.ip_address && formData.ip_address.trim() !== "" && !isValidIPAddress(formData.ip_address)) {
+    fieldErrors.ip_address = "Please enter a valid IP address (e.g., 192.168.1.1)";
+  }
+  if (formData.mac_address && formData.mac_address.trim() !== "" && !isValidMACAddress(formData.mac_address)) {
+    fieldErrors.mac_address = "Please enter a valid MAC address (e.g., 00:1B:44:11:3A:B7)";
+  }
+};
+
+const validateLocationUsage = (formData: FormDataT, fieldErrors: Record<string, string>) => {
+  if (formData.in_current_state_since && typeof formData.in_current_state_since === "string" && formData.in_current_state_since.trim() !== "") {
+    if (!isValidDate(formData.in_current_state_since)) {
+      fieldErrors.in_current_state_since = "Please enter a valid date (YYYY-MM-DD)";
+    }
+  }
+  if (formData.expected_checkin_date && typeof formData.expected_checkin_date === "string" && formData.expected_checkin_date.trim() !== "") {
+    if (!isValidDate(formData.expected_checkin_date)) {
+      fieldErrors.expected_checkin_date = "Please enter a valid date (YYYY-MM-DD)";
+    }
+  }
+};
+
+const validateCostDepreciationPurchaseReplacement = (formData: FormDataT, fieldErrors: Record<string, string>) => {
+  const parseCost = (val: string) => parseFloat(val.replace(/[^0-9.-]/g, ""));
+  if (formData.purchase_price && typeof formData.purchase_price === "string" && formData.purchase_price.trim() !== "") {
+    if (!isValidPositiveNumber(parseCost(formData.purchase_price))) {
+      fieldErrors.purchase_price = "Please enter a valid positive number";
+    }
+  }
+  if (formData.replacement_cost && typeof formData.replacement_cost === "string" && formData.replacement_cost.trim() !== "") {
+    if (!isValidPositiveNumber(parseCost(formData.replacement_cost))) {
+      fieldErrors.replacement_cost = "Please enter a valid positive number";
+    }
+  }
+  if (formData.salvage_value && typeof formData.salvage_value === "string" && formData.salvage_value.trim() !== "") {
+    if (!isValidPositiveNumber(parseCost(formData.salvage_value))) {
+      fieldErrors.salvage_value = "Please enter a valid positive number";
+    }
+  }
+};
+
+const validateCostDepreciation = (formData: FormDataT, fieldErrors: Record<string, string>) => {
+  validateCostDepreciationPurchaseReplacement(formData, fieldErrors);
+  if (formData.useful_life_years !== undefined && formData.useful_life_years !== null) {
+    if (!isValidPositiveNumber(formData.useful_life_years)) {
+      fieldErrors.useful_life_years = "Please enter a valid positive number";
+    }
+  }
+  if (formData.approaching_eol_months !== undefined && formData.approaching_eol_months !== null) {
+    if (!isValidPositiveNumber(formData.approaching_eol_months)) {
+      fieldErrors.approaching_eol_months = "Please enter a valid positive number";
+    }
+  }
+};
+
+const validateWarrantyAcquisition = (formData: FormDataT, fieldErrors: Record<string, string>) => {
+  if (formData.acquisition_date && formData.acquisition_date.trim() !== "" && !isValidDate(formData.acquisition_date)) {
+    fieldErrors.acquisition_date = "Please enter a valid date (YYYY-MM-DD)";
+  }
+  if (formData.warranty_expiration && formData.warranty_expiration.trim() !== "" && !isValidDate(formData.warranty_expiration)) {
+    fieldErrors.warranty_expiration = "Please enter a valid date (YYYY-MM-DD)";
+  }
+  if (formData.installation_date && formData.installation_date.trim() !== "" && !isValidDate(formData.installation_date)) {
+    fieldErrors.installation_date = "Please enter a valid date (YYYY-MM-DD)";
+  }
+};
 
 /**
  * Validates steps 1-6 (shared validation logic for both create and update)
@@ -200,99 +252,18 @@ const validateCommonSteps = (
   const fieldErrors: Record<string, string> = {}
 
   switch (stepIndex) {
-    case 1: // Tech Specs
-      // Validate IP address if provided
-      if (formData.ip_address && formData.ip_address.trim() !== "") {
-        if (!isValidIPAddress(formData.ip_address)) {
-          fieldErrors.ip_address = "Please enter a valid IP address (e.g., 192.168.1.1)"
-        }
-      }
-
-      // Validate MAC address if provided
-      if (formData.mac_address && formData.mac_address.trim() !== "") {
-        if (!isValidMACAddress(formData.mac_address)) {
-          fieldErrors.mac_address = "Please enter a valid MAC address (e.g., 00:1B:44:11:3A:B7)"
-        }
-      }
-      break
-
-    case 2: // Location & Usage
-      // Validate dates if provided 
-      if (formData.in_current_state_since && typeof formData.in_current_state_since === "string" && formData.in_current_state_since.trim() !== "") {
-        if (!isValidDate(formData.in_current_state_since)) {
-          fieldErrors.in_current_state_since = "Please enter a valid date (YYYY-MM-DD)"
-        }
-      }
-
-      if (formData.expected_checkin_date && typeof formData.expected_checkin_date === "string" && formData.expected_checkin_date.trim() !== "") {
-        if (!isValidDate(formData.expected_checkin_date)) {
-          fieldErrors.expected_checkin_date = "Please enter a valid date (YYYY-MM-DD)"
-        }
-      }
-      break
-
-    case 3: // Cost Depreciation
-      // Validate numeric fields if provided
-      if (formData.purchase_price && typeof formData.purchase_price === "string" && formData.purchase_price.trim() !== "") {
-        const purchasePrice = parseFloat(formData.purchase_price.replace(/[^0-9.-]/g, ""))
-        if (!isValidPositiveNumber(purchasePrice)) {
-          fieldErrors.purchase_price = "Please enter a valid positive number"
-        }
-      }
-
-      if (formData.replacement_cost && typeof formData.replacement_cost === "string" && formData.replacement_cost.trim() !== "") {
-        const replacementCost = parseFloat(formData.replacement_cost.replace(/[^0-9.-]/g, ""))
-        if (!isValidPositiveNumber(replacementCost)) {
-          fieldErrors.replacement_cost = "Please enter a valid positive number"
-        }
-      }
-
-      if (formData.salvage_value && typeof formData.salvage_value === "string" && formData.salvage_value.trim() !== "") {
-        const salvageValue = parseFloat(formData.salvage_value.replace(/[^0-9.-]/g, ""))
-        if (!isValidPositiveNumber(salvageValue)) {
-          fieldErrors.salvage_value = "Please enter a valid positive number"
-        }
-      }
-
-      if (formData.useful_life_years !== undefined && formData.useful_life_years !== null) {
-        if (!isValidPositiveNumber(formData.useful_life_years)) {
-          fieldErrors.useful_life_years = "Please enter a valid positive number"
-        }
-      }
-
-      if (formData.approaching_eol_months !== undefined && formData.approaching_eol_months !== null) {
-        if (!isValidPositiveNumber(formData.approaching_eol_months)) {
-          fieldErrors.approaching_eol_months = "Please enter a valid positive number"
-        }
-      }
-      break
-
-    case 4: // Warranty & Acquisition
-      // Validate dates if provided
-      if (formData.acquisition_date && formData.acquisition_date.trim() !== "") {
-        if (!isValidDate(formData.acquisition_date)) {
-          fieldErrors.acquisition_date = "Please enter a valid date (YYYY-MM-DD)"
-        }
-      }
-
-      if (formData.warranty_expiration && formData.warranty_expiration.trim() !== "") {
-        if (!isValidDate(formData.warranty_expiration)) {
-          fieldErrors.warranty_expiration = "Please enter a valid date (YYYY-MM-DD)"
-        }
-      }
-
-      if (formData.installation_date && formData.installation_date.trim() !== "") {
-        if (!isValidDate(formData.installation_date)) {
-          fieldErrors.installation_date = "Please enter a valid date (YYYY-MM-DD)"
-        }
-      }
-      break
-
-    case 5: // Alerts
-    case 6: // Additional Details
-    default:
-      // All fields optional, no validation needed
-      break
+    case 1:
+      validateTechSpecs(formData, fieldErrors);
+      break;
+    case 2:
+      validateLocationUsage(formData, fieldErrors);
+      break;
+    case 3:
+      validateCostDepreciation(formData, fieldErrors);
+      break;
+    case 4:
+      validateWarrantyAcquisition(formData, fieldErrors);
+      break;
   }
 
   return fieldErrors

@@ -74,3 +74,18 @@ export function safeApiResponse<T>(response: BaseApiResponse<T>): { success: boo
   }
   return { success: true, data: response.data }
 }
+
+/**
+ * Normalize list API response: backend may return either T[] or { results: T[] }.
+ * Single place for this logic (DRY) – use in settings and other list endpoints.
+ */
+export function normalizeListResponse<T>(
+  data: T[] | { results: T[] } | null | undefined
+): T[] {
+  if (data == null) return []
+  if (Array.isArray(data)) return data
+  if (typeof data === "object" && "results" in data && Array.isArray((data as { results: T[] }).results)) {
+    return (data as { results: T[] }).results
+  }
+  return []
+}

@@ -10,7 +10,7 @@ interface SampleItem {
   id: string;
   subnet: string;
   description: string;
-  vlan: string;
+  vlan: string; 
   vrf: string;
 }
 

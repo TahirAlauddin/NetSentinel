@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useSession, signOut } from "next-auth/react"
 import { Menu } from "lucide-react"
+import { NotificationBell } from "@/components/notifications/notification-bell"
 
 export function Topbar({ onMenuToggle }: { onMenuToggle: () => void }) {
   const [now, setNow] = useState<string>("")
@@ -58,7 +59,8 @@ export function Topbar({ onMenuToggle }: { onMenuToggle: () => void }) {
               <span className="px-2 py-1 text-xs bg-yellow-600 rounded">Admin</span>
             )}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <NotificationBell />
             <span className="hidden sm:block">{now}</span>
             {session ? (
               <button 

@@ -110,6 +110,16 @@ const PHONE_MANAGEMENT_NAV_ITEMS = [
   { href: "/phone-management/blocks", label: "Number Blocks" },
 ];
 
+/**
+ * Notifications Navigation Items
+ */
+const NOTIFICATIONS_NAV_ITEMS = [
+  { href: "/notifications", label: "Overview" },
+  { href: "/notifications/slack", label: "Slack" },
+  { href: "/notifications/discord", label: "Discord" },
+  { href: "/notifications/preferences", label: "Preferences" },
+];
+
 
 /**
  * Sectional Navigation Component
@@ -125,6 +135,7 @@ export function SectionalNavigation() {
   const isContractsRoute = pathname.startsWith("/contracts");
   const isTelecomRoute = pathname.startsWith("/telecom-management");
   const isPhoneManagementRoute = pathname.startsWith("/phone-management");
+  const isNotificationsRoute = pathname.startsWith("/notifications");
 
   // Show IPAM navigation when on IPAM routes
   if (isIpamRoute) {
@@ -154,6 +165,11 @@ export function SectionalNavigation() {
   // Show Phone Management navigation when on Phone Management routes
   if (isPhoneManagementRoute) {
     return <PhoneManagementNavigation pathname={pathname} />;
+  }
+
+  // Show Notifications navigation when on Notifications routes
+  if (isNotificationsRoute) {
+    return <NotificationsNavigation pathname={pathname} />;
   }
 
   // Default navigation for other routes
@@ -401,6 +417,41 @@ function PhoneManagementNavigation({ pathname }: { pathname: string }) {
   return (
     <ul className="flex items-center gap-2 sm:gap-4 lg:gap-6 py-2 sm:py-3 text-xs sm:text-sm overflow-x-auto">
       {PHONE_MANAGEMENT_NAV_ITEMS.map((item) => {
+        const active = isActive(item.href);
+        return (
+          <li key={item.href} className="flex-shrink-0">
+            <Link
+              href={item.href}
+              className={cn(
+                "hover:underline whitespace-nowrap transition-colors",
+                active
+                  ? "text-primary font-semibold underline"
+                  : "text-secondary-foreground hover:text-foreground"
+              )}
+            >
+              {item.label}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/**
+ * Notifications Navigation Component
+ */
+function NotificationsNavigation({ pathname }: { pathname: string }) {
+  const isActive = (href: string) => {
+    if (href === "/notifications") {
+      return pathname === "/notifications" || pathname === "/notifications/";
+    }
+    return pathname.startsWith(href);
+  };
+
+  return (
+    <ul className="flex items-center gap-2 sm:gap-4 lg:gap-6 py-2 sm:py-3 text-xs sm:text-sm overflow-x-auto">
+      {NOTIFICATIONS_NAV_ITEMS.map((item) => {
         const active = isActive(item.href);
         return (
           <li key={item.href} className="flex-shrink-0">

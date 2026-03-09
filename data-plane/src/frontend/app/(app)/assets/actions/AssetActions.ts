@@ -11,6 +11,55 @@ import { AssetActionUtils } from "./utils";
 import { Tag } from "@/types/assets/fields";
 import { validateImageFile, validateAttachmentFile } from "@/lib/security/file-validation";
 import { assetCreateSchema, assetUpdateSchema, validateData } from "@/lib/security/validation-schemas";
+
+function getActionErrorMessage(status?: number, errorStr?: string, defaultMessage = "Failed operation", customMessages?: Record<number, string>) {
+  let errorMessage = errorStr || defaultMessage;
+  if (customMessages && status && customMessages[status]) {
+    errorMessage = customMessages[status];
+  } else if (status === 400) {
+    errorMessage = `Validation error: ${errorMessage}`;
+  } else if (status === 401) {
+    errorMessage = "Authentication failed. Please log in again.";
+  } else if (status === 403) {
+    errorMessage = "You don't have permission to perform this action.";
+  } else if (status === 404) {
+    errorMessage = "Asset not found.";
+  } else if (status && status >= 500) {
+    errorMessage = "Server error. Please try again later.";
+  }
+  return errorMessage;
+}
+
+async function addTagToAssetData(validatedData: AssetCreateDto | AssetUpdateDto, tagId: number | null, isUpdate = false, id?: number) {
+  if (!tagId) return;
+  if (isUpdate && validatedData.tags === undefined && id !== undefined) {
+    try {
+      const existingAsset = await AssetActions.get(id);
+      const existingTags = existingAsset.tags;
+      if (existingTags && Array.isArray(existingTags)) {
+        validatedData.tags = existingTags
+          .map((tag: Tag | number) => {
+            if (typeof tag === "number") return tag;
+            if (typeof tag === "object" && tag !== null && "id" in tag) return tag.id;
+            return null;
+          })
+          .filter((id: number | null): id is number => id !== null);
+      } else {
+        validatedData.tags = [];
+      }
+    } catch (error) {
+      console.warn("Could not fetch existing asset tags:", error);
+      validatedData.tags = [];
+    }
+  }
+  if (!validatedData.tags || !Array.isArray(validatedData.tags)) {
+    validatedData.tags = [];
+  }
+  if (!validatedData.tags.includes(tagId)) {
+    validatedData.tags.push(tagId);
+  }
+}
+
 /**
  * Asset CRUD operations and related functionality
  */
@@ -113,36 +162,16 @@ export class AssetActions {
       // If asset_tag is provided, create/find the tag and add it to tags array
       if (validatedData.asset_tag && typeof validatedData.asset_tag === "string" && validatedData.asset_tag.trim() !== "") {
         const tagId = await AssetActionUtils.findOrCreateAssetTag(validatedData.asset_tag);
-        if (tagId) {
-          // Add the tag to the tags array if it doesn't already exist
-          if (!validatedData.tags) {
-            validatedData.tags = [];
-          }
-          if (!Array.isArray(validatedData.tags)) {
-            validatedData.tags = [];
-          }
-          if (!validatedData.tags.includes(tagId)) {
-            validatedData.tags.push(tagId);
-          }
-        }
+        await addTagToAssetData(validatedData, tagId);
       }
 
       // Send request to backend with validated data
       const response = await serverApi.post<Asset>("/assets/", validatedData);
 
       if (response.error) {
-        let errorMessage = response.error || "Failed to create asset";
-
-        if (response.status === 400) {
-          errorMessage = `Validation error: ${errorMessage}`;
-        } else if (response.status === 401) {
-          errorMessage = "Authentication failed. Please log in again.";
-        } else if (response.status === 403) {
-          errorMessage = "You don't have permission to create assets.";
-        } else if (response.status >= 500) {
-          errorMessage = "Server error. Please try again later.";
-        }
-
+        const errorMessage = getActionErrorMessage(response.status, response.error, "Failed to create asset", {
+          403: "You don't have permission to create assets."
+        });
         console.error("[AssetActions.create] Error response:", response.status, errorMessage);
         return { success: false, error: errorMessage };
       }
@@ -197,68 +226,16 @@ export class AssetActions {
       // If asset_tag is provided, create/find the tag and add it to tags array
       if (validatedData.asset_tag && typeof validatedData.asset_tag === "string" && validatedData.asset_tag.trim() !== "") {
         const tagId = await AssetActionUtils.findOrCreateAssetTag(validatedData.asset_tag);
-        if (tagId) {
-          // For updates, preserve existing tags if tags weren't explicitly provided in the update
-          if (validatedData.tags === undefined && validatedData.tags === undefined) {
-            // Fetch existing asset to get current tags
-            try {
-              const existingAsset = await AssetActions.get(id);
-              // Handle tags - they might be objects or IDs
-              const existingTags = (existingAsset as Asset).tags;
-              if (existingTags && Array.isArray(existingTags)) {
-                // Extract tag IDs from tag objects or use IDs directly
-                validatedData.tags = existingTags
-                  .map((tag: Tag | number) => {
-                    if (typeof tag === "number") return tag;
-                    if (typeof tag === "object" && tag !== null && "id" in tag) {
-                      return tag.id;
-                    }
-                    return null;
-                  })
-                  .filter((id: number | null): id is number => id !== null);
-              } else {
-                validatedData.tags = [];
-              }
-            } catch (error) {
-              // If we can't fetch existing asset, start with empty array
-              console.warn("Could not fetch existing asset tags:", error);
-              validatedData.tags = [];
-            }
-          }
-
-          // Ensure tags is an array
-          if (!validatedData.tags) {
-            validatedData.tags = [];
-          }
-          if (!Array.isArray(validatedData.tags)) {
-            validatedData.tags = [];
-          }
-
-          // Add the tag if it doesn't already exist
-          if (!validatedData.tags.includes(tagId)) {
-            validatedData.tags.push(tagId);
-          }
-        }
+        await addTagToAssetData(validatedData, tagId, true, id);
       }
 
       // Send request to backend with validated data
       const response = await serverApi.patch<Asset>(`/assets/${id}/`, validatedData);
 
       if (response.error) {
-        let errorMessage = response.error || "Failed to update asset";
-
-        if (response.status === 400) {
-          errorMessage = `Validation error: ${errorMessage}`;
-        } else if (response.status === 401) {
-          errorMessage = "Authentication failed. Please log in again.";
-        } else if (response.status === 403) {
-          errorMessage = "You don't have permission to update this asset.";
-        } else if (response.status === 404) {
-          errorMessage = "Asset not found.";
-        } else if (response.status >= 500) {
-          errorMessage = "Server error. Please try again later.";
-        }
-
+        const errorMessage = getActionErrorMessage(response.status, response.error, "Failed to update asset", {
+          403: "You don't have permission to update this asset."
+        });
         console.error("[AssetActions.update] Error response:", response.status, errorMessage);
         return { success: false, error: errorMessage };
       }

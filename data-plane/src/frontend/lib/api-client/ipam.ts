@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { BaseApiClient, BaseApiResponse } from "./index";
 import {
   SubnetCreateUpdateDto,

@@ -8,42 +8,25 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { GripVertical, Trash2, Edit2 } from "lucide-react";
+import { INFRASTRUCTURE } from "@/constants/api-paths";
+import { getFormString } from "@/lib/form-utils";
+import { api, normalizeListResponse } from "@/lib/utils";
 import { CategoryRecord } from "@/types/categories";
-import { api } from "@/lib/utils";
 
 async function listCategories(): Promise<CategoryRecord[]> {
   const response = await api.get<
     CategoryRecord[] | { results: CategoryRecord[] }
-  >("/infrastructure/categories/");
+  >(INFRASTRUCTURE.CATEGORIES);
   if (response.error || !response.data) {
     throw new Error(response.error || "Failed to fetch categories");
   }
-
-  const data = response.data;
-
-  // Handle paginated response
-  if (
-    data &&
-    typeof data === "object" &&
-    "results" in data &&
-    Array.isArray((data as { results: CategoryRecord[] }).results)
-  ) {
-    return (data as { results: CategoryRecord[] }).results;
-  }
-
-  // Handle direct array response
-  if (Array.isArray(data)) {
-    return data;
-  }
-
-  console.warn("Unexpected categories data format:", data);
-  return [];
+  return normalizeListResponse(response.data);
 }
 
 async function createCategory(
   name: string
 ): Promise<{ success: boolean; message?: string; error?: string }> {
-  const response = await api.post("/infrastructure/categories/", {
+  const response = await api.post(INFRASTRUCTURE.CATEGORIES, {
     name,
   });
 
@@ -63,7 +46,7 @@ async function createCategory(
 async function deleteCategory(
   id: number
 ): Promise<{ success: boolean; message?: string; error?: string }> {
-  const response = await api.delete(`/infrastructure/categories/${id}/`);
+  const response = await api.delete(`${INFRASTRUCTURE.CATEGORIES}${id}/`);
 
   if (response.error) {
     return {
@@ -82,7 +65,7 @@ async function updateCategory(
   id: number,
   name: string
 ): Promise<{ success: boolean; message?: string; error?: string }> {
-  const response = await api.put(`/infrastructure/categories/${id}/`, {
+  const response = await api.put(`${INFRASTRUCTURE.CATEGORIES}${id}/`, {
     name,
   });
 
@@ -112,7 +95,7 @@ export default function CategoriesPage() {
     e.preventDefault();
     setSubmitting(true);
     const formData = new FormData(e.currentTarget);
-    const name = (formData.get("name") as string)?.trim();
+    const name = getFormString(formData, "name");
 
     if (!name) {
       toast.error("Category name is required");

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from core.serializers import NameOnlyModelSerializer
 from .models import (
     CarrierContact,
     Category,
@@ -115,32 +116,18 @@ class AssetLocationSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
-class DepartmentSerializer(serializers.ModelSerializer):
+class DepartmentSerializer(NameOnlyModelSerializer):
     """Serializer for Department."""
 
-    class Meta:
+    class Meta(NameOnlyModelSerializer.Meta):
         model = Department
-        fields = [
-            "id",
-            "name",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = ["id", "created_at", "updated_at"]
 
 
-class CategorySerializer(serializers.ModelSerializer):
+class CategorySerializer(NameOnlyModelSerializer):
     """Serializer for Category."""
 
-    class Meta:
+    class Meta(NameOnlyModelSerializer.Meta):
         model = Category
-        fields = [
-            "id",
-            "name",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = ["id", "created_at", "updated_at"]
 
 
 class ContactSerializer(serializers.ModelSerializer):

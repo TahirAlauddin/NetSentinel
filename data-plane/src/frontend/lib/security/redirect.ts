@@ -31,6 +31,18 @@ export interface GetSafeRedirectPathOptions {
  * // First of several params with default
  * const path = getSafeRedirectPath(callbackUrl) ?? getSafeRedirectPath(redirectParam) ?? "/dashboard";
  */
+function resolveAbsoluteUrl(s: string, origin: string | undefined): string | null {
+  if (!origin) return null;
+  try {
+    const url = new URL(s, origin);
+    if (url.origin !== origin) return null;
+    const path = url.pathname + url.search;
+    return path.startsWith("//") ? null : path || "/";
+  } catch {
+    return null;
+  }
+}
+
 export function getSafeRedirectPath(
   value: string | null | undefined,
   options: GetSafeRedirectPathOptions = {}
@@ -47,15 +59,7 @@ export function getSafeRedirectPath(
   const isAbsoluteOrProtocolRelative = s.startsWith("//") || /^\w+:\/\//i.test(s);
 
   if (isAbsoluteOrProtocolRelative) {
-    if (!origin) return null;
-    try {
-      const url = new URL(s, origin);
-      if (url.origin !== origin) return null;
-      const path = url.pathname + url.search;
-      return path.startsWith("//") ? null : path || "/";
-    } catch {
-      return null;
-    }
+    return resolveAbsoluteUrl(s, origin);
   }
 
   if (s.startsWith("/") && !s.startsWith("//")) return s;
