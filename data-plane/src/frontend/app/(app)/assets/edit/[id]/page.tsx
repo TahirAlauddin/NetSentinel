@@ -12,7 +12,7 @@ import { validateId } from "@/lib/security/input-validation";
 /**
  * Edit asset page - validates route id before rendering form.
  */
-export function EditAssetPage() {
+export default function EditAssetPage() {
   const params = useParams();
   const router = useRouter();
   const assetId = validateId(params.id);
