@@ -17,6 +17,62 @@ import { toast } from "sonner";
 import { transformToCreateDto, transformToUpdateDto } from "../utils/transform";
 import { transformToCalendarAlertCreateUpdateDto } from "../utils/transform";
 import { CalendarAlertApiClient } from "@/lib/api-client/calendar-alert";
+async function processAssetFilesAndRelations(
+  savedAssetId: number,
+  latestFormData: Partial<Asset>
+) {
+  const relatedItems = Array.isArray(latestFormData.related_items)
+    ? latestFormData.related_items
+    : [];
+  const attachments = Array.isArray(latestFormData.attachments)
+    ? latestFormData.attachments
+    : [];
+  const images = Array.isArray(latestFormData.images) ? latestFormData.images : [];
+
+  const relResult = await setAssetRelations(savedAssetId, relatedItems as Asset[]);
+  if (!relResult.success && relResult.error) {
+    toast.error(`Failed to save related items: ${relResult.error}`);
+  }
+
+  const attachResult = await uploadAssetAttachments(savedAssetId, attachments as Asset["attachments"]);
+  if (!attachResult.success && attachResult.error) {
+    toast.error(`Failed to upload attachments: ${attachResult.error}`);
+  }
+
+  const imgResult = await uploadAssetImages(savedAssetId, images as Asset["images"]);
+  if (!imgResult.success && imgResult.error) {
+    toast.error(`Failed to upload images: ${imgResult.error}`);
+  }
+}
+
+async function handleAssetSaveSuccess(
+  result: { success: boolean; message?: string; error?: string; data?: Asset },
+  mode: "create" | "edit",
+  assetId: string | null,
+  latestFormData: Partial<Asset>,
+  createCalendarAlertsForNewAsset: (id: number, alerts: CalendarAlert[]) => Promise<void>,
+  router: ReturnType<typeof useRouter>
+) {
+  const savedAssetId = result.data?.id || (assetId ? parseInt(assetId, 10) : null);
+
+  if (mode === "create" && result.data?.id) {
+    const calendarAlerts = Array.isArray(latestFormData.calendar_alerts)
+      ? latestFormData.calendar_alerts
+      : [];
+    await createCalendarAlertsForNewAsset(result.data.id, calendarAlerts);
+  }
+
+  if (savedAssetId) {
+    await processAssetFilesAndRelations(savedAssetId, latestFormData);
+  }
+
+  toast.success(
+    result.message ||
+      (mode === "edit" ? "Asset updated successfully!" : "Asset created successfully!")
+  );
+  router.push("/assets");
+}
+
 /**
  * Hook for managing form navigation and submission actions
  *
@@ -156,48 +212,14 @@ export function useFormActions(
         : await createAsset(transformToCreateDto(latestFormData));
 
       if (result.success) {
-        // If creating a new asset, create calendar alerts after asset creation
-        const savedAssetId = result.data?.id || (assetId ? parseInt(assetId, 10) : null);
-
-        if (mode === "create" && result.data?.id) {
-          const calendarAlerts = Array.isArray(latestFormData.calendar_alerts)
-            ? latestFormData.calendar_alerts
-            : [];
-          await createCalendarAlertsForNewAsset(result.data.id, calendarAlerts);
-        }
-
-        // After base asset save, sync related_items, attachments, and images
-        if (savedAssetId) {
-          const relatedItems = Array.isArray(latestFormData.related_items)
-            ? latestFormData.related_items
-            : [];
-          const attachments = Array.isArray(latestFormData.attachments)
-            ? latestFormData.attachments
-            : [];
-          const images = Array.isArray(latestFormData.images) ? latestFormData.images : [];
-
-          // Fire sequentially to keep logic simple
-          const relResult = await setAssetRelations(savedAssetId, relatedItems as Asset[]);
-          if (!relResult.success && relResult.error) {
-            toast.error(`Failed to save related items: ${relResult.error}`);
-          }
-
-          const attachResult = await uploadAssetAttachments(savedAssetId, attachments as Asset["attachments"]);
-          if (!attachResult.success && attachResult.error) {
-            toast.error(`Failed to upload attachments: ${attachResult.error}`);
-          }
-
-          const imgResult = await uploadAssetImages(savedAssetId, images as Asset["images"]);
-          if (!imgResult.success && imgResult.error) {
-            toast.error(`Failed to upload images: ${imgResult.error}`);
-          }
-        }
-
-        toast.success(
-          result.message ||
-            (mode === "edit" ? "Asset updated successfully!" : "Asset created successfully!")
+        await handleAssetSaveSuccess(
+          result,
+          mode,
+          assetId,
+          latestFormData,
+          createCalendarAlertsForNewAsset,
+          router
         );
-        router.push("/assets");
       } else {
         toast.error(result.error || "Failed to save asset");
       }
