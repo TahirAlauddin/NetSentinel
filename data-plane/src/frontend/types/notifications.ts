@@ -53,6 +53,14 @@ export interface NotificationPreferences {
   digestFrequency: "daily" | "weekly" | "off";
 }
 
+/** Min/max limit for in-app notification list requests (backend enforced). */
+export const NOTIFICATION_LIMIT_MIN = 1;
+export const NOTIFICATION_LIMIT_MAX = 100;
+/** Default limit for unread-only (e.g. bell dropdown). */
+export const NOTIFICATION_LIMIT_DEFAULT_UNREAD = 20;
+/** Default limit for all notifications (e.g. history). */
+export const NOTIFICATION_LIMIT_DEFAULT_ALL = 50;
+
 export const DEFAULT_CHANNELS_CONFIG: NotificationChannelsConfig = {
   slack: { enabled: false, webhookUrl: "", defaultChannel: undefined },
   discord: { enabled: false, webhookUrl: "" },
