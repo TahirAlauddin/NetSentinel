@@ -17,6 +17,59 @@ export interface SubnetMaskInfo {
   is_ipv6?: boolean;
 }
 
+function calculateIpv6Mask(prefixLength: number) {
+  const netmask = `/${prefixLength}`;
+  
+  const maskParts: string[] = [];
+  const fullHextets = Math.floor(prefixLength / 16);
+  const partialBits = prefixLength % 16;
+  
+  for (let i = 0; i < fullHextets; i++) {
+    maskParts.push("ffff");
+  }
+  
+  if (partialBits > 0 && fullHextets < 8) {
+    const maskValue = 0xffff << (16 - partialBits);
+    maskParts.push(maskValue.toString(16).padStart(4, "0"));
+  }
+  
+  while (maskParts.length < 8) {
+    maskParts.push("0000");
+  }
+  
+  return {
+    netmask,
+    wildcardMask: "Not applicable for IPv6",
+    binary: maskParts.join(":")
+  };
+}
+
+function calculateIpv4Mask(prefixLength: number) {
+  const maskValue = 0xffffffff << (32 - prefixLength);
+  const maskBytes = [
+    (maskValue >>> 24) & 0xff,
+    (maskValue >>> 16) & 0xff,
+    (maskValue >>> 8) & 0xff,
+    maskValue & 0xff,
+  ];
+  const netmask = maskBytes.join(".");
+
+  const wildcardValue = 0xffffffff ^ maskValue;
+  const wildcardBytes = [
+    (wildcardValue >>> 24) & 0xff,
+    (wildcardValue >>> 16) & 0xff,
+    (wildcardValue >>> 8) & 0xff,
+    wildcardValue & 0xff,
+  ];
+  const wildcardMask = wildcardBytes.join(".");
+
+  const binary = maskBytes
+    .map((b) => b.toString(2).padStart(8, "0"))
+    .join(".");
+
+  return { netmask, wildcardMask, binary };
+}
+
 /**
  * Calculate subnet mask information for a given prefix length
  */
@@ -62,70 +115,13 @@ export function getSubnetMaskInfo(
   }
 
   // Generate netmask
-  let netmask: string;
-  let wildcardMask: string;
-  let binary: string;
-
-  if (isIpv6) {
-    // For IPv6, show prefix length notation (standard format)
-    // e.g., /64, /48, etc.
-    netmask = `/${prefixLength}`;
-    
-    // For IPv6, we can also show the mask in hex format
-    // Calculate the mask value
-    const maskParts: string[] = [];
-    const fullHextets = Math.floor(prefixLength / 16);
-    const partialBits = prefixLength % 16;
-    
-    for (let i = 0; i < fullHextets; i++) {
-      maskParts.push("ffff");
-    }
-    
-    if (partialBits > 0 && fullHextets < 8) {
-      const maskValue = 0xffff << (16 - partialBits);
-      maskParts.push(maskValue.toString(16).padStart(4, "0"));
-    }
-    
-    // Fill remaining with zeros
-    while (maskParts.length < 8) {
-      maskParts.push("0000");
-    }
-    
-    const hexMask = maskParts.join(":");
-    wildcardMask = "Not applicable for IPv6";
-    binary = hexMask; // Use hex for IPv6 (binary too long)
-  } else {
-    // For IPv4, calculate netmask from prefix length
-    const maskValue = 0xffffffff << (32 - prefixLength);
-    const maskBytes = [
-      (maskValue >>> 24) & 0xff,
-      (maskValue >>> 16) & 0xff,
-      (maskValue >>> 8) & 0xff,
-      maskValue & 0xff,
-    ];
-    netmask = maskBytes.join(".");
-
-    // Calculate wildcard mask (inverse)
-    const wildcardValue = 0xffffffff ^ maskValue;
-    const wildcardBytes = [
-      (wildcardValue >>> 24) & 0xff,
-      (wildcardValue >>> 16) & 0xff,
-      (wildcardValue >>> 8) & 0xff,
-      wildcardValue & 0xff,
-    ];
-    wildcardMask = wildcardBytes.join(".");
-
-    // Binary representation
-    binary = maskBytes
-      .map((b) => b.toString(2).padStart(8, "0"))
-      .join(".");
-  }
+  const maskInfo = isIpv6 ? calculateIpv6Mask(prefixLength) : calculateIpv4Mask(prefixLength);
 
   return {
     bitmask: prefixLength,
-    netmask,
-    wildcard_mask: wildcardMask,
-    binary,
+    netmask: maskInfo.netmask,
+    wildcard_mask: maskInfo.wildcardMask,
+    binary: maskInfo.binary,
     subnets,
     hosts: usableHosts,
     subnet_bits: subnetBits,

@@ -16,6 +16,22 @@ interface SubnetTableProps {
   onToggleFavorite?: (subnet: Subnet) => void;
 }
 
+function filterSubnet(term: string, subnet: Subnet): boolean {
+  if (!term.trim()) return true;
+  const lower = term.toLowerCase().trim();
+  
+  const searchFields = [
+    subnet.network,
+    subnet.description,
+    subnet.vlan_detail ? subnet.vlan_detail.name : "",
+    subnet.vrf_detail ? subnet.vrf_detail.name : "",
+    subnet.customer_detail ? subnet.customer_detail.name : "",
+    subnet.location_detail ? subnet.location_detail.name : "",
+  ];
+
+  return searchFields.some((field) => field && field.toLowerCase().includes(lower));
+}
+
 /**
  * SubnetTable component
  * Displays subnets using the shared DataList with table and grid views
@@ -44,18 +60,7 @@ export function SubnetTable({
       columns={columns}
       gridItems={gridItems}
       searchPlaceholder="Search subnets..."
-      getSearchFilter={(term, subnet) => {
-        if (!term.trim()) return true;
-        const lower = term.toLowerCase().trim();
-        return (
-          subnet.network.toLowerCase().includes(lower) ||
-          (subnet.description?.toLowerCase().includes(lower) ?? false) ||
-          (subnet.vlan_detail?.name?.toLowerCase().includes(lower) ?? false) ||
-          (subnet.vrf_detail?.name?.toLowerCase().includes(lower) ?? false) ||
-          (subnet.customer_detail?.name?.toLowerCase().includes(lower) ?? false) ||
-          (subnet.location_detail?.name?.toLowerCase().includes(lower) ?? false)
-        );
-      }}
+      getSearchFilter={filterSubnet}
       searchable
       pagination
       paginationOptions={{ defaultPageSize: 18, pageSizeOptions: [10, 18, 25, 50, 100] }}

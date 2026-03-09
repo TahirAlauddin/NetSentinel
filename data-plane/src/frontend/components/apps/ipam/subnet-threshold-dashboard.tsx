@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -135,7 +136,10 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (parseInt(formData.warning_threshold.toString()) >= parseInt(formData.critical_threshold.toString())) {
+    if (
+      parseInt(formData.warning_threshold.toString()) >=
+      parseInt(formData.critical_threshold.toString())
+    ) {
       toast.error("Warning threshold must be less than critical threshold");
       return;
     }
@@ -289,13 +293,10 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
           <h2 className="text-2xl font-bold">Threshold Monitoring</h2>
           {unacknowledgedAlerts.length > 0 && (
             <div className="mt-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowAlerts(true)}
-                className="gap-2"
-              >
+              <Button variant="outline" onClick={() => setShowAlerts(true)} className="gap-2">
                 <Bell className="w-4 h-4" />
-                {unacknowledgedAlerts.length} Unacknowledged Alert{unacknowledgedAlerts.length !== 1 ? "s" : ""}
+                {unacknowledgedAlerts.length} Unacknowledged Alert
+                {unacknowledgedAlerts.length !== 1 ? "s" : ""}
               </Button>
             </div>
           )}
@@ -305,10 +306,13 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
             <RefreshCw className="w-4 h-4 mr-2" />
             Check All
           </Button>
-          <Dialog open={dialogOpen} onOpenChange={(open) => {
-            setDialogOpen(open);
-            if (!open) resetForm();
-          }}>
+          <Dialog
+            open={dialogOpen}
+            onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (!open) resetForm();
+            }}
+          >
             <DialogTrigger asChild>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
@@ -317,9 +321,13 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>{editingThreshold ? "Edit Threshold" : "Create Threshold"}</DialogTitle>
+                <DialogTitle>
+                  {editingThreshold ? "Edit Threshold" : "Create Threshold"}
+                </DialogTitle>
                 <DialogDescription>
-                  {editingThreshold ? "Update threshold settings" : "Configure utilization thresholds for a subnet"}
+                  {editingThreshold
+                    ? "Update threshold settings"
+                    : "Configure utilization thresholds for a subnet"}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -351,7 +359,12 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
                       min="0"
                       max="100"
                       value={formData.warning_threshold}
-                      onChange={(e) => setFormData({ ...formData, warning_threshold: parseInt(e.target.value) || 0 })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          warning_threshold: parseInt(e.target.value) || 0,
+                        })
+                      }
                       required
                     />
                   </div>
@@ -363,7 +376,12 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
                       min="0"
                       max="100"
                       value={formData.critical_threshold}
-                      onChange={(e) => setFormData({ ...formData, critical_threshold: parseInt(e.target.value) || 0 })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          critical_threshold: parseInt(e.target.value) || 0,
+                        })
+                      }
                       required
                     />
                   </div>
@@ -386,7 +404,9 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
                     <Checkbox
                       id="enable_alerts"
                       checked={formData.enable_alerts}
-                      onCheckedChange={(checked) => setFormData({ ...formData, enable_alerts: !!checked })}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, enable_alerts: !!checked })
+                      }
                     />
                     <Label htmlFor="enable_alerts" className="cursor-pointer">
                       Enable alerts
@@ -398,7 +418,9 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
                         <Checkbox
                           id="notify_on_warning"
                           checked={formData.notify_on_warning}
-                          onCheckedChange={(checked) => setFormData({ ...formData, notify_on_warning: !!checked })}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, notify_on_warning: !!checked })
+                          }
                         />
                         <Label htmlFor="notify_on_warning" className="cursor-pointer">
                           Notify on warning threshold
@@ -408,7 +430,9 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
                         <Checkbox
                           id="notify_on_critical"
                           checked={formData.notify_on_critical}
-                          onCheckedChange={(checked) => setFormData({ ...formData, notify_on_critical: !!checked })}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, notify_on_critical: !!checked })
+                          }
                         />
                         <Label htmlFor="notify_on_critical" className="cursor-pointer">
                           Notify on critical threshold
@@ -418,7 +442,9 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
                         <Checkbox
                           id="notify_on_recovery"
                           checked={formData.notify_on_recovery}
-                          onCheckedChange={(checked) => setFormData({ ...formData, notify_on_recovery: !!checked })}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, notify_on_recovery: !!checked })
+                          }
                         />
                         <Label htmlFor="notify_on_recovery" className="cursor-pointer">
                           Notify on recovery (below threshold)
@@ -478,7 +504,8 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
                   <TableCell>{threshold.critical_threshold}%</TableCell>
                   <TableCell>{getStatusBadge(threshold.current_status)}</TableCell>
                   <TableCell>
-                    {threshold.unacknowledged_alerts_count !== undefined && threshold.unacknowledged_alerts_count > 0 ? (
+                    {threshold.unacknowledged_alerts_count !== undefined &&
+                    threshold.unacknowledged_alerts_count > 0 ? (
                       <Badge variant="destructive">
                         {threshold.unacknowledged_alerts_count} unacknowledged
                       </Badge>
@@ -493,25 +520,13 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCheck(threshold.id)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleCheck(threshold.id)}>
                         <RefreshCw className="w-4 h-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(threshold)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(threshold)}>
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(threshold.id)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(threshold.id)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -528,9 +543,7 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
         <AlertDialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <AlertDialogHeader>
             <AlertDialogTitle>Threshold Alerts</AlertDialogTitle>
-            <AlertDialogDescription>
-              Unacknowledged threshold alerts
-            </AlertDialogDescription>
+            <AlertDialogDescription>Unacknowledged threshold alerts</AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4">
             {unacknowledgedAlerts.length > 0 && (
@@ -556,7 +569,10 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
                 <TableRow>
                   <TableHead className="w-12">
                     <Checkbox
-                      checked={selectedAlerts.length === unacknowledgedAlerts.length && unacknowledgedAlerts.length > 0}
+                      checked={
+                        selectedAlerts.length === unacknowledgedAlerts.length &&
+                        unacknowledgedAlerts.length > 0
+                      }
                       onCheckedChange={(checked) => {
                         if (checked) {
                           setSelectedAlerts(unacknowledgedAlerts.map((a) => a.id));
@@ -604,8 +620,8 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
                             alert.alert_type === "critical"
                               ? "destructive"
                               : alert.alert_type === "warning"
-                              ? "secondary"
-                              : "default"
+                                ? "secondary"
+                                : "default"
                           }
                         >
                           {alert.alert_type_display}

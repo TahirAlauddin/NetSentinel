@@ -2,21 +2,14 @@
 
 import React, { useMemo, useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
-import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
-import { ListView } from "@/components/ui/list-view";
-import { GridView } from "@/components/ui/grid-view";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import type { ViewMode } from "@/components/ui/view-toggle";
 import type { ListItemBase, ListProps, ListSortDirection } from "./DataListTypes";
 import { cn } from "@/lib/utils";
+
+import { DataListContent } from "./DataListContent";
+import { DataListHeader } from "./DataListHeader";
+import { DataListToolbar } from "./DataListToolbar";
+import { DataListPaginationControls } from "./DataListPaginationControls";
 
 const DEFAULT_PAGE_SIZES = [10, 25, 50, 100];
 const DEFAULT_PAGE_SIZE = 10;
@@ -154,126 +147,50 @@ export function DataList<T extends ListItemBase>({
 
   return (
     <Card className={cn("p-6", className)}>
-      {/* Header: title + actions */}
-      {(title != null || headerActions != null) && (
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          {title != null && (
-            <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-          )}
-          {headerActions != null && <div className="flex items-center gap-2">{headerActions}</div>}
-        </div>
-      )}
+      <DataListHeader title={title} headerActions={headerActions} />
 
-      {/* Toolbar: search, view toggle, per page */}
-      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 mb-6">
-        <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
-          {searchable && (
-            <div className="relative flex-1 sm:flex-initial min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-              <Input
-                placeholder={searchPlaceholder}
-                value={searchTerm}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="pl-10 w-full sm:w-64"
-                aria-label="Search"
-              />
-            </div>
-          )}
-          {canShowViewToggle && (
-            <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-          )}
-        </div>
-        {pagination && (
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-sm text-muted-foreground whitespace-nowrap">Per page</span>
-            <Select
-              value={String(itemsPerPage)}
-              onValueChange={handlePageSizeChange}
-            >
-              <SelectTrigger className="w-[100px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {pageSizeOptions.map((size) => (
-                  <SelectItem key={size} value={String(size)}>
-                    {size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      </div>
+      <DataListToolbar
+        searchable={searchable}
+        searchPlaceholder={searchPlaceholder}
+        searchTerm={searchTerm}
+        onSearchChange={handleSearchChange}
+        canShowViewToggle={canShowViewToggle}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        pagination={pagination}
+        itemsPerPage={itemsPerPage}
+        onPageSizeChange={handlePageSizeChange}
+        pageSizeOptions={pageSizeOptions}
+      />
 
-      {/* Content: table or grid */}
-      {loading ? (
-        <div className="text-center py-12 text-muted-foreground">{loadingMessage}</div>
-      ) : viewMode === "list" ? (
-        <div className="overflow-x-auto rounded-md border">
-          <ListView<T>
-            data={paginatedData}
-            columns={columns}
-            onSort={handleSort}
-            sortField={sortField ?? undefined}
-            sortDirection={sortDirection}
-            emptyMessage={emptyMessage}
-            rowClassName={rowClassName}
-            onRowClick={onRowClick}
-          />
-        </div>
-      ) : gridItems.length > 0 ? (
-        <GridView<T>
-          data={paginatedData}
-          items={gridItems}
-          columns={gridColumns}
-          emptyMessage={emptyMessage}
-          cardClassName={cardClassName}
-          onItemClick={onItemClick}
-        />
-      ) : (
-        <ListView<T>
-          data={paginatedData}
-          columns={columns}
-          onSort={handleSort}
-          sortField={sortField ?? undefined}
-          sortDirection={sortDirection}
-          emptyMessage={emptyMessage}
-          rowClassName={rowClassName}
-          onRowClick={onRowClick}
-        />
-      )}
+      <DataListContent<T>
+        loading={loading}
+        loadingMessage={loadingMessage}
+        viewMode={viewMode}
+        gridItems={gridItems}
+        paginatedData={paginatedData}
+        columns={columns}
+        gridColumns={gridColumns}
+        emptyMessage={emptyMessage}
+        cardClassName={cardClassName}
+        rowClassName={rowClassName}
+        sortField={sortField}
+        sortDirection={sortDirection}
+        handleSort={handleSort}
+        onRowClick={onRowClick}
+        onItemClick={onItemClick}
+      />
 
-      {/* Pagination bar */}
-      {hasPagination && (
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4 pt-4 border-t">
-          <div className="text-sm text-muted-foreground order-2 sm:order-1">
-            Showing {startItem} to {endItem} of {sortedData.length} items
-          </div>
-          <div className="flex items-center gap-2 order-1 sm:order-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={pageIndex <= 1}
-              aria-label="Previous page"
-            >
-              Previous
-            </Button>
-            <span className="text-sm text-muted-foreground min-w-[100px] text-center">
-              Page {pageIndex} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={pageIndex >= totalPages}
-              aria-label="Next page"
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
+      <DataListPaginationControls
+        hasPagination={hasPagination}
+        startItem={startItem}
+        endItem={endItem}
+        totalItems={sortedData.length}
+        pageIndex={pageIndex}
+        totalPages={totalPages}
+        onPrevPage={() => setCurrentPage((p) => Math.max(1, p - 1))}
+        onNextPage={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+      />
     </Card>
   );
 }

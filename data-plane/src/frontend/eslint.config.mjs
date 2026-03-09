@@ -97,6 +97,18 @@ export default typescriptEslint.config(
       "prefer-const": "warn",
       "no-var": "error",
       "no-unused-vars": "off", // Use TypeScript version instead
+
+      // Complexity & size (code quality checklist §1.3)
+      "complexity": ["warn", { max: 15 }],
+      "max-lines": ["warn", { max: 450, skipBlankLines: true, skipComments: true }],
+    },
+  },
+
+  // Relax complexity for React components
+  {
+    files: ["**/*.tsx", "**/*.jsx"],
+    rules: {
+      "complexity": "off",
     },
   },
   
