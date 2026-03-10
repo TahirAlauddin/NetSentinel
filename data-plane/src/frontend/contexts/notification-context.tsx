@@ -71,6 +71,10 @@ function backendConfigToChannels(b: BackendNotificationConfig): NotificationChan
       enabled: b.discord_enabled,
       webhookUrl: b.discord_webhook_url ?? "",
     },
+    email: {
+      enabled: b.email_enabled ?? false,
+      recipient: b.email_recipient ?? "",
+    },
   };
 }
 

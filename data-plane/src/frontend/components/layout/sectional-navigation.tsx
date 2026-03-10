@@ -115,6 +115,7 @@ const PHONE_MANAGEMENT_NAV_ITEMS = [
  */
 const NOTIFICATIONS_NAV_ITEMS = [
   { href: "/notifications", label: "Overview" },
+  { href: "/notifications/email", label: "Email" },
   { href: "/notifications/slack", label: "Slack" },
   { href: "/notifications/discord", label: "Discord" },
   { href: "/notifications/preferences", label: "Preferences" },

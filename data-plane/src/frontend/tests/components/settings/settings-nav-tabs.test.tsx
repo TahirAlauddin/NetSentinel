@@ -32,7 +32,6 @@ describe('SettingsNavTabs', () => {
     expect(screen.getByText('Departments')).toBeInTheDocument()
     expect(screen.getByText('Categories')).toBeInTheDocument()
     expect(screen.getByText('Carrier Contacts')).toBeInTheDocument()
-    expect(screen.getByText('Email Format')).toBeInTheDocument()
   })
 
   it('should highlight active tab when pathname matches', () => {
@@ -61,7 +60,6 @@ describe('SettingsNavTabs', () => {
     expect(screen.getByText('Departments').closest('a')).toHaveAttribute('href', '/settings/departments')
     expect(screen.getByText('Categories').closest('a')).toHaveAttribute('href', '/settings/categories')
     expect(screen.getByText('Carrier Contacts').closest('a')).toHaveAttribute('href', '/settings/carrier-contacts')
-    expect(screen.getByText('Email Format').closest('a')).toHaveAttribute('href', '/settings/email-format')
   })
 
   it('should highlight overview tab when on /settings', () => {

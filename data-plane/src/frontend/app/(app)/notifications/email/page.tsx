@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Mail } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,49 +12,61 @@ import { useNotifications } from "@/contexts/notification-context";
 import { notificationClient } from "@/lib/notification-client";
 import { toast } from "sonner";
 
-export default function DiscordNotificationsPage() {
+export default function EmailNotificationsPage() {
   const { channelsConfig, setChannelsConfig } = useNotifications();
   return (
-    <DiscordForm
-      key={JSON.stringify(channelsConfig.discord)}
-      initial={channelsConfig.discord}
+    <EmailForm
+      key={JSON.stringify(channelsConfig.email)}
+      initial={channelsConfig.email}
       channelsConfig={channelsConfig}
       setChannelsConfig={setChannelsConfig}
     />
   );
 }
 
-function DiscordForm({
+function EmailForm({
   initial,
   channelsConfig,
   setChannelsConfig,
 }: {
-  initial: { webhookUrl: string; enabled: boolean };
+  initial: {
+    enabled: boolean;
+    recipient: string;
+  };
   channelsConfig: ReturnType<typeof useNotifications>["channelsConfig"];
   setChannelsConfig: ReturnType<typeof useNotifications>["setChannelsConfig"];
 }) {
-  const [webhookUrl, setWebhookUrl] = useState(initial.webhookUrl);
   const [enabled, setEnabled] = useState(initial.enabled);
+  const [recipient, setRecipient] = useState(initial.recipient);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
 
   const handleSave = async () => {
-    if (enabled && !webhookUrl.trim()) {
-      toast.error("Webhook URL is required when Discord is enabled.");
+    if (enabled && !recipient.trim()) {
+      toast.error("Recipient Email is required when Email notifications are enabled.");
       return;
     }
+    
     setSaving(true);
-    const nextDiscord = { enabled, webhookUrl: webhookUrl.trim() };
-    const updated = await notificationClient.patchConfig({
-      discord_enabled: nextDiscord.enabled,
-      discord_webhook_url: nextDiscord.webhookUrl,
-    });
+    const nextEmail = {
+      enabled,
+      recipient: recipient.trim(),
+    };
+    
+    const payload = {
+      email_enabled: nextEmail.enabled,
+      email_recipient: nextEmail.recipient,
+    };
+
+    const updated = await notificationClient.patchConfig(payload);
+    
     setChannelsConfig({
       ...channelsConfig,
-      discord: nextDiscord,
+      email: nextEmail,
     });
+    
     if (updated) {
-      toast.success("Discord settings saved. Alerts will use this webhook.");
+      toast.success("Email configuration saved successfully.");
     } else {
       toast.warning("Saved locally; could not reach server. Sign in and save again to use for alerts.");
     }
@@ -63,31 +74,33 @@ function DiscordForm({
   };
 
   const handleTest = async () => {
-    if (!webhookUrl.trim()) {
-      toast.error("Enter a webhook URL first.");
+    if (!recipient.trim()) {
+      toast.error("Enter a recipient email first.");
       return;
     }
     setTesting(true);
-    const result = await notificationClient.sendTest({ channel: "discord" });
+    const result = await notificationClient.sendTest({ channel: "email" });
     setTesting(false);
+    
     if (result === null) {
       toast.error("Test request failed. Check you're signed in.");
       return;
     }
-    if (result.discord_ok) {
-      toast.success("Test message sent. Check your Discord channel.");
+    if (result.email_ok) {
+      toast.success("Test email sent. Check your inbox.");
       return;
     }
+    
     const msg =
-      result.discord_error === "no_config"
-        ? "Save your Discord settings first, then send a test message."
-        : result.discord_error === "discord_disabled"
-          ? "Turn on “Enable Discord notifications”, then Save, and try again."
-          : result.discord_error === "no_webhook"
-            ? "Enter a webhook URL and Save, then try again."
-            : result.discord_error === "webhook_failed"
-              ? "Discord rejected the message. Check that the webhook URL is correct."
-              : "Discord test failed. Enable Discord, save, then try again.";
+      result.email_error === "no_config"
+        ? "Save your Email settings first, then send a test message."
+        : result.email_error === "email_disabled"
+          ? "Turn on “Enable Email notifications”, then Save, and try again."
+          : result.email_error === "no_recipient"
+            ? "Please specify a default recipient email."
+            : result.email_error === "smtp_failed"
+              ? "Failed to dispatch email. Ensure server's underlying SMTP settings (env variables) are correct."
+              : "Email test failed. Ensure settings are correct, save, then try again.";
     toast.error(msg);
   };
 
@@ -102,9 +115,9 @@ function DiscordForm({
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Discord</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Email</h1>
           <p className="text-muted-foreground mt-1">
-            Send NetSentinel alerts to a Discord channel via a webhook.
+            Send NetSentinel alerts to your inbox via email.
           </p>
         </div>
       </div>
@@ -112,13 +125,13 @@ function DiscordForm({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted/80 ring-1 ring-border/50 p-2">
-              <Image src="/discord.png" alt="" width={24} height={24} className="size-6 object-contain" />
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted/80 ring-1 ring-border/50 p-2 text-foreground">
+              <Mail className="h-5 w-5" />
             </span>
-            Discord integration
+            Email integration
           </CardTitle>
           <CardDescription>
-            Create a webhook in your Discord server (Channel Settings → Integrations → Webhooks) and paste the URL below.
+            Enable email notifications and set the default recipient. Alerts will be sent to that address.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -126,8 +139,8 @@ function DiscordForm({
             <p className="text-sm font-medium text-foreground">Step 1: Enable and save</p>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <Label htmlFor="discord-enabled" className="text-base font-medium text-foreground">
-                  Enable Discord notifications
+                <Label htmlFor="email-enabled" className="text-base font-medium text-foreground">
+                  Enable Email notifications
                 </Label>
                 <p className="text-sm text-muted-foreground mt-1">
                   Turn the switch on → then click <strong>Save</strong> below.
@@ -135,31 +148,33 @@ function DiscordForm({
               </div>
               <div className="shrink-0 rounded-full p-1 ring-2 ring-border ring-offset-2 ring-offset-background bg-muted/50">
                 <Switch
-                  id="discord-enabled"
+                  id="email-enabled"
                   checked={enabled}
                   onCheckedChange={setEnabled}
-                  aria-describedby="discord-enabled-desc"
+                  aria-describedby="email-enabled-desc"
                 />
               </div>
             </div>
-            <p id="discord-enabled-desc" className="text-xs text-muted-foreground">
-              {enabled ? "Discord is on — remember to click Save." : "Switch is off — turn it on, then Save."}
+            <p id="email-enabled-desc" className="text-xs text-muted-foreground">
+              {enabled ? "Email is on — remember to click Save." : "Switch is off — turn it on, then Save."}
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="discord-webhook">Webhook URL</Label>
-            <Input
-              id="discord-webhook"
-              type="url"
-              placeholder="https://discord.com/api/webhooks/..."
-              value={webhookUrl}
-              onChange={(e) => setWebhookUrl(e.target.value)}
-              className="font-mono text-sm"
-            />
-            <p className="text-xs text-muted-foreground">
-              Server → Channel → Edit Channel → Integrations → Webhooks → New Webhook → Copy URL.
-            </p>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email-recipient">Default Recipient Email Address</Label>
+              <Input
+                id="email-recipient"
+                type="email"
+                placeholder="admin@example.com"
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Fallback recipient used for test messages and system-wide notifications.
+              </p>
+            </div>
+            
           </div>
 
           <div className="flex flex-col gap-2">
@@ -170,13 +185,13 @@ function DiscordForm({
               <Button
                 variant="outline"
                 onClick={handleTest}
-                disabled={testing || !webhookUrl.trim()}
+                disabled={testing || !recipient.trim()}
               >
                 {testing ? "Sending…" : "Send test message"}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Save your settings first, then use &quot;Send test message&quot; to post a test alert to your channel.
+              Save your settings first, then use &quot;Send test message&quot; to verify the configuration.
             </p>
           </div>
         </CardContent>

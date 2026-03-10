@@ -23,7 +23,6 @@ export const settingsMainSubmenuLinks = [
   { label: "Locations", href: "/settings/locations" },
   { label: "Departments", href: "/settings/departments" },
   { label: "Categories", href: "/settings/categories" },
-  { label: "Email Format", href: "/settings/email-format" },
 ];
 
 export const settingsPeopleSubmenuLinks = [
@@ -73,10 +72,10 @@ export const phoneManagementSubmenuLinks = [
 
 // Notifications submenu links — channels and preferences
 export const notificationsChannelsSubmenuLinks = [
+  { label: "Email", href: "/notifications/email" },
   { label: "Slack", href: "/notifications/slack" },
   { label: "Discord", href: "/notifications/discord" },
-  { label: "SMS (coming soon)", href: "/notifications/sms" },
-  { label: "Voice (coming soon)", href: "/notifications/voice" },
+  { label: "SMS", href: "/notifications/sms" },
 ];
 
 export const notificationsSettingsSubmenuLinks = [
