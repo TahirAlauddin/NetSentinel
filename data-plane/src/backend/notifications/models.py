@@ -33,6 +33,10 @@ class NotificationConfig(models.Model):
     discord_enabled = models.BooleanField(default=False)
     discord_webhook_url = models.URLField(max_length=2000, blank=True)
 
+    # Email Configuration
+    email_enabled = models.BooleanField(default=False)
+    email_recipient = models.CharField(max_length=255, blank=True, help_text="Default recipient email for tests and system alerts")
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

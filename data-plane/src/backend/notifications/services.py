@@ -14,6 +14,9 @@ from .models import NotificationConfig
 
 logger = logging.getLogger(__name__)
 
+# Single hardcoded email template for notifications (no user customization).
+DEFAULT_EMAIL_SUBJECT_PREFIX = "[NetSentinel] "
+
 
 def _url_host(url: str) -> str:
     """Return host part of URL for logging (no path or query)."""
@@ -100,6 +103,37 @@ def send_discord_message(webhook_url: str, content: str, embeds: Optional[list] 
     return _post_json(webhook_url, payload)
 
 
+def send_email_message(config: NotificationConfig, subject: str, body: str) -> bool:
+    """
+    Send an email using Django's configured email backend with a hardcoded template.
+    """
+    if not config.email_recipient:
+        return False
+
+    from django.core.mail import EmailMultiAlternatives
+    from django.conf import settings
+
+    if not subject.startswith(DEFAULT_EMAIL_SUBJECT_PREFIX):
+        subject = f"{DEFAULT_EMAIL_SUBJECT_PREFIX}{subject}"
+    full_body_text = body
+    full_body_html = body.replace("\n", "<br>")
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@netsentinel.local")
+
+    try:
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=full_body_text,
+            from_email=from_email,
+            to=[config.email_recipient],
+        )
+        msg.attach_alternative(full_body_html, "text/html")
+        sent = msg.send(fail_silently=False)
+        return bool(sent)
+    except Exception as e:
+        logger.warning("Email send failed: %s", e)
+        return False
+
+
 def send_notification(
     title: str,
     message: str,
@@ -107,13 +141,13 @@ def send_notification(
     user=None,
 ) -> dict:
     """
-    Send a notification to all enabled channels (Slack, Discord) for the given config.
+    Send a notification to all enabled channels (Slack, Discord, Email) for the given config.
 
     alert_type: "info" | "warning" | "critical" | "success" | "recovery"
-    Returns dict with slack_ok, discord_ok.
+    Returns dict with slack_ok, discord_ok, email_ok.
     """
     config = get_channel_config(user=user)
-    result = {"slack_ok": False, "discord_ok": False}
+    result = {"slack_ok": False, "discord_ok": False, "email_ok": False}
     if not config:
         return result
 
@@ -144,5 +178,10 @@ def send_notification(
         result["discord_ok"] = send_discord_message(
             config.discord_webhook_url, content, embeds=embeds
         )
+
+    # Email
+    if config.email_enabled and config.email_recipient:
+        subject = f"[{alert_type.upper()}] {title}"
+        result["email_ok"] = send_email_message(config, subject, message)
 
     return result

@@ -13,12 +13,15 @@ class NotificationConfigSerializer(serializers.ModelSerializer):
             "slack_default_channel",
             "discord_enabled",
             "discord_webhook_url",
+            "email_enabled",
+            "email_recipient",
             "updated_at",
         ]
         extra_kwargs = {
             "slack_webhook_url": {"allow_blank": True},
             "discord_webhook_url": {"allow_blank": True},
             "slack_default_channel": {"allow_blank": True},
+            "email_recipient": {"allow_blank": True},
         }
 
 

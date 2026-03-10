@@ -20,6 +20,7 @@ def _get_config_for_user(user):
         defaults={
             "slack_enabled": False,
             "discord_enabled": False,
+            "email_enabled": False,
         },
     )
     return config
@@ -56,25 +57,27 @@ class NotificationConfigView(APIView):
 class NotificationConfigTestView(APIView):
     """
     POST: send a test notification to one channel only.
-    Query param: channel=slack | discord (required). Only that channel is triggered.
-    Returns {"slack_ok": bool, "discord_ok": bool, "slack_error": str?, "discord_error": str?}.
+    Query param: channel=slack | discord | email (required). Only that channel is triggered.
+    Returns {"slack_ok": bool, "discord_ok": bool, "email_ok": bool, "slack_error": str?, "discord_error": str?, "email_error": str?}.
     """
 
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         channel = (request.query_params.get("channel") or "").strip().lower()
-        if channel not in ("slack", "discord"):
+        if channel not in ("slack", "discord", "email"):
             return Response(
-                {"detail": "Query param 'channel' is required and must be 'slack' or 'discord'."},
+                {"detail": "Query param 'channel' is required and must be 'slack', 'discord', or 'email'."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         config = get_channel_config(user=request.user)
         response = {
             "slack_ok": False,
             "discord_ok": False,
+            "email_ok": False,
             "slack_error": None,
             "discord_error": None,
+            "email_error": None,
         }
         if not config:
             logger.info(
@@ -82,6 +85,7 @@ class NotificationConfigTestView(APIView):
             )
             response["slack_error"] = "no_config"
             response["discord_error"] = "no_config"
+            response["email_error"] = "no_config"
             return Response(response)
 
         if channel == "slack":
@@ -96,7 +100,7 @@ class NotificationConfigTestView(APIView):
                 response["slack_ok"] = send_slack_message(config.slack_webhook_url, text)
                 if not response["slack_ok"]:
                     response["slack_error"] = "webhook_failed"
-        else:  # discord
+        elif channel == "discord":
             if not config.discord_enabled:
                 response["discord_error"] = "discord_disabled"
             elif not (config.discord_webhook_url or not config.discord_webhook_url.strip()):
@@ -117,6 +121,26 @@ class NotificationConfigTestView(APIView):
                 )
                 if not response["discord_ok"]:
                     response["discord_error"] = "webhook_failed"
+        elif channel == "email":
+            if not config.email_enabled:
+                response["email_error"] = "email_disabled"
+            elif not config.email_recipient:
+                response["email_error"] = "no_recipient"
+            else:
+                from .services import send_email_message
+
+                subject = "NetSentinel test notification"
+                body = "If you see this, Email notifications are working."
+                
+                try:
+                    response["email_ok"] = send_email_message(config, subject, body)
+                    if not response["email_ok"]:
+                        response["email_error"] = "smtp_failed"
+                except Exception as e:
+                    logger.error("Email test failed: %s", e)
+                    response["email_ok"] = False
+                    response["email_error"] = "smtp_failed"
+                    
         return Response(response)
 
 
