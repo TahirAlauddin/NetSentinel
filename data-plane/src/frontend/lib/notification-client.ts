@@ -19,6 +19,8 @@ export interface BackendNotificationConfig {
   discord_webhook_url: string;
   email_enabled: boolean;
   email_recipient?: string;
+  sms_enabled: boolean;
+  sms_recipient?: string;
   updated_at?: string;
 }
 
@@ -128,26 +130,30 @@ export const notificationClient = {
   },
 
   /**
-   * Send a test notification to one channel only (slack, discord, or email).
-   * Returns { slack_ok, discord_ok, email_ok, slack_error?, discord_error?, email_error? } or null on request failure.
-   * Error codes: no_config | slack_disabled | discord_disabled | email_disabled | no_webhook | webhook_failed | smtp_failed
+   * Send a test notification to one channel only (slack, discord, email, or sms).
+   * Returns { slack_ok, discord_ok, email_ok, sms_ok, slack_error?, discord_error?, email_error?, sms_error? } or null on request failure.
+   * Error codes: no_config | slack_disabled | discord_disabled | email_disabled | sms_disabled | no_webhook | no_recipient | webhook_failed | smtp_failed | twilio_failed
    */
-  async sendTest(options: { channel: "slack" | "discord" | "email" }): Promise<{
+  async sendTest(options: { channel: "slack" | "discord" | "email" | "sms" }): Promise<{
     slack_ok: boolean;
     discord_ok: boolean;
     email_ok: boolean;
+    sms_ok: boolean;
     slack_error?: string | null;
     discord_error?: string | null;
     email_error?: string | null;
+    sms_error?: string | null;
   } | null> {
     const { channel } = options;
     const res = await api.post<{
       slack_ok: boolean;
       discord_ok: boolean;
       email_ok: boolean;
+      sms_ok: boolean;
       slack_error?: string | null;
       discord_error?: string | null;
       email_error?: string | null;
+      sms_error?: string | null;
     }>(`${NOTIFICATIONS.CONFIG_TEST}?channel=${channel}`, {}, { requireAuth: true });
     if (res.error) return null;
     const data = res.data as Record<string, unknown>;
@@ -156,9 +162,11 @@ export const notificationClient = {
           slack_ok: !!data.slack_ok,
           discord_ok: !!data.discord_ok,
           email_ok: !!data.email_ok,
+          sms_ok: !!data.sms_ok,
           slack_error: (data.slack_error as string | null) ?? null,
           discord_error: (data.discord_error as string | null) ?? null,
           email_error: (data.email_error as string | null) ?? null,
+          sms_error: (data.sms_error as string | null) ?? null,
         }
       : null;
   },

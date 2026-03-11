@@ -40,11 +40,16 @@ export interface EmailChannelConfig {
   recipient: string;
 }
 
+export interface SmsChannelConfig {
+  enabled: boolean;
+  recipient: string;
+}
+
 export interface NotificationChannelsConfig {
   slack: SlackChannelConfig;
   discord: DiscordChannelConfig;
   email: EmailChannelConfig;
-  // sms: coming soon, no config yet
+  sms: SmsChannelConfig;
 }
 
 /** User preferences for notification behavior (sound, desktop, etc.) */
@@ -71,6 +76,10 @@ export const DEFAULT_CHANNELS_CONFIG: NotificationChannelsConfig = {
   slack: { enabled: false, webhookUrl: "", defaultChannel: undefined },
   discord: { enabled: false, webhookUrl: "" },
   email: {
+    enabled: false,
+    recipient: "",
+  },
+  sms: {
     enabled: false,
     recipient: "",
   },
