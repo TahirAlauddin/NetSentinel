@@ -1,7 +1,7 @@
 """
 Notification delivery service.
 
-Sends messages to Slack and Discord webhooks when alerts are triggered.
+Sends messages to Slack, Discord, Email, and SMS when alerts are triggered.
 """
 
 import json
@@ -103,6 +103,42 @@ def send_discord_message(webhook_url: str, content: str, embeds: Optional[list] 
     return _post_json(webhook_url, payload)
 
 
+def send_sms_message(to_number: str, body: str) -> bool:
+    """
+    Send an SMS using the Twilio Python SDK.
+
+    Sender phone number and credentials are read from Django settings:
+    - TWILIO_ACCOUNT_SID
+    - TWILIO_AUTH_TOKEN
+    - TWILIO_PHONE_NUMBER
+    """
+    if not to_number or not to_number.strip():
+        return False
+
+    from django.conf import settings
+    from twilio.rest import Client
+
+    account_sid = getattr(settings, "TWILIO_ACCOUNT_SID", "") or ""
+    auth_token = getattr(settings, "TWILIO_AUTH_TOKEN", "") or ""
+    from_number = getattr(settings, "TWILIO_PHONE_NUMBER", "") or ""
+
+    if not (account_sid and auth_token and from_number):
+        logger.warning("Twilio SMS configuration missing; check TWILIO_* settings.")
+        return False
+
+    try:
+        client = Client(account_sid, auth_token)
+        client.messages.create(
+            to=to_number.strip(),
+            from_=from_number,
+            body=body[:1600],
+        )
+        return True
+    except Exception as e:
+        logger.warning("Twilio SMS send failed: %s", e)
+        return False
+
+
 def send_email_message(config: NotificationConfig, subject: str, body: str) -> bool:
     """
     Send an email using Django's configured email backend with a hardcoded template.
@@ -141,13 +177,13 @@ def send_notification(
     user=None,
 ) -> dict:
     """
-    Send a notification to all enabled channels (Slack, Discord, Email) for the given config.
+    Send a notification to all enabled channels (Slack, Discord, Email, SMS) for the given config.
 
     alert_type: "info" | "warning" | "critical" | "success" | "recovery"
-    Returns dict with slack_ok, discord_ok, email_ok.
+    Returns dict with slack_ok, discord_ok, email_ok, sms_ok.
     """
     config = get_channel_config(user=user)
-    result = {"slack_ok": False, "discord_ok": False, "email_ok": False}
+    result = {"slack_ok": False, "discord_ok": False, "email_ok": False, "sms_ok": False}
     if not config:
         return result
 
@@ -183,5 +219,10 @@ def send_notification(
     if config.email_enabled and config.email_recipient:
         subject = f"[{alert_type.upper()}] {title}"
         result["email_ok"] = send_email_message(config, subject, message)
+
+    # SMS
+    if getattr(config, "sms_enabled", False) and getattr(config, "sms_recipient", ""):
+        sms_body = f"[{alert_type.upper()}] {title} — {message}"
+        result["sms_ok"] = send_sms_message(config.sms_recipient, sms_body)
 
     return result

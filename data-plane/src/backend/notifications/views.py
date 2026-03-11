@@ -75,9 +75,11 @@ class NotificationConfigTestView(APIView):
             "slack_ok": False,
             "discord_ok": False,
             "email_ok": False,
+            "sms_ok": False,
             "slack_error": None,
             "discord_error": None,
             "email_error": None,
+            "sms_error": None,
         }
         if not config:
             logger.info(
@@ -86,6 +88,7 @@ class NotificationConfigTestView(APIView):
             response["slack_error"] = "no_config"
             response["discord_error"] = "no_config"
             response["email_error"] = "no_config"
+            response["sms_error"] = "no_config"
             return Response(response)
 
         if channel == "slack":
@@ -140,7 +143,20 @@ class NotificationConfigTestView(APIView):
                     logger.error("Email test failed: %s", e)
                     response["email_ok"] = False
                     response["email_error"] = "smtp_failed"
-                    
+        elif channel == "sms":
+            if not getattr(config, "sms_enabled", False):
+                response["sms_error"] = "sms_disabled"
+            elif not getattr(config, "sms_recipient", ""):
+                response["sms_error"] = "no_recipient"
+            else:
+                from .services import send_sms_message
+
+                body = "If you see this, SMS notifications are working."
+                ok = send_sms_message(config.sms_recipient, body)
+                response["sms_ok"] = bool(ok)
+                if not response["sms_ok"]:
+                    response["sms_error"] = "twilio_failed"
+
         return Response(response)
 
 
