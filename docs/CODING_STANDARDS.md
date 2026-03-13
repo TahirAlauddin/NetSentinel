@@ -304,6 +304,41 @@ components/
     └── app-shell.tsx
 ```
 
+### Frontend Layering & Feature Structure
+
+To keep the frontend layered and maintainable:
+
+- **Pages/route segments (`app/(app)/...`)**
+  - Handle routing, access control, and high-level layout (breadcrumbs, page titles).
+  - Orchestrate data by composing **hooks** and **feature components**.
+  - Should avoid inline business logic, complex forms, or direct API calls where a hook or lib helper can be used.
+
+- **Feature components (`components/apps/...`)**
+  - Encapsulate reusable UI patterns and feature-specific widgets.
+  - Receive all data and callbacks via props (no direct API calls in most cases).
+  - May own small, purely UI-focused state (e.g., local toggles, open/closed flags).
+
+- **Hooks (`hooks/...`)**
+  - Encapsulate stateful logic, effects, and API integration for a feature (e.g., `useDataCircuits`, IPAM search hooks).
+  - Expose a typed interface (data, loading/error flags, callbacks) that pages and components can depend on.
+
+- **Lib/util (`lib/...`)**
+  - Provide pure helpers, formatting utilities, and API client wrappers.
+  - Contain no React state or JSX.
+
+For new features, prefer the following structure when it fits:
+- Route under `app/(app)/feature/...` for pages.
+- Feature UI under `components/apps/feature/...`.
+- Feature hooks under `hooks/feature/...`.
+- Shared DTOs and types under `types/feature.ts`.
+- API helpers under `lib/api-client/feature-*.ts`.
+
+For example, the IPAM subnet threshold monitoring flow follows this pattern:
+
+- Route-level page renders a thin `SubnetThresholdDashboard` container from `components/apps/ipam`.
+- The container uses `useSubnetThresholdDashboard` in `hooks` for all state, effects, and API calls via `IpamApiClient`.
+- Table and dialog UIs (such as `SubnetThresholdTable` and `SubnetThresholdAlertsDialog`) are presentational components that receive data and callbacks via props.
+
 ### File Naming
 
 - **Components**: PascalCase (e.g., `UserProfile.tsx`, `AssetForm.tsx`)
