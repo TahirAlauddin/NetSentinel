@@ -1,7 +1,5 @@
-/* eslint-disable max-lines */
 "use client";
 
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,15 +11,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -32,249 +21,40 @@ import {
 } from "@/components/ui/select";
 import {
   Plus,
-  Edit,
-  Trash2,
   RefreshCw,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
   Bell,
 } from "lucide-react";
-import { IpamApiClient } from "@/lib/api-client/ipam";
-import { extractIpamArrayData } from "@/lib/ipam-utils";
-import type { SubnetThreshold, SubnetThresholdAlert, Subnet } from "@/types/ipam";
-import { toast } from "sonner";
-import { formatDistanceToNow } from "date-fns";
 import { SubnetThresholdAlertsDialog } from "@/components/apps/ipam/SubnetThresholdAlertsDialog";
-
-const ipamApi = new IpamApiClient();
+import { SubnetThresholdTable } from "@/components/apps/ipam/SubnetThresholdTable";
+import { useSubnetThresholdDashboard } from "@/hooks/useSubnetThresholdDashboard";
 
 interface SubnetThresholdDashboardProps {
   subnetId?: number;
 }
 
 export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardProps) {
-  const [thresholds, setThresholds] = useState<SubnetThreshold[]>([]);
-  const [alerts, setAlerts] = useState<SubnetThresholdAlert[]>([]);
-  const [subnets, setSubnets] = useState<Subnet[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingThreshold, setEditingThreshold] = useState<SubnetThreshold | null>(null);
-  const [formData, setFormData] = useState({
-    subnet: subnetId?.toString() || "",
-    warning_threshold: 75,
-    critical_threshold: 90,
-    enable_alerts: true,
-    alert_email: "",
-    notify_on_warning: true,
-    notify_on_critical: true,
-    notify_on_recovery: false,
-  });
-  const [showAlerts, setShowAlerts] = useState(false);
-
-  useEffect(() => {
-    loadSubnets();
-    loadThresholds();
-    loadAlerts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subnetId]);
-
-  const loadSubnets = async () => {
-    try {
-      const response = await ipamApi.getSubnets();
-      if (response.data) {
-        setSubnets(extractIpamArrayData<Subnet>(response.data));
-      }
-    } catch (error) {
-      console.error("Error loading subnets:", error);
-    }
-  };
-
-  const loadThresholds = async () => {
-    setLoading(true);
-    try {
-      const params: Record<string, unknown> = {};
-      if (subnetId) {
-        params.subnet = subnetId;
-      }
-      const response = await ipamApi.getSubnetThresholds(params);
-      if (response.data) {
-        setThresholds(extractIpamArrayData<SubnetThreshold>(response.data));
-      }
-    } catch (error) {
-      console.error("Error loading thresholds:", error);
-      toast.error("Failed to load thresholds");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadAlerts = async () => {
-    try {
-      const params: Record<string, unknown> = { acknowledged: false };
-      if (subnetId) {
-        params.subnet = subnetId;
-      }
-      const response = await ipamApi.getSubnetThresholdAlerts(params);
-      if (response.data) {
-        setAlerts(extractIpamArrayData<SubnetThresholdAlert>(response.data));
-      }
-    } catch (error) {
-      console.error("Error loading alerts:", error);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (
-      parseInt(formData.warning_threshold.toString()) >=
-      parseInt(formData.critical_threshold.toString())
-    ) {
-      toast.error("Warning threshold must be less than critical threshold");
-      return;
-    }
-
-    try {
-      const data = {
-        subnet: parseInt(formData.subnet),
-        warning_threshold: parseInt(formData.warning_threshold.toString()),
-        critical_threshold: parseInt(formData.critical_threshold.toString()),
-        enable_alerts: formData.enable_alerts,
-        alert_email: formData.alert_email || undefined,
-        notify_on_warning: formData.notify_on_warning,
-        notify_on_critical: formData.notify_on_critical,
-        notify_on_recovery: formData.notify_on_recovery,
-      };
-
-      if (editingThreshold) {
-        await ipamApi.updateSubnetThreshold(editingThreshold.id, data);
-        toast.success("Threshold updated successfully");
-      } else {
-        await ipamApi.createSubnetThreshold(data);
-        toast.success("Threshold created successfully");
-      }
-      setDialogOpen(false);
-      resetForm();
-      loadThresholds();
-    } catch (error) {
-      console.error("Error saving threshold:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to save threshold");
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this threshold?")) {
-      return;
-    }
-
-    try {
-      await ipamApi.deleteSubnetThreshold(id);
-      toast.success("Threshold deleted successfully");
-      loadThresholds();
-    } catch (error) {
-      console.error("Error deleting threshold:", error);
-      toast.error("Failed to delete threshold");
-    }
-  };
-
-  const handleCheck = async (id: number) => {
-    try {
-      await ipamApi.checkSubnetThreshold(id);
-      toast.success("Threshold checked successfully");
-      loadThresholds();
-      loadAlerts();
-    } catch (error) {
-      console.error("Error checking threshold:", error);
-      toast.error("Failed to check threshold");
-    }
-  };
-
-  const handleCheckAll = async () => {
-    try {
-      await ipamApi.checkAllSubnetThresholds();
-      toast.success("All thresholds checked successfully");
-      loadThresholds();
-      loadAlerts();
-    } catch (error) {
-      console.error("Error checking thresholds:", error);
-      toast.error("Failed to check thresholds");
-    }
-  };
-
-  const handleAcknowledge = async (id: number) => {
-    try {
-      await ipamApi.acknowledgeSubnetThresholdAlert(id);
-      toast.success("Alert acknowledged");
-      loadAlerts();
-    } catch (error) {
-      console.error("Error acknowledging alert:", error);
-      toast.error("Failed to acknowledge alert");
-    }
-  };
-
-  const handleBulkAcknowledge = async (ids: number[]) => {
-    if (ids.length === 0) {
-      toast.error("Please select alerts to acknowledge");
-      return;
-    }
-
-    try {
-      await ipamApi.bulkAcknowledgeSubnetThresholdAlerts(ids);
-      toast.success(`${ids.length} alerts acknowledged`);
-      loadAlerts();
-    } catch (error) {
-      console.error("Error acknowledging alerts:", error);
-      toast.error("Failed to acknowledge alerts");
-    }
-  };
-
-  const resetForm = () => {
-    setEditingThreshold(null);
-    setFormData({
-      subnet: subnetId?.toString() || "",
-      warning_threshold: 75,
-      critical_threshold: 90,
-      enable_alerts: true,
-      alert_email: "",
-      notify_on_warning: true,
-      notify_on_critical: true,
-      notify_on_recovery: false,
-    });
-  };
-
-  const handleEdit = (threshold: SubnetThreshold) => {
-    setEditingThreshold(threshold);
-    setFormData({
-      subnet: threshold.subnet.toString(),
-      warning_threshold: threshold.warning_threshold,
-      critical_threshold: threshold.critical_threshold,
-      enable_alerts: threshold.enable_alerts,
-      alert_email: threshold.alert_email || "",
-      notify_on_warning: threshold.notify_on_warning,
-      notify_on_critical: threshold.notify_on_critical,
-      notify_on_recovery: threshold.notify_on_recovery,
-    });
-    setDialogOpen(true);
-  };
-
-  const getStatusBadge = (status: SubnetThreshold["current_status"]) => {
-    const variants = {
-      healthy: { variant: "default" as const, icon: CheckCircle2, label: "Healthy" },
-      warning: { variant: "secondary" as const, icon: AlertTriangle, label: "Warning" },
-      critical: { variant: "destructive" as const, icon: XCircle, label: "Critical" },
-    };
-    const config = variants[status];
-    const Icon = config.icon;
-    return (
-      <Badge variant={config.variant}>
-        <Icon className="w-3 h-3 mr-1" />
-        {config.label}
-      </Badge>
-    );
-  };
-
-  const unacknowledgedAlerts = alerts.filter((a) => !a.acknowledged);
+  const {
+    thresholds,
+    alerts,
+    subnets,
+    loading,
+    dialogOpen,
+    setDialogOpen,
+    editingThreshold,
+    formData,
+    setFormData,
+    resetForm,
+    showAlerts,
+    setShowAlerts,
+    unacknowledgedAlerts,
+    handleSubmit,
+    handleDelete,
+    handleCheck,
+    handleCheckAll,
+    handleAcknowledge,
+    handleBulkAcknowledge,
+    handleEdit,
+  } = useSubnetThresholdDashboard({ subnetId });
 
   return (
     <div className="space-y-6">
@@ -462,71 +242,13 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
         </div>
       </div>
 
-      {loading ? (
-        <div className="text-center py-8 text-muted-foreground">Loading thresholds...</div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Subnet</TableHead>
-              <TableHead>Warning</TableHead>
-              <TableHead>Critical</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Alerts</TableHead>
-              <TableHead>Last Checked</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {thresholds.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  No thresholds configured. Create a threshold to start monitoring.
-                </TableCell>
-              </TableRow>
-            ) : (
-              thresholds.map((threshold) => (
-                <TableRow key={threshold.id}>
-                  <TableCell className="font-mono">
-                    {threshold.subnet_detail?.network || threshold.subnet}
-                  </TableCell>
-                  <TableCell>{threshold.warning_threshold}%</TableCell>
-                  <TableCell>{threshold.critical_threshold}%</TableCell>
-                  <TableCell>{getStatusBadge(threshold.current_status)}</TableCell>
-                  <TableCell>
-                    {threshold.unacknowledged_alerts_count !== undefined &&
-                    threshold.unacknowledged_alerts_count > 0 ? (
-                      <Badge variant="destructive">
-                        {threshold.unacknowledged_alerts_count} unacknowledged
-                      </Badge>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {threshold.last_checked
-                      ? formatDistanceToNow(new Date(threshold.last_checked), { addSuffix: true })
-                      : "Never"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleCheck(threshold.id)}>
-                        <RefreshCw className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleEdit(threshold)}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(threshold.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      )}
+      <SubnetThresholdTable
+        thresholds={thresholds}
+        loading={loading}
+        onCheck={handleCheck}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
 
       <SubnetThresholdAlertsDialog
         open={showAlerts}
