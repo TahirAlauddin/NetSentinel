@@ -160,9 +160,13 @@ jobs:
         working-directory: data-plane/src/frontend
         run: npm ci
 
-      - name: Run frontend tests
+      - name: Run frontend tests with coverage
         working-directory: data-plane/src/frontend
-        run: npm run test
+        run: npm run test:ci
+
+      - name: Type check frontend (tsc --noEmit)
+        working-directory: data-plane/src/frontend
+        run: npx tsc --noEmit
 
   deploy-staging:
     name: Deploy to Staging
