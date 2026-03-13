@@ -10,6 +10,7 @@ import os
 from django.http import Http404, HttpResponse
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from .models import Contract, ContractCategory
@@ -32,7 +33,7 @@ class ContractViewSet(viewsets.ModelViewSet):
     ordering_fields = ("carrier", "contract_number", "start_date", "end_date")
 
     @action(detail=True, methods=["get"], url_path="document")
-    def document(self, request, pk=None):
+    def document(self, request: Request, pk=None) -> HttpResponse:
         """
         Stream the contract document file for view/download.
         Requires authentication. Sets Content-Disposition for download.
@@ -51,7 +52,7 @@ class ContractViewSet(viewsets.ModelViewSet):
         return response
 
     @action(detail=True, methods=["get"], url_path="logo")
-    def logo(self, request, pk=None):
+    def logo(self, request: Request, pk=None) -> HttpResponse:
         """
         Stream the contract logo image. Requires authentication.
         """
@@ -75,7 +76,7 @@ class ContractViewSet(viewsets.ModelViewSet):
         return HttpResponse(content, content_type=content_type)
 
     @action(detail=False, methods=["get"], url_path="overview")
-    def overview(self, request):
+    def overview(self, request: Request) -> Response:
         """
         Return overview stats and chart data: at_glance, spending_by_category,
         top_contracts, categories, total_spend.
@@ -84,7 +85,7 @@ class ContractViewSet(viewsets.ModelViewSet):
         return Response(data)
 
     @action(detail=False, methods=["get"], url_path="categories")
-    def categories_list(self, request):
+    def categories_list(self, request: Request) -> Response:
         """List contract categories (id, name) for dropdowns."""
         cats = ContractCategory.objects.order_by("name").values("id", "name")
         return Response(list(cats))

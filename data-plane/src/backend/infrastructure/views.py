@@ -1,5 +1,6 @@
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from .models import (
@@ -33,7 +34,7 @@ class LocationViewSet(viewsets.ModelViewSet):
     serializer_class = LocationSerializer
 
     @action(detail=True, methods=["get"])
-    def circuits(self, request, pk=None):
+    def circuits(self, request: Request, pk=None) -> Response:
         """Get all circuits for a location."""
         location = self.get_object()
         circuits = location.circuits.all()
@@ -50,7 +51,7 @@ class CircuitViewSet(viewsets.ModelViewSet):
     serializer_class = CircuitSerializer
 
     @action(detail=True, methods=["get"])
-    def contacts(self, request, pk=None):
+    def contacts(self, request: Request, pk=None) -> Response:
         """Get all points of contact for a circuit."""
         circuit = self.get_object()
         contacts = circuit.points_of_contact.all()

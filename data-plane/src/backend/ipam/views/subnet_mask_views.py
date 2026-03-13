@@ -6,6 +6,7 @@ API endpoints for subnet mask reference information.
 
 from rest_framework import status
 from rest_framework.decorators import api_view
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from ..services.subnet_mask_utils import (
@@ -16,7 +17,7 @@ from ..services.subnet_mask_utils import (
 
 
 @api_view(["GET"])
-def subnet_masks_list(request):
+def subnet_masks_list(request: Request) -> Response:
     """
     Get list of subnet mask information.
 
@@ -54,7 +55,7 @@ def subnet_masks_list(request):
 
 
 @api_view(["GET"])
-def subnet_mask_detail(request, prefix_length):
+def subnet_mask_detail(request: Request, prefix_length: int) -> Response:
     """
     Get detailed information for a specific subnet mask.
 

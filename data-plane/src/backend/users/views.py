@@ -2,15 +2,17 @@ from django.contrib.auth.models import Group, Permission
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from .models import User
 from .serializers import GroupSerializer, PermissionSerializer
+from .services import get_user_stats
 
 
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
-def api_info_view(request):
+def api_info_view(request: Request) -> Response:
     """
     Public API information endpoint for testing browsable API.
     """
@@ -31,20 +33,14 @@ Use /api/v1/auth/users/ to register or /api/v1/auth/jwt/create/ to login.",
 
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
-def user_stats_view(request):
+def user_stats_view(request: Request) -> Response:
     """
     API view for user statistics (admin only).
     """
     if not request.user.is_staff:
         return Response({"error": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
 
-    stats = {
-        "total_users": User.objects.count(),
-        "active_users": User.objects.filter(is_active=True).count(),
-        "staff_users": User.objects.filter(is_staff=True).count(),
-        "superusers": User.objects.filter(is_superuser=True).count(),
-    }
-
+    stats = get_user_stats()
     return Response(stats)
 
 

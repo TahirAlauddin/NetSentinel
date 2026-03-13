@@ -4,6 +4,7 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from .models import (
@@ -48,7 +49,7 @@ from .serializers import (
 
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
-def api_info_view(request):
+def api_info_view(request: Request) -> Response:
     return Response(
         {
             "message": "NetSentinel API is running!",
