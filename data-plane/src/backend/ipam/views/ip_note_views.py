@@ -6,6 +6,7 @@ from django.db import models
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from ..models import IPNote, IPNoteAttachment, IPNoteComment
@@ -70,7 +71,7 @@ class IPNoteViewSet(viewsets.ModelViewSet):
         return queryset
 
     @action(detail=True, methods=["get"], url_path="versions")
-    def versions(self, request, pk=None):
+    def versions(self, request: Request, pk=None) -> Response:
         """Get all versions of a note."""
         note = self.get_object()
 
@@ -86,7 +87,7 @@ class IPNoteViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"], url_path="pin")
-    def pin(self, request, pk=None):
+    def pin(self, request: Request, pk=None) -> Response:
         """Pin or unpin a note."""
         note = self.get_object()
         note.is_pinned = not note.is_pinned

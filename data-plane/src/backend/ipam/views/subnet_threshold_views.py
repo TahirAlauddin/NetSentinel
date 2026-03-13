@@ -5,6 +5,7 @@ Subnet Threshold ViewSets for IPAM.
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from ..models import SubnetThreshold, SubnetThresholdAlert
@@ -55,20 +56,20 @@ class SubnetThresholdViewSet(viewsets.ModelViewSet):
         return queryset
 
     @action(detail=True, methods=["post"], url_path="check")
-    def check_threshold(self, request, pk=None):
+    def check_threshold(self, request: Request, pk=None) -> Response:
         """Manually check a subnet threshold."""
         threshold = self.get_object()
         result = check_subnet_threshold(threshold.subnet.id)
         return Response(result, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"], url_path="check-all")
-    def check_all(self, request):
+    def check_all(self, request: Request) -> Response:
         """Check all subnet thresholds."""
         result = check_all_thresholds()
         return Response(result, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_path="summary")
-    def summary(self, request):
+    def summary(self, request: Request) -> Response:
         """Get threshold summary statistics."""
         subnet_id = request.query_params.get("subnet_id")
         summary = get_threshold_summary(subnet_id=int(subnet_id) if subnet_id else None)
@@ -110,7 +111,7 @@ class SubnetThresholdAlertViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
     @action(detail=True, methods=["post"], url_path="acknowledge")
-    def acknowledge(self, request, pk=None):
+    def acknowledge(self, request: Request, pk=None) -> Response:
         """Acknowledge an alert."""
         alert = self.get_object()
         alert.acknowledged = True
@@ -122,7 +123,7 @@ class SubnetThresholdAlertViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"], url_path="bulk-acknowledge")
-    def bulk_acknowledge(self, request):
+    def bulk_acknowledge(self, request: Request) -> Response:
         """Acknowledge multiple alerts."""
         alert_ids = request.data.get("alert_ids", [])
 

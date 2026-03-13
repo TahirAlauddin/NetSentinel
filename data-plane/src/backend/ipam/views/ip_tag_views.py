@@ -5,6 +5,7 @@ IP Tag ViewSets for IPAM.
 from django.db import models
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from ..models import IPAddress, IPAddressTag, IPTag
@@ -52,7 +53,7 @@ class IPTagViewSet(viewsets.ModelViewSet):
         return queryset
 
     @action(detail=True, methods=["get"])
-    def usage(self, request, pk=None):
+    def usage(self, request: Request, pk=None) -> Response:
         """Get IP addresses using this tag."""
         tag = self.get_object()
         ip_addresses = IPAddress.objects.filter(tags=tag)
@@ -98,7 +99,7 @@ class IPAddressTagViewSet(viewsets.ModelViewSet):
         serializer.save(applied_by=self.request.user)
 
     @action(detail=False, methods=["post"], url_path="bulk-apply")
-    def bulk_apply(self, request):
+    def bulk_apply(self, request: Request) -> Response:
         """
         Apply tags to multiple IP addresses.
 
@@ -158,7 +159,7 @@ class IPAddressTagViewSet(viewsets.ModelViewSet):
         )
 
     @action(detail=False, methods=["post"], url_path="bulk-remove")
-    def bulk_remove(self, request):
+    def bulk_remove(self, request: Request) -> Response:
         """
         Remove tags from multiple IP addresses.
 

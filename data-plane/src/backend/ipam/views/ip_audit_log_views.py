@@ -5,6 +5,7 @@ IP Audit Log ViewSets for IPAM.
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from ..models import IPAuditLog, IPAuditLogFilter
@@ -22,7 +23,7 @@ class IPAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = IPAuditLog.objects.select_related("user", "ip_address").all()
     serializer_class = IPAuditLogSerializer
 
-    def _parse_date(self, date_str):
+    def _parse_date(self, date_str: str | None):
         """Parse ISO format date string to datetime object."""
         if not date_str:
             return None
@@ -58,7 +59,7 @@ class IPAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
 
         return queryset
 
-    def _get_limit(self, query_params):
+    def _get_limit(self, query_params) -> int:
         """Get and validate limit parameter."""
         limit = int(query_params.get("limit", 100))
         return min(limit, 1000)  # Max limit
@@ -71,7 +72,7 @@ class IPAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset[:limit]
 
     @action(detail=False, methods=["get"], url_path="summary")
-    def summary(self, request):
+    def summary(self, request: Request) -> Response:
         """
         Get audit log summary statistics.
 
@@ -84,7 +85,7 @@ class IPAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(summary, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_path="export")
-    def export(self, request):
+    def export(self, request: Request) -> Response:
         """
         Export audit logs to CSV.
 
