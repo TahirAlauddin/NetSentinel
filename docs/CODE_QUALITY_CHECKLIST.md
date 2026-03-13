@@ -39,8 +39,8 @@ Files over ~400 lines that are candidates for further split (refactor in progres
 
 | File | Lines | Action |
 |------|-------|--------|
-| `app/(app)/telecom-management/data-circuits/page.tsx` | ~970 | ✅ API + hook extracted (`lib/data-circuits-api.ts`, `hooks/useDataCircuits.ts`); forms still inline – extract `DataCircuitAddForm` / `DataCircuitEditRow` next |
-| `app/(app)/telecom-management/page.tsx` | 541 | Consider extracting sections or sub-pages |
+| `app/(app)/telecom-management/data-circuits/page.tsx` | ~970 | ✅ API + hook extracted (`lib/data-circuits-api.ts`, `hooks/useDataCircuits.ts`); forms still inline – extract `DataCircuitAddForm` / `DataCircuitEditRow` next (now split into dedicated components). |
+| `app/(app)/telecom-management/page.tsx` | 541 → small | ✅ Split into thin route-level container using `TelecomOverview`, `TelecomServicesOverview`, and `useTelecomOverview`. |
 | `components/apps/ipam/ip-search-enhanced.tsx` | 562 | Extract search state hook and result subcomponents |
 | `components/apps/ipam/subnet-threshold-dashboard.tsx` | 640 | Split into smaller dashboard widgets |
 | `app/(app)/settings/carrier-contacts/page.tsx` | 684 | Extract table + form components |
@@ -210,7 +210,7 @@ Assessment of the current NetSentinel codebase against this checklist. **✅ Don
 | No commented-out blocks | ⚠ | Some files have commented code; not systematically removed. |
 | No unused imports | ✅ | ESLint; backend linters can catch. |
 | Functions stay focused | ✅ | API/hook extraction done for data-circuits; pattern for other large pages. |
-| Reasonable function/file length | ⚠ | ESLint `max-lines` (450) warns; large files listed in checklist §1.3 audit. |
+| Reasonable function/file length | ⚠ | ESLint `max-lines` (450) warns; several large files remain (see §1.3 audit), but `app/(app)/telecom-management/page.tsx` has been split into smaller pieces. |
 | Cyclomatic complexity | ✅ | ESLint `complexity` (max 15) in frontend; Flake8 `--max-complexity=10` in backend CI. |
 | Descriptive names | ✅ | Naming is generally clear and consistent. |
 | Consistent naming | ✅ | Conventions in `docs/CODING_STANDARDS.md`. |
@@ -220,14 +220,19 @@ Assessment of the current NetSentinel codebase against this checklist. **✅ Don
 
 | Item | Status | Notes |
 |------|--------|--------|
-| Clear layers | ✅ | Frontend: app → components → lib; backend: views → serializers → models/services. |
+| Clear layers | ✅ | Frontend: app → components → hooks/lib (see `docs/CODING_STANDARDS.md` layering section); backend: views → serializers → models/services. |
 | No circular dependencies | ⚠ | Not audited with a tool; structure suggests few. |
-| Backend: views thin | ✅ | Services used (e.g. ipam services, notifications); views delegate. |
-| Frontend: containers vs presentational | ✅ | Pages fetch; components receive props; hooks for logic. |
-| Consistent structure | ✅ | App router; `(app)`, `(auth)`; backend apps by domain. |
-| Colocation | ⚠ | Tests in `tests/`; some feature colocation. |
-| Explicit dependencies | ✅ | Imports explicit; env for config. |
-| Shared types in one place | ✅ | `types/` in frontend; serializers define backend contracts. |
+| Backend: views thin | ✅ | Services used (e.g. ipam services, notifications); views delegate (see IPAM DHCP and subnet threshold viewsets). |
+| Frontend: containers vs presentational | ✅ | Pages route/orchestrate; hooks own data/state (e.g. `useDataCircuits`, `useTelecomOverview`, `useIpSearchEnhanced`, `useSubnetThresholdDashboard`); components receive props. |
+| Consistent structure | ✅ | App router `(app)/(auth)` segments; backend apps by domain; frontend split into `components/apps`, `hooks`, `lib`, `types`. |
+| Colocation | ⚠ | Tests in `tests/`; many features colocate components/hooks/lib (e.g. IPAM `subnet-threshold-dashboard` + `useSubnetThresholdDashboard` + `SubnetThresholdTable`), but not consistently across all legacy areas. |
+| Barrel exports | ⚠ | Barrel indexes (e.g. feature `index.ts` files) used in several areas per `docs/CODING_STANDARDS.md`, but not systematically across the whole frontend. |
+| Backend: app-per-domain | ✅ | Django apps organized by domain (users, assets, ipam, etc.) as shown in backend `apps/` layout. |
+| Frontend: feature or type folders | ⚠ | Newer features follow `app/(app)/feature`, `components/apps/feature`, `hooks/feature`, `types/feature.ts`; some older code is still more ad hoc. |
+| Explicit dependencies | ✅ | Imports and configuration are explicit; no reliance on global mutable state beyond well-defined settings/env. |
+| Loose coupling | ⚠ | Layers and hooks help keep concerns separated (e.g. IPAM dashboards depend on hooks and API clients, not backend services directly), but some components and views still know about multiple layers or concrete implementations. |
+| Shared types in one place | ✅ | Frontend uses `types/` modules; backend contracts defined via DRF serializers and shared DTOs per coding standards. |
+| No “god” objects | ✅ | No single catch-all `utils` or monolithic service; responsibilities split across feature modules, services, and helpers, with only intentional central configuration modules. |
 
 ## 3. Type Safety & Contracts
 
