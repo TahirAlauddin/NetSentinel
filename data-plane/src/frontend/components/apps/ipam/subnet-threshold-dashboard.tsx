@@ -31,15 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Plus,
   Edit,
   Trash2,
@@ -54,6 +45,7 @@ import { extractIpamArrayData } from "@/lib/ipam-utils";
 import type { SubnetThreshold, SubnetThresholdAlert, Subnet } from "@/types/ipam";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { SubnetThresholdAlertsDialog } from "@/components/apps/ipam/SubnetThresholdAlertsDialog";
 
 const ipamApi = new IpamApiClient();
 
@@ -79,7 +71,6 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
     notify_on_recovery: false,
   });
   const [showAlerts, setShowAlerts] = useState(false);
-  const [selectedAlerts, setSelectedAlerts] = useState<number[]>([]);
 
   useEffect(() => {
     loadSubnets();
@@ -222,16 +213,15 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
     }
   };
 
-  const handleBulkAcknowledge = async () => {
-    if (selectedAlerts.length === 0) {
+  const handleBulkAcknowledge = async (ids: number[]) => {
+    if (ids.length === 0) {
       toast.error("Please select alerts to acknowledge");
       return;
     }
 
     try {
-      await ipamApi.bulkAcknowledgeSubnetThresholdAlerts(selectedAlerts);
-      toast.success(`${selectedAlerts.length} alerts acknowledged`);
-      setSelectedAlerts([]);
+      await ipamApi.bulkAcknowledgeSubnetThresholdAlerts(ids);
+      toast.success(`${ids.length} alerts acknowledged`);
       loadAlerts();
     } catch (error) {
       console.error("Error acknowledging alerts:", error);
@@ -538,119 +528,13 @@ export function SubnetThresholdDashboard({ subnetId }: SubnetThresholdDashboardP
         </Table>
       )}
 
-      {/* Alerts Dialog */}
-      <AlertDialog open={showAlerts} onOpenChange={setShowAlerts}>
-        <AlertDialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Threshold Alerts</AlertDialogTitle>
-            <AlertDialogDescription>Unacknowledged threshold alerts</AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="space-y-4">
-            {unacknowledgedAlerts.length > 0 && (
-              <div className="flex justify-between items-center">
-                <div>
-                  {selectedAlerts.length > 0 && (
-                    <span className="text-sm text-muted-foreground">
-                      {selectedAlerts.length} selected
-                    </span>
-                  )}
-                </div>
-                <Button
-                  size="sm"
-                  onClick={handleBulkAcknowledge}
-                  disabled={selectedAlerts.length === 0}
-                >
-                  Acknowledge Selected
-                </Button>
-              </div>
-            )}
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={
-                        selectedAlerts.length === unacknowledgedAlerts.length &&
-                        unacknowledgedAlerts.length > 0
-                      }
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedAlerts(unacknowledgedAlerts.map((a) => a.id));
-                        } else {
-                          setSelectedAlerts([]);
-                        }
-                      }}
-                    />
-                  </TableHead>
-                  <TableHead>Subnet</TableHead>
-                  <TableHead>Alert Type</TableHead>
-                  <TableHead>Utilization</TableHead>
-                  <TableHead>Sent</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {unacknowledgedAlerts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      No unacknowledged alerts
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  unacknowledgedAlerts.map((alert) => (
-                    <TableRow key={alert.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedAlerts.includes(alert.id)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedAlerts([...selectedAlerts, alert.id]);
-                            } else {
-                              setSelectedAlerts(selectedAlerts.filter((id) => id !== alert.id));
-                            }
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell className="font-mono">
-                        {alert.threshold_detail?.subnet_network || alert.threshold}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            alert.alert_type === "critical"
-                              ? "destructive"
-                              : alert.alert_type === "warning"
-                                ? "secondary"
-                                : "default"
-                          }
-                        >
-                          {alert.alert_type_display}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{alert.utilization_percentage.toFixed(1)}%</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {formatDistanceToNow(new Date(alert.sent_at), { addSuffix: true })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleAcknowledge(alert.id)}
-                        >
-                          Acknowledge
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Close</AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <SubnetThresholdAlertsDialog
+        open={showAlerts}
+        onOpenChange={setShowAlerts}
+        alerts={alerts}
+        onAcknowledge={handleAcknowledge}
+        onBulkAcknowledge={handleBulkAcknowledge}
+      />
     </div>
   );
 }
