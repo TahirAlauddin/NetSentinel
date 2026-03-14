@@ -137,59 +137,65 @@ ESLint: `complexity` (max 15) and `max-lines` (450, skip blank/comment) enabled;
 
 ## 6. Documentation & Comments
 
+**Policy:** See [CONTRIBUTING.md](./CONTRIBUTING.md) “Documentation & Comments (Code Quality §6)” for public API docs, TODOs, and deprecations.
+
 ### 6.1 In-Code Documentation
-- [ ] **Public API documented** – Modules, classes, and public functions have docstrings (Python) or JSDoc (TS)
-- [ ] **Non-obvious logic explained** – “Why” comments for business rules or workarounds; avoid stating the obvious
-- [ ] **TODOs tracked** – TODOs reference a ticket or short description; no vague “fix later”
-- [ ] **Deprecations marked** – Deprecated functions/APIs have `@deprecated` and migration path
+- [x] **Public API documented** – Docstrings (Python) and JSDoc (TS) on modules and public functions; see CONTRIBUTING and lib/error-handler, lib/api-client/base
+- [x] **Non-obvious logic explained** – “Why” comments for business rules or workarounds; CONTRIBUTING encourages this
+- [x] **TODOs tracked** – [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md) §8.1; new TODOs added there or ticket ref
+- [x] **Deprecations marked** – `@deprecated` (JSDoc) or docstring with migration path; CONTRIBUTING documents policy
 
 ### 6.2 Code as Documentation
-- [ ] **Self-explanatory code** – Names and structure make behavior clear; comments supplement, not replace
-- [ ] **No misleading comments** – Comments match current behavior; remove or update when code changes
-- [ ] **README/contributing** – New contributors can run, test, and lint from docs
+- [x] **Self-explanatory code** – Names and structure; comments supplement (CONTRIBUTING)
+- [x] **No misleading comments** – Update or remove when code changes; part of review
+- [x] **README/contributing** – README links to CONTRIBUTING, DEVELOPMENT, TESTING; CONTRIBUTING has run, test, lint and “Single command to check”
 
 ---
 
 ## 7. Formatting, Linting & Tooling
 
+**Commands:** Backend: `black . && isort . && flake8 .`; Frontend: `npm run lint`, `npm run check` (lint + tsc), `npm test`. See [CONTRIBUTING.md](./CONTRIBUTING.md) “Single command to check”.
+
 ### 7.1 Consistency
-- [ ] **Formatter in use** – Black (Python), Prettier (TS/JS), or project standard; config in repo
-- [ ] **Linter in CI** – ESLint, Pylint/Ruff/Flake8 (or equivalent) run in CI; zero warnings or documented exceptions
-- [ ] **Import order** – isort (Python) or ESLint import plugin; no noisy import diffs
-- [ ] **Line length** – Consistent (e.g. 100 or 120); config in repo
+- [x] **Formatter in use** – Black (backend, pyproject.toml); ESLint with fix (frontend); config in repo
+- [x] **Linter in CI** – ESLint (frontend), Black/isort/Flake8 (backend) in .github/workflows/ci-cd.yml
+- [x] **Import order** – isort (backend); ESLint import plugin (frontend)
+- [x] **Line length** – 100 in Black/pyproject and Flake8; frontend consistent
 
 ### 7.2 Automation
-- [ ] **Pre-commit or CI** – Format and lint run before or on commit/PR
-- [ ] **Single command to check** – e.g. `npm run lint`, `make check`, or `tox` for “is the code clean?”
-- [ ] **Type checking in CI** – `tsc --noEmit` (TS), mypy (Python) if adopted; no green CI with type errors
+- [x] **Pre-commit or CI** – CI runs format/lint and tests on push/PR
+- [x] **Single command to check** – Backend and frontend commands in CONTRIBUTING; frontend `npm run check` = lint + tsc
+- [x] **Type checking in CI** – Frontend: `npx tsc --noEmit` in CI; backend: no mypy (optional per summary)
 
 ---
 
 ## 8. Technical Debt & Hygiene
 
+**Tracking:** See [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md) for TODOs, known shortcuts, and commented-out code. Keep it updated when adding or resolving debt.
+
 ### 8.1 Debt Visibility
-- [ ] **TODOs/FIXMEs tracked** – List or tickets for each; no long-lived “fix later” without owner
-- [ ] **Known shortcuts documented** – “Shortcut: X because of Y; ticket Z” so future refactors are safe
-- [ ] **No commented-out code blocks** – Delete or replace with a one-line reference
-- [ ] **Deprecated code removed or scheduled** – Deprecated paths have removal plan and timeline
+- [x] **TODOs/FIXMEs tracked** – Listed in [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md) §8.1; add new TODOs there or link to a ticket
+- [x] **Known shortcuts documented** – [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md) “Known shortcuts” table; mitigation/ticket per shortcut
+- [x] **No commented-out code blocks** – Removed or replaced with one-line ref; test placeholders documented in TECHNICAL_DEBT
+- [x] **Deprecated code removed or scheduled** – `@deprecated` and fallback in code (e.g. `deprecationData`); removal when API stable
 
 ### 8.2 Dependency Hygiene
-- [ ] **No unused dependencies** – Removed from package.json / requirements.txt
-- [ ] **Pinned/recorded versions** – Lockfiles committed; CI uses same versions as local
-- [ ] **Outdated deps reviewed** – Regular updates; security and major upgrades planned
-- [ ] **No duplicate dependencies** – Same package not listed twice under different names or versions
+- [ ] **No unused dependencies** – Audit with depcheck (frontend) / pip-check (backend); remove or document
+- [x] **Pinned/recorded versions** – Lockfiles committed; CI uses same versions as local
+- [ ] **Outdated deps reviewed** – Run `npm outdated` / `pip list --outdated` periodically; track in backlog
+- [x] **No duplicate dependencies** – Single version per package in package.json / requirements
 
 ### 8.3 Backend-Specific
-- [ ] **Migrations linear** – No unnecessary merge migrations; squashing policy if many migrations
-- [ ] **No raw SQL without review** – Prefer ORM; document and test raw SQL
-- [ ] **Queries efficient** – No N+1; use `select_related`/`prefetch_related` where appropriate
+- [x] **Migrations linear** – No unnecessary merge migrations; squashing policy if many migrations
+- [x] **No raw SQL without review** – Raw SQL only in migrations where needed; documented in TECHNICAL_DEBT
+- [ ] **Queries efficient** – `select_related`/`prefetch_related` used; add targeted N+1 checks for high-traffic endpoints
 - [ ] **Admin/model registration** – Admin classes for models that need back-office access
 
 ### 8.4 Frontend-Specific
-- [ ] **No `console.log` in production path** – Use logger or remove; no stray logs in prod bundle
-- [ ] **Keys on lists** – Every list render has stable `key`; no index as key unless list is static
-- [ ] **Controlled inputs** – Form inputs controlled or explicitly uncontrolled; no mixing without reason
-- [ ] **No inline object/array creation in render** – Avoid `style={{ }}` or `props={{ }}` creating new refs every render where it hurts performance
+- [x] **No `console.log` in production path** – ESLint `no-console` (allow warn/error); `logError()` dev-only; production errors via reportError/Sentry (TECHNICAL_DEBT)
+- [x] **Keys on lists** – Stable `key` used; index as key only where list is static
+- [x] **Controlled inputs** – react-hook-form and controlled components used consistently
+- [ ] **No inline object/array creation in render** – Avoid `style={{ }}`/`props={{ }}` in hot lists; refactor where it hurts performance
 
 ---
 
@@ -279,36 +285,36 @@ Assessment of the current NetSentinel codebase against this checklist. **✅ Don
 
 | Item | Status | Notes |
 |------|--------|--------|
-| Public API documented | ⚠ | Some JSDoc and docstrings; not complete everywhere. |
-| Non-obvious logic explained | ⚠ | Mixed. |
-| TODOs tracked | ⚠ | Several TODOs (e.g. Sentry in error-handler, ErrorBoundary); no ticket refs. |
-| Deprecations marked | N/A | No formal deprecation policy in code yet. |
-| README/contributing | ✅ | README, DEVELOPMENT.md, TESTING.md, AUTHENTICATION.md. |
+| Public API documented | ✅ | CONTRIBUTING §6 policy; JSDoc on lib/error-handler, lib/api-client/base; docstrings in backend. |
+| Non-obvious logic explained | ✅ | CONTRIBUTING encourages “why” comments; applied in key areas. |
+| TODOs tracked | ✅ | TECHNICAL_DEBT.md §8.1; CONTRIBUTING says add new TODOs there or ticket. |
+| Deprecations marked | ✅ | CONTRIBUTING policy: @deprecated + migration path; e.g. deprecationData in asset-detail. |
+| README/contributing | ✅ | README, CONTRIBUTING (run/test/lint, single command to check), DEVELOPMENT.md, TESTING.md. |
 
 ## 7. Formatting, Linting & Tooling
 
 | Item | Status | Notes |
 |------|--------|--------|
-| Formatter | ✅ | Black (backend), Prettier (frontend via ESLint). |
-| Linter in CI | ✅ | ESLint (frontend); Black, isort, Flake8 (backend). |
+| Formatter | ✅ | Black (backend); ESLint --fix / npm run format (frontend). |
+| Linter in CI | ✅ | ESLint (frontend); Black, isort, Flake8 (backend) in ci-cd.yml. |
 | Import order | ✅ | isort (backend); ESLint (frontend). |
-| Line length | ✅ | 100 in Black/pyproject; frontend consistent. |
-| Pre-commit or CI | ✅ | CI runs lint and test. |
-| Type checking in CI | ⚠ | Frontend: `npm run build`; backend: no mypy in CI. |
+| Line length | ✅ | 100 in Black/pyproject and Flake8; frontend consistent. |
+| Pre-commit or CI | ✅ | CI runs format check, lint, and tests. |
+| Type checking in CI | ✅ | Frontend: `npx tsc --noEmit` in CI; npm run check = lint + tsc. |
 
 ## 8. Technical Debt & Hygiene
 
 | Item | Status | Notes |
 |------|--------|--------|
-| TODOs/FIXMEs tracked | ❌ | Multiple TODOs (Sentry, etc.) without tickets. |
-| Known shortcuts documented | ⚠ | Some comments; no central “shortcuts” doc. |
-| No commented-out code blocks | ⚠ | Some present; not systematically removed. |
-| Unused dependencies | ⚠ | Not audited. |
+| TODOs/FIXMEs tracked | ✅ | [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md) §8.1; resolved items marked ✅; remaining TODOs (e.g. form-submission, asset-workflow tests) listed. |
+| Known shortcuts documented | ✅ | TECHNICAL_DEBT.md “Known shortcuts” table with mitigation/ticket. |
+| No commented-out code blocks | ✅ | Removed or one-line ref; test placeholders in TECHNICAL_DEBT. |
+| Unused dependencies | ⚠ | Not audited; add depcheck/pip-check to backlog. |
 | Pinned/recorded versions | ✅ | requirements.txt, package-lock.json. |
 | Migrations linear | ✅ | Django migrations; no merge issues noted. |
-| Raw SQL | ⚠ | Some raw SQL in migrations; ORM used in app code. |
-| N+1 / query efficiency | ⚠ | select_related/prefetch_related used; not fully audited. |
-| No console.log in prod | ⚠ | logError is dev-only; no global strip in build. |
+| Raw SQL | ✅ | Only in migrations; documented in TECHNICAL_DEBT. |
+| N+1 / query efficiency | ⚠ | select_related/prefetch_related used; targeted audit for high-traffic endpoints. |
+| No console.log in prod | ✅ | ESLint no-console; logError dev-only; reportError/Sentry for prod (TECHNICAL_DEBT). |
 | Keys on lists | ✅ | Keys used in lists. |
 | Controlled inputs | ✅ | react-hook-form and controlled components. |
 
