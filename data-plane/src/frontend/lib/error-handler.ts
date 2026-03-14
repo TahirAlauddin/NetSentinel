@@ -174,8 +174,12 @@ export function logError(error: AppError, context?: Record<string, unknown>): vo
 }
 
 /**
- * Handle error and return standardized error object
- * This is the main function to use for error handling
+ * Handle error and return a standardized AppError. Prefer this for all error handling.
+ * Accepts either a thrown value or an API response object; logs and (when configured) reports to Sentry.
+ *
+ * @param error - Caught error or API response with `status` and `error`
+ * @param context - Optional extra data to attach when logging/reporting
+ * @returns Normalized AppError with type, message, userMessage, and optional fieldErrors
  */
 export function handleError(
   error: unknown | BaseApiResponse<unknown>,
