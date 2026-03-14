@@ -10,8 +10,6 @@ interface SystemDetailsSectionProps {
 }
 
 export function SystemDetailsSection({ asset }: SystemDetailsSectionProps) {
-  // TODO: Map asset fields to systemDetails structure
-  // Currently asset doesn't have systemDetails, need to map from computer_details, etc.
   const systemDetails = {
     processor: asset.computer_details?.processor || "---",
     memory: asset.computer_details?.memory || "---",
