@@ -1,13 +1,14 @@
 /**
- * Optional error reporting to Sentry (or similar).
- * When NEXT_PUBLIC_SENTRY_DSN is set, errors are sent to Sentry in production.
- * In development we only log to console; production reporting is opt-in via env.
+ * Error reporting to Sentry. When NEXT_PUBLIC_SENTRY_DSN is set, errors are sent in production.
+ * In development we only log via logError in error-handler.
  */
+
+import * as Sentry from "@sentry/nextjs";
 
 export type ErrorReportContext = Record<string, unknown>;
 
 /**
- * Report an error to the configured service (e.g. Sentry) in production.
+ * Report an error to Sentry in production when DSN is configured.
  * No-op when NEXT_PUBLIC_SENTRY_DSN is not set or in development.
  */
 export function reportError(error: unknown, context?: ErrorReportContext): void {
@@ -15,17 +16,10 @@ export function reportError(error: unknown, context?: ErrorReportContext): void 
     return; // Already logged via logError in error-handler
   }
 
-  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
-  if (!dsn) {
+  if (!process.env.NEXT_PUBLIC_SENTRY_DSN) {
     return;
   }
 
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Sentry = require("@sentry/nextjs");
-    const err = error instanceof Error ? error : new Error(String(error));
-    Sentry.captureException(err, { extra: context });
-  } catch {
-    // @sentry/nextjs not installed or failed to load; ignore
-  }
+  const err = error instanceof Error ? error : new Error(String(error));
+  Sentry.captureException(err, { extra: context });
 }
