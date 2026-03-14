@@ -3,14 +3,14 @@
 import { Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import { Asset } from "@/types/assets";
+import { mapBackendAssetToDetailView } from "../../../utils/asset-detail-mapper";
 
 interface HistorySectionProps {
   asset: Asset;
 }
 
 export function HistorySection({ asset }: HistorySectionProps) {
-  // TODO: Map asset.created_at to asset.createdAt if needed
-  const createdAt = (asset as Asset & { createdAt?: string }).createdAt || asset.created_at || "";
+  const { createdAt } = mapBackendAssetToDetailView(asset);
 
   return (
     <section id="history">

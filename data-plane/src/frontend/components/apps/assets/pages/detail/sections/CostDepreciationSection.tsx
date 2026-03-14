@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Asset } from "@/types/assets";
-import { deprecationData } from "../../../constants/asset-detail";
+import { getDeprecationData, deprecationData } from "../../../constants/asset-detail";
 
 interface CostDepreciationSectionProps {
   asset: Asset;
@@ -21,14 +21,25 @@ interface CostDepreciationSectionProps {
 }
 
 export function CostDepreciationSection({ asset, onEdit }: CostDepreciationSectionProps) {
-  // TODO: Map asset fields to costDepreciation structure
+  const purchasePrice = asset.purchase_price != null ? Number.parseFloat(String(asset.purchase_price)) : NaN;
+  const usefulLifeYears = asset.useful_life_years ?? 0;
+  const salvageValue = asset.salvage_value != null ? Number.parseFloat(String(asset.salvage_value)) : 0;
+  const chartData =
+    !Number.isNaN(purchasePrice) && usefulLifeYears > 0
+      ? getDeprecationData({
+          purchasePrice,
+          salvageValue: Number.isNaN(salvageValue) ? 0 : salvageValue,
+          usefulLifeYears,
+        })
+      : deprecationData;
+
   const costDepreciation = {
-    purchasePrice: asset.purchase_price || undefined,
-    replacementCost: asset.replacement_cost || undefined,
-    salvageValue: asset.salvage_value || undefined,
-    usefulLife: asset.useful_life_years || undefined,
-    approachingEndOfLife: asset.approaching_eol_months || undefined,
-    poNumber: asset.po_number || undefined,
+    purchasePrice: asset.purchase_price != null ? Number.parseFloat(String(asset.purchase_price)) : undefined,
+    replacementCost: asset.replacement_cost != null ? Number.parseFloat(String(asset.replacement_cost)) : undefined,
+    salvageValue: asset.salvage_value != null ? Number.parseFloat(String(asset.salvage_value)) : undefined,
+    usefulLife: asset.useful_life_years ?? undefined,
+    approachingEndOfLife: asset.approaching_eol_months ?? undefined,
+    poNumber: asset.po_number ?? undefined,
   };
 
   return (
@@ -91,7 +102,7 @@ export function CostDepreciationSection({ asset, onEdit }: CostDepreciationSecti
           </div>
           <div className="h-48 md:h-auto">
             <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={deprecationData}>
+              <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="year" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />

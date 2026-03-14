@@ -20,25 +20,23 @@ import {
 } from "lucide-react";
 import { STATUS_OPTIONS } from "@/constants/assets";
 import { Asset } from "@/types/assets";
+import { mapBackendAssetToDetailView } from "../../utils/asset-detail-mapper";
 
 interface AssetDetailHeaderProps {
   asset: Asset;
   currentStatus: (typeof STATUS_OPTIONS)[0];
   onStatusChange: (newStatus: string) => void;
+  onAlertsClick?: () => void;
 }
 
 export function AssetDetailHeader({
   asset,
   currentStatus,
   onStatusChange,
+  onAlertsClick,
 }: AssetDetailHeaderProps) {
   const router = useRouter();
-
-  // TODO: Map asset.category to asset.type if needed
-  const assetType = (asset as Asset & { type?: string }).type || asset.category?.name || "Asset";
-
-  // TODO: Map asset.created_at to asset.createdAt if needed
-  const createdAt = (asset as Asset & { createdAt?: string }).createdAt || asset.created_at || "";
+  const { type: assetType, createdAt } = mapBackendAssetToDetailView(asset);
 
   return (
     <header className="bg-white border-b px-4 md:px-8 py-4 shrink-0 z-20">
@@ -118,9 +116,7 @@ export function AssetDetailHeader({
           </div>
           <button
             className="text-orange-500 text-sm flex items-center gap-1 whitespace-nowrap"
-            onClick={() => {
-              // TODO: Implement alerts dialog
-            }}
+            onClick={onAlertsClick}
           >
             <Bell className="w-4 h-4" />+ Add alerts
           </button>

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { settingsApiClient } from "@/lib/api-client/settings";
+import { handleError } from "@/lib/error-handler";
 
 interface EditCompanyProps {
   onCancel: () => void;
@@ -24,6 +26,8 @@ interface EditCompanyProps {
 }
 
 export function EditCompany({ onCancel, initialData }: EditCompanyProps) {
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     companyName: initialData?.companyName || "NetSentinel Corp",
     subdomain: initialData?.subdomain || "netsentinel",
@@ -48,10 +52,38 @@ export function EditCompany({ onCancel, initialData }: EditCompanyProps) {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Save to backend
-    // After successful save, call onCancel to close the form
+    setSaveError(null);
+    setSaving(true);
+    try {
+      const response = await settingsApiClient.updateCompany({
+        company_name: formData.companyName,
+        subdomain: formData.subdomain,
+        company_url: formData.companyUrl,
+        main_contact: formData.mainContact,
+        phone_country: formData.phoneCountry,
+        phone_number: formData.phoneNumber,
+        phone_extension: formData.phoneExtension,
+        time_zone: formData.timeZone,
+        fiscal_year_month: formData.fiscalYearMonth,
+        fiscal_year_day: formData.fiscalYearDay,
+        isolate_workspaces: formData.isolateWorkspaces,
+        show_free_modules: formData.showFreeModules,
+        enable_chat_support: formData.enableChatSupport,
+      });
+      if (response.error) {
+        const appError = handleError(response);
+        setSaveError(appError.userMessage);
+        return;
+      }
+      onCancel();
+    } catch (err) {
+      const appError = handleError(err);
+      setSaveError(appError.userMessage);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -257,10 +289,18 @@ export function EditCompany({ onCancel, initialData }: EditCompanyProps) {
         </div>
       </div>
 
+      {saveError && (
+        <p className="text-sm text-destructive" role="alert">
+          {saveError}
+        </p>
+      )}
+
       {/* Action Buttons */}
       <div className="flex gap-3 pt-8 border-t border-border">
-        <Button type="submit">Save Changes</Button>
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="submit" disabled={saving}>
+          {saving ? "Saving…" : "Save Changes"}
+        </Button>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
           Cancel
         </Button>
       </div>

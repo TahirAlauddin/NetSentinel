@@ -34,7 +34,36 @@ export const SECTIONS: Section[] = [
   { id: "automation-history", label: "Automation History", icon: Zap },
 ];
 
-// TODO: Replace with actual deprecation calculation logic
+/**
+ * Straight-line depreciation: (cost - salvage) / useful_life per year.
+ * Returns array of { year, value } for chart from start year through useful_life_years.
+ */
+export function getDeprecationData(params: {
+  purchasePrice: number;
+  salvageValue?: number;
+  usefulLifeYears: number;
+  startYear?: number;
+}): Array<{ year: string; value: number }> {
+  const {
+    purchasePrice,
+    salvageValue = 0,
+    usefulLifeYears,
+    startYear = new Date().getFullYear(),
+  } = params;
+  if (usefulLifeYears <= 0) return [];
+  const depreciable = Math.max(0, purchasePrice - salvageValue);
+  const annualDepreciation = depreciable / usefulLifeYears;
+  const data: Array<{ year: string; value: number }> = [];
+  let bookValue = purchasePrice;
+  for (let i = 0; i <= usefulLifeYears; i++) {
+    const year = startYear + i;
+    data.push({ year: String(year), value: Math.round(bookValue * 100) / 100 });
+    bookValue = Math.max(salvageValue, bookValue - annualDepreciation);
+  }
+  return data;
+}
+
+/** @deprecated Use getDeprecationData() with asset cost/depreciation fields for real data. */
 export const deprecationData = [
   { year: "2024", value: 10000 },
   { year: "2025", value: 8500 },

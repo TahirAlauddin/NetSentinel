@@ -294,15 +294,13 @@ export const authOptions = {
     strategy: 'jwt' as const,
     maxAge: 7 * 24 * 60 * 60, // 7 days
   },
-  // Use secure cookies only when NEXTAUTH_URL is HTTPS. In Docker dev we run with NODE_ENV=production
-  // but serve over HTTP (localhost); secure cookies are not sent over HTTP, so the session would be
-  // lost after login and the middleware would redirect back to /login.
+  // Use secure cookies: NEXTAUTH_USE_SECURE_COOKIES=true forces secure; otherwise derive from URL (https => secure).
+  // In Docker dev we may run with NODE_ENV=production over HTTP (localhost); secure cookies are not sent over HTTP.
   cookies: (() => {
     const url = authConfig.url
-    // TODO: Possibly update the check from https to an environment variable, especially for production
-    // Staging is https, so it works.
     const useSecureCookies =
-      typeof url === 'string' && url.length > 0 && url.toLowerCase().startsWith('https://')
+      authConfig.useSecureCookies ||
+      (typeof url === 'string' && url.length > 0 && url.toLowerCase().startsWith('https://'))
     return {
       sessionToken: {
         name: `${useSecureCookies ? '__Secure-' : ''}next-auth.session-token`,

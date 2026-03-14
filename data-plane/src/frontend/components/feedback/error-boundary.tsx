@@ -3,6 +3,7 @@
 import React, { Component, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { reportError } from "@/lib/error-reporter";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -50,8 +51,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     // Call custom error handler if provided
     this.props.onError?.(error, errorInfo);
 
-    // TODO: Integrate with error reporting service (Sentry, etc.)
-    // Example: Sentry.captureException(error, { contexts: { react: errorInfo } });
+    // Send to error reporting service in production when configured (e.g. Sentry)
+    reportError(error, {
+      componentStack: errorInfo.componentStack,
+    });
   }
 
   handleReset = (): void => {

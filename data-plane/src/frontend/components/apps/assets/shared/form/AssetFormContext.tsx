@@ -6,6 +6,9 @@ import { DepartmentRecord } from "@/types/departments";
 import { UserRecord } from "@/types/users";
 import { LocationRecord } from "@/types/locations";
 
+/** Related item can be an asset or (when API supports it) other entities (location, contract, etc.). */
+export type RelatedItemEntity = Asset | LocationRecord;
+
 /**
  * AssetFormProviderProps - Props for the AssetFormProvider component
  */
@@ -21,7 +24,7 @@ interface AssetFormProviderProps {
   isSubmitting: boolean;
   fieldErrors?: Record<string, string>;
   mode: "create" | "edit";
-  relatedItems: Asset[]; // TODO: We'll need to allow asset relations with every entity
+  relatedItems: RelatedItemEntity[];
   onInputChange: (field: string, value: string | number | null | undefined | object) => void;
   handleNext: () => void;
   handlePrevious: () => void;
@@ -43,7 +46,7 @@ interface AssetFormContextValue {
   categories: Category[];
   customLifecycles: CustomLifecycle[];
   users: UserRecord[];
-  relatedItems: Asset[]; // TODO: We'll need to allow asset relations with every entity
+  relatedItems: RelatedItemEntity[];
   updateField: (field: string, value: string | number | null | undefined | object) => void;
   handleNext: () => void;
   handlePrevious: () => void;
