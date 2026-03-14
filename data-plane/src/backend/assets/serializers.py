@@ -522,4 +522,68 @@ class AssetTechSpecsSerializer(serializers.ModelSerializer):
         return data
 
 
-# TODO: add more chunks per step
+class AssetLocationUsageSerializer(serializers.ModelSerializer):
+    """Serializer for Asset Location & Usage step."""
+
+    class Meta:
+        model = Asset
+        fields = [
+            "id",
+            "name",
+            "location",
+            "in_current_state_since",
+            "expected_checkin_date",
+            "used_by",
+            "managed_by",
+            "departments",
+            "custom_lifecycle",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["location"] = (
+            AssetLocationSerializer(instance.location).data if instance.location else None
+        )
+        data["departments"] = DepartmentSerializer(instance.departments.all(), many=True).data
+        data["managed_by"] = UserSerializer(instance.managed_by).data if instance.managed_by else None
+        data["used_by"] = UserSerializer(instance.used_by).data if instance.used_by else None
+        data["custom_lifecycle"] = (
+            CustomLifecycleSerializer(instance.custom_lifecycle).data
+            if instance.custom_lifecycle
+            else None
+        )
+        return data
+
+
+class AssetCostDepreciationSerializer(serializers.ModelSerializer):
+    """Serializer for Asset Cost & Depreciation step."""
+
+    class Meta:
+        model = Asset
+        fields = [
+            "id",
+            "name",
+            "purchase_price",
+            "replacement_cost",
+            "salvage_value",
+            "useful_life_years",
+            "approaching_eol_months",
+            "po_number",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class AssetWarrantyAcquisitionSerializer(serializers.ModelSerializer):
+    """Serializer for Asset Warranty & Acquisition step."""
+
+    class Meta:
+        model = Asset
+        fields = [
+            "id",
+            "name",
+            "acquisition_date",
+            "warranty_expiration",
+            "installation_date",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
