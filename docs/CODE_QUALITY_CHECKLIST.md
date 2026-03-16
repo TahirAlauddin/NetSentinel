@@ -91,7 +91,7 @@ ESLint: `complexity` (max 15) and `max-lines` (450, skip blank/comment) enabled;
 - [x] **Serializers as contracts** – Request/response shapes defined by serializers; validated at boundaries
 
 ### 3.3 API Contract
-- [ ] **Backend and frontend types in sync** – Frontend types match API (manual or OpenAPI-generated)
+- [x] **Backend and frontend types in sync** – Frontend types generated from backend Swagger/OpenAPI schema (`/swagger.json` converted to OpenAPI 3) via `npm run generate:api-types`; manual types live in `types/` alongside generated ones
 - [x] **Validation at boundaries** – Backend validates all inputs; frontend validates before submit where useful
 - [x] **Error response shape** – Consistent error JSON (e.g. `detail`, `field_errors`); frontend parses one format
 
@@ -249,7 +249,7 @@ Assessment of the current NetSentinel codebase against this checklist. **✅ Don
 | API response types | ✅ | Typed API client; response types used. |
 | Props interfaces | ✅ | Components use interfaces for props. |
 | Python type hints | ⚠ | Used in places; not everywhere on public APIs. |
-| Backend and frontend types in sync | ⚠ | Manual alignment; no OpenAPI→TS generation. |
+| Backend and frontend types in sync | ✅ | Backend exposes Swagger/OpenAPI schema at `/swagger.json`; frontend has `npm run generate:api-types` (uses `swagger2openapi` + `openapi-typescript`) to generate types into `src/frontend/types/openapi.d.ts` and keep contracts in sync. |
 | Validation at boundaries | ✅ | DRF serializers; frontend validation with Zod/react-hook-form. |
 | Error response shape | ✅ | Centralized parsing in `error-handler.ts` and API client. |
 
