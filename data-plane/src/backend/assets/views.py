@@ -385,7 +385,8 @@ class ComputerDetailsViewSet(viewsets.ReadOnlyModelViewSet):
     ViewSet for viewing computer details.
     """
 
-    queryset = ComputerDetails.objects.select_related("asset").all()
+    # Ensure deterministic ordering for pagination to avoid UnorderedObjectListWarning
+    queryset = ComputerDetails.objects.select_related("asset").order_by("asset_id")
     serializer_class = ComputerDetailsSerializer
     permission_classes = [IsAuthenticated]
 
