@@ -4,6 +4,14 @@ import { cleanup } from '@testing-library/react'
 
 afterEach(cleanup)
 
+// Mock Next.js Link to avoid useIntersection timers in tests, but preserve href for assertions
+jest.mock('next/link', () => {
+  const React = require('react')
+  return function MockLink({ href, children, ...props }) {
+    return React.createElement('a', { href, ...props }, children)
+  }
+})
+
 // Mock Next.js router - using shared mocks from __mocks__ folder
 jest.mock('next/navigation', () => {
   const { useRouter, usePathname, useSearchParams } = require('./tests/__mocks__/next-navigation')

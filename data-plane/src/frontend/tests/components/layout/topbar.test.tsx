@@ -39,6 +39,7 @@ jest.mock('next/link', () => {
 jest.mock('lucide-react', () => ({
   Menu: () => <div data-testid="menu-icon">Menu</div>,
   X: () => <div data-testid="x-icon">X</div>,
+  Bell: () => <div data-testid="bell-icon">Bell</div>,
 }))
 
 describe('Topbar', () => {

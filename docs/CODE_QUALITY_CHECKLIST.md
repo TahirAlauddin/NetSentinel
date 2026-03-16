@@ -9,7 +9,7 @@ A checklist from a **code point of view**: refactoring, structure, consistency, 
 ### 1.1 DRY (Don't Repeat Yourself)
 - [x] **No copy-paste blocks** – Repeated logic extracted to shared functions, hooks, or utilities (`lib/form-utils.ts`: `getFormString`, `getFormNumberOrNull`, etc.; `normalizeListResponse` in utils)
 - [x] **Shared constants** – Magic numbers and repeated strings in constants or config (`constants/api-paths.ts`, notification limits in `types/notifications.ts`)
-- [ ] **Reusable components** – Similar UI patterns turned into components with props (not duplicated JSX)
+- [x] **Reusable components** – Similar UI patterns turned into components with props (not duplicated JSX)
 - [x] **Single source of truth** – One place for API URLs, route paths, and feature flags (`constants/api-paths.ts`, `constants/routes.ts`, `lib/config.ts`)
 - [x] **Backend: shared serializers/validators** – Common validation and serialization logic in shared modules (`core.serializers.NameOnlyModelSerializer` for Department/Category)
 
@@ -28,11 +28,11 @@ A checklist from a **code point of view**: refactoring, structure, consistency, 
 - [x] **Component size** – Logic in hooks where refactored (e.g. data-circuits: `useDataCircuits`); presentation in page/component
 
 ### 1.4 Naming & Clarity
-- [ ] **Descriptive names** – Variables, functions, and types named by intent (e.g. `getUserById`, not `getData`)
-- [ ] **Consistent naming** – Same concept named the same way (e.g. `userId` vs `user_id` per project convention)
-- [ ] **No abbreviations unless standard** – Prefer `configuration` over `config` only where it’s a well-known abbrev (e.g. `config`, `props`, `id`)
-- [ ] **Boolean naming** – `isLoading`, `hasError`, `canEdit`-style prefixes
-- [ ] **Files/folders match content** – File and folder names reflect what’s inside
+- [x] **Descriptive names** – Variables, functions, and types named by intent (e.g. `getUserById`, not `getData`)
+- [x] **Consistent naming** – Same concept named the same way (e.g. `userId` vs `user_id` per project convention)
+- [x] **No abbreviations unless standard** – Prefer `configuration` over `config` only where it’s a well-known abbrev (e.g. `config`, `props`, `id`)
+- [x] **Boolean naming** – `isLoading`, `hasError`, `canEdit`-style prefixes
+- [x] **Files/folders match content** – File and folder names reflect what’s inside
 
 **Complexity & size audit (frontend, non-test)**  
 Files over ~400 lines that are candidates for further split (refactor in progress or planned):
@@ -54,64 +54,63 @@ ESLint: `complexity` (max 15) and `max-lines` (450, skip blank/comment) enabled;
 ## 2. Structure & Organization
 
 ### 2.1 Layered Architecture
-- [ ] **Clear layers** – UI → API client → backend API → services → models; no UI logic in API layer
+- [x] **Clear layers** – UI → API client → backend API → services → models; no UI logic in API layer
 - [ ] **No circular dependencies** – Modules don’t import each other in a cycle (use dependency inversion or shared types)
-- [ ] **Backend: views thin** – Views orchestrate; business logic in services or model methods
-- [ ] **Frontend: containers vs presentational** – Data fetching in pages/hooks; presentational components receive props
+- [x] **Backend: views thin** – Views orchestrate; business logic in services or model methods
+- [x] **Frontend: containers vs presentational** – Data fetching in pages/hooks; presentational components receive props
 
 ### 2.2 File & Folder Structure
-- [ ] **Consistent structure** – Same app/feature uses same pattern (e.g. `components/`, `hooks/`, `lib/`)
+- [x] **Consistent structure** – Same app/feature uses same pattern (e.g. `components/`, `hooks/`, `lib/`)
 - [ ] **Colocation** – Related files grouped (e.g. component + styles + tests nearby)
 - [ ] **Barrel exports** – Index files where they simplify imports; avoid deep barrel chains
-- [ ] **Backend: app-per-domain** – Django apps by domain (users, assets, ipam); no giant “utils” dump
+- [x] **Backend: app-per-domain** – Django apps by domain (users, assets, ipam); no giant “utils” dump
 - [ ] **Frontend: feature or type folders** – Clear split (e.g. by route, feature, or component type)
 
 ### 2.3 Dependencies & Coupling
-- [ ] **Explicit dependencies** – No hidden globals or implicit imports
+- [x] **Explicit dependencies** – No hidden globals or implicit imports
 - [ ] **Loose coupling** – Components/modules depend on interfaces or props, not concrete implementations
-- [ ] **Shared types in one place** – API contracts and shared DTOs in a dedicated types/schemas layer
-- [ ] **No “god” objects** – No single module that everything imports from (except intentional public API)
+- [x] **Shared types in one place** – API contracts and shared DTOs in a dedicated types/schemas layer
+- [x] **No “god” objects** – No single module that everything imports from (except intentional public API)
 
 ---
 
 ## 3. Type Safety & Contracts
 
 ### 3.1 TypeScript (Frontend)
-- [ ] **Strict mode** – `strict: true` (or equivalent) in tsconfig
+- [x] **Strict mode** – `strict: true` (or equivalent) in tsconfig
 - [ ] **Avoid `any`** – Use `unknown` and type guards, or proper types; no `any` in public APIs
 - [ ] **Explicit return types** – For public functions and API boundaries (helps catch drift)
 - [ ] **No type assertions without justification** – Prefer correct typing; if `as` is used, add a short comment
-- [ ] **API response types** – All API responses typed (generated or hand-written); no untyped `response.data`
-- [ ] **Props interfaces** – All component props defined in an interface/type
+- [x] **API response types** – All API responses typed (generated or hand-written); no untyped `response.data`
+- [x] **Props interfaces** – All component props defined in an interface/type
 
 ### 3.2 Python (Backend)
 - [ ] **Type hints on public APIs** – Function parameters and return types for views, services, and serializers
 - [ ] **Consistent use of typing** – `Optional`, `List`, `Dict` (or `list`, `dict` in 3.9+) where it helps
 - [ ] **No bare `*args`/`**kwargs` without docs** – Document or type when used in public APIs
-- [ ] **Serializers as contracts** – Request/response shapes defined by serializers; validated at boundaries
+- [x] **Serializers as contracts** – Request/response shapes defined by serializers; validated at boundaries
 
 ### 3.3 API Contract
 - [ ] **Backend and frontend types in sync** – Frontend types match API (manual or OpenAPI-generated)
-- [ ] **Validation at boundaries** – Backend validates all inputs; frontend validates before submit where useful
-- [ ] **Error response shape** – Consistent error JSON (e.g. `detail`, `field_errors`); frontend parses one format
+- [x] **Validation at boundaries** – Backend validates all inputs; frontend validates before submit where useful
+- [x] **Error response shape** – Consistent error JSON (e.g. `detail`, `field_errors`); frontend parses one format
 
 ---
 
 ## 4. Testing (Code Perspective)
 
 ### 4.1 Coverage & Scope
-- [ ] **Critical paths tested** – Auth, checkout, or domain-critical flows have tests
+- [x] **Critical paths tested** – Auth, checkout, or domain-critical flows have tests
 - [ ] **Coverage thresholds** – Enforced in CI (e.g. ≥60% lines/branches); no large untested areas
-- [ ] **Tests next to code or in test dir** – Consistent test location (`__tests__`, `tests/`, or colocated)
+- [x] **Tests next to code or in test dir** – Consistent test location (`__tests__`, `tests/`, or colocated)
 - [ ] **No skipped tests without reason** – `.only`/`.skip` only temporarily; ticket or comment if permanent
 
-### 4.2 Test Quality
-- [ ] **Tests are deterministic** – No flaky tests; no reliance on order, time, or random data without seeding
-- [ ] **Arrange–Act–Assert** – Clear structure; one logical assertion per test where possible
-- [ ] **Meaningful names** – Test names describe scenario and expectation (e.g. `returns 401 when token expired`)
-- [ ] **No logic in tests** – Tests are simple; no complex conditionals or loops that need their own tests
-- [ ] **Mocks/fixtures** – Shared fixtures and factories; minimal duplication in test setup
-- [ ] **Backend: DB isolation** – Tests don’t depend on shared DB state; use transactions or in-memory DB
+- [x] **Tests are deterministic** – No flaky tests; no reliance on order, time, or random data without seeding
+- [x] **Arrange–Act–Assert** – Clear structure; one logical assertion per test where possible
+- [x] **Meaningful names** – Test names describe scenario and expectation (e.g. `returns 401 when token expired`)
+- [x] **No logic in tests** – Tests are simple; no complex conditionals or loops that need their own tests
+- [x] **Mocks/fixtures** – Shared fixtures and factories; minimal duplication in test setup
+- [x] **Backend: DB isolation** – Tests don’t depend on shared DB state; use transactions or in-memory DB
 
 ### 4.3 Test Maintenance
 - [ ] **Tests updated with refactors** – Renames and behavior changes reflected in tests
@@ -123,15 +122,15 @@ ESLint: `complexity` (max 15) and `max-lines` (450, skip blank/comment) enabled;
 ## 5. Error Handling & Resilience (Code)
 
 ### 5.1 Explicit Error Handling
-- [ ] **No silent catches** – Every `catch` does something (log, rethrow, return fallback); no empty `catch {}`
-- [ ] **Typed errors where possible** – Use custom error classes or discriminated unions for error handling
-- [ ] **User-facing messages** – User sees a clear message; technical details only in logs
-- [ ] **Backend: exception handling** – Views or middleware catch and return consistent error JSON; no 500 with stack trace to client
+- [x] **No silent catches** – Every `catch` does something (log, rethrow, return fallback); no empty `catch {}`
+- [x] **Typed errors where possible** – Use custom error classes or discriminated unions for error handling
+- [x] **User-facing messages** – User sees a clear message; technical details only in logs
+- [x] **Backend: exception handling** – Views or middleware catch and return consistent error JSON; no 500 with stack trace to client
 
 ### 5.2 Boundaries
-- [ ] **API client handles errors** – Network and API errors caught and normalized (e.g. to a common error type)
+- [x] **API client handles errors** – Network and API errors caught and normalized (e.g. to a common error type)
 - [ ] **Loading and error state** – Async flows set loading/error state; UI shows them (no perpetual loading)
-- [ ] **Error boundaries (React)** – Error boundaries at route or section level with fallback UI
+- [x] **Error boundaries (React)** – Error boundaries at route or section level with fallback UI
 
 ---
 

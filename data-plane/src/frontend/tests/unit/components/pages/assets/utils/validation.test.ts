@@ -367,7 +367,7 @@ describe('Asset Validation Utils', () => {
       });
       
       expect(result.isValid).toBe(false);
-      expect(result.fieldErrors?.category).toBe("Asset type (category) cannot be zero");
+      expect(result.fieldErrors?.category).toBe("Asset type (category) cannot be empty");
     });
 
     it('should pass validation with valid category object in step 0', () => {

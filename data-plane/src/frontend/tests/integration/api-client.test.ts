@@ -5,6 +5,19 @@
 
 import { BaseApiClient } from '@/lib/api-client'
 
+jest.mock('next-auth/react', () => ({
+  getSession: jest.fn().mockResolvedValue({
+    accessToken: 'test-access-token',
+    refreshToken: 'test-refresh-token',
+    user: {
+      id: '123',
+      name: 'John Doe',
+      email: 'john.doe@example.com',
+    },
+  }),
+  signOut: jest.fn(),
+}))
+
 describe('API Client Integration', () => {
   it('should expose get, post, patch, put, delete methods', () => {
     const client = new BaseApiClient()
@@ -24,9 +37,8 @@ describe('API Client Integration', () => {
 
   it('should return response object from get', async () => {
     const client = new BaseApiClient()
-    const response = await (client as unknown as { get: (endpoint: string) => Promise<Record<string, unknown>> }).get('/assets/')
+    const response = await client.get('/assets/')
     expect(response).toBeDefined()
     expect(typeof response).toBe('object')
   })
 })
-
