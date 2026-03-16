@@ -1,5 +1,6 @@
 import ipaddress
 import re
+from typing import Any
 
 from django.core.validators import RegexValidator
 from django.db import models
@@ -115,8 +116,8 @@ class Subnet(models.Model):
         ordering = ["network"]
         unique_together = [["network", "location"]]
 
-    def save(self, *args, **kwargs):
-        """Override save to automatically set is_ipv6 based on network."""
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Override save to automatically set is_ipv6 based on network, then delegate to base save()."""
         if self.network:
             try:
                 net = ipaddress.ip_network(self.network, strict=False)

@@ -2,6 +2,8 @@
 Subnet Threshold serializers for IPAM.
 """
 
+from typing import Any, Dict
+
 from rest_framework import serializers
 
 from ..models import SubnetThreshold, SubnetThresholdAlert
@@ -17,7 +19,7 @@ class SubnetThresholdAlertSerializer(serializers.ModelSerializer):
         source="acknowledged_by.username", read_only=True
     )
 
-    def get_threshold_detail(self, obj):
+    def get_threshold_detail(self, obj: SubnetThresholdAlert) -> Dict[str, Any]:
         """Return threshold details."""
         return {
             "id": obj.threshold.id,
@@ -63,11 +65,11 @@ class SubnetThresholdSerializer(serializers.ModelSerializer):
     alerts_count = serializers.SerializerMethodField()
     unacknowledged_alerts_count = serializers.SerializerMethodField()
 
-    def get_alerts_count(self, obj):
+    def get_alerts_count(self, obj: SubnetThreshold) -> int:
         """Return total number of alerts."""
         return obj.alerts.count()
 
-    def get_unacknowledged_alerts_count(self, obj):
+    def get_unacknowledged_alerts_count(self, obj: SubnetThreshold) -> int:
         """Return number of unacknowledged alerts."""
         return obj.alerts.filter(acknowledged=False).count()
 
@@ -106,7 +108,7 @@ class SubnetThresholdSerializer(serializers.ModelSerializer):
 class SubnetThresholdCreateUpdateSerializer(serializers.ModelSerializer):
     """Serializer for creating and updating SubnetThreshold."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize serializer and set subnet queryset."""
         super().__init__(*args, **kwargs)
         # Set queryset for subnet field
@@ -129,7 +131,7 @@ class SubnetThresholdCreateUpdateSerializer(serializers.ModelSerializer):
             "notify_on_recovery",
         ]
 
-    def validate(self, data):
+    def validate(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Validate that warning threshold is less than critical threshold."""
         warning = data.get(
             "warning_threshold", self.instance.warning_threshold if self.instance else 75

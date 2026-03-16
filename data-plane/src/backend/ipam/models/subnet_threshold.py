@@ -4,6 +4,8 @@ Subnet Threshold Models for IPAM.
 Models for monitoring subnet utilization thresholds and alerts.
 """
 
+from typing import Any
+
 from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -106,14 +108,14 @@ class SubnetThreshold(models.Model):
     def __str__(self):
         return f"{self.subnet.network} - {self.warning_threshold}%/{self.critical_threshold}%"
 
-    def validate_thresholds(self):
+    def validate_thresholds(self) -> bool:
         """Validate that warning threshold is less than critical threshold."""
         if self.warning_threshold >= self.critical_threshold:
             raise ValueError("Warning threshold must be less than critical threshold")
         return True
 
-    def save(self, *args, **kwargs):
-        """Validate thresholds before saving."""
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Validate thresholds before saving, then delegate to base save()."""
         self.validate_thresholds()
         super().save(*args, **kwargs)
 

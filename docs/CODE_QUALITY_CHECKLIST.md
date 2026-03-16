@@ -85,9 +85,9 @@ ESLint: `complexity` (max 15) and `max-lines` (450, skip blank/comment) enabled;
 - [x] **Props interfaces** – All component props defined in an interface/type
 
 ### 3.2 Python (Backend)
-- [ ] **Type hints on public APIs** – Function parameters and return types for views, services, and serializers
-- [ ] **Consistent use of typing** – `Optional`, `List`, `Dict` (or `list`, `dict` in 3.9+) where it helps
-- [ ] **No bare `*args`/`**kwargs` without docs** – Document or type when used in public APIs
+- [x] **Type hints on public APIs** – Function parameters and return types for views, services, and serializers
+- [x] **Consistent use of typing** – `Optional`, `List`, `Dict` (or `list`, `dict` in 3.9+) where it helps
+- [x] **No bare `*args`/`**kwargs` without docs** – Document or type when used in public APIs
 - [x] **Serializers as contracts** – Request/response shapes defined by serializers; validated at boundaries
 
 ### 3.3 API Contract
