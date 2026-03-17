@@ -6,13 +6,22 @@ Sends messages to Slack, Discord, Email, and SMS when alerts are triggered.
 
 import json
 import logging
-from typing import Dict, Optional
+from typing import Dict, Optional, TypedDict, List, Literal
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from .models import NotificationConfig
 
 logger = logging.getLogger(__name__)
+
+
+AlertType = Literal["info", "warning", "critical", "success", "recovery", "error"]
+
+
+class DiscordEmbedPayload(TypedDict, total=False):
+    title: str
+    description: str
+    color: int
 
 # Single hardcoded email template for notifications (no user customization).
 DEFAULT_EMAIL_SUBJECT_PREFIX = "[NetSentinel] "
@@ -82,7 +91,9 @@ def _post_json(url: str, payload: Dict, timeout: int = 10) -> bool:
         return False
 
 
-def send_slack_message(webhook_url: str, text: str, blocks: Optional[list] = None) -> bool:
+def send_slack_message(
+    webhook_url: str, text: str, blocks: Optional[List[Dict]] = None
+) -> bool:
     """
     POST a message to a Slack incoming webhook.
     """
@@ -92,7 +103,11 @@ def send_slack_message(webhook_url: str, text: str, blocks: Optional[list] = Non
     return _post_json(webhook_url, payload)
 
 
-def send_discord_message(webhook_url: str, content: str, embeds: Optional[list] = None) -> bool:
+def send_discord_message(
+    webhook_url: str,
+    content: str,
+    embeds: Optional[List[DiscordEmbedPayload]] = None,
+) -> bool:
     """
     POST a message to a Discord webhook.
     """
@@ -174,7 +189,7 @@ def send_email_message(config: NotificationConfig, subject: str, body: str) -> b
 def send_notification(
     title: str,
     message: str,
-    alert_type: str = "info",
+    alert_type: AlertType = "info",
     user=None,
 ) -> Dict[str, bool]:
     """

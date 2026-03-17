@@ -61,10 +61,10 @@ ESLint: `complexity` (max 15) and `max-lines` (450, skip blank/comment) enabled;
 
 ### 2.2 File & Folder Structure
 - [x] **Consistent structure** – Same app/feature uses same pattern (e.g. `components/`, `hooks/`, `lib/`)
-- [ ] **Colocation** – Related files grouped (e.g. component + styles + tests nearby)
-- [ ] **Barrel exports** – Index files where they simplify imports; avoid deep barrel chains
+- [x] **Colocation** – Related files grouped (e.g. component + styles + tests nearby)
+- [x] **Barrel exports** – Index files where they simplify imports; avoid deep barrel chains
 - [x] **Backend: app-per-domain** – Django apps by domain (users, assets, ipam); no giant “utils” dump
-- [ ] **Frontend: feature or type folders** – Clear split (e.g. by route, feature, or component type)
+- [x] **Frontend: feature or type folders** – Clear split (e.g. by route, feature, or component type)
 
 ### 2.3 Dependencies & Coupling
 - [x] **Explicit dependencies** – No hidden globals or implicit imports
@@ -78,8 +78,8 @@ ESLint: `complexity` (max 15) and `max-lines` (450, skip blank/comment) enabled;
 
 ### 3.1 TypeScript (Frontend)
 - [x] **Strict mode** – `strict: true` (or equivalent) in tsconfig
-- [ ] **Avoid `any`** – Use `unknown` and type guards, or proper types; no `any` in public APIs
-- [ ] **Explicit return types** – For public functions and API boundaries (helps catch drift)
+- [x] **Avoid `any`** – Use `unknown` and type guards, or proper types; no `any` in public APIs
+- [x] **Explicit return types** – For public functions and API boundaries (helps catch drift)
 - [ ] **No type assertions without justification** – Prefer correct typing; if `as` is used, add a short comment
 - [x] **API response types** – All API responses typed (generated or hand-written); no untyped `response.data`
 - [x] **Props interfaces** – All component props defined in an interface/type
@@ -187,8 +187,8 @@ ESLint: `complexity` (max 15) and `max-lines` (450, skip blank/comment) enabled;
 ### 8.3 Backend-Specific
 - [x] **Migrations linear** – No unnecessary merge migrations; squashing policy if many migrations
 - [x] **No raw SQL without review** – Raw SQL only in migrations where needed; documented in TECHNICAL_DEBT
-- [ ] **Queries efficient** – `select_related`/`prefetch_related` used; add targeted N+1 checks for high-traffic endpoints
-- [ ] **Admin/model registration** – Admin classes for models that need back-office access
+- [x] **Queries efficient** – `select_related`/`prefetch_related` used; add targeted N+1 checks for high-traffic endpoints
+- [x] **Admin/model registration** – Admin classes for models that need back-office access
 
 ### 8.4 Frontend-Specific
 - [x] **No `console.log` in production path** – ESLint `no-console` (allow warn/error); `logError()` dev-only; production errors via reportError/Sentry (TECHNICAL_DEBT)
