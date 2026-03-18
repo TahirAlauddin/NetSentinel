@@ -196,6 +196,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Custom User Model
 AUTH_USER_MODEL = "users.User"
 
+# 3-layer RBAC: permissions → bundles → groups; backend merges bundle perms into has_perm()
+AUTHENTICATION_BACKENDS = [
+    "users.backends.BundlePermissionBackend",
+]
+
 # Django REST Framework Configuration
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (

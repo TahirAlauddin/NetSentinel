@@ -1,102 +1,80 @@
-from django.contrib.auth.models import AbstractUser, Group
+from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db import models
 
 
-class AppPermission(models.Model):
+
+class PermissionBundle(models.Model):
     """
-    Application-level permission model.
-    These are app-level permissions (e.g., view_monitoring, create_assets)
-    as opposed to Django's model-level permissions (can_add, can_change, can_delete).
+    Layer 2 — Permission Bundles (subgroups).
+    Groups Django's atomic permissions into named bundles (e.g. view_ipam, edit_monitoring)
+    for UX-friendly role assignment. Used by ExtendedGroup.
     """
 
-    # Permission identifier (e.g., 'view_monitoring', 'create_assets', 'view_assets')
-    codename = models.CharField(
+    name = models.CharField(
         max_length=100,
         unique=True,
-        help_text="Unique permission identifier (e.g., 'view_monitoring')",
+        help_text="Human-readable bundle name (e.g. 'View IPAM')",
     )
-    name = models.CharField(
-        max_length=255,
-        help_text="Human-readable permission name (e.g., 'View Monitoring')",
+    code = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Unique code for this bundle (e.g. 'view_ipam', 'edit_monitoring')",
+    )
+    permissions = models.ManyToManyField(
+        Permission,
+        related_name="bundles",
+        blank=True,
+        help_text="Django permissions included in this bundle",
+    )
+    app = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Optional app label for filtering in UI (e.g. 'ipam', 'monitoring')",
     )
     description = models.TextField(
         blank=True,
         null=True,
-        help_text="Detailed description of what this permission allows",
+        help_text="Optional description of what this bundle grants",
     )
-    app_label = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        help_text="App/module this permission belongs to (e.g., 'monitoring', 'assets')",
-    )
-    category = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        help_text="Permission category for grouping \
-(e.g., 'monitoring', 'assets', 'infrastructure')",
-    )
-    is_active = models.BooleanField(
-        default=True,
-        help_text="Whether this permission is currently active",
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = "users_app_permission"
-        verbose_name = "App Permission"
-        verbose_name_plural = "App Permissions"
-        ordering = ["category", "app_label", "codename"]
-        indexes = [
-            models.Index(fields=["codename"]),
-            models.Index(fields=["category", "app_label"]),
-        ]
+        db_table = "users_permission_bundle"
+        verbose_name = "Permission Bundle"
+        verbose_name_plural = "Permission Bundles"
+        ordering = ["app", "code"]
 
     def __str__(self):
-        return f"{self.name} ({self.codename})"
+        return self.name
 
 
-class AppPermissionGroup(models.Model):
+class ExtendedGroup(models.Model):
     """
-    Links Django Groups to App Permissions.
-    This allows assigning app-level permissions to groups.
+    Layer 3 — Extended Group (role).
+    One-to-one with Django Group; adds many-to-many to PermissionBundle
+    so that has_perm() resolves: user → group → bundles → permissions.
     """
 
-    group = models.ForeignKey(
+    group = models.OneToOneField(
         Group,
         on_delete=models.CASCADE,
-        related_name="app_permissions",
-        help_text="Django Group",
+        related_name="extended",
+        help_text="Django Group this extension belongs to",
     )
-    permission = models.ForeignKey(
-        AppPermission,
-        on_delete=models.CASCADE,
-        related_name="groups",
-        help_text="App Permission",
-    )
-    granted_at = models.DateTimeField(auto_now_add=True)
-    granted_by = models.ForeignKey(
-        "User",
-        on_delete=models.SET_NULL,
-        null=True,
+    bundles = models.ManyToManyField(
+        PermissionBundle,
+        related_name="extended_groups",
         blank=True,
-        related_name="granted_group_permissions",
-        help_text="User who granted this permission",
+        help_text="Permission bundles (subgroups) assigned to this role",
     )
 
     class Meta:
-        db_table = "users_app_permission_group"
-        verbose_name = "Group App Permission"
-        verbose_name_plural = "Group App Permissions"
-        unique_together = [["group", "permission"]]
-        indexes = [
-            models.Index(fields=["group", "permission"]),
-        ]
+        db_table = "users_extended_group"
+        verbose_name = "Extended Group"
+        verbose_name_plural = "Extended Groups"
 
     def __str__(self):
-        return f"{self.group.name} - {self.permission.name}"
+        return f"Extended: {self.group.name}"
 
 
 class User(AbstractUser):
@@ -118,6 +96,7 @@ class User(AbstractUser):
         related_name="users",
         blank=True,
         help_text="App-level permissions assigned directly to this user",
+        db_table="users_user_app_permissions_many_to_many",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
