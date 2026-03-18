@@ -1,37 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
 import { useSession, signOut } from "next-auth/react"
 import { Menu } from "lucide-react"
 import { NotificationBell } from "@/components/notifications/notification-bell"
 
 export function Topbar({ onMenuToggle }: { onMenuToggle: () => void }) {
-  const [now, setNow] = useState<string>("")
   const { data: session } = useSession()
 
-  useEffect(() => {
-    function tick() {
-      const d = new Date()
-      const weekday = new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(d)
-      const date = new Intl.DateTimeFormat("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }).format(d)
-      const time = new Intl.DateTimeFormat("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(d)
-      setNow(`${weekday}, ${date}  ${time}`)
-    }
-    tick()
-    const id = setInterval(tick, 1000 * 30)
-    if (typeof (id as NodeJS.Timeout).unref === "function") {
-      (id as NodeJS.Timeout).unref()
-    }
-    return () => clearInterval(id)
-  }, [])
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: "/login" })
@@ -61,7 +37,6 @@ export function Topbar({ onMenuToggle }: { onMenuToggle: () => void }) {
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
             <NotificationBell />
-            <span className="hidden sm:block">{now}</span>
             {session ? (
               <button 
                 onClick={handleLogout}
