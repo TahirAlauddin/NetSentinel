@@ -1,5 +1,4 @@
 import { AppShell } from "@/components/layout/app-shell"
-import { SettingsNavTabs } from "@/components/settings/settings-nav-tabs"
 import { SettingsHeader } from "@/components/settings/settings-header"
 import { SettingsOverview } from "@/components/settings/settings-overview"
 
@@ -12,7 +11,6 @@ export default async function SettingsPage() {
         <div className="p-8">
           <div className="space-y-6">
             <SettingsHeader currentPage="Overview" showCompanyManagement={true} />
-            <SettingsNavTabs />
 
             {/* Overview content */}
             <SettingsOverview />
