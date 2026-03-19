@@ -14,6 +14,8 @@ urlpatterns = [
     path("", views.api_info_view, name="users_api_info"),
     # Admin endpoints
     path("stats/", views.user_stats_view, name="user_stats"),
+    # RBAC: current user's permission codenames (for frontend)
+    path("current-permissions/", views.current_user_permissions_view, name="current_permissions"),
     # Groups and Permissions
     path("", include(router.urls)),
 ]

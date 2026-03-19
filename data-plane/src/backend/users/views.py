@@ -44,6 +44,17 @@ def user_stats_view(request: Request) -> Response:
     return Response(stats)
 
 
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def current_user_permissions_view(request: Request) -> Response:
+    """
+    Return the list of permission codenames the current user has (Django + bundle permissions).
+    Used by the frontend for RBAC UI (show/hide actions, nav items).
+    """
+    perms = list(request.user.get_all_permissions())
+    return Response({"permissions": sorted(perms)})
+
+
 class GroupViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing groups.

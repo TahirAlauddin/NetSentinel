@@ -455,6 +455,37 @@ class TechSpecs(models.Model):
         return self.name
 
 
+class AssetReport(models.Model):
+    """
+    Placeholder model used only to declare custom permissions for asset reporting pages.
+    Each permission (e.g. view_cost, view_operating_system) can be assigned to groups
+    or via PermissionBundles. Use these codenames in frontend requiredPermission and
+    in backend permission checks for reporting views.
+    """
+
+    name = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        verbose_name = "Asset Report"
+        verbose_name_plural = "Asset Reports"
+        db_table = "assets_asset_report"
+        permissions = [
+            ("view_operating_system", "View operating system report"),
+            ("view_applications", "View applications report"),
+            ("view_availability", "View availability report"),
+            ("view_location", "View location report"),
+            ("view_warranty", "View warranty report"),
+            ("view_model", "View model report"),
+            ("view_asset_type", "View asset type report"),
+            ("view_department", "View department report"),
+            ("view_cost", "View cost report"),
+            ("view_firmware", "View firmware report"),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
 # Import all the extension models after main models are defined
 # This avoids circular imports since extension models import Asset
 from .computer import ComputerDetails  # noqa: E402

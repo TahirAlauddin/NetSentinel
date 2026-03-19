@@ -1,7 +1,7 @@
 from django.contrib.auth.models import Group, Permission
 from rest_framework import serializers
 
-from .models import AppPermission, AppPermissionGroup, User
+from .models import User
 
 
 class PermissionSerializer(serializers.ModelSerializer):
@@ -93,109 +93,3 @@ class UserCreateSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
-
-class AppPermissionSerializer(serializers.ModelSerializer):
-    """Serializer for App Permission."""
-
-    class Meta:
-        model = AppPermission
-        fields = [
-            "id",
-            "codename",
-            "name",
-            "description",
-            "app_label",
-            "category",
-            "is_active",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = ["id", "created_at", "updated_at"]
-
-
-class AppPermissionGroupSerializer(serializers.ModelSerializer):
-    """Serializer for Group App Permission."""
-
-    permission_detail = AppPermissionSerializer(source="permission", read_only=True)
-    group_name = serializers.CharField(source="group.name", read_only=True)
-
-    class Meta:
-        model = AppPermissionGroup
-        fields = [
-            "id",
-            "group",
-            "group_name",
-            "permission",
-            "permission_detail",
-            "granted_at",
-            "granted_by",
-        ]
-        read_only_fields = ["id", "granted_at"]
-
-
-class GroupWithAppPermissionsSerializer(GroupSerializer):
-    """Extended Group serializer with app permissions."""
-
-    app_permissions_detail = serializers.SerializerMethodField()
-    app_permissions = serializers.SerializerMethodField()
-
-    # Write-only field for creating/updating
-    app_permissions_write = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=AppPermission.objects.filter(is_active=True),
-        required=False,
-        write_only=True,
-    )
-
-    def get_app_permissions(self, obj):
-        """Get app permission IDs through the AppPermissionGroup relationship."""
-        app_permission_groups = obj.app_permissions.select_related("permission").all()
-        return [apg.permission.id for apg in app_permission_groups]
-
-    def get_app_permissions_detail(self, obj):
-        """Get app permissions through the AppPermissionGroup relationship."""
-        app_permission_groups = obj.app_permissions.select_related("permission").all()
-        permissions = [apg.permission for apg in app_permission_groups]
-        return AppPermissionSerializer(permissions, many=True).data
-
-    class Meta(GroupSerializer.Meta):
-        fields = GroupSerializer.Meta.fields + [
-            "app_permissions",
-            "app_permissions_detail",
-            "app_permissions_write",
-        ]
-
-    def update(self, instance, validated_data):
-        """Update group app permissions."""
-        # app_permissions_write is the write-only field name
-        app_permissions = validated_data.pop("app_permissions_write", None)
-        group = super().update(instance, validated_data)
-
-        if app_permissions is not None:
-            # Clear existing app permissions
-            AppPermissionGroup.objects.filter(group=group).delete()
-            # Add new app permissions
-            for permission in app_permissions:
-                AppPermissionGroup.objects.create(
-                    group=group,
-                    permission=permission,
-                    granted_by=self.context["request"].user,
-                )
-
-        return group
-
-    def create(self, validated_data):
-        """Create group with app permissions."""
-        # app_permissions_write is the write-only field name
-        app_permissions = validated_data.pop("app_permissions_write", [])
-        group = super().create(validated_data)
-
-        # Add app permissions
-        for permission in app_permissions:
-            AppPermissionGroup.objects.create(
-                group=group,
-                permission=permission,
-                granted_by=self.context["request"].user,
-            )
-
-        return group
