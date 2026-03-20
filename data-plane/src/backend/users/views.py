@@ -6,7 +6,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from .models import User
-from .serializers import GroupSerializer, PermissionSerializer
+from .serializers import GroupSerializer, PermissionSerializer, UserAssignmentsUpdateSerializer
 from .services import get_user_stats
 
 
@@ -105,3 +105,45 @@ class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
         if not self.request.user.is_superuser:
             return Permission.objects.none()
         return super().get_queryset()
+
+
+@api_view(["GET", "PUT"])
+@permission_classes([permissions.IsAuthenticated])
+def user_assignments_view(request: Request, user_id: int) -> Response:
+    """
+    Admin-only endpoint to read/update a user's direct groups and permissions.
+    """
+    if not request.user.is_superuser:
+        return Response({"error": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "GET":
+        return Response(
+            {
+                "group_ids": list(user.groups.values_list("id", flat=True)),
+                "permission_ids": list(user.user_permissions.values_list("id", flat=True)),
+            }
+        )
+
+    # PUT
+    serializer = UserAssignmentsUpdateSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    group_ids = serializer.validated_data["group_ids"]
+    permission_ids = serializer.validated_data["permission_ids"]
+
+    user.groups.set(Group.objects.filter(id__in=group_ids))
+    user.user_permissions.set(Permission.objects.filter(id__in=permission_ids))
+
+    return Response(
+        {
+            "success": True,
+            "group_ids": list(user.groups.values_list("id", flat=True)),
+            "permission_ids": list(user.user_permissions.values_list("id", flat=True)),
+        }
+    )

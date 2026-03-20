@@ -67,10 +67,130 @@ export async function addUser(formData: FormData) {
   })
 
   if (response.error) {
-    return { success: false, error: 'Failed to create user. Please try again.' }
+    return { success: false, error: response.error || 'Failed to create user. Please try again.' }
   }
 
-  return { success: true, message: 'User created successfully!' }
+  const createdUserId =
+    response.data && typeof response.data === "object" && "id" in response.data
+      ? (response.data as { id: number | string }).id
+      : null
+
+  // Ensure a newly-created user starts permissionless.
+  // (Djoser creates users with no groups/user_permissions by default, but this makes it explicit.)
+  if (createdUserId) {
+    await serverApi.put(`/users/${createdUserId}/assignments/`, {
+      group_ids: [],
+      permission_ids: [],
+    })
+  }
+
+  return { success: true, message: 'User created successfully!', userId: createdUserId }
+}
+
+export async function getUser(userId: number): Promise<UserRecord | null> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.isSuperuser) {
+    throw new Error("Not authorized to get user")
+  }
+
+  const response = await serverApi.get<UserRecord>(`/auth/users/${userId}/`)
+  if (response.error) {
+    throw new Error(response.error)
+  }
+
+  return response.data ?? null
+}
+
+export async function deleteUser(userId: number) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.isSuperuser) {
+    return { success: false, error: "Not authorized to delete users" }
+  }
+
+  const response = await serverApi.delete(`/auth/users/${userId}/`)
+  if (response.error) {
+    return { success: false, error: response.error || "Failed to delete user" }
+  }
+
+  return { success: true, message: "User deleted successfully!" }
+}
+
+export type UserAssignments = {
+  group_ids: number[]
+  permission_ids: number[]
+}
+
+export async function getUserAssignments(userId: number): Promise<UserAssignments> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.isSuperuser) {
+    throw new Error("Not authorized to get user assignments")
+  }
+
+  const response = await serverApi.get<UserAssignments>(`/users/${userId}/assignments/`)
+  if (response.error) {
+    throw new Error(response.error)
+  }
+
+  return response.data ?? { group_ids: [], permission_ids: [] }
+}
+
+export async function updateUserAssignments(
+  userId: number,
+  groupIds: number[],
+  permissionIds: number[]
+) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.isSuperuser) {
+    return { success: false, error: "Not authorized to update user assignments" }
+  }
+
+  const response = await serverApi.put(`/users/${userId}/assignments/`, {
+    group_ids: groupIds,
+    permission_ids: permissionIds,
+  })
+
+  if (response.error) {
+    return { success: false, error: response.error || "Failed to update user assignments" }
+  }
+
+  return { success: true, message: "User assignments updated successfully!" }
+}
+
+export async function updateUserBasic(
+  userId: number,
+  payload: {
+    username: string
+    email: string
+    first_name?: string
+    last_name?: string
+  }
+) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.isSuperuser) {
+    return { success: false, error: "Not authorized to update users" }
+  }
+
+  const user = await getUser(userId)
+  if (!user) {
+    return { success: false, error: "User not found" }
+  }
+
+  // Djoser user update uses the full user serializer, so we keep role flags unchanged.
+  const response = await serverApi.put(`/auth/users/${userId}/`, {
+    username: payload.username,
+    email: payload.email,
+    first_name: payload.first_name ?? "",
+    last_name: payload.last_name ?? "",
+    is_staff: user.is_staff,
+    is_superuser: user.is_superuser,
+    is_active: user.is_active,
+  })
+
+  if (response.error) {
+    return { success: false, error: response.error || "Failed to update user" }
+  }
+
+  return { success: true, message: "User updated successfully!" }
 }
 
 export async function listGroups(): Promise<GroupRecord[]> {

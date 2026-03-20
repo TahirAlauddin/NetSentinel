@@ -18,4 +18,6 @@ urlpatterns = [
     path("current-permissions/", views.current_user_permissions_view, name="current_permissions"),
     # Groups and Permissions
     path("", include(router.urls)),
+    # User admin: assignments (groups + direct permissions)
+    path("<int:user_id>/assignments/", views.user_assignments_view, name="user-assignments"),
 ]

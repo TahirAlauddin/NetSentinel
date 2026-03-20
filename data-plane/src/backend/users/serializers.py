@@ -93,3 +93,23 @@ class UserCreateSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+
+class UserAssignmentsUpdateSerializer(serializers.Serializer):
+    """
+    Assign groups and direct Django permissions to a user.
+    Effective permissions are derived from:
+      - user.user_permissions (direct grants)
+      - user.groups -> ExtendedGroup -> PermissionBundle -> permissions
+    """
+
+    group_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=True,
+        allow_empty=True,
+    )
+    permission_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=True,
+        allow_empty=True,
+    )
+
