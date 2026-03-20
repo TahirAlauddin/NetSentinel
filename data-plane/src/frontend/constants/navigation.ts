@@ -121,24 +121,24 @@ export const contractsMainSubmenuLinks = [
   { label: "Contracts", href: "/contracts" },
 ];
 
-// Assets submenu links
+// Assets submenu links (each link can require a permission for RBAC)
 export const assetsMainSubmenuLinks = [
-  { label: "Overview", href: "/assets" },
-  { label: "All Assets", href: "/assets/list" },
-  { label: "Reporting", href: "/assets/reporting" },
+  { label: "Overview", href: "/assets", requiredPermission: "assets.view_asset" },
+  { label: "All Assets", href: "/assets/list", requiredPermission: "assets.view_asset" },
+  { label: "Reporting", href: "/assets/reporting", requiredPermission: "assets.view_asset" },
 ];
 
 export const assetsReportingSubmenuLinks = [
-  { label: "Operating System", href: "/assets/reporting/operating-system" },
-  { label: "Applications", href: "/assets/reporting/applications" },
-  { label: "Availability", href: "/assets/reporting/availability" },
-  { label: "Location", href: "/assets/reporting/location" },
-  { label: "Warranty", href: "/assets/reporting/warranty" },
-  { label: "Model", href: "/assets/reporting/model" },
-  { label: "Asset Type", href: "/assets/reporting/asset-type" },
-  { label: "Department", href: "/assets/reporting/department" },
-  { label: "Cost", href: "/assets/reporting/cost" },
-  { label: "Firmware", href: "/assets/reporting/firmware" },
+  { label: "Operating System", href: "/assets/reporting/operating-system", requiredPermission: "assets.view_operating_system" },
+  { label: "Applications", href: "/assets/reporting/applications", requiredPermission: "assets.view_applications" },
+  { label: "Availability", href: "/assets/reporting/availability", requiredPermission: "assets.view_availability" },
+  { label: "Location", href: "/assets/reporting/location", requiredPermission: "assets.view_location" },
+  { label: "Warranty", href: "/assets/reporting/warranty", requiredPermission: "assets.view_warranty" },
+  { label: "Model", href: "/assets/reporting/model", requiredPermission: "assets.view_model" },
+  { label: "Asset Type", href: "/assets/reporting/asset-type", requiredPermission: "assets.view_asset_type" },
+  { label: "Department", href: "/assets/reporting/department", requiredPermission: "assets.view_department" },
+  { label: "Cost", href: "/assets/reporting/cost", requiredPermission: "assets.view_cost" },
+  { label: "Firmware", href: "/assets/reporting/firmware", requiredPermission: "assets.view_firmware" },
 ];
 
 // IPAM submenu links
@@ -198,6 +198,7 @@ export const navigationItems: NavigationItem[] = [
     label: "Assets",
     icon: Boxes,
     href: "/assets",
+    requiredPermission: "assets.view_asset",
     hasSubmenu: true,
     submenuColumns: [
       {

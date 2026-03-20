@@ -19,6 +19,8 @@ declare module "next-auth" {
       isStaff?: boolean
       isActive?: boolean
       isSuperuser?: boolean
+      /** Django permission codenames (e.g. assets.view_asset) for RBAC */
+      permissions?: string[]
     }
   }
 
@@ -32,6 +34,7 @@ declare module "next-auth" {
     isStaff: boolean
     isActive: boolean
     isSuperuser: boolean
+    permissions?: string[]
   }
 }
 
@@ -45,6 +48,8 @@ declare module "next-auth/jwt" {
     isSuperuser?: boolean
     accessTokenExpires?: number
     error?: string
+    /** Django permission codenames for RBAC */
+    permissions?: string[]
   }
 }
 
@@ -204,6 +209,23 @@ export const authOptions = {
 
           const userData = await userResponse.json()
 
+          // Fetch current user permissions for RBAC (Django + bundle permissions)
+          let permissions: string[] = []
+          try {
+            const permResponse = await fetch(`${apiConfig.serverBaseUrl}/users/current-permissions/`, {
+              headers: {
+                Authorization: `Bearer ${data.access}`,
+                "Content-Type": "application/json",
+              },
+            })
+            if (permResponse.ok) {
+              const permData = await permResponse.json()
+              permissions = Array.isArray(permData.permissions) ? permData.permissions : []
+            }
+          } catch (_e) {
+            // Non-fatal; user still logs in, permissions will be empty
+          }
+
           return {
             id: userData.id.toString(),
             email: userData.email,
@@ -214,6 +236,7 @@ export const authOptions = {
             isStaff: userData.is_staff,
             isActive: userData.is_active,
             isSuperuser: userData.is_superuser,
+            permissions,
           }
         } catch (_error) {
           return null
@@ -231,6 +254,7 @@ export const authOptions = {
         token.isStaff = user.isStaff
         token.isActive = user.isActive
         token.isSuperuser = user.isSuperuser
+        token.permissions = user.permissions
         token.accessTokenExpires = Date.now() + 60 * 60 * 1000 // 1 hour from now
         token.error = undefined // Clear any previous errors
         return token
@@ -283,6 +307,7 @@ export const authOptions = {
       session.user.isStaff = token.isStaff
       session.user.isActive = token.isActive
       session.user.isSuperuser = token.isSuperuser
+      session.user.permissions = token.permissions ?? []
       return session
     }
   },

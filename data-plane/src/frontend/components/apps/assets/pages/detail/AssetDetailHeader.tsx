@@ -21,6 +21,7 @@ import {
 import { STATUS_OPTIONS } from "@/constants/assets";
 import { Asset } from "@/types/assets";
 import { mapBackendAssetToDetailView } from "../../utils/asset-detail-mapper";
+import { Can } from "@/contexts/permissions-context";
 
 interface AssetDetailHeaderProps {
   asset: Asset;
@@ -60,9 +61,16 @@ export function AssetDetailHeader({
             <Button variant="outline" size="icon" className="h-8 w-8 bg-transparent">
               <RefreshCw className="w-4 h-4" />
             </Button>
-            <Button variant="outline" size="icon" className="h-8 w-8 bg-transparent">
-              <Edit2 className="w-4 h-4" />
-            </Button>
+            <Can permission="assets.change_asset">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 bg-transparent"
+                onClick={() => router.push(`/assets/edit/${asset.id}`)}
+              >
+                <Edit2 className="w-4 h-4" />
+              </Button>
+            </Can>
             <Button variant="outline" size="icon" className="h-8 w-8 bg-transparent">
               <MoreHorizontal className="w-4 h-4" />
             </Button>

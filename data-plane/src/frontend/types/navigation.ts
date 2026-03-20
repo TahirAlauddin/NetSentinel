@@ -3,6 +3,8 @@ import { LucideIcon } from "lucide-react"
 export interface SubmenuLink {
   label: string
   href: string
+  /** If set, user must have this Django permission to see the link (RBAC). */
+  requiredPermission?: string
 }
 
 export interface SubmenuColumn {
@@ -17,6 +19,8 @@ export interface NavigationItem {
   active?: boolean
   hasSubmenu?: boolean
   submenuColumns?: SubmenuColumn[]
+  /** If set, user must have this Django permission to see the item (RBAC). */
+  requiredPermission?: string
 }
 
 export interface SidebarProps {
