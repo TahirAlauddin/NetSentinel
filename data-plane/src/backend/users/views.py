@@ -96,7 +96,7 @@ class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
     Only superusers can view permissions.
     """
 
-    queryset = Permission.objects.select_related("content_type").all()
+    queryset = Permission.objects.select_related("content_type").order_by("id")
     serializer_class = PermissionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
