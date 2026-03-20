@@ -101,30 +101,54 @@ export async function listGroups(): Promise<GroupRecord[]> {
   return []
 }
 
-export async function listPermissions(): Promise<PermissionRecord[]> {
+type PaginatedPermissions = {
+  count?: number
+  next: string | null
+  previous?: string | null
+  results: PermissionRecord[]
+}
+
+/**
+ * One page of permissions (DRF PageNumberPagination). Use page=1 initially, then increment while hasMore.
+ */
+export async function listPermissionsPage(page: number): Promise<{
+  results: PermissionRecord[]
+  hasMore: boolean
+}> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.isSuperuser) {
     throw new Error('Not authorized to list permissions')
   }
 
-  const response = await serverApi.get<PermissionRecord[]>('/permissions/')
-  
+  const response = await serverApi.get<PaginatedPermissions | PermissionRecord[]>(
+    `/permissions/?page=${page}`
+  )
+
   if (response.error) {
     throw new Error(response.error)
   }
 
-  const permissions = response.data
-  
-  if (Array.isArray(permissions)) {
-    return permissions
+  const data = response.data
+
+  if (Array.isArray(data)) {
+    return { results: data, hasMore: false }
   }
-  
-  if (permissions && typeof permissions === 'object' && 'results' in permissions && Array.isArray((permissions as { results: PermissionRecord[] }).results)) {
-    return (permissions as { results: PermissionRecord[] }).results
+
+  if (data && typeof data === 'object' && 'results' in data && Array.isArray(data.results)) {
+    return {
+      results: data.results,
+      hasMore: Boolean(data.next),
+    }
   }
-  
-  console.warn('Unexpected permissions data format:', permissions)
-  return []
+
+  console.warn('Unexpected permissions data format:', data)
+  return { results: [], hasMore: false }
+}
+
+/** First page only; same as `listPermissionsPage(1).results`. */
+export async function listPermissions(): Promise<PermissionRecord[]> {
+  const { results } = await listPermissionsPage(1)
+  return results
 }
 
 export async function createGroup(name: string, permissionIds: number[]) {

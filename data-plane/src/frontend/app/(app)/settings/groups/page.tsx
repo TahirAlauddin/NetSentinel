@@ -8,10 +8,11 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import GroupsList from "@/components/groups/groups-list";
 import GroupForm from "@/components/groups/group-form";
+import { usePaginatedAppend } from "@/hooks/use-paginated-append";
 import { GroupRecord, PermissionRecord } from "@/types/groups";
 import {
   listGroups,
-  listPermissions,
+  listPermissionsPage,
   createGroup,
   updateGroup,
   deleteGroup,
@@ -20,7 +21,17 @@ import {
 export default function GroupsPage() {
   const { data: session } = useSession();
   const [groups, setGroups] = useState<GroupRecord[]>([]);
-  const [permissions, setPermissions] = useState<PermissionRecord[]>([]);
+  const {
+    items: permissions,
+    hasMore: permissionsHasMore,
+    loadingMore: loadingMorePermissions,
+    setFirstPage: setPermissionsFirstPage,
+    loadMore: loadMorePermissions,
+    reset: resetPermissionsPagination,
+  } = usePaginatedAppend<PermissionRecord>({
+    fetchPage: listPermissionsPage,
+    onLoadMoreError: () => toast.error("Could not load more permissions."),
+  });
   const [submitting, setSubmitting] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -123,21 +134,21 @@ export default function GroupsPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [groupsList, permissionsList] = await Promise.all([
+        const [groupsList, permissionsPage] = await Promise.all([
           listGroups(),
-          listPermissions(),
+          listPermissionsPage(1),
         ]);
         setGroups(Array.isArray(groupsList) ? groupsList : []);
-        setPermissions(Array.isArray(permissionsList) ? permissionsList : []);
+        setPermissionsFirstPage(permissionsPage);
       } catch (error) {
         console.error("Failed to fetch data:", error);
         setGroups([]);
-        setPermissions([]);
+        resetPermissionsPagination();
       }
     }
 
     fetchData();
-  }, [session]);
+  }, [session, resetPermissionsPagination, setPermissionsFirstPage]);
 
   return (
     <ProtectedRoute>
@@ -181,6 +192,9 @@ export default function GroupsPage() {
                           selectedPermissions={selectedPermissions}
                           setSelectedPermissions={setSelectedPermissions}
                           permissions={permissions}
+                          hasMorePermissions={permissionsHasMore}
+                          loadingMorePermissions={loadingMorePermissions}
+                          onLoadMorePermissions={loadMorePermissions}
                           submitting={submitting}
                           onSubmit={handleAddGroup}
                           onCancel={handleCancelAdd}
@@ -201,6 +215,9 @@ export default function GroupsPage() {
                           selectedPermissions={selectedPermissions}
                           setSelectedPermissions={setSelectedPermissions}
                           permissions={permissions}
+                          hasMorePermissions={permissionsHasMore}
+                          loadingMorePermissions={loadingMorePermissions}
+                          onLoadMorePermissions={loadMorePermissions}
                           submitting={submitting}
                           onSubmit={handleUpdateGroup}
                           onCancel={handleCancelEdit}
