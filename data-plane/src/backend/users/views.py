@@ -5,8 +5,15 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from .models import User
-from .serializers import GroupSerializer, PermissionSerializer, UserAssignmentsUpdateSerializer
+from .models import PermissionBundle, User
+from .serializers import (
+    GroupDetailSerializer,
+    GroupSerializer,
+    PermissionBundleDetailSerializer,
+    PermissionBundleSerializer,
+    PermissionSerializer,
+    UserAssignmentsUpdateSerializer,
+)
 from .services import get_user_stats
 
 
@@ -61,9 +68,18 @@ class GroupViewSet(viewsets.ModelViewSet):
     Only superusers can manage groups.
     """
 
-    queryset = Group.objects.prefetch_related("permissions").order_by("name")
+    queryset = (
+        Group.objects.select_related("extended")
+        .prefetch_related("permissions", "extended__bundles")
+        .order_by("name")
+    )
     serializer_class = GroupSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return GroupDetailSerializer
+        return GroupSerializer
 
     def get_queryset(self):
         # Only superusers can access groups
@@ -99,12 +115,61 @@ class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Permission.objects.select_related("content_type").order_by("id")
     serializer_class = PermissionSerializer
     permission_classes = [permissions.IsAuthenticated]
+    search_fields = (
+        "name",
+        "codename",
+        "content_type__app_label",
+        "content_type__model",
+    )
 
     def get_queryset(self):
         # Only superusers can access permissions
         if not self.request.user.is_superuser:
             return Permission.objects.none()
         return super().get_queryset()
+
+
+class PermissionBundleViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing PermissionBundles (CRUD).
+    Only superusers can manage bundles.
+
+    List  → PermissionBundleSerializer        (IDs only, lightweight)
+    Detail → PermissionBundleDetailSerializer  (includes permissions_detail)
+    """
+
+    queryset = (
+        PermissionBundle.objects.prefetch_related("permissions")
+        .order_by("app", "code")
+    )
+    serializer_class = PermissionBundleSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return PermissionBundleDetailSerializer
+        return PermissionBundleSerializer
+
+    def get_queryset(self):
+        # Only superusers can access bundles
+        if not self.request.user.is_superuser:
+            return PermissionBundle.objects.none()
+        return super().get_queryset()
+
+    def perform_create(self, serializer):
+        if not self.request.user.is_superuser:
+            raise PermissionDenied("Only superusers can create permission bundles.")
+        serializer.save()
+
+    def perform_update(self, serializer):
+        if not self.request.user.is_superuser:
+            raise PermissionDenied("Only superusers can update permission bundles.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if not self.request.user.is_superuser:
+            raise PermissionDenied("Only superusers can delete permission bundles.")
+        instance.delete()
 
 
 @api_view(["GET", "PUT"])

@@ -25,7 +25,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from rest_framework.routers import DefaultRouter
 
-from users.views import GroupViewSet, PermissionViewSet
+from users.views import GroupViewSet, PermissionBundleViewSet, PermissionViewSet
 
 from .health import health_check
 from .views import api_info_view
@@ -35,6 +35,11 @@ from .views import api_info_view
 api_v1_rbac_router = DefaultRouter()
 api_v1_rbac_router.register(r"groups", GroupViewSet, basename="api_v1_group")
 api_v1_rbac_router.register(r"permissions", PermissionViewSet, basename="api_v1_permission")
+api_v1_rbac_router.register(
+    r"permission-bundles",
+    PermissionBundleViewSet,
+    basename="api_v1_permission_bundle",
+)
 
 schema_view = get_schema_view(
     openapi.Info(

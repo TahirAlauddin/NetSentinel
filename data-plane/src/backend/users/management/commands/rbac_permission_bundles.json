@@ -1,0 +1,324 @@
+{
+  "version": 2,
+  "apps": [
+    { "app_label": "users", "display_name": "User Management" },
+    { "app_label": "assets", "display_name": "Asset Management" },
+    { "app_label": "infrastructure", "display_name": "Infrastructure" },
+    { "app_label": "contracts", "display_name": "Contracts" },
+    { "app_label": "ipam", "display_name": "IPAM" },
+    { "app_label": "notifications", "display_name": "Notifications" },
+    { "app_label": "phone_management", "display_name": "Phone Management" },
+    { "app_label": "telecom", "display_name": "Telecom" }
+  ],
+  "roles": [
+
+    {
+      "bundle_name": "User Management Viewer",
+      "description": "Read-only access to User Management.",
+      "scope": "per_app",
+      "app_label": "users",
+      "permission_codename_prefixes": ["view_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "users_viewer", "name": "User Management - Viewer" }
+    },
+    {
+      "bundle_name": "User Management Editor",
+      "description": "Read and write access to User Management. Cannot delete.",
+      "scope": "per_app",
+      "app_label": "users",
+      "permission_codename_prefixes": ["view_", "add_", "change_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "users_editor", "name": "User Management - Editor" }
+    },
+    {
+      "bundle_name": "User Management Admin",
+      "description": "Full access to User Management including deletion.",
+      "scope": "per_app",
+      "app_label": "users",
+      "permission_codename_prefixes": ["view_", "add_", "change_", "delete_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "users_admin", "name": "User Management - Admin" }
+    },
+
+    {
+      "bundle_name": "Asset Management Viewer",
+      "description": "Read-only access to Asset Management.",
+      "scope": "per_app",
+      "app_label": "assets",
+      "permission_codename_prefixes": ["view_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "assets_viewer", "name": "Asset Management - Viewer" }
+    },
+    {
+      "bundle_name": "Asset Management Editor",
+      "description": "Read and write access to Asset Management. Cannot delete.",
+      "scope": "per_app",
+      "app_label": "assets",
+      "permission_codename_prefixes": ["view_", "add_", "change_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "assets_editor", "name": "Asset Management - Editor" }
+    },
+    {
+      "bundle_name": "Asset Management Admin",
+      "description": "Full access to Asset Management including deletion.",
+      "scope": "per_app",
+      "app_label": "assets",
+      "permission_codename_prefixes": ["view_", "add_", "change_", "delete_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "assets_admin", "name": "Asset Management - Admin" }
+    },
+
+    {
+      "bundle_name": "Infrastructure Viewer",
+      "description": "Read-only access to Infrastructure.",
+      "scope": "per_app",
+      "app_label": "infrastructure",
+      "permission_codename_prefixes": ["view_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "infrastructure_viewer", "name": "Infrastructure - Viewer" }
+    },
+    {
+      "bundle_name": "Infrastructure Editor",
+      "description": "Read and write access to Infrastructure. Cannot delete.",
+      "scope": "per_app",
+      "app_label": "infrastructure",
+      "permission_codename_prefixes": ["view_", "add_", "change_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "infrastructure_editor", "name": "Infrastructure - Editor" }
+    },
+    {
+      "bundle_name": "Infrastructure Admin",
+      "description": "Full access to Infrastructure including deletion.",
+      "scope": "per_app",
+      "app_label": "infrastructure",
+      "permission_codename_prefixes": ["view_", "add_", "change_", "delete_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "infrastructure_admin", "name": "Infrastructure - Admin" }
+    },
+
+    {
+      "bundle_name": "Contracts Viewer",
+      "description": "Read-only access to Contracts.",
+      "scope": "per_app",
+      "app_label": "contracts",
+      "permission_codename_prefixes": ["view_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "contracts_viewer", "name": "Contracts - Viewer" }
+    },
+    {
+      "bundle_name": "Contracts Editor",
+      "description": "Read and write access to Contracts. Cannot delete.",
+      "scope": "per_app",
+      "app_label": "contracts",
+      "permission_codename_prefixes": ["view_", "add_", "change_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "contracts_editor", "name": "Contracts - Editor" }
+    },
+    {
+      "bundle_name": "Contracts Admin",
+      "description": "Full access to Contracts including deletion.",
+      "scope": "per_app",
+      "app_label": "contracts",
+      "permission_codename_prefixes": ["view_", "add_", "change_", "delete_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "contracts_admin", "name": "Contracts - Admin" }
+    },
+
+    {
+      "bundle_name": "IPAM Viewer",
+      "description": "Read-only access to IPAM.",
+      "scope": "per_app",
+      "app_label": "ipam",
+      "permission_codename_prefixes": ["view_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "ipam_viewer", "name": "IPAM - Viewer" }
+    },
+    {
+      "bundle_name": "IPAM Editor",
+      "description": "Read and write access to IPAM. Cannot delete.",
+      "scope": "per_app",
+      "app_label": "ipam",
+      "permission_codename_prefixes": ["view_", "add_", "change_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "ipam_editor", "name": "IPAM - Editor" }
+    },
+    {
+      "bundle_name": "IPAM Admin",
+      "description": "Full access to IPAM including deletion.",
+      "scope": "per_app",
+      "app_label": "ipam",
+      "permission_codename_prefixes": ["view_", "add_", "change_", "delete_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "ipam_admin", "name": "IPAM - Admin" }
+    },
+
+    {
+      "bundle_name": "Notifications Viewer",
+      "description": "Read-only access to Notifications.",
+      "scope": "per_app",
+      "app_label": "notifications",
+      "permission_codename_prefixes": ["view_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "notifications_viewer", "name": "Notifications - Viewer" }
+    },
+    {
+      "bundle_name": "Notifications Editor",
+      "description": "Read and write access to Notifications. Cannot delete.",
+      "scope": "per_app",
+      "app_label": "notifications",
+      "permission_codename_prefixes": ["view_", "add_", "change_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "notifications_editor", "name": "Notifications - Editor" }
+    },
+    {
+      "bundle_name": "Notifications Admin",
+      "description": "Full access to Notifications including deletion.",
+      "scope": "per_app",
+      "app_label": "notifications",
+      "permission_codename_prefixes": ["view_", "add_", "change_", "delete_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "notifications_admin", "name": "Notifications - Admin" }
+    },
+
+    {
+      "bundle_name": "Phone Management Viewer",
+      "description": "Read-only access to Phone Management.",
+      "scope": "per_app",
+      "app_label": "phone_management",
+      "permission_codename_prefixes": ["view_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "phone_management_viewer", "name": "Phone Management - Viewer" }
+    },
+    {
+      "bundle_name": "Phone Management Editor",
+      "description": "Read and write access to Phone Management. Cannot delete.",
+      "scope": "per_app",
+      "app_label": "phone_management",
+      "permission_codename_prefixes": ["view_", "add_", "change_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "phone_management_editor", "name": "Phone Management - Editor" }
+    },
+    {
+      "bundle_name": "Phone Management Admin",
+      "description": "Full access to Phone Management including deletion.",
+      "scope": "per_app",
+      "app_label": "phone_management",
+      "permission_codename_prefixes": ["view_", "add_", "change_", "delete_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "phone_management_admin", "name": "Phone Management - Admin" }
+    },
+
+    {
+      "bundle_name": "Telecom Viewer",
+      "description": "Read-only access to Telecom.",
+      "scope": "per_app",
+      "app_label": "telecom",
+      "permission_codename_prefixes": ["view_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "telecom_viewer", "name": "Telecom - Viewer" }
+    },
+    {
+      "bundle_name": "Telecom Editor",
+      "description": "Read and write access to Telecom. Cannot delete.",
+      "scope": "per_app",
+      "app_label": "telecom",
+      "permission_codename_prefixes": ["view_", "add_", "change_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "telecom_editor", "name": "Telecom - Editor" }
+    },
+    {
+      "bundle_name": "Telecom Admin",
+      "description": "Full access to Telecom including deletion.",
+      "scope": "per_app",
+      "app_label": "telecom",
+      "permission_codename_prefixes": ["view_", "add_", "change_", "delete_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundle": { "code": "telecom_admin", "name": "Telecom - Admin" }
+    },
+
+    {
+      "bundle_name": "Global Viewer",
+      "description": "Read-only access across all apps. Suitable for auditors, stakeholders, and observers who need visibility without any write access.",
+      "scope": "global",
+      "app_labels": [
+        "users",
+        "assets",
+        "infrastructure",
+        "contracts",
+        "ipam",
+        "notifications",
+        "phone_management",
+        "telecom"
+      ],
+      "permission_codename_prefixes": ["view_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundles": {
+        "users":            { "code": "users_viewer",            "name": "User Management - Viewer" },
+        "assets":           { "code": "assets_viewer",           "name": "Asset Management - Viewer" },
+        "infrastructure":   { "code": "infrastructure_viewer",   "name": "Infrastructure - Viewer" },
+        "contracts":        { "code": "contracts_viewer",        "name": "Contracts - Viewer" },
+        "ipam":             { "code": "ipam_viewer",             "name": "IPAM - Viewer" },
+        "notifications":    { "code": "notifications_viewer",    "name": "Notifications - Viewer" },
+        "phone_management": { "code": "phone_management_viewer", "name": "Phone Management - Viewer" },
+        "telecom":          { "code": "telecom_viewer",          "name": "Telecom - Viewer" }
+      }
+    },
+
+    {
+      "bundle_name": "Global Editor",
+      "description": "Read and write access across all apps. Cannot delete. Suitable for operations staff who work across multiple systems.",
+      "scope": "global",
+      "app_labels": [
+        "users",
+        "assets",
+        "infrastructure",
+        "contracts",
+        "ipam",
+        "notifications",
+        "phone_management",
+        "telecom"
+      ],
+      "permission_codename_prefixes": ["view_", "add_", "change_"],
+      "include_unknown_codenames_for_safety": false,
+      "bundles": {
+        "users":            { "code": "users_editor",            "name": "User Management - Editor" },
+        "assets":           { "code": "assets_editor",           "name": "Asset Management - Editor" },
+        "infrastructure":   { "code": "infrastructure_editor",   "name": "Infrastructure - Editor" },
+        "contracts":        { "code": "contracts_editor",        "name": "Contracts - Editor" },
+        "ipam":             { "code": "ipam_editor",             "name": "IPAM - Editor" },
+        "notifications":    { "code": "notifications_editor",    "name": "Notifications - Editor" },
+        "phone_management": { "code": "phone_management_editor", "name": "Phone Management - Editor" },
+        "telecom":          { "code": "telecom_editor",          "name": "Telecom - Editor" }
+      }
+    },
+
+    {
+      "bundle_name": "Super Admin",
+      "description": "Full access across all apps including deletion. Highest privilege level — assign sparingly.",
+      "scope": "global",
+      "app_labels": [
+        "users",
+        "assets",
+        "infrastructure",
+        "contracts",
+        "ipam",
+        "notifications",
+        "phone_management",
+        "telecom"
+      ],
+      "permission_codename_prefixes": ["view_", "add_", "change_", "delete_"],
+      "include_unknown_codenames_for_safety": true,
+      "bundles": {
+        "users":            { "code": "users_admin",            "name": "User Management - Admin" },
+        "assets":           { "code": "assets_admin",           "name": "Asset Management - Admin" },
+        "infrastructure":   { "code": "infrastructure_admin",   "name": "Infrastructure - Admin" },
+        "contracts":        { "code": "contracts_admin",        "name": "Contracts - Admin" },
+        "ipam":             { "code": "ipam_admin",             "name": "IPAM - Admin" },
+        "notifications":    { "code": "notifications_admin",    "name": "Notifications - Admin" },
+        "phone_management": { "code": "phone_management_admin", "name": "Phone Management - Admin" },
+        "telecom":          { "code": "telecom_admin",          "name": "Telecom - Admin" }
+      }
+    }
+
+  ]
+}
