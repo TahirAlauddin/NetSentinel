@@ -2,6 +2,7 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
+import { RoutePermissionGuard } from "@/components/auth/route-permission-guard";
 
 export const metadata: Metadata = {
   title: "NetSentinel Dashboard",
@@ -14,15 +15,17 @@ export default function AppLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <Suspense fallback={null}>
-      <div className="flex h-screen overflow-hidden">
-        <div className="hidden lg:block w-64 flex-shrink-0 overflow-visible">
-          <Sidebar />
+    <RoutePermissionGuard>
+      <Suspense fallback={null}>
+        <div className="flex h-screen overflow-hidden">
+          <div className="hidden lg:block w-64 flex-shrink-0 overflow-visible">
+            <Sidebar />
+          </div>
+          <main className="w-full grid grid-cols-1 min-h-0 overflow-y-auto">
+            {children}
+          </main>
         </div>
-        <main className="w-full grid grid-cols-1 min-h-0 overflow-y-auto">
-          {children}
-        </main>
-      </div>
-    </Suspense>
+      </Suspense>
+    </RoutePermissionGuard>
   );
 }
