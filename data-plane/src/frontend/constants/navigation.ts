@@ -19,86 +19,86 @@ import { NavigationItem, SubmenuColumn } from "../types/navigation";
 
 // Settings submenu links
 export const settingsMainSubmenuLinks = [
-  { label: "Overview", href: "/settings" },
-  { label: "Locations", href: "/settings/locations" },
-  { label: "Departments", href: "/settings/departments" },
-  { label: "Categories", href: "/settings/categories" },
+  { label: "Overview", href: "/settings", requiredPermission: "auth.view_user" },
+  { label: "Locations", href: "/settings/locations", requiredPermission: "auth.view_user" },
+  { label: "Departments", href: "/settings/departments", requiredPermission: "auth.view_user" },
+  { label: "Categories", href: "/settings/categories", requiredPermission: "auth.view_user" },
 ];
 
 export const settingsPeopleSubmenuLinks = [
-  { label: "People", href: "/settings/people" },
-  { label: "Groups", href: "/settings/groups" },
+  { label: "People", href: "/settings/people", requiredPermission: "auth.view_user" },
+  { label: "Groups", href: "/settings/groups", requiredPermission: "auth.view_group" },
 ];
 
 export const settingsAdditionalSubmenuLinks = [
-  { label: "Child Company Management", href: "/settings/company" },
-  { label: "Feature Requests", href: "/settings/requests" },
-  { label: "Logs", href: "/settings/logs" },
+  { label: "Child Company Management", href: "/settings/company", requiredPermission: "auth.view_user" },
+  { label: "Feature Requests", href: "/settings/requests", requiredPermission: "auth.view_user" },
+  { label: "Logs", href: "/settings/logs", requiredPermission: "auth.view_user" },
 ];
 
 export const settingsDataSubmenuLinks = [
-  { label: "Export Data", href: "/settings/export" },
-  { label: "Import Data", href: "/settings/import" },
+  { label: "Export Data", href: "/settings/export", requiredPermission: "auth.view_user" },
+  { label: "Import Data", href: "/settings/import", requiredPermission: "auth.view_user" },
 ];
 
 // Telecom Expense Management submenu links
 export const telecomManagementSubmenuLinks = [
-  { label: "Overview", href: "/telecom-management" },
-  { label: "Providers", href: "/telecom-management/providers" },
-  { label: "Services", href: "/telecom-management/services" },
-  { label: "Phone Numbers", href: "/telecom-management/phone-numbers" },
-  { label: "Data Circuits", href: "/telecom-management/data-circuits" },
+  { label: "Overview", href: "/telecom-management", requiredPermission: "telecom.view_provider" },
+  { label: "Providers", href: "/telecom-management/providers", requiredPermission: "telecom.view_provider" },
+  { label: "Services", href: "/telecom-management/services", requiredPermission: "telecom.view_service" },
+  { label: "Phone Numbers", href: "/telecom-management/phone-numbers", requiredPermission: "telecom.view_phonenumber" },
+  { label: "Data Circuits", href: "/telecom-management/data-circuits", requiredPermission: "telecom.view_datacircuit" },
 ];
 
 export const telecomExpenseCategoriesSubmenuLinks = [
-  { label: "Voice Services", href: "/telecom-management/voice-services" },
-  { label: "Data Services", href: "/telecom-management/data-services" },
-  { label: "Internet Services", href: "/telecom-management/internet-services" },
-  { label: "Mobile Services", href: "/telecom-management/mobile-services" },
-  { label: "Equipment Costs", href: "/telecom-management/equipment-costs" },
-  { label: "Service Fees", href: "/telecom-management/service-fees" },
+  { label: "Voice Services", href: "/telecom-management/voice-services", requiredPermission: "telecom.view_provider" },
+  { label: "Data Services", href: "/telecom-management/data-services", requiredPermission: "telecom.view_provider" },
+  { label: "Internet Services", href: "/telecom-management/internet-services", requiredPermission: "telecom.view_provider" },
+  { label: "Mobile Services", href: "/telecom-management/mobile-services", requiredPermission: "telecom.view_provider" },
+  { label: "Equipment Costs", href: "/telecom-management/equipment-costs", requiredPermission: "telecom.view_provider" },
+  { label: "Service Fees", href: "/telecom-management/service-fees", requiredPermission: "telecom.view_provider" },
 ];
 
 export const telecomReportsSubmenuLinks = [
-  { label: "Reports", href: "/telecom-management/reports" },
+  { label: "Reports", href: "/telecom-management/reports", requiredPermission: "telecom.view_provider" },
 ];
 
 // Phone Management submenu links
 export const phoneManagementSubmenuLinks = [
-  { label: "Overview", href: "/phone-management" },
-  { label: "Managed Numbers", href: "/phone-management/numbers" },
-  { label: "Number Blocks", href: "/phone-management/blocks" },
+  { label: "Overview", href: "/phone-management", requiredPermission: "phone_management.view_managedphonenumber" },
+  { label: "Managed Numbers", href: "/phone-management/numbers", requiredPermission: "phone_management.view_managedphonenumber" },
+  { label: "Number Blocks", href: "/phone-management/blocks", requiredPermission: "phone_management.view_managedphonenumberblock" },
 ];
 
 // Notifications submenu links — channels and preferences
 export const notificationsChannelsSubmenuLinks = [
-  { label: "Email", href: "/notifications/email" },
-  { label: "Slack", href: "/notifications/slack" },
-  { label: "Discord", href: "/notifications/discord" },
-  { label: "SMS", href: "/notifications/sms" },
+  { label: "Email", href: "/notifications/email", requiredPermission: "notifications.view_inappnotification" },
+  { label: "Slack", href: "/notifications/slack", requiredPermission: "notifications.view_inappnotification" },
+  { label: "Discord", href: "/notifications/discord", requiredPermission: "notifications.view_inappnotification" },
+  { label: "SMS", href: "/notifications/sms", requiredPermission: "notifications.view_inappnotification" },
 ];
 
 export const notificationsSettingsSubmenuLinks = [
-  { label: "Preferences", href: "/notifications/preferences" },
+  { label: "Preferences", href: "/notifications/preferences", requiredPermission: "notifications.view_inappnotification" },
 ];
 
 // Monitoring submenu links
 export const monitoringSubmenuLinks = [
-  { label: "SNMP", href: "/monitoring/snmp" },
-  { label: "Notifications", href: "/monitoring/notifications" },
-  { label: "Service", href: "/monitoring/service" },
-  { label: "Wallboard", href: "/monitoring/wallboard" },
-  { label: "Synthetic User", href: "/monitoring/synthetic-user" },
-  { label: "Sensors", href: "/monitoring/sensors" },
-  { label: "Alarms", href: "/monitoring/alarms" },
-  { label: "Syslog(Data Hub)", href: "/monitoring/syslog" },
-  { label: "Reports", href: "/monitoring/reports" },
-  { label: "Config Backup", href: "/monitoring/config-backup" },
-  { label: "Logs", href: "/monitoring/logs" },
-  { label: "SQL Query Monitoring", href: "/monitoring/sql-query" },
-  { label: "Website Monitoring", href: "/monitoring/website" },
-  { label: "Email Monitoring", href: "/monitoring/email" },
-  { label: "Distributed Monitoring", href: "/monitoring/distributed" },
+  { label: "SNMP", href: "/monitoring/snmp", requiredPermission: "monitoring.view_alert" },
+  { label: "Notifications", href: "/monitoring/notifications", requiredPermission: "monitoring.view_alert" },
+  { label: "Service", href: "/monitoring/service", requiredPermission: "monitoring.view_alert" },
+  { label: "Wallboard", href: "/monitoring/wallboard", requiredPermission: "monitoring.view_alert" },
+  { label: "Synthetic User", href: "/monitoring/synthetic-user", requiredPermission: "monitoring.view_alert" },
+  { label: "Sensors", href: "/monitoring/sensors", requiredPermission: "monitoring.view_alert" },
+  { label: "Alarms", href: "/monitoring/alarms", requiredPermission: "monitoring.view_alert" },
+  { label: "Syslog(Data Hub)", href: "/monitoring/syslog", requiredPermission: "monitoring.view_alert" },
+  { label: "Reports", href: "/monitoring/reports", requiredPermission: "monitoring.view_alert" },
+  { label: "Config Backup", href: "/monitoring/config-backup", requiredPermission: "monitoring.view_alert" },
+  { label: "Logs", href: "/monitoring/logs", requiredPermission: "monitoring.view_alert" },
+  { label: "SQL Query Monitoring", href: "/monitoring/sql-query", requiredPermission: "monitoring.view_alert" },
+  { label: "Website Monitoring", href: "/monitoring/website", requiredPermission: "monitoring.view_alert" },
+  { label: "Email Monitoring", href: "/monitoring/email", requiredPermission: "monitoring.view_alert" },
+  { label: "Distributed Monitoring", href: "/monitoring/distributed", requiredPermission: "monitoring.view_alert" },
 ];
 
 export const monitoringSubmenuColumns: SubmenuColumn[] = [
@@ -118,7 +118,7 @@ export const monitoringSubmenuColumns: SubmenuColumn[] = [
 
 // Contracts submenu links (list and overview are the same page at /contracts)
 export const contractsMainSubmenuLinks = [
-  { label: "Contracts", href: "/contracts" },
+  { label: "Contracts", href: "/contracts", requiredPermission: "contracts.view_contract" },
 ];
 
 // Assets submenu links (each link can require a permission for RBAC)
@@ -143,47 +143,47 @@ export const assetsReportingSubmenuLinks = [
 
 // IPAM submenu links
 export const ipamMainSubmenuLinks = [
-  { label: "Dashboard", href: "/ipam" },
-  { label: "Subnets", href: "/ipam/subnets" },
-  { label: "Subnet Groups", href: "/ipam/subnet-groups" },
-  { label: "Customers", href: "/ipam/customers" },
-  { label: "VLAN", href: "/ipam/vlans" },
-  { label: "VRF", href: "/ipam/vrfs" },
-  { label: "Devices", href: "/ipam/devices" },
-  { label: "IP Requests", href: "/ipam/ip-requests" },
+  { label: "Dashboard", href: "/ipam", requiredPermission: "ipam.view_subnet" },
+  { label: "Subnets", href: "/ipam/subnets", requiredPermission: "ipam.view_subnet" },
+  { label: "Subnet Groups", href: "/ipam/subnet-groups", requiredPermission: "ipam.view_subnetgroup" },
+  { label: "Customers", href: "/ipam/customers", requiredPermission: "ipam.view_customer" },
+  { label: "VLAN", href: "/ipam/vlans", requiredPermission: "ipam.view_vlan" },
+  { label: "VRF", href: "/ipam/vrfs", requiredPermission: "ipam.view_vrf" },
+  { label: "Devices", href: "/ipam/devices", requiredPermission: "ipam.view_device" },
+  { label: "IP Requests", href: "/ipam/ip-requests", requiredPermission: "ipam.view_subnet" },
 ];
 
 export const ipamSubnetManagementSubmenuLinks = [
-  { label: "Favourite Subnets", href: "/ipam/favourite-subnets" },
+  { label: "Favourite Subnets", href: "/ipam/favourite-subnets", requiredPermission: "ipam.view_subnet" },
   // { label: "Scanned Networks", href: "/ipam/scanned-networks" },
-  { label: "Subnet Masks", href: "/ipam/subnet-masks" },
-  { label: "Temporary Shares", href: "/ipam/temporary-shares" },
-  { label: "Inactive Hosts", href: "/ipam/inactive-hosts" },
-  { label: "Duplicates", href: "/ipam/duplicates" },
-  { label: "Threshold Monitoring", href: "/ipam/thresholds" },
-  { label: "IP Tags", href: "/ipam/ip-tags" },
-  { label: "Audit Logs", href: "/ipam/audit-logs" },
+  { label: "Subnet Masks", href: "/ipam/subnet-masks", requiredPermission: "ipam.view_subnet" },
+  { label: "Temporary Shares", href: "/ipam/temporary-shares", requiredPermission: "ipam.view_subnet" },
+  { label: "Inactive Hosts", href: "/ipam/inactive-hosts", requiredPermission: "ipam.view_subnet" },
+  { label: "Duplicates", href: "/ipam/duplicates", requiredPermission: "ipam.view_subnet" },
+  { label: "Threshold Monitoring", href: "/ipam/thresholds", requiredPermission: "ipam.view_subnet" },
+  { label: "IP Tags", href: "/ipam/ip-tags", requiredPermission: "ipam.view_subnet" },
+  { label: "Audit Logs", href: "/ipam/audit-logs", requiredPermission: "ipam.view_subnet" },
 ];
 
 export const ipamNetworkServicesSubmenuLinks = [
-  { label: "DHCP Scopes", href: "/ipam/dhcp-scopes" },
-  { label: "DHCP Leases", href: "/ipam/dhcp-leases" },
-  { label: "DHCP Reservations", href: "/ipam/dhcp-reservations" },
-  { label: "IP Pools", href: "/ipam/ip-pools" },
-  { label: "NAT", href: "/ipam/nat" },
-  { label: "Routing", href: "/ipam/routing" },
-  { label: "Firewall Zones", href: "/ipam/firewall-zones" },
+  { label: "DHCP Scopes", href: "/ipam/dhcp-scopes", requiredPermission: "ipam.view_dhcpscope" },
+  { label: "DHCP Leases", href: "/ipam/dhcp-leases", requiredPermission: "ipam.view_dhcplease" },
+  { label: "DHCP Reservations", href: "/ipam/dhcp-reservations", requiredPermission: "ipam.view_dhcpreservation" },
+  { label: "IP Pools", href: "/ipam/ip-pools", requiredPermission: "ipam.view_ippool" },
+  { label: "NAT", href: "/ipam/nat", requiredPermission: "ipam.view_subnet" },
+  { label: "Routing", href: "/ipam/routing", requiredPermission: "ipam.view_subnet" },
+  { label: "Firewall Zones", href: "/ipam/firewall-zones", requiredPermission: "ipam.view_subnet" },
 ];
 
 export const ipamInfrastructureSubmenuLinks = [
-  { label: "Racks", href: "/ipam/racks" },
-  { label: "Circuits", href: "/ipam/circuits" },
-  { label: "Locations", href: "/ipam/locations" },
+  { label: "Racks", href: "/ipam/racks", requiredPermission: "ipam.view_subnet" },
+  { label: "Circuits", href: "/ipam/circuits", requiredPermission: "ipam.view_subnet" },
+  { label: "Locations", href: "/ipam/locations", requiredPermission: "ipam.view_subnet" },
 ];
 
 export const ipamToolsSubmenuLinks = [
-  { label: "Search", href: "/ipam/search" },
-  { label: "Documentation", href: "/ipam/documentation" },
+  { label: "Search", href: "/ipam/search", requiredPermission: "ipam.view_subnet" },
+  { label: "Documentation", href: "/ipam/documentation", requiredPermission: "ipam.view_subnet" },
 ];
 
 /******************************************************************************************************************
@@ -215,6 +215,7 @@ export const navigationItems: NavigationItem[] = [
     label: "Contracts",
     icon: FileText,
     href: "/contracts",
+    requiredPermission: "contracts.view_contract",
     hasSubmenu: true,
     submenuColumns: [
       {
@@ -228,6 +229,7 @@ export const navigationItems: NavigationItem[] = [
     label: "Telecom Expense Management",
     icon: CreditCard,
     href: "/telecom-management",
+    requiredPermission: "telecom.view_provider",
     hasSubmenu: true,
     submenuColumns: [
       {
@@ -255,6 +257,7 @@ export const navigationItems: NavigationItem[] = [
     label: "Notifications",
     icon: Bell,
     href: "/notifications",
+    requiredPermission: "notifications.view_inappnotification",
     hasSubmenu: true,
     submenuColumns: [
       {
@@ -272,6 +275,7 @@ export const navigationItems: NavigationItem[] = [
     label: "Phone Management",
     icon: Phone,
     href: "/phone-management",
+    requiredPermission: "phone_management.view_managedphonenumber",
     hasSubmenu: true,
     submenuColumns: [
       {
@@ -285,6 +289,7 @@ export const navigationItems: NavigationItem[] = [
     label: "IPAM",
     icon: Network,
     href: "/ipam",
+    requiredPermission: "ipam.view_subnet",
     hasSubmenu: true,
     submenuColumns: [
       {

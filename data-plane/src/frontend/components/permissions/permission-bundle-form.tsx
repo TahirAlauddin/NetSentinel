@@ -29,6 +29,9 @@ interface PermissionBundleFormProps {
   submitLabel: string;
 }
 
+/*
+This component is used to create a new permission bundle.
+*/
 const PermissionBundleForm = ({
   name,
   setName,

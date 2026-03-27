@@ -1,25 +1,21 @@
 /**
- * Error reporting to Sentry. When NEXT_PUBLIC_SENTRY_DSN is set, errors are sent in production.
- * In development we only log via logError in error-handler.
+ * Error reporting.
+ *
+ * Sentry is intentionally disabled for now.
+ * We keep this module (and the `reportError` API) so existing callers
+ * don't need to change.
  */
-
-import * as Sentry from "@sentry/nextjs";
 
 export type ErrorReportContext = Record<string, unknown>;
 
 /**
- * Report an error to Sentry in production when DSN is configured.
- * No-op when NEXT_PUBLIC_SENTRY_DSN is not set or in development.
+ * Report an error to the error reporting service.
+ *
+ * Temporarily no-op (Sentry disabled).
  */
 export function reportError(error: unknown, context?: ErrorReportContext): void {
-  if (process.env.NODE_ENV === "development") {
-    return; // Already logged via logError in error-handler
-  }
-
-  if (!process.env.NEXT_PUBLIC_SENTRY_DSN) {
-    return;
-  }
-
-  const err = error instanceof Error ? error : new Error(String(error));
-  Sentry.captureException(err, { extra: context });
+  // Intentionally disabled.
+  // `error` and `context` are accepted so callsites remain stable.
+  void error;
+  void context;
 }

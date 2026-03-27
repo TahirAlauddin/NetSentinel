@@ -2,7 +2,7 @@
 
 import { ProtectedRoute } from "@/components/feedback/protected-route";
 
-export default function AssetsLayout({
+export default function PhoneManagementLayout({
   children,
 }: {
   children: React.ReactNode;

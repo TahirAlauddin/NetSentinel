@@ -2,6 +2,15 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { PermissionRecord } from "@/types/groups";
+import {
+  APP_LABELS,
+  APP_ORDER,
+  BOTTOM_THRESHOLD_PX,
+  getAppKey,
+  SEARCH_DEBOUNCE_MS,
+  type AppKey,
+  VERB_PREFIXES,
+} from "@/components/permissions/permissions-by-app.constants";
 
 type PageResult<T> = {
   results: T[];
@@ -18,91 +27,6 @@ export type PermissionsByAppSelectProps = {
   onLoadMorePermissions?: () => void | Promise<void>;
   onSearchPermissionsPage: (query: string, page: number) => Promise<PageResult<PermissionRecord>>;
 };
-
-type AppKey =
-  | "all"
-  | "assets"
-  | "contracts"
-  | "ipam"
-  | "telecom"
-  | "phone_mgmt"
-  | "settings"
-  | "other";
-
-const APP_LABELS: Record<AppKey, string> = {
-  all: "All",
-  assets: "Assets",
-  contracts: "Contracts",
-  ipam: "IPAM",
-  telecom: "Telecom",
-  phone_mgmt: "Phone Mgmt",
-  settings: "Settings",
-  other: "Other",
-};
-
-const APP_ORDER: AppKey[] = [
-  "all",
-  "assets",
-  "contracts",
-  "ipam",
-  "telecom",
-  "phone_mgmt",
-  "settings",
-  "other",
-];
-
-const VERB_PREFIXES = new Set(["view", "add", "change", "delete"]);
-const BOTTOM_THRESHOLD_PX = 72;
-const SEARCH_DEBOUNCE_MS = 450;
-
-function getAppKey(permission: PermissionRecord): AppKey {
-  const codename = permission.codename.toLowerCase();
-  const name = permission.name.toLowerCase();
-  const source = `${codename} ${name}`;
-
-  if (source.includes("contract")) return "contracts";
-  if (
-    source.includes("dhcp") ||
-    source.includes("subnet") ||
-    source.includes("vlan") ||
-    source.includes("vrf") ||
-    source.includes("ipam") ||
-    source.includes("ip_pool") ||
-    source.includes("ip pool") ||
-    source.includes("ip address")
-  ) {
-    return "ipam";
-  }
-  if (
-    source.includes("telecom") ||
-    source.includes("provider") ||
-    source.includes("circuit") ||
-    source.includes("carrier") ||
-    source.includes("trunk") ||
-    source.includes("service")
-  ) {
-    return "telecom";
-  }
-  if (
-    source.includes("phone") ||
-    source.includes("extension") ||
-    source.includes("dial") ||
-    source.includes("block")
-  ) {
-    return "phone_mgmt";
-  }
-  if (source.includes("asset") || source.includes("inventory")) return "assets";
-  if (
-    source.includes("permission") ||
-    source.includes("group") ||
-    source.includes("user") ||
-    source.includes("role") ||
-    source.includes("settings")
-  ) {
-    return "settings";
-  }
-  return "other";
-}
 
 function getResourceKey(permission: PermissionRecord): string {
   const bits = permission.codename.toLowerCase().split("_").filter(Boolean);

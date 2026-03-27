@@ -1,25 +1,58 @@
 import React, { useState } from "react";
-import { GroupRecord } from "@/types/groups";
-import { GripVertical, Trash2, Edit2, ChevronDown, ChevronRight, Shield } from "lucide-react";
+import { GroupRecord, PermissionRecord } from "@/types/groups";
+import {
+  ChevronDown,
+  ChevronRight,
+  Edit2,
+  GripVertical,
+  Loader2,
+  Shield,
+  Trash2,
+} from "lucide-react";
+import { getGroup } from "@/app/(app)/settings/actions";
 
 interface GroupsListProps {
   groups: GroupRecord[];
   onEdit: (group: GroupRecord) => void;
   onDelete: (id: number) => void;
-  editingId: number | null;
 }
 
-const GroupsList = ({ groups, onEdit, onDelete, editingId }: GroupsListProps) => {
+const GroupsList = ({ groups, onEdit, onDelete }: GroupsListProps) => {
   const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set());
+  const [loadingDetail, setLoadingDetail] = useState<Set<number>>(new Set());
+  const [detailCache, setDetailCache] = useState<Record<number, PermissionRecord[]>>({});
 
-  const toggleExpand = (groupId: number) => {
-    const newExpanded = new Set(expandedGroups);
-    if (newExpanded.has(groupId)) {
-      newExpanded.delete(groupId);
-    } else {
-      newExpanded.add(groupId);
+  const toggleExpand = async (group: GroupRecord) => {
+    const id = group.id;
+    const next = new Set(expandedGroups);
+
+    if (next.has(id)) {
+      next.delete(id);
+      setExpandedGroups(next);
+      return;
     }
-    setExpandedGroups(newExpanded);
+
+    next.add(id);
+    setExpandedGroups(next);
+
+    if (detailCache[id] !== undefined || group.permissions.length === 0) return;
+
+    setLoadingDetail((prev) => new Set(prev).add(id));
+    try {
+      const detail = await getGroup(id);
+      setDetailCache((prev) => ({
+        ...prev,
+        [id]: detail?.permissions_detail ?? [],
+      }));
+    } catch {
+      setDetailCache((prev) => ({ ...prev, [id]: [] }));
+    } finally {
+      setLoadingDetail((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
   };
 
   return (
@@ -27,17 +60,18 @@ const GroupsList = ({ groups, onEdit, onDelete, editingId }: GroupsListProps) =>
       {groups.length > 0 ? (
         groups.map((group) => {
           const isExpanded = expandedGroups.has(group.id);
-          const hasPermissions = group.permissions_detail && group.permissions_detail.length > 0;
+          const isLoading = loadingDetail.has(group.id);
+          const permCount = group.permissions.length;
+          const permsDetail = detailCache[group.id];
 
           return (
             <div
               key={group.id}
               className="border border-border rounded-lg bg-card overflow-hidden"
             >
-              {/* Group Header */}
               <div className="flex items-start gap-3 px-4 py-3 hover:bg-[oklch(0.98_0_0)]">
                 <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab mt-1 flex-shrink-0" />
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm font-semibold text-[oklch(0.40_0.15_249)]">
@@ -48,74 +82,66 @@ const GroupsList = ({ groups, onEdit, onDelete, editingId }: GroupsListProps) =>
                         • {group.user_count} {group.user_count === 1 ? "user" : "users"}
                       </span>
                     )}
-                    {hasPermissions && (
+                    {permCount > 0 && (
                       <span className="text-xs text-muted-foreground">
-                        • {group.permissions_detail!.length} {group.permissions_detail!.length === 1 ? "permission" : "permissions"}
+                        • {permCount} {permCount === 1 ? "permission" : "permissions"}
                       </span>
                     )}
                   </div>
 
-                  {/* Permissions Preview (when collapsed) */}
-                  {!isExpanded && hasPermissions && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {group.permissions_detail!.slice(0, 3).map((perm) => (
-                        <span
-                          key={perm.id}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[oklch(0.95_0.02_249)] text-xs text-[oklch(0.40_0.15_249)] border border-[oklch(0.90_0.05_249)]"
-                        >
-                          <Shield className="w-3 h-3" />
-                          {perm.name}
-                        </span>
-                      ))}
-                      {group.permissions_detail!.length > 3 && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[oklch(0.95_0_0)] text-xs text-muted-foreground border border-border">
-                          +{group.permissions_detail!.length - 3} more
-                        </span>
+                  {isExpanded ? (
+                    <div className="mt-3 pt-3 border-t border-border/50">
+                      {isLoading ? (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Loading permissions…
+                        </div>
+                      ) : permsDetail && permsDetail.length > 0 ? (
+                        <>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Shield className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-xs font-medium text-muted-foreground">
+                              Permissions ({permsDetail.length})
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {permsDetail.map((perm) => (
+                              <span
+                                key={perm.id}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[oklch(0.95_0.02_249)] text-xs text-[oklch(0.40_0.15_249)] border border-[oklch(0.90_0.05_249)]"
+                                title={perm.codename}
+                              >
+                                <Shield className="w-3 h-3" />
+                                {perm.name}
+                              </span>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-xs text-muted-foreground italic">
+                          No permissions assigned
+                        </div>
                       )}
                     </div>
-                  )}
+                  ) : null}
 
-                  {/* Expanded Permissions List */}
-                  {isExpanded && hasPermissions && (
-                    <div className="mt-3 pt-3 border-t border-border/50">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Shield className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-xs font-medium text-muted-foreground">
-                          Permissions ({group.permissions_detail!.length})
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {group.permissions_detail!.map((perm) => (
-                          <span
-                            key={perm.id}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[oklch(0.95_0.02_249)] text-xs text-[oklch(0.40_0.15_249)] border border-[oklch(0.90_0.05_249)]"
-                            title={perm.codename}
-                          >
-                            <Shield className="w-3 h-3" />
-                            {perm.name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* No Permissions Message */}
-                  {!hasPermissions && (
+                  {!isExpanded && permCount === 0 && (
                     <div className="text-xs text-muted-foreground mt-1 italic">
                       No permissions assigned
                     </div>
                   )}
                 </div>
 
-                {/* Actions */}
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  {hasPermissions && (
+                  {permCount > 0 && (
                     <button
-                      onClick={() => toggleExpand(group.id)}
+                      onClick={() => toggleExpand(group)}
                       className="p-1.5 rounded hover:bg-[oklch(0.93_0_0)] text-muted-foreground hover:text-foreground transition-colors"
                       title={isExpanded ? "Collapse" : "Expand permissions"}
                     >
-                      {isExpanded ? (
+                      {isLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : isExpanded ? (
                         <ChevronDown className="w-4 h-4" />
                       ) : (
                         <ChevronRight className="w-4 h-4" />
@@ -124,7 +150,6 @@ const GroupsList = ({ groups, onEdit, onDelete, editingId }: GroupsListProps) =>
                   )}
                   <button
                     onClick={() => onEdit(group)}
-                    disabled={editingId !== null}
                     className="p-1.5 rounded hover:bg-[oklch(0.93_0_0)] text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     title="Edit"
                   >
@@ -132,7 +157,6 @@ const GroupsList = ({ groups, onEdit, onDelete, editingId }: GroupsListProps) =>
                   </button>
                   <button
                     onClick={() => onDelete(group.id)}
-                    disabled={editingId !== null}
                     className="p-1.5 rounded hover:bg-red-100 text-muted-foreground hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     title="Delete"
                   >
@@ -153,4 +177,3 @@ const GroupsList = ({ groups, onEdit, onDelete, editingId }: GroupsListProps) =>
 };
 
 export default GroupsList;
-

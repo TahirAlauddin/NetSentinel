@@ -10,7 +10,7 @@ interface ContractDetailHeaderProps {
   logoUrl: string | null;
   /** When set, Edit is rendered as a link to this href (e.g. /contracts/edit/123). */
   editHref?: string;
-  onDeleteClick: () => void;
+  onDeleteClick?: () => void;
 }
 
 export function ContractDetailHeader({

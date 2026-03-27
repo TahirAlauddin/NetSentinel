@@ -1,32 +1,32 @@
 "use client";
 
+import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
 import { SettingsHeader } from "@/components/settings/settings-header";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import GroupsList from "@/components/groups/groups-list";
 import GroupForm from "@/components/groups/group-form";
 import { usePaginatedAppend } from "@/hooks/use-paginated-append";
-import { GroupRecord, PermissionRecord } from "@/types/groups";
+import { GroupRecord, PermissionBundleRecord, PermissionRecord } from "@/types/groups";
 import {
   listGroups,
+  listPermissionBundles,
   listPermissionsPage,
   createGroup,
-  updateGroup,
   deleteGroup,
 } from "../actions";
 
 export default function GroupsPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [groups, setGroups] = useState<GroupRecord[]>([]);
   const {
     items: permissions,
-    hasMore: permissionsHasMore,
-    loadingMore: loadingMorePermissions,
     setFirstPage: setPermissionsFirstPage,
-    loadMore: loadMorePermissions,
     reset: resetPermissionsPagination,
   } = usePaginatedAppend<PermissionRecord>({
     fetchPage: listPermissionsPage,
@@ -34,16 +34,17 @@ export default function GroupsPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
   const [formName, setFormName] = useState("");
   const [selectedPermissions, setSelectedPermissions] = useState<number[]>([]);
+  const [bundlesCatalog, setBundlesCatalog] = useState<PermissionBundleRecord[]>([]);
+  const [selectedBundleIds, setSelectedBundleIds] = useState<number[]>([]);
 
   const handleAddGroup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitting(true);
 
     try {
-      const result = await createGroup(formName, selectedPermissions);
+      const result = await createGroup(formName, selectedPermissions, selectedBundleIds);
 
       if (result.success) {
         toast.success(result.message || "Group created successfully!");
@@ -56,32 +57,6 @@ export default function GroupsPage() {
       }
     } catch (error) {
       console.error("Failed to add group:", error);
-      toast.error("An unexpected error occurred. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleUpdateGroup = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!editingId) return;
-
-    setSubmitting(true);
-
-    try {
-      const result = await updateGroup(editingId, formName, selectedPermissions);
-
-      if (result.success) {
-        toast.success(result.message || "Group updated successfully!");
-        const groupsList = await listGroups();
-        setGroups(Array.isArray(groupsList) ? groupsList : []);
-        resetForm();
-        setEditingId(null);
-      } else {
-        toast.error(result.error || "Failed to update group");
-      }
-    } catch (error) {
-      console.error("Failed to update group:", error);
       toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setSubmitting(false);
@@ -109,21 +84,14 @@ export default function GroupsPage() {
     }
   };
 
-  const handleStartEdit = (group: GroupRecord) => {
-    setEditingId(group.id);
-    setFormName(group.name);
-    setSelectedPermissions(group.permissions || []);
-    setShowAddForm(false);
-  };
-
-  const handleCancelEdit = () => {
-    resetForm();
-    setEditingId(null);
+  const handleEditGroup = (group: GroupRecord) => {
+    router.push(`/settings/groups/edit/${group.id}`);
   };
 
   const resetForm = () => {
     setFormName("");
     setSelectedPermissions([]);
+    setSelectedBundleIds([]);
   };
 
   const handleCancelAdd = () => {
@@ -134,12 +102,14 @@ export default function GroupsPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [groupsList, permissionsPage] = await Promise.all([
+        const [groupsList, permissionsPage, bundlesList] = await Promise.all([
           listGroups(),
           listPermissionsPage(1),
+          listPermissionBundles(),
         ]);
         setGroups(Array.isArray(groupsList) ? groupsList : []);
         setPermissionsFirstPage(permissionsPage);
+        setBundlesCatalog(Array.isArray(bundlesList) ? bundlesList : []);
       } catch (error) {
         console.error("Failed to fetch data:", error);
         setGroups([]);
@@ -159,6 +129,15 @@ export default function GroupsPage() {
             <div className="space-y-6">
               <SettingsHeader currentPage="Groups & Permissions" />
 
+              <div className="flex justify-end">
+                <Link
+                  href="/settings/permissions"
+                  className="px-3 py-2 rounded-md border border-border bg-background hover:bg-[oklch(0.98_0_0)] text-sm"
+                >
+                  Permission Bundles
+                </Link>
+              </div>
+
               {/* Content area */}
               <div className="flex gap-8">
                 {/* Content */}
@@ -168,12 +147,8 @@ export default function GroupsPage() {
                     <div className="flex justify-end">
                       <button
                         onClick={() => {
-                          if (editingId) {
-                            handleCancelEdit();
-                          }
                           setShowAddForm(!showAddForm);
                         }}
-                        disabled={editingId !== null}
                         className="px-4 py-2 rounded-md bg-red-500 text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                       >
                         {showAddForm ? "Cancel" : "Add Group"}
@@ -191,37 +166,15 @@ export default function GroupsPage() {
                           setName={setFormName}
                           selectedPermissions={selectedPermissions}
                           setSelectedPermissions={setSelectedPermissions}
+                          bundles={bundlesCatalog}
+                          selectedBundleIds={selectedBundleIds}
+                          setSelectedBundleIds={setSelectedBundleIds}
                           permissions={permissions}
-                          hasMorePermissions={permissionsHasMore}
-                          loadingMorePermissions={loadingMorePermissions}
-                          onLoadMorePermissions={loadMorePermissions}
+                          onListPermissionsPage={listPermissionsPage}
                           submitting={submitting}
                           onSubmit={handleAddGroup}
                           onCancel={handleCancelAdd}
                           submitLabel="Add Group"
-                        />
-                      </div>
-                    )}
-
-                    {/* Edit Group Form */}
-                    {editingId !== null && (
-                      <div className="bg-card border border-border rounded-lg p-4">
-                        <h2 className="text-sm font-medium mb-4">
-                          Edit Group
-                        </h2>
-                        <GroupForm
-                          name={formName}
-                          setName={setFormName}
-                          selectedPermissions={selectedPermissions}
-                          setSelectedPermissions={setSelectedPermissions}
-                          permissions={permissions}
-                          hasMorePermissions={permissionsHasMore}
-                          loadingMorePermissions={loadingMorePermissions}
-                          onLoadMorePermissions={loadMorePermissions}
-                          submitting={submitting}
-                          onSubmit={handleUpdateGroup}
-                          onCancel={handleCancelEdit}
-                          submitLabel="Save Changes"
                         />
                       </div>
                     )}
@@ -233,9 +186,8 @@ export default function GroupsPage() {
                       </h2>
                       <GroupsList
                         groups={groups}
-                        onEdit={handleStartEdit}
+                        onEdit={handleEditGroup}
                         onDelete={handleDeleteGroup}
-                        editingId={editingId}
                       />
                     </div>
                   </div>

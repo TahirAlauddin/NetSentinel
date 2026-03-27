@@ -11,7 +11,6 @@ import { AssetMetricsDisplay } from "@/components/apps/assets/AssetMetrics";
 import { AssetChart } from "@/components/apps/assets/AssetChart";
 import { AssetsDashboardNav } from "@/components/apps/assets/AssetsDashboardNav";
 import { calculateAssetMetrics } from "@/components/apps/assets/utils";
-import { Can } from "@/contexts/permissions-context";
 
 /**
  * AssetsPage component - Main page for asset management
@@ -123,16 +122,13 @@ export default function AssetsPage() {
                   <Search className="w-4 h-4" />
                   Discover
                 </Button>
-                {/* Only show "Managed Asset" button if user has assets.add_asset permission */}
-                <Can permission="assets.add_asset">
-                  <Button
-                    className="gap-2 bg-blue-600 hover:bg-blue-700"
-                    onClick={() => router.push("/assets/new")}
-                  >
-                    <Plus className="w-4 h-4" />
-                    Managed Asset
-                  </Button>
-                </Can>
+                <Button
+                  className="gap-2 bg-blue-600 hover:bg-blue-700"
+                  onClick={() => router.push("/assets/new")}
+                >
+                  <Plus className="w-4 h-4" />
+                  Managed Asset
+                </Button>
               </div>
             </div>
 
