@@ -4,18 +4,11 @@ import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
 import { SettingsHeader } from "@/components/settings/settings-header";
 import { validateId } from "@/lib/security/input-validation";
-import { useSession } from "next-auth/react";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import {
-  listGroups,
-  getUser,
-  getUserAssignments,
-  updateUserAssignments,
-  updateUserBasic,
-} from "../../actions";
+import { useParams } from "next/navigation";
 import { GroupRecord } from "@/types/groups";
+import PermissionManagementPanel from "@/components/permissions/permission-management-panel";
+import { listPermissionsPage, searchPermissionsPage } from "../../actions";
+import { usePeopleDetail } from "@/hooks/use-people-detail";
 
 function GroupsPicker({
   groups,
@@ -60,111 +53,31 @@ function GroupsPicker({
 
 export default function PeopleDetailPage() {
   const params = useParams();
-  const router = useRouter();
-  const { data: session, status } = useSession();
-
   const personId = validateId(params.id);
-
-  const [loadingInitial, setLoadingInitial] = useState(personId !== null);
-  const [saving, setSaving] = useState(false);
-  const [basicSaving, setBasicSaving] = useState(false);
-
-  const [groups, setGroups] = useState<GroupRecord[]>([]);
-  const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([]);
-
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-
-  useEffect(() => {
-    if (status === "loading") return;
-    if (status === "authenticated" && !session?.user?.isSuperuser) {
-      router.replace("/unauthorized");
-    }
-  }, [session, status, router]);
-
-  useEffect(() => {
-    if (personId === null) {
-      router.replace("/settings/people");
-      return;
-    }
-
-    const load = async () => {
-      setLoadingInitial(true);
-      try {
-        const [userData, assignments, groupsList] = await Promise.all([
-          getUser(personId),
-          getUserAssignments(personId),
-          listGroups(),
-        ]);
-
-        if (!userData) {
-          toast.error("User not found");
-          router.replace("/settings/people");
-          return;
-        }
-
-        setUsername(userData.username || "");
-        setEmail(userData.email || "");
-        setFirstName(userData.first_name || "");
-        setLastName(userData.last_name || "");
-        setGroups(Array.isArray(groupsList) ? groupsList : []);
-        setSelectedGroupIds(assignments.group_ids || []);
-      } catch (error) {
-        console.error("Failed to load user detail:", error);
-        toast.error("Failed to load user detail");
-        router.replace("/settings/people");
-      } finally {
-        setLoadingInitial(false);
-      }
-    };
-
-    load();
-  }, [personId, router]);
-
-  const handleSaveDetails = async () => {
-    if (personId === null) return;
-    setBasicSaving(true);
-    try {
-      const result = await updateUserBasic(personId, {
-        username,
-        email,
-        first_name: firstName,
-        last_name: lastName,
-      });
-
-      if (!result.success) {
-        toast.error(result.error || "Failed to update user details");
-        return;
-      }
-
-      toast.success(result.message || "User details updated");
-    } catch (error) {
-      console.error("Failed to save details:", error);
-      toast.error("An unexpected error occurred. Please try again.");
-    } finally {
-      setBasicSaving(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (personId === null) return;
-    setSaving(true);
-    try {
-      const result = await updateUserAssignments(personId, selectedGroupIds);
-      if (!result.success) {
-        toast.error(result.error || "Failed to update assignments");
-        return;
-      }
-      toast.success(result.message || "Assignments updated");
-    } catch (error) {
-      console.error("Failed to save assignments:", error);
-      toast.error("An unexpected error occurred. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  };
+  const {
+    loadingInitial,
+    saving,
+    basicSaving,
+    groups,
+    selectedGroupIds,
+    setSelectedGroupIds,
+    selectedPermissionIds,
+    setSelectedPermissionIds,
+    username,
+    setUsername,
+    email,
+    setEmail,
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
+    permissions,
+    permissionsHasMore,
+    loadingMorePermissions,
+    loadMorePermissions,
+    saveDetails,
+    saveAssignments,
+  } = usePeopleDetail(personId);
 
   if (personId === null) return null;
 
@@ -244,7 +157,7 @@ export default function PeopleDetailPage() {
                       <button
                         type="button"
                         disabled={basicSaving}
-                        onClick={handleSaveDetails}
+                        onClick={saveDetails}
                         className="px-4 py-2 rounded-md bg-red-500 text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                       >
                         {basicSaving ? "Saving..." : "Edit"}
@@ -253,14 +166,34 @@ export default function PeopleDetailPage() {
                   </div>
                 </div>
 
-                <div className="bg-card border border-border rounded-lg p-4">
-                  <h2 className="text-sm font-medium mb-4">Group assignments</h2>
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium">Groups</div>
-                    <GroupsPicker
-                      groups={groups}
-                      selectedGroupIds={selectedGroupIds}
-                      setSelectedGroupIds={setSelectedGroupIds}
+                <div className="space-y-6">
+                  <div className="bg-card border border-border rounded-lg p-4">
+                    <h2 className="text-sm font-medium mb-4">Group assignments</h2>
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">Groups</div>
+                      <GroupsPicker
+                        groups={groups}
+                        selectedGroupIds={selectedGroupIds}
+                        setSelectedGroupIds={setSelectedGroupIds}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-card border border-border rounded-lg p-4">
+                    <PermissionManagementPanel
+                      title="User permission management"
+                      description="Assign app-level access first. Use atomic permissions only for advanced exceptions."
+                      permissions={permissions}
+                      selectedPermissionIds={selectedPermissionIds}
+                      setSelectedPermissionIds={setSelectedPermissionIds}
+                      onListPermissionsPage={listPermissionsPage}
+                      onSearchPermissionsPage={searchPermissionsPage}
+                      hasMorePermissions={permissionsHasMore}
+                      loadingMorePermissions={loadingMorePermissions}
+                      onLoadMorePermissions={loadMorePermissions}
+                      showAtomicToggle
+                      atomicDefaultOpen={false}
+                      disabled={saving}
                     />
                   </div>
                 </div>
@@ -270,7 +203,7 @@ export default function PeopleDetailPage() {
                 <button
                   type="button"
                   disabled={saving}
-                  onClick={handleSave}
+                  onClick={saveAssignments}
                   className="px-4 py-2 rounded-md bg-red-500 text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
                   {saving ? "Saving..." : "Save assignments"}

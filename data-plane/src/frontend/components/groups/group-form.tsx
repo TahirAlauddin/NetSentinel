@@ -1,8 +1,7 @@
 import React from "react";
-import PermissionBundlesPicker from "@/components/groups/permission-bundles-picker";
-import AppAccessLevelSelect from "@/components/permissions/app-access-level-select";
-import { listPermissionsPage } from "@/app/(app)/settings/actions";
+import { listPermissionsPage, searchPermissionsPage } from "@/app/(app)/settings/actions";
 import type { UseGroupFormReturn } from "@/hooks/use-group-form";
+import PermissionManagementPanel from "@/components/permissions/permission-management-panel";
 
 interface GroupFormProps {
   form: UseGroupFormReturn;
@@ -22,6 +21,9 @@ const GroupForm = ({ form, submitting, onSubmit, onCancel, submitLabel }: GroupF
     setSelectedBundleIds,
     bundlesCatalog,
     permissions,
+    hasMorePermissions,
+    loadingMorePermissions,
+    loadMorePermissions,
   } = form;
 
   return (
@@ -42,40 +44,23 @@ const GroupForm = ({ form, submitting, onSubmit, onCancel, submitLabel }: GroupF
         />
       </div>
 
-      {bundlesCatalog.length > 0 && (
-        <div>
-          <label className="block text-sm font-medium mb-1">Permission bundles</label>
-          <p className="text-xs text-muted-foreground mb-2">
-            Curated bundles (recommended). Use app access levels below only when you need
-            fine-grained overrides beyond bundles.
-          </p>
-          <PermissionBundlesPicker
-            bundles={bundlesCatalog}
-            selectedIds={selectedBundleIds}
-            setSelectedIds={setSelectedBundleIds}
-            disabled={submitting}
-          />
-        </div>
-      )}
-
-      <div>
-        <label className="block text-sm font-medium mb-2">
-          App access level
-        </label>
-        <AppAccessLevelSelect
-          permissions={permissions}
-          selectedPermissionIds={selectedPermissions}
-          setSelectedPermissionIds={setSelectedPermissions}
-          onListPermissionsPage={listPermissionsPage}
-          disabled={submitting}
-        />
-        {selectedPermissions.length > 0 && (
-          <div className="text-xs text-muted-foreground mt-2">
-            {selectedPermissions.length}{" "}
-            {selectedPermissions.length === 1 ? "permission" : "permissions"} selected
-          </div>
-        )}
-      </div>
+      <PermissionManagementPanel
+        title="Group permissions"
+        description="Use bundles and app-level access for most roles. Atomic permissions are optional for edge cases."
+        permissions={permissions}
+        selectedPermissionIds={selectedPermissions}
+        setSelectedPermissionIds={setSelectedPermissions}
+        onListPermissionsPage={listPermissionsPage}
+        onSearchPermissionsPage={searchPermissionsPage}
+        hasMorePermissions={hasMorePermissions}
+        loadingMorePermissions={loadingMorePermissions}
+        onLoadMorePermissions={loadMorePermissions}
+        bundles={bundlesCatalog}
+        selectedBundleIds={selectedBundleIds}
+        setSelectedBundleIds={setSelectedBundleIds}
+        showAtomicToggle
+        disabled={submitting}
+      />
 
       <div className="flex gap-2">
         <button

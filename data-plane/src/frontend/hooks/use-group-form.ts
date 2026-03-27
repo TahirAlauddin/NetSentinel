@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { GroupRecord, PermissionBundleRecord, PermissionRecord } from "@/types/groups";
 import { usePaginatedAppend, type PaginatedFetchResult } from "@/hooks/use-paginated-append";
-import { listPermissionsPage } from "@/app/(app)/settings/action";
+import { listPermissionsPage } from "@/app/(app)/settings/actions";
 
 export type UseGroupFormReturn = {
   name: string;
@@ -16,6 +16,9 @@ export type UseGroupFormReturn = {
   bundlesCatalog: PermissionBundleRecord[];
   setBundlesCatalog: (bundles: PermissionBundleRecord[]) => void;
   permissions: PermissionRecord[];
+  hasMorePermissions: boolean;
+  loadingMorePermissions: boolean;
+  loadMorePermissions: () => Promise<void>;
   /** Seed the form with data from an existing group and/or initial catalog data. */
   initialize: (opts: {
     group?: GroupRecord;
@@ -34,7 +37,10 @@ export function useGroupForm(): UseGroupFormReturn {
 
   const {
     items: permissions,
+    hasMore: hasMorePermissions,
+    loadingMore: loadingMorePermissions,
     setFirstPage,
+    loadMore: loadMorePermissions,
     reset: resetPermissions,
   } = usePaginatedAppend<PermissionRecord>({
     fetchPage: listPermissionsPage,
@@ -79,6 +85,9 @@ export function useGroupForm(): UseGroupFormReturn {
     bundlesCatalog,
     setBundlesCatalog,
     permissions,
+    hasMorePermissions,
+    loadingMorePermissions,
+    loadMorePermissions,
     initialize,
     reset,
   };

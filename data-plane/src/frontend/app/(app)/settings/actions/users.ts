@@ -146,6 +146,7 @@ export async function getUserAssignments(userId: number): Promise<UserAssignment
 export async function updateUserAssignments(
   userId: number,
   groupIds: number[],
+  permissionIds: number[] = [],
 ) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.isSuperuser) {
@@ -154,7 +155,7 @@ export async function updateUserAssignments(
 
   const response = await serverApi.put(`/users/${userId}/assignments/`, {
     group_ids: groupIds,
-    permission_ids: [],
+    permission_ids: permissionIds,
   })
 
   if (response.error) {

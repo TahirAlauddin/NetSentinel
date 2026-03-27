@@ -1,4 +1,3 @@
-"use server";
 
 export * from "./users";
 export * from "./permissions";
