@@ -488,6 +488,8 @@ class AssetReport(models.Model):
 
 # Import all the extension models after main models are defined
 # This avoids circular imports since extension models import Asset
+# Using these files instead of adding all these attributes in the asset directly
+# To make the file smaller
 from .computer import ComputerDetails  # noqa: E402
 from .display import DisplayDetails  # noqa: E402
 from .network import NetworkDetails  # noqa: E402
