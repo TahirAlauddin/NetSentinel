@@ -8,11 +8,13 @@ import { SubnetGroupTable } from "@/components/apps/ipam/subnet-group-table";
 import { SubnetGroup } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { extractIpamArrayData } from "@/lib/ipam-utils";
+import { usePermissions } from "@/contexts/permissions-context";
 
 const ipamApi = new IpamApiClient();
 
 export default function SubnetGroupsPage() {
   const router = useRouter();
+  const { can } = usePermissions();
   const [groups, setGroups] = useState<SubnetGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,9 +92,9 @@ export default function SubnetGroupsPage() {
       ) : (
         <SubnetGroupTable
           groups={groups}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onAdd={handleAdd}
+          onEdit={can("ipam.change_subnetgroup") ? handleEdit : undefined}
+          onDelete={can("ipam.delete_subnetgroup") ? handleDelete : undefined}
+          onAdd={can("ipam.add_subnetgroup") ? handleAdd : undefined}
         />
       )}
     </div>

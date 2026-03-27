@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Trash2, Edit2, Plus } from "lucide-react";
 import { ProviderRecord } from "@/types/providers";
 import { TelecomApiClient } from "@/lib/api-client/telecom";
+import { Can } from "@/contexts/permissions-context";
 import { getSafeAbsoluteUrl } from "@/lib/security/url";
 import { TelecomBreadcrumb } from "@/components/apps/telecom/telecom-breadcrumb";
 import { ViewToggle, ViewMode } from "@/components/ui/view-toggle";
@@ -127,12 +128,14 @@ export default function ProvidersPage() {
                 Manage your telecom providers.
               </p>
             </div>
-            <Button asChild>
-              <Link href="/telecom-management/providers/new" className="gap-2">
-                <Plus className="w-4 h-4" />
-                Add Provider
-              </Link>
-            </Button>
+            <Can permission="telecom.add_provider">
+              <Button asChild>
+                <Link href="/telecom-management/providers/new" className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Add Provider
+                </Link>
+              </Button>
+            </Can>
           </div>
 
           <Card>
@@ -294,21 +297,23 @@ export default function ProvidersPage() {
                               </span>
                             )}
                           </Link>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                              <Link href={`/telecom-management/providers/${provider.id}/edit`}>
-                                <Edit2 className="w-4 h-4" />
-                              </Link>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={(e) => handleDelete(e, provider.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
+                          <Can permission="telecom.change_provider">
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                <Link href={`/telecom-management/providers/${provider.id}/edit`}>
+                                  <Edit2 className="w-4 h-4" />
+                                </Link>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={(e) => handleDelete(e, provider.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </Can>
                         </div>
                       </li>
                     );

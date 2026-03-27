@@ -8,11 +8,13 @@ import { DeviceTable } from "@/components/apps/ipam/device-table";
 import { Device, DeviceType, Rack } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { extractIpamArrayData } from "@/lib/ipam-utils";
+import { usePermissions } from "@/contexts/permissions-context";
 
 const ipamApi = new IpamApiClient();
 
 export default function DevicesPage() {
   const router = useRouter();
+  const { can } = usePermissions();
   const [devices, setDevices] = useState<Device[]>([]);
   const [deviceTypes, setDeviceTypes] = useState<DeviceType[]>([]);
   const [locations, setLocations] = useState<Array<{ id: number; name: string }>>([]);
@@ -142,9 +144,9 @@ export default function DevicesPage() {
       ) : (
         <DeviceTable
           devices={devices}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onAdd={handleAdd}
+          onEdit={can("ipam.change_device") ? handleEdit : undefined}
+          onDelete={can("ipam.delete_device") ? handleDelete : undefined}
+          onAdd={can("ipam.add_device") ? handleAdd : undefined}
           deviceTypes={deviceTypes}
           locations={locations}
           racks={racks}

@@ -10,8 +10,8 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import GroupsList from "@/components/groups/groups-list";
 import GroupForm from "@/components/groups/group-form";
-import { usePaginatedAppend } from "@/hooks/use-paginated-append";
-import { GroupRecord, PermissionBundleRecord, PermissionRecord } from "@/types/groups";
+import { useGroupForm } from "@/hooks/use-group-form";
+import { GroupRecord } from "@/types/groups";
 import {
   listGroups,
   listPermissionBundles,
@@ -23,34 +23,22 @@ import {
 export default function GroupsPage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const form = useGroupForm();
+
   const [groups, setGroups] = useState<GroupRecord[]>([]);
-  const {
-    items: permissions,
-    setFirstPage: setPermissionsFirstPage,
-    reset: resetPermissionsPagination,
-  } = usePaginatedAppend<PermissionRecord>({
-    fetchPage: listPermissionsPage,
-    onLoadMoreError: () => toast.error("Could not load more permissions."),
-  });
   const [submitting, setSubmitting] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [formName, setFormName] = useState("");
-  const [selectedPermissions, setSelectedPermissions] = useState<number[]>([]);
-  const [bundlesCatalog, setBundlesCatalog] = useState<PermissionBundleRecord[]>([]);
-  const [selectedBundleIds, setSelectedBundleIds] = useState<number[]>([]);
 
   const handleAddGroup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitting(true);
-
     try {
-      const result = await createGroup(formName, selectedPermissions, selectedBundleIds);
-
+      const result = await createGroup(form.name, form.selectedPermissions, form.selectedBundleIds);
       if (result.success) {
         toast.success(result.message || "Group created successfully!");
         const groupsList = await listGroups();
         setGroups(Array.isArray(groupsList) ? groupsList : []);
-        resetForm();
+        form.reset();
         setShowAddForm(false);
       } else {
         toast.error(result.error || "Failed to create group");
@@ -64,13 +52,9 @@ export default function GroupsPage() {
   };
 
   const handleDeleteGroup = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this group?")) {
-      return;
-    }
-
+    if (!confirm("Are you sure you want to delete this group?")) return;
     try {
       const result = await deleteGroup(id);
-
       if (result.success) {
         toast.success(result.message || "Group deleted successfully!");
         const groupsList = await listGroups();
@@ -88,43 +72,39 @@ export default function GroupsPage() {
     router.push(`/settings/groups/edit/${group.id}`);
   };
 
-  const resetForm = () => {
-    setFormName("");
-    setSelectedPermissions([]);
-    setSelectedBundleIds([]);
-  };
-
   const handleCancelAdd = () => {
-    resetForm();
+    form.reset();
     setShowAddForm(false);
   };
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [groupsList, permissionsPage, bundlesList] = await Promise.all([
+        const [groupsList, permissionsPage, bundles] = await Promise.all([
           listGroups(),
           listPermissionsPage(1),
           listPermissionBundles(),
         ]);
         setGroups(Array.isArray(groupsList) ? groupsList : []);
-        setPermissionsFirstPage(permissionsPage);
-        setBundlesCatalog(Array.isArray(bundlesList) ? bundlesList : []);
+        form.initialize({
+          bundles: Array.isArray(bundles) ? bundles : [],
+          permissionsPage,
+        });
       } catch (error) {
         console.error("Failed to fetch data:", error);
         setGroups([]);
-        resetPermissionsPagination();
       }
     }
 
     fetchData();
-  }, [session, resetPermissionsPagination, setPermissionsFirstPage]);
+    // form.initialize is stable (useCallback) — intentionally omitted from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
 
   return (
     <ProtectedRoute>
       <AppShell>
         <div className="min-h-[calc(100dvh-120px)]">
-          {/* Main content */}
           <div className="p-8">
             <div className="space-y-6">
               <SettingsHeader currentPage="Groups & Permissions" />
@@ -138,58 +118,37 @@ export default function GroupsPage() {
                 </Link>
               </div>
 
-              {/* Content area */}
               <div className="flex gap-8">
-                {/* Content */}
-                <div className="flex-1">
-                  <div className="space-y-6">
-                    {/* Add Group Button */}
-                    <div className="flex justify-end">
-                      <button
-                        onClick={() => {
-                          setShowAddForm(!showAddForm);
-                        }}
-                        className="px-4 py-2 rounded-md bg-red-500 text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                      >
-                        {showAddForm ? "Cancel" : "Add Group"}
-                      </button>
-                    </div>
+                <div className="flex-1 space-y-6">
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => setShowAddForm((v) => !v)}
+                      className="px-4 py-2 rounded-md bg-red-500 text-white hover:opacity-90 text-sm"
+                    >
+                      {showAddForm ? "Cancel" : "Add Group"}
+                    </button>
+                  </div>
 
-                    {/* Add Group Form */}
-                    {showAddForm && (
-                      <div className="bg-card border border-border rounded-lg p-4">
-                        <h2 className="text-sm font-medium mb-4">
-                          Add New Group
-                        </h2>
-                        <GroupForm
-                          name={formName}
-                          setName={setFormName}
-                          selectedPermissions={selectedPermissions}
-                          setSelectedPermissions={setSelectedPermissions}
-                          bundles={bundlesCatalog}
-                          selectedBundleIds={selectedBundleIds}
-                          setSelectedBundleIds={setSelectedBundleIds}
-                          permissions={permissions}
-                          onListPermissionsPage={listPermissionsPage}
-                          submitting={submitting}
-                          onSubmit={handleAddGroup}
-                          onCancel={handleCancelAdd}
-                          submitLabel="Add Group"
-                        />
-                      </div>
-                    )}
-
-                    {/* Groups list */}
-                    <div>
-                      <h2 className="text-lg font-semibold mb-4">
-                        Current Groups
-                      </h2>
-                      <GroupsList
-                        groups={groups}
-                        onEdit={handleEditGroup}
-                        onDelete={handleDeleteGroup}
+                  {showAddForm && (
+                    <div className="bg-card border border-border rounded-lg p-4">
+                      <h2 className="text-sm font-medium mb-4">Add New Group</h2>
+                      <GroupForm
+                        form={form}
+                        submitting={submitting}
+                        onSubmit={handleAddGroup}
+                        onCancel={handleCancelAdd}
+                        submitLabel="Add Group"
                       />
                     </div>
+                  )}
+
+                  <div>
+                    <h2 className="text-lg font-semibold mb-4">Current Groups</h2>
+                    <GroupsList
+                      groups={groups}
+                      onEdit={handleEditGroup}
+                      onDelete={handleDeleteGroup}
+                    />
                   </div>
                 </div>
               </div>
@@ -200,4 +159,3 @@ export default function GroupsPage() {
     </ProtectedRoute>
   );
 }
-

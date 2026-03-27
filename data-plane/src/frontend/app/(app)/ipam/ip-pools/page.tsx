@@ -8,11 +8,13 @@ import { IpPoolTable } from "@/components/apps/ipam/ip-pool-table";
 import { IPPool } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { extractIpamArrayData } from "@/lib/ipam-utils";
+import { usePermissions } from "@/contexts/permissions-context";
 
 const ipamApi = new IpamApiClient();
 
 export default function IpPoolsPage() {
   const router = useRouter();
+  const { can } = usePermissions();
   const [pools, setPools] = useState<IPPool[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -92,9 +94,9 @@ export default function IpPoolsPage() {
       ) : (
         <IpPoolTable
           pools={pools}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onAdd={handleAdd}
+          onEdit={can("ipam.change_ippool") ? handleEdit : undefined}
+          onDelete={can("ipam.delete_ippool") ? handleDelete : undefined}
+          onAdd={can("ipam.add_ippool") ? handleAdd : undefined}
           onViewUtilization={handleViewUtilization}
         />
       )}

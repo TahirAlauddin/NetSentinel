@@ -8,12 +8,14 @@ import { DhcpReservationTable } from "@/components/apps/ipam/dhcp-reservation-ta
 import { DHCPReservation } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { extractIpamArrayData } from "@/lib/ipam-utils";
+import { usePermissions } from "@/contexts/permissions-context";
 
 const ipamApi = new IpamApiClient();
 
 export default function DhcpReservationsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { can } = usePermissions();
   const scopeId = searchParams.get("scope");
   const [reservations, setReservations] = useState<DHCPReservation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,9 +94,9 @@ export default function DhcpReservationsPage() {
       ) : (
         <DhcpReservationTable
           reservations={reservations}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onAdd={handleAdd}
+          onEdit={can("ipam.change_dhcpreservation") ? handleEdit : undefined}
+          onDelete={can("ipam.delete_dhcpreservation") ? handleDelete : undefined}
+          onAdd={can("ipam.add_dhcpreservation") ? handleAdd : undefined}
         />
       )}
     </div>

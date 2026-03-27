@@ -4,9 +4,9 @@ import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
 import { SettingsHeader } from "@/components/settings/settings-header";
 import GroupForm from "@/components/groups/group-form";
-import { usePaginatedAppend } from "@/hooks/use-paginated-append";
+import { useGroupForm } from "@/hooks/use-group-form";
 import { validateId } from "@/lib/security/input-validation";
-import { GroupRecord, PermissionBundleRecord, PermissionRecord } from "@/types/groups";
+import { GroupRecord } from "@/types/groups";
 import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -24,26 +24,13 @@ export default function EditGroupPage() {
   const { data: session, status } = useSession();
 
   const groupId = validateId(params.id);
+  const form = useGroupForm();
 
   const [loadingInitial, setLoadingInitial] = useState(groupId === null);
   const [submitting, setSubmitting] = useState(false);
 
-  const [formName, setFormName] = useState("");
-  const [selectedPermissions, setSelectedPermissions] = useState<number[]>([]);
-  const [bundlesCatalog, setBundlesCatalog] = useState<PermissionBundleRecord[]>([]);
-  const [selectedBundleIds, setSelectedBundleIds] = useState<number[]>([]);
-
-  const {
-    items: permissions,
-    setFirstPage: setPermissionsFirstPage,
-  } = usePaginatedAppend<PermissionRecord>({
-    fetchPage: listPermissionsPage,
-    onLoadMoreError: () => toast.error("Could not load more permissions."),
-  });
-
   useEffect(() => {
     if (status === "loading") return;
-
     if (status === "authenticated" && session?.user && !session.user.isSuperuser) {
       router.replace("/unauthorized");
     }
@@ -58,7 +45,7 @@ export default function EditGroupPage() {
     const load = async () => {
       setLoadingInitial(true);
       try {
-        const [groupsList, permissionsPage, bundlesList] = await Promise.all([
+        const [groupsList, permissionsPage, bundles] = await Promise.all([
           listGroups(),
           listPermissionsPage(1),
           listPermissionBundles(),
@@ -74,11 +61,11 @@ export default function EditGroupPage() {
           return;
         }
 
-        setFormName(group.name || "");
-        setSelectedPermissions(group.permissions || []);
-        setSelectedBundleIds(group.permission_bundle_ids || []);
-        setBundlesCatalog(Array.isArray(bundlesList) ? bundlesList : []);
-        setPermissionsFirstPage(permissionsPage);
+        form.initialize({
+          group,
+          bundles: Array.isArray(bundles) ? bundles : [],
+          permissionsPage,
+        });
       } catch (error) {
         console.error("Failed to load group:", error);
         toast.error("Failed to load group");
@@ -89,7 +76,9 @@ export default function EditGroupPage() {
     };
 
     void load();
-  }, [groupId, router, setPermissionsFirstPage]);
+    // form.initialize is stable (useCallback with stable deps)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId, router]);
 
   const handleCancel = () => {
     router.push("/settings/groups");
@@ -103,9 +92,9 @@ export default function EditGroupPage() {
     try {
       const result = await updateGroup(
         groupId,
-        formName,
-        selectedPermissions,
-        selectedBundleIds,
+        form.name,
+        form.selectedPermissions,
+        form.selectedBundleIds,
       );
       if (result.success) {
         toast.success(result.message || "Group updated successfully!");
@@ -137,15 +126,7 @@ export default function EditGroupPage() {
                 <div className="bg-card border border-border rounded-lg p-4">
                   <h2 className="text-sm font-medium mb-4">Edit Group</h2>
                   <GroupForm
-                    name={formName}
-                    setName={setFormName}
-                    selectedPermissions={selectedPermissions}
-                    setSelectedPermissions={setSelectedPermissions}
-                    bundles={bundlesCatalog}
-                    selectedBundleIds={selectedBundleIds}
-                    setSelectedBundleIds={setSelectedBundleIds}
-                    permissions={permissions}
-                    onListPermissionsPage={listPermissionsPage}
+                    form={form}
                     submitting={submitting}
                     onSubmit={handleUpdate}
                     onCancel={handleCancel}
@@ -160,4 +141,3 @@ export default function EditGroupPage() {
     </ProtectedRoute>
   );
 }
-

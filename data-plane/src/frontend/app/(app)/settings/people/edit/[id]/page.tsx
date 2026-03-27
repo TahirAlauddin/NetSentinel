@@ -7,8 +7,6 @@ import { validateId } from "@/lib/security/input-validation";
 import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { updateUserBasic } from "../../../actions";
 
 export default function EditPersonPage() {
   const params = useParams();
@@ -17,8 +15,8 @@ export default function EditPersonPage() {
 
   const personId = validateId(params.id);
 
+  // TODO:> Fix this
   const [loading, setLoading] = useState(personId !== null);
-  const [submitting, setSubmitting] = useState(false);
   // This route is kept for backward compatibility only.
   // It now redirects to the merged details page at `/settings/people/[id]`.
 

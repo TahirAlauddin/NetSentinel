@@ -7,6 +7,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
 import { TelecomBreadcrumb } from "@/components/apps/telecom/telecom-breadcrumb";
 import { PhoneManagementApiClient } from "@/lib/api-client/phone-management";
+import { Can } from "@/contexts/permissions-context";
 import type {
   ManagedPhoneNumberRecord,
   ManagedPhoneNumberBlockRecord,
@@ -102,18 +103,22 @@ export default function PhoneManagementPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button asChild variant="default" size="sm" className="gap-2">
-                <Link href="/phone-management/numbers/new">
-                  <Plus className="w-4 h-4" />
-                  Add number
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="sm" className="gap-2">
-                <Link href="/phone-management/blocks/new">
-                  <Plus className="w-4 h-4" />
-                  Add block
-                </Link>
-              </Button>
+              <Can permission="phone_management.add_managedphonenumber">
+                <Button asChild variant="default" size="sm" className="gap-2">
+                  <Link href="/phone-management/numbers/new">
+                    <Plus className="w-4 h-4" />
+                    Add number
+                  </Link>
+                </Button>
+              </Can>
+              <Can permission="phone_management.add_phonenumberblock">
+                <Button asChild variant="outline" size="sm" className="gap-2">
+                  <Link href="/phone-management/blocks/new">
+                    <Plus className="w-4 h-4" />
+                    Add block
+                  </Link>
+                </Button>
+              </Can>
             </div>
           </div>
 

@@ -5,6 +5,7 @@ import { AssetForm } from "@/components/apps/assets/shared/form/AssetForm";
 import { LoadingState } from "@/components/feedback/loading-state";
 import { AppShell } from "@/components/layout/app-shell";
 
+
 export default function NewAssetPage() {
   return (
     <Suspense fallback={<LoadingState message="Loading new asset page..." />}>
