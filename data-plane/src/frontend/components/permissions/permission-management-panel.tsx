@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { PermissionBundleRecord, PermissionRecord } from "@/types/groups";
+import { PermissionRecord } from "@/types/groups";
 import AppAccessLevelSelect from "@/components/permissions/app-access-level-select";
 import PermissionsByAppSelect from "@/components/permissions/PermissionsByAppSelect";
-import PermissionBundlesPicker from "@/components/groups/permission-bundles-picker";
 
 type PageResult<T> = {
   results: T[];
@@ -20,10 +19,6 @@ type PermissionManagementPanelProps = {
   hasMorePermissions?: boolean;
   loadingMorePermissions?: boolean;
   onLoadMorePermissions?: () => void | Promise<void>;
-
-  bundles?: PermissionBundleRecord[];
-  selectedBundleIds?: number[];
-  setSelectedBundleIds?: (ids: number[]) => void;
 
   title?: string;
   description?: string;
@@ -41,9 +36,6 @@ export default function PermissionManagementPanel({
   hasMorePermissions,
   loadingMorePermissions,
   onLoadMorePermissions,
-  bundles,
-  selectedBundleIds,
-  setSelectedBundleIds,
   title = "Permission Management",
   description = "Assign app-level access first. Enable atomic permissions only for advanced exceptions.",
   showAtomicToggle = true,
@@ -52,27 +44,12 @@ export default function PermissionManagementPanel({
 }: PermissionManagementPanelProps) {
   const [showAtomic, setShowAtomic] = useState(atomicDefaultOpen);
 
-  const showBundles =
-    bundles !== undefined && selectedBundleIds !== undefined && setSelectedBundleIds !== undefined;
-
   return (
     <div className="space-y-4">
       <div>
         <h2 className="text-sm font-medium">{title}</h2>
         <p className="text-xs text-muted-foreground mt-1">{description}</p>
       </div>
-
-      {showBundles ? (
-        <div className="space-y-2">
-          <div className="text-sm font-medium">Permission bundles</div>
-          <PermissionBundlesPicker
-            bundles={bundles}
-            selectedIds={selectedBundleIds}
-            setSelectedIds={setSelectedBundleIds}
-            disabled={disabled}
-          />
-        </div>
-      ) : null}
 
       <div className="space-y-2">
         <div className="text-sm font-medium">App level access</div>
@@ -98,7 +75,7 @@ export default function PermissionManagementPanel({
             />
           </label>
           <p className="text-xs text-muted-foreground">
-            Advanced mode. Most teams should rely on app-level access and bundles.
+            Advanced mode. Most teams should rely on app-level access only.
           </p>
         </div>
       ) : null}

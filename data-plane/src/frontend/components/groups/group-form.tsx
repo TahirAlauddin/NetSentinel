@@ -1,7 +1,7 @@
 import React from "react";
-import { listPermissionsPage, searchPermissionsPage } from "@/app/(app)/settings/actions";
+import { listPermissionsPage } from "@/app/(app)/settings/actions";
 import type { UseGroupFormReturn } from "@/hooks/use-group-form";
-import PermissionManagementPanel from "@/components/permissions/permission-management-panel";
+import AppAccessLevelSelect from "@/components/permissions/app-access-level-select";
 
 interface GroupFormProps {
   form: UseGroupFormReturn;
@@ -12,19 +12,7 @@ interface GroupFormProps {
 }
 
 const GroupForm = ({ form, submitting, onSubmit, onCancel, submitLabel }: GroupFormProps) => {
-  const {
-    name,
-    setName,
-    selectedPermissions,
-    setSelectedPermissions,
-    selectedBundleIds,
-    setSelectedBundleIds,
-    bundlesCatalog,
-    permissions,
-    hasMorePermissions,
-    loadingMorePermissions,
-    loadMorePermissions,
-  } = form;
+  const { name, setName, selectedPermissions, setSelectedPermissions, permissions } = form;
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -44,23 +32,19 @@ const GroupForm = ({ form, submitting, onSubmit, onCancel, submitLabel }: GroupF
         />
       </div>
 
-      <PermissionManagementPanel
-        title="Group permissions"
-        description="Use bundles and app-level access for most roles. Atomic permissions are optional for edge cases."
-        permissions={permissions}
-        selectedPermissionIds={selectedPermissions}
-        setSelectedPermissionIds={setSelectedPermissions}
-        onListPermissionsPage={listPermissionsPage}
-        onSearchPermissionsPage={searchPermissionsPage}
-        hasMorePermissions={hasMorePermissions}
-        loadingMorePermissions={loadingMorePermissions}
-        onLoadMorePermissions={loadMorePermissions}
-        bundles={bundlesCatalog}
-        selectedBundleIds={selectedBundleIds}
-        setSelectedBundleIds={setSelectedBundleIds}
-        showAtomicToggle
-        disabled={submitting}
-      />
+      <div className="space-y-2">
+        <h2 className="text-sm font-medium">Group permissions</h2>
+        <p className="text-xs text-muted-foreground">
+          Read All grants catalog view_* permissions; Edit All adds matching change_* (not add/delete); Admin grants everything in that app.
+        </p>
+        <AppAccessLevelSelect
+          permissions={permissions}
+          selectedPermissionIds={selectedPermissions}
+          setSelectedPermissionIds={setSelectedPermissions}
+          onListPermissionsPage={listPermissionsPage}
+          disabled={submitting}
+        />
+      </div>
 
       <div className="flex gap-2">
         <button

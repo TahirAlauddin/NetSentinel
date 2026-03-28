@@ -8,13 +8,14 @@ import {
   getAppKey,
   type AppKey,
 } from "@/components/permissions/permissions-by-app.constants";
+import { getCatalogAccessTier } from "@/constants/app-permissions-catalog";
 
 type PageResult<T> = {
   results: T[];
   hasMore: boolean;
 };
 
-type AccessLevel = "none" | "read" | "write";
+type AccessLevel = "none" | "read" | "edit" | "admin";
 
 type AppAccessLevelSelectProps = {
   permissions: PermissionRecord[];
@@ -25,13 +26,14 @@ type AppAccessLevelSelectProps = {
 };
 
 const MANAGED_APPS: AppKey[] = APP_ORDER.filter((x) => x !== "all");
-const WRITE_PREFIXES = ["add_", "change_", "delete_"];
 
-function getPermissionLevel(permission: PermissionRecord): "read" | "write" {
-  const codename = permission.codename.toLowerCase();
-  if (codename.startsWith("view_")) return "read";
-  if (WRITE_PREFIXES.some((prefix) => codename.startsWith(prefix))) return "write";
-  return "write";
+/**
+ * Read All: catalog `view_*` for models in backend (see app-permissions-catalog.ts).
+ * Edit All: those `view_*` plus matching `change_*` (not add_/delete_).
+ * Admin: all permissions in this UI app bucket (incl. add_/delete_/unlisted codenames).
+ */
+function getPermissionTier(permission: PermissionRecord, app: AppKey): "read" | "edit" | "admin" {
+  return getCatalogAccessTier(permission.codename, app);
 }
 
 export default function AppAccessLevelSelect({
@@ -99,8 +101,9 @@ export default function AppAccessLevelSelect({
     if (perms.length === 0) return "none";
     const selectedForApp = perms.filter((perm) => selectedSet.has(perm.id));
     if (selectedForApp.length === 0) return "none";
-    const hasWrite = selectedForApp.some((perm) => getPermissionLevel(perm) === "write");
-    return hasWrite ? "write" : "read";
+    if (selectedForApp.some((perm) => getPermissionTier(perm, app) === "admin")) return "admin";
+    if (selectedForApp.some((perm) => getPermissionTier(perm, app) === "edit")) return "edit";
+    return "read";
   };
 
   const applyLevelForApp = (app: AppKey, level: AccessLevel) => {
@@ -113,9 +116,12 @@ export default function AppAccessLevelSelect({
       return;
     }
 
-    const allowed = perms.filter((perm) =>
-      level === "write" ? true : getPermissionLevel(perm) === "read"
-    );
+    const allowed = perms.filter((perm) => {
+      const tier = getPermissionTier(perm, app);
+      if (level === "read") return tier === "read";
+      if (level === "edit") return tier === "read" || tier === "edit";
+      return true;
+    });
     setSelectedPermissionIds([...base, ...allowed.map((perm) => perm.id)]);
   };
 
@@ -138,7 +144,8 @@ export default function AppAccessLevelSelect({
               >
                 <option value="none">None</option>
                 <option value="read">Read All</option>
-                <option value="write">Write All</option>
+                <option value="edit">Edit All</option>
+                <option value="admin">Admin</option>
               </select>
             </div>
           ))}

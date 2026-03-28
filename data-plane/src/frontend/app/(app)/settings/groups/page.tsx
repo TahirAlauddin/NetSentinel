@@ -9,47 +9,14 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import GroupsList from "@/components/groups/groups-list";
-import GroupForm from "@/components/groups/group-form";
-import { useGroupForm } from "@/hooks/use-group-form";
 import { GroupRecord } from "@/types/groups";
-import {
-  listGroups,
-  listPermissionBundles,
-  listPermissionsPage,
-  createGroup,
-  deleteGroup,
-} from "../actions";
+import { listGroups, deleteGroup } from "../actions";
 
 export default function GroupsPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  const form = useGroupForm();
 
   const [groups, setGroups] = useState<GroupRecord[]>([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
-
-  const handleAddGroup = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      const result = await createGroup(form.name, form.selectedPermissions, form.selectedBundleIds);
-      if (result.success) {
-        toast.success(result.message || "Group created successfully!");
-        const groupsList = await listGroups();
-        setGroups(Array.isArray(groupsList) ? groupsList : []);
-        form.reset();
-        setShowAddForm(false);
-      } else {
-        toast.error(result.error || "Failed to create group");
-      }
-    } catch (error) {
-      console.error("Failed to add group:", error);
-      toast.error("An unexpected error occurred. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const handleDeleteGroup = async (id: number) => {
     if (!confirm("Are you sure you want to delete this group?")) return;
@@ -72,24 +39,11 @@ export default function GroupsPage() {
     router.push(`/settings/groups/edit/${group.id}`);
   };
 
-  const handleCancelAdd = () => {
-    form.reset();
-    setShowAddForm(false);
-  };
-
   useEffect(() => {
     async function fetchData() {
       try {
-        const [groupsList, permissionsPage, bundles] = await Promise.all([
-          listGroups(),
-          listPermissionsPage(1),
-          listPermissionBundles(),
-        ]);
+        const groupsList = await listGroups();
         setGroups(Array.isArray(groupsList) ? groupsList : []);
-        form.initialize({
-          bundles: Array.isArray(bundles) ? bundles : [],
-          permissionsPage,
-        });
       } catch (error) {
         console.error("Failed to fetch data:", error);
         setGroups([]);
@@ -97,8 +51,6 @@ export default function GroupsPage() {
     }
 
     fetchData();
-    // form.initialize is stable (useCallback) — intentionally omitted from deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   return (
@@ -121,26 +73,13 @@ export default function GroupsPage() {
               <div className="flex gap-8">
                 <div className="flex-1 space-y-6">
                   <div className="flex justify-end">
-                    <button
-                      onClick={() => setShowAddForm((v) => !v)}
-                      className="px-4 py-2 rounded-md bg-red-500 text-white hover:opacity-90 text-sm"
+                    <Link
+                      href="/settings/groups/new"
+                      className="px-4 py-2 rounded-md bg-red-500 text-white hover:opacity-90 text-sm inline-block text-center"
                     >
-                      {showAddForm ? "Cancel" : "Add Group"}
-                    </button>
+                      Add Group
+                    </Link>
                   </div>
-
-                  {showAddForm && (
-                    <div className="bg-card border border-border rounded-lg p-4">
-                      <h2 className="text-sm font-medium mb-4">Add New Group</h2>
-                      <GroupForm
-                        form={form}
-                        submitting={submitting}
-                        onSubmit={handleAddGroup}
-                        onCancel={handleCancelAdd}
-                        submitLabel="Add Group"
-                      />
-                    </div>
-                  )}
 
                   <div>
                     <h2 className="text-lg font-semibold mb-4">Current Groups</h2>
