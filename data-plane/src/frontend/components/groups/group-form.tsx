@@ -1,6 +1,6 @@
 import React from "react";
 import type { UseGroupFormReturn } from "@/hooks/use-group-form";
-import AppLevelPermissionSelect from "@/components/permissions/app-access-level-select";
+import AppLevelPermission from "@/components/permissions/AppLevelPermission";
 
 interface GroupFormProps {
   form: UseGroupFormReturn;
@@ -36,7 +36,7 @@ const GroupForm = ({ form, submitting, onSubmit, onCancel, submitLabel }: GroupF
         <p className="text-xs text-muted-foreground">
           Read All grants catalog view_* permissions; Edit All adds matching change_* (not add/delete); Admin grants everything in that app.
         </p>
-        <AppLevelPermissionSelect
+        <AppLevelPermission
           disabled={submitting}
         />
       </div>

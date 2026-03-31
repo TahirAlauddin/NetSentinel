@@ -30,7 +30,7 @@ async function postAppAccessSelections(levels: AppAccessSelections): Promise<voi
   });
 }
 
-export default function AppLevelPermissionSelect({
+export default function AppLevelPermission({
   disabled,
 }: AppAccessLevelSelectProps) {
   const initialSelections = useMemo(() => {

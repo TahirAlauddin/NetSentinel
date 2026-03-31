@@ -6,7 +6,7 @@ import { SettingsHeader } from "@/components/settings/settings-header";
 import { validateId } from "@/lib/security/input-validation";
 import { useParams } from "next/navigation";
 import { GroupRecord } from "@/types/groups";
-import AppLevelPermissionSelect from "@/components/permissions/app-access-level-select";
+import AppLevelPermission from "@/components/permissions/AppLevelPermission";
 import { usePeopleDetail } from "@/hooks/use-people-detail";
 
 function GroupsPicker({
@@ -173,7 +173,7 @@ export default function PeopleDetailPage() {
                   </div>
 
                   <div className="bg-card border border-border rounded-lg p-4">
-                    <AppLevelPermissionSelect disabled={saving} />
+                    <AppLevelPermission disabled={saving} />
                   </div>
                 </div>
               </div>
