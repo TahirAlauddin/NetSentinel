@@ -63,6 +63,11 @@ export async function addUser(formData: FormData) {
 
   const { username, email, password, re_password, first_name, last_name } =
     validation.data
+  const groupIdRaw = formData.get("group_id")
+  const groupId = Number(groupIdRaw)
+  if (!Number.isInteger(groupId) || groupId <= 0) {
+    return { success: false, error: "A valid group selection is required" }
+  }
 
   const response = await serverApi.post("/auth/users/", {
     username,
@@ -88,7 +93,7 @@ export async function addUser(formData: FormData) {
   // Ensure a newly-created user starts permissionless.
   if (createdUserId) {
     await serverApi.put(`/users/${createdUserId}/assignments/`, {
-      group_ids: [],
+      group_ids: [groupId],
       permission_ids: [],
     })
   }

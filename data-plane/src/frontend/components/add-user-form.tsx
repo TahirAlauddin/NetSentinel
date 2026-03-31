@@ -1,6 +1,16 @@
 import React from "react";
+import { GroupRecord } from "@/types/groups";
+import AppLevelPermission from "@/components/permissions/AppLevelPermission";
 
-const AddUserForm = ({ handleAddUser, submitting }: { handleAddUser: (e: React.FormEvent<HTMLFormElement>) => void; submitting: boolean }) => {
+const AddUserForm = ({
+  handleAddUser,
+  submitting,
+  groups,
+}: {
+  handleAddUser: (e: React.FormEvent<HTMLFormElement>) => void;
+  submitting: boolean;
+  groups: GroupRecord[];
+}) => {
   return (
     <form onSubmit={handleAddUser} className="grid gap-2 sm:gap-3">
       <div className="grid gap-1">
@@ -58,6 +68,33 @@ const AddUserForm = ({ handleAddUser, submitting }: { handleAddUser: (e: React.F
         />
       </div>
 
+      <div className="grid gap-1">
+        <label htmlFor="group_id" className="text-xs sm:text-sm">
+          Group
+        </label>
+        <select
+          id="group_id"
+          name="group_id"
+          required
+          defaultValue=""
+          className="h-9 sm:h-10 rounded-md border border-input bg-background px-2 sm:px-3 text-sm"
+        >
+          <option value="" disabled>
+            Select a group
+          </option>
+          {groups.map((group) => (
+            <option key={group.id} value={group.id}>
+              {group.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="space-y-2">
+        <h2 className="text-sm font-medium">App-level permissions</h2>
+        <AppLevelPermission disabled={submitting} />
+      </div>
+
       <button
         type="submit"
         disabled={submitting}
@@ -66,8 +103,7 @@ const AddUserForm = ({ handleAddUser, submitting }: { handleAddUser: (e: React.F
         {submitting ? "Adding User..." : "Add User"}
       </button>
       <p className="text-xs text-muted-foreground">
-        Note: Users will be created in the database with regular user
-        permissions.
+        Note: A group selection is required when creating a user.
       </p>
     </form>
   );
