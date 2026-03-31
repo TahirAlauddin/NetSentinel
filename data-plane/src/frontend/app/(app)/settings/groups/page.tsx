@@ -61,15 +61,6 @@ export default function GroupsPage() {
             <div className="space-y-6">
               <SettingsHeader currentPage="Groups & Permissions" />
 
-              <div className="flex justify-end">
-                <Link
-                  href="/settings/permissions"
-                  className="px-3 py-2 rounded-md border border-border bg-background hover:bg-[oklch(0.98_0_0)] text-sm"
-                >
-                  Permission Bundles
-                </Link>
-              </div>
-
               <div className="flex gap-8">
                 <div className="flex-1 space-y-6">
                   <div className="flex justify-end">
