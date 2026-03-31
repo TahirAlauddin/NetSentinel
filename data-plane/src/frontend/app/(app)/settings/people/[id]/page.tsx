@@ -6,8 +6,7 @@ import { SettingsHeader } from "@/components/settings/settings-header";
 import { validateId } from "@/lib/security/input-validation";
 import { useParams } from "next/navigation";
 import { GroupRecord } from "@/types/groups";
-import PermissionManagementPanel from "@/components/permissions/permission-management-panel";
-import { listPermissionsPage, searchPermissionsPage } from "../../actions";
+import AppLevelPermissionSelect from "@/components/permissions/app-access-level-select";
 import { usePeopleDetail } from "@/hooks/use-people-detail";
 
 function GroupsPicker({
@@ -61,8 +60,6 @@ export default function PeopleDetailPage() {
     groups,
     selectedGroupIds,
     setSelectedGroupIds,
-    selectedPermissionIds,
-    setSelectedPermissionIds,
     username,
     setUsername,
     email,
@@ -71,10 +68,6 @@ export default function PeopleDetailPage() {
     setFirstName,
     lastName,
     setLastName,
-    permissions,
-    permissionsHasMore,
-    loadingMorePermissions,
-    loadMorePermissions,
     saveDetails,
     saveAssignments,
   } = usePeopleDetail(personId);
@@ -180,21 +173,7 @@ export default function PeopleDetailPage() {
                   </div>
 
                   <div className="bg-card border border-border rounded-lg p-4">
-                    <PermissionManagementPanel
-                      title="User permission management"
-                      description="Assign app-level access first. Use atomic permissions only for advanced exceptions."
-                      permissions={permissions}
-                      selectedPermissionIds={selectedPermissionIds}
-                      setSelectedPermissionIds={setSelectedPermissionIds}
-                      onListPermissionsPage={listPermissionsPage}
-                      onSearchPermissionsPage={searchPermissionsPage}
-                      hasMorePermissions={permissionsHasMore}
-                      loadingMorePermissions={loadingMorePermissions}
-                      onLoadMorePermissions={loadMorePermissions}
-                      showAtomicToggle
-                      atomicDefaultOpen={false}
-                      disabled={saving}
-                    />
+                    <AppLevelPermissionSelect disabled={saving} />
                   </div>
                 </div>
               </div>
