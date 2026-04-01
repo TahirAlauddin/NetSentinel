@@ -87,7 +87,7 @@ export default function ManagedBlocksPage() {
   );
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requiredPermission="phone_management.view_managedphonenumberblock">
       <AppShell>
         <div className="flex-1 p-6 space-y-6">
           <TelecomBreadcrumb

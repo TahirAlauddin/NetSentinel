@@ -91,7 +91,7 @@ export default function EditManagedBlockPage() {
 
   if (loading || !record) {
     return (
-      <ProtectedRoute>
+      <ProtectedRoute requiredPermission="phone_management.change_managedphonenumberblock">
         <AppShell>
           <div className="flex-1 p-6">
             {loading ? "Loading…" : "Number block not found."}
@@ -102,7 +102,7 @@ export default function EditManagedBlockPage() {
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requiredPermission="phone_management.change_managedphonenumberblock">
       <AppShell>
         <div className="flex-1 p-6 space-y-6">
           <TelecomBreadcrumb

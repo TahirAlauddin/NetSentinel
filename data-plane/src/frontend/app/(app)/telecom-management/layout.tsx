@@ -7,5 +7,9 @@ export default function TelecomLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <ProtectedRoute>{children}</ProtectedRoute>;
+  return (
+    <ProtectedRoute>
+      {children}
+    </ProtectedRoute>
+  );
 }

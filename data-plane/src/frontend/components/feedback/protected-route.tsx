@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { Can, usePermissions } from '@/contexts/permissions-context'
 
 /**
  * Props interface for the ProtectedRoute component
@@ -12,6 +13,8 @@ interface ProtectedRouteProps {
   children: React.ReactNode
   /** Optional role requirement - 'user' for basic auth, 'admin' for staff-only access */
   requiredRole?: 'user' | 'admin'
+  /** Optional Django permission codename (e.g. "ipam.view_subnet") */
+  requiredPermission?: string
 }
 
 /**
@@ -31,9 +34,10 @@ interface ProtectedRouteProps {
  * @param children - The content to render if access is granted
  * @param requiredRole - Optional role requirement ('user' or 'admin')
  */
-export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requiredRole, requiredPermission }: ProtectedRouteProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { can } = usePermissions()
 
   // Handle authentication and authorization checks
   useEffect(() => {
@@ -62,7 +66,12 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
       router.push('/unauthorized')
       return
     }
-  }, [session, status, requiredRole, router])
+
+    if (requiredPermission && !can(requiredPermission)) {
+      router.push('/unauthorized')
+      return
+    }
+  }, [session, status, requiredRole, requiredPermission, can, router])
 
   // Show loading spinner while session is being determined
   if (status === 'loading') {
@@ -96,10 +105,16 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     )
   }
 
+  if (requiredPermission && session?.user && !can(requiredPermission)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <div className="ml-4 text-lg">Redirecting to unauthorized...</div>
+      </div>
+    )
+  }
+
   // All checks passed - render the protected content
-  return (
-    <>
-      {children}
-    </>
-  )
+  if (!requiredPermission) return <>{children}</>
+  return <Can permission={requiredPermission}>{children}</Can>
 }

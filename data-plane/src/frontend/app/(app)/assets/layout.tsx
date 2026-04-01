@@ -7,5 +7,9 @@ export default function AssetsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <ProtectedRoute>{children}</ProtectedRoute>;
+  return (
+    <ProtectedRoute>
+      {children}
+    </ProtectedRoute>
+  );
 }

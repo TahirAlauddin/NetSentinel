@@ -104,7 +104,7 @@ export default function NewManagedNumberPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute>
+      <ProtectedRoute requiredPermission="phone_management.add_managedphonenumber">
         <AppShell>
           <div className="flex-1 p-6">Loading…</div>
         </AppShell>
@@ -113,7 +113,7 @@ export default function NewManagedNumberPage() {
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requiredPermission="phone_management.add_managedphonenumber">
       <AppShell>
         <div className="flex-1 p-6 space-y-6">
           <TelecomBreadcrumb
