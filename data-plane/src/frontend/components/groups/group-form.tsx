@@ -10,8 +10,9 @@ interface GroupFormProps {
   submitLabel: string;
 }
 
+/** Shared create/edit group form with app-level permission selectors. */
 const GroupForm = ({ form, submitting, onSubmit, onCancel, submitLabel }: GroupFormProps) => {
-  const { name, setName } = form;
+  const { name, setName, appAccess, setAppAccess } = form;
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -37,6 +38,8 @@ const GroupForm = ({ form, submitting, onSubmit, onCancel, submitLabel }: GroupF
           Read All grants catalog view_* permissions; Edit All adds matching change_* (not add/delete); Admin grants everything in that app.
         </p>
         <AppLevelPermission
+          value={appAccess}
+          onChange={setAppAccess}
           disabled={submitting}
         />
       </div>

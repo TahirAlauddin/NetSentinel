@@ -1,65 +1,43 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { GroupRecord, PermissionRecord } from "@/types/groups";
-import type { PaginatedFetchResult } from "@/hooks/use-paginated-append";
+import type { GroupRecord } from "@/types/groups";
+import {
+  buildEmptyAppAccess,
+  type AppAccessSelection,
+} from "@/components/permissions/permissions-by-app.constants";
 
 export type UseGroupFormReturn = {
   name: string;
   setName: (name: string) => void;
-  selectedPermissions: number[];
-  setSelectedPermissions: (ids: number[]) => void;
-  /** Sent on save; set from group on edit (no UI). New groups use []. */
-  selectedBundleIds: number[];
-  permissions: PermissionRecord[];
-  initialize: (opts: {
-    group?: GroupRecord;
-    permissionsPage?: PaginatedFetchResult<PermissionRecord>;
-  }) => void;
+  appAccess: AppAccessSelection;
+  setAppAccess: (levels: AppAccessSelection) => void;
+  initialize: (opts: { group?: GroupRecord; appAccess?: AppAccessSelection }) => void;
   reset: () => void;
 };
 
+/**
+ * This hook is used to manage the state of the group form.
+ * It is used to initialize the form with the group data and the app access selection.
+ */
 export function useGroupForm(): UseGroupFormReturn {
   const [name, setName] = useState("");
-  const [selectedPermissions, setSelectedPermissions] = useState<number[]>([]);
-  const [selectedBundleIds, setSelectedBundleIds] = useState<number[]>([]);
-  const [permissions, setPermissions] = useState<PermissionRecord[]>([]);
+  const [appAccess, setAppAccess] = useState<AppAccessSelection>(buildEmptyAppAccess);
 
   const initialize = useCallback(
-    ({
-      group,
-      permissionsPage,
-    }: {
-      group?: GroupRecord;
-      permissionsPage?: PaginatedFetchResult<PermissionRecord>;
-    }) => {
+    ({ group, appAccess: initialAppAccess }: { group?: GroupRecord; appAccess?: AppAccessSelection }) => {
       if (group) {
         setName(group.name ?? "");
-        setSelectedPermissions(group.permissions ?? []);
-        setSelectedBundleIds(group.permission_bundle_ids ?? []);
       }
-      if (permissionsPage?.results) {
-        setPermissions(permissionsPage.results);
-      }
+      setAppAccess(initialAppAccess ?? buildEmptyAppAccess());
     },
     []
   );
 
   const reset = useCallback(() => {
     setName("");
-    setSelectedPermissions([]);
-    setSelectedBundleIds([]);
-    setPermissions([]);
+    setAppAccess(buildEmptyAppAccess());
   }, []);
 
-  return {
-    name,
-    setName,
-    selectedPermissions,
-    setSelectedPermissions,
-    selectedBundleIds,
-    permissions,
-    initialize,
-    reset,
-  };
+  return { name, setName, appAccess, setAppAccess, initialize, reset };
 }

@@ -6,18 +6,8 @@ import { render, screen, waitFor } from "@/tests/__utils__/test-utils";
 import userEvent from "@testing-library/user-event";
 import GroupForm from "@/components/groups/group-form";
 import type { UseGroupFormReturn } from "@/hooks/use-group-form";
-import { PermissionRecord } from "@/types/groups";
+import { buildEmptyAppAccess } from "@/components/permissions/permissions-by-app.constants";
 
-jest.mock("@/app/(app)/settings/actions", () => ({
-  listPermissionsPage: jest.fn(async () => ({
-    results: [
-      { id: 1, name: "Can view assets", codename: "view_asset", content_type: 1 },
-      { id: 2, name: "Can change assets", codename: "change_asset", content_type: 1 },
-      { id: 3, name: "Can view users", codename: "view_user", content_type: 2 },
-    ] as PermissionRecord[],
-    hasMore: false,
-  })),
-}));
 
 describe("GroupForm", () => {
   const mockOnSubmit = jest.fn((e: React.FormEvent<HTMLFormElement>) => {
@@ -25,22 +15,13 @@ describe("GroupForm", () => {
   });
   const mockOnCancel = jest.fn();
   const mockSetName = jest.fn();
-  const mockSetSelectedPermissions = jest.fn();
-
-  const mockPermissions: PermissionRecord[] = [
-    { id: 1, name: "Can view assets", codename: "view_asset", content_type: 1 },
-    { id: 2, name: "Can change assets", codename: "change_asset", content_type: 1 },
-    { id: 3, name: "Can view users", codename: "view_user", content_type: 2 },
-  ];
 
   function makeForm(overrides: Partial<UseGroupFormReturn> = {}): UseGroupFormReturn {
     return {
       name: "",
       setName: mockSetName,
-      selectedPermissions: [],
-      setSelectedPermissions: mockSetSelectedPermissions,
-      selectedBundleIds: [],
-      permissions: mockPermissions,
+      appAccess: buildEmptyAppAccess(),
+      setAppAccess: jest.fn(),
       initialize: jest.fn(),
       reset: jest.fn(),
       ...overrides,
@@ -89,7 +70,7 @@ describe("GroupForm", () => {
     const user = userEvent.setup();
     render(
       <GroupForm
-        form={makeForm({ name: "Test Group", selectedPermissions: [1] })}
+        form={makeForm({ name: "Test Group" })}
         submitting={false}
         onSubmit={mockOnSubmit}
         onCancel={mockOnCancel}

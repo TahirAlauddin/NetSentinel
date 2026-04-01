@@ -23,6 +23,7 @@ class GroupSerializer(serializers.ModelSerializer):
     )
     user_count = serializers.SerializerMethodField()
     permission_bundle_ids = serializers.SerializerMethodField()
+    app_level_permission_count = serializers.SerializerMethodField()
 
     def get_user_count(self, obj):
         return obj.user_set.count()
@@ -33,6 +34,33 @@ class GroupSerializer(serializers.ModelSerializer):
             return list(ext.bundles.values_list("id", flat=True))
         except ExtendedGroup.DoesNotExist:
             return []
+
+    def get_app_level_permission_count(self, obj):
+        """Return unique app count as shown in UI tabs/cards."""
+        try:
+            app_labels = list(obj.extended.bundles.values_list("app", flat=True))
+        except ExtendedGroup.DoesNotExist:
+            return 0
+
+        ui_apps = set()
+        for label in app_labels:
+            if not label:
+                continue
+            if label == "phone_management":
+                ui_apps.add("phone_mgmt")
+            elif label in {
+                "users",
+                "infrastructure",
+                "notifications",
+                "auth",
+                "admin",
+                "contenttypes",
+                "sessions",
+            }:
+                ui_apps.add("users")
+            else:
+                ui_apps.add(label)
+        return len(ui_apps)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -88,6 +116,7 @@ class GroupSerializer(serializers.ModelSerializer):
             "permissions",
             "user_count",
             "permission_bundle_ids",
+            "app_level_permission_count",
         ]
         read_only_fields = ["id"]
 

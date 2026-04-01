@@ -1,6 +1,5 @@
 import React from "react";
 import { GroupRecord } from "@/types/groups";
-import AppLevelPermission from "@/components/permissions/AppLevelPermission";
 
 const AddUserForm = ({
   handleAddUser,
@@ -88,11 +87,6 @@ const AddUserForm = ({
             </option>
           ))}
         </select>
-      </div>
-
-      <div className="space-y-2">
-        <h2 className="text-sm font-medium">App-level permissions</h2>
-        <AppLevelPermission disabled={submitting} />
       </div>
 
       <button

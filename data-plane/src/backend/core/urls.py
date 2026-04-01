@@ -25,7 +25,13 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from rest_framework.routers import DefaultRouter
 
-from users.views import GroupViewSet, PermissionBundleViewSet, PermissionViewSet
+from users.views import (
+    GroupViewSet,
+    PermissionBundleViewSet,
+    PermissionViewSet,
+    create_group_from_permission_bundles_view,
+    update_group_from_permission_bundles_view,
+)
 
 from .health import health_check
 from .views import api_info_view
@@ -70,6 +76,17 @@ urlpatterns = [
     # Djoser endpoints for authentication and user management
     path("api/v1/auth/", include("djoser.urls")),
     path("api/v1/auth/", include("djoser.urls.jwt")),
+    # App-level group create/update aliases under /api/v1 for frontend settings flows.
+    path(
+        "api/v1/groups/app-level/",
+        create_group_from_permission_bundles_view,
+        name="groups-app-level-create",
+    ),
+    path(
+        "api/v1/groups/<int:group_id>/app-level/",
+        update_group_from_permission_bundles_view,
+        name="groups-app-level-update",
+    ),
     path("api/v1/", include(api_v1_rbac_router.urls)),
     # API Documentation
     path(

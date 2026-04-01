@@ -1,53 +1,35 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React from "react";
 import {
   APP_LABELS,
   APP_ORDER,
+  type AccessLevel,
+  type AppAccessSelection,
   type AppKey,
 } from "@/components/permissions/permissions-by-app.constants";
 
-type AccessLevel = "none" | "read" | "edit" | "admin";
+export type { AppAccessSelection, AccessLevel };
 
 type AppAccessLevelSelectProps = {
+  value: AppAccessSelection;
+  onChange: (levels: AppAccessSelection) => void;
   disabled?: boolean;
 };
 
-const MANAGED_APPS: AppKey[] = APP_ORDER.filter((x) => x !== "all");
+const MANAGED_APPS = APP_ORDER.filter((x): x is Exclude<AppKey, "all"> => x !== "all");
 
-type AppAccessSelections = Record<AppKey, AccessLevel>;
-
-async function postAppAccessSelections(levels: AppAccessSelections): Promise<void> {
-  await fetch("/api/dummy/app-level-access", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      app_access_levels: Object.entries(levels).map(([app, level]) => ({
-        app,
-        level,
-      })),
-    }),
-  });
-}
-
+/**
+ * Controlled app-level permission picker.
+ * Parent owns state and receives updated per-app access levels on change.
+ */
 export default function AppLevelPermission({
+  value,
+  onChange,
   disabled,
 }: AppAccessLevelSelectProps) {
-  const initialSelections = useMemo(() => {
-    const base = {} as AppAccessSelections;
-    for (const app of MANAGED_APPS) {
-      base[app] = "none";
-    }
-    return base;
-  }, []);
-  const [selections, setSelections] = useState<AppAccessSelections>(initialSelections);
-
-  const applyLevelForApp = (app: AppKey, level: AccessLevel) => {
-    const next = { ...selections, [app]: level };
-    setSelections(next);
-    void postAppAccessSelections(next).catch((error) => {
-      console.warn("Dummy app-level access post failed:", error);
-    });
+  const applyLevelForApp = (app: Exclude<AppKey, "all">, level: AccessLevel) => {
+    onChange({ ...value, [app]: level });
   };
 
   return (
@@ -63,7 +45,7 @@ export default function AppLevelPermission({
               <span className="text-sm">{APP_LABELS[app]}</span>
               <select
                 className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-                value={selections[app] ?? "none"}
+                value={value[app]}
                 disabled={disabled}
                 onChange={(e) => applyLevelForApp(app, e.target.value as AccessLevel)}
               >
@@ -79,4 +61,3 @@ export default function AppLevelPermission({
     </div>
   );
 }
-

@@ -9,14 +9,14 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { listPermissionsPage, createGroup } from "../../actions";
+import { createGroup } from "../../actions";
 
+/** Create-group page that submits app-level access selections. */
 export default function NewGroupPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const form = useGroupForm();
 
-  const [loadingInitial, setLoadingInitial] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -25,27 +25,6 @@ export default function NewGroupPage() {
       router.replace("/unauthorized");
     }
   }, [session, status, router]);
-
-  useEffect(() => {
-    if (status !== "authenticated" || !session?.user?.isSuperuser) return;
-
-    const load = async () => {
-      setLoadingInitial(true);
-      try {
-        const permissionsPage = await listPermissionsPage(1);
-        form.initialize({ permissionsPage });
-      } catch (error) {
-        console.error("Failed to load permissions:", error);
-        toast.error("Failed to load permissions");
-        router.replace("/settings/groups");
-      } finally {
-        setLoadingInitial(false);
-      }
-    };
-
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, session?.user?.isSuperuser, router]);
 
   const handleCancel = () => {
     router.push("/settings/groups");
@@ -57,8 +36,7 @@ export default function NewGroupPage() {
     try {
       const result = await createGroup(
         form.name,
-        form.selectedPermissions,
-        form.selectedBundleIds,
+        form.appAccess,
       );
       if (result.success) {
         toast.success(result.message || "Group created successfully!");
@@ -82,20 +60,16 @@ export default function NewGroupPage() {
             <div className="space-y-6">
               <SettingsHeader currentPage="Add Group" />
 
-              {loadingInitial ? (
-                <div className="text-sm text-muted-foreground mt-4">Loading...</div>
-              ) : (
-                <div className="bg-card border border-border rounded-lg p-4">
-                  <h2 className="text-sm font-medium mb-4">Add New Group</h2>
-                  <GroupForm
-                    form={form}
-                    submitting={submitting}
-                    onSubmit={handleCreate}
-                    onCancel={handleCancel}
-                    submitLabel="Add Group"
-                  />
-                </div>
-              )}
+              <div className="bg-card border border-border rounded-lg p-4">
+                <h2 className="text-sm font-medium mb-4">Add New Group</h2>
+                <GroupForm
+                  form={form}
+                  submitting={submitting}
+                  onSubmit={handleCreate}
+                  onCancel={handleCancel}
+                  submitLabel="Add Group"
+                />
+              </div>
             </div>
           </div>
         </div>

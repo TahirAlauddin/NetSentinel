@@ -5,7 +5,12 @@ import { authOptions } from "@/lib/auth"
 import { serverApi } from "@/lib/server-api"
 import { GroupRecord } from "@/types/groups"
 import { groupSchema, idSchema, validateData } from "@/lib/security/validation-schemas"
+import type { AppAccessSelection } from "@/components/permissions/permissions-by-app.constants"
 
+/**
+ * Server actions for group CRUD.
+ * Create/update submit app-level access selections to backend app-level endpoints.
+ */
 export async function getGroup(id: number): Promise<GroupRecord | null> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.isSuperuser) {
@@ -60,26 +65,21 @@ export async function listGroups(): Promise<GroupRecord[]> {
 
 export async function createGroup(
   name: string,
-  permissionIds: number[],
-  permissionBundleIds: number[],
+  appAccess: AppAccessSelection,
 ) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.isSuperuser) {
     return { success: false, error: "Not authorized to create groups" }
   }
 
-  const validation = validateData(
-    { name, permissionIds, permissionBundleIds },
-    groupSchema,
-  )
-  if (!validation.success) {
-    return { success: false, error: validation.error }
+  const nameValidation = validateData({ name, permissionIds: [], permissionBundleIds: [] }, groupSchema)
+  if (!nameValidation.success) {
+    return { success: false, error: nameValidation.error }
   }
 
-  const response = await serverApi.post("/groups/", {
-    name: validation.data.name,
-    permissions: validation.data.permissionIds,
-    permission_bundle_ids: validation.data.permissionBundleIds,
+  const response = await serverApi.post("/groups/app-level/", {
+    name: nameValidation.data.name,
+    app_access_levels: Object.entries(appAccess).map(([app, level]) => ({ app, level })),
   })
 
   if (response.error) {
@@ -92,8 +92,7 @@ export async function createGroup(
 export async function updateGroup(
   id: number,
   name: string,
-  permissionIds: number[],
-  permissionBundleIds: number[],
+  appAccess: AppAccessSelection,
 ) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.isSuperuser) {
@@ -105,18 +104,14 @@ export async function updateGroup(
     return { success: false, error: "Invalid group ID" }
   }
 
-  const validation = validateData(
-    { name, permissionIds, permissionBundleIds },
-    groupSchema,
-  )
-  if (!validation.success) {
-    return { success: false, error: validation.error }
+  const nameValidation = validateData({ name, permissionIds: [], permissionBundleIds: [] }, groupSchema)
+  if (!nameValidation.success) {
+    return { success: false, error: nameValidation.error }
   }
 
-  const response = await serverApi.put(`/groups/${idValidation.data}/`, {
-    name: validation.data.name,
-    permissions: validation.data.permissionIds,
-    permission_bundle_ids: validation.data.permissionBundleIds,
+  const response = await serverApi.put(`/groups/${idValidation.data}/app-level/`, {
+    name: nameValidation.data.name,
+    app_access_levels: Object.entries(appAccess).map(([app, level]) => ({ app, level })),
   })
 
   if (response.error) {

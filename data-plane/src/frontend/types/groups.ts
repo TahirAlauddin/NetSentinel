@@ -11,6 +11,8 @@ export interface GroupRecord {
   permissions: number[]; // Permission IDs (always present)
   /** IDs of PermissionBundle rows attached via ExtendedGroup (Layer 3). */
   permission_bundle_ids?: number[];
+  /** UI-level count with users-family collapsed to a single app. */
+  app_level_permission_count?: number;
   /** Only returned by the single-group GET /groups/{id}/ endpoint. */
   permissions_detail?: PermissionRecord[];
   user_count?: number;

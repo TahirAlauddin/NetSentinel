@@ -58,12 +58,12 @@ export const ROUTE_PERMISSIONS: Record<string, string> = {
   "/ipam/documentation": "ipam.view_subnet",
 
   // Settings
-  "/settings": "auth.view_user",
-  "/settings/locations": "auth.view_user",
-  "/settings/departments": "auth.view_user",
-  "/settings/categories": "auth.view_user",
-  "/settings/people": "auth.view_user",
-  "/settings/groups": "auth.view_group",
+  // "/settings": "auth.view_user",
+  // "/settings/locations": "auth.view_user",
+  // "/settings/departments": "auth.view_user",
+  // "/settings/categories": "auth.view_user",
+  // "/settings/people": "auth.view_user",
+  // "/settings/groups": "auth.view_group",
 };
 
 function normalizePathname(pathname: string): string {

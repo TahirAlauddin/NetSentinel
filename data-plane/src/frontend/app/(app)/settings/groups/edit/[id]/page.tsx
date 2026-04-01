@@ -6,12 +6,73 @@ import { SettingsHeader } from "@/components/settings/settings-header";
 import GroupForm from "@/components/groups/group-form";
 import { useGroupForm } from "@/hooks/use-group-form";
 import { validateId } from "@/lib/security/input-validation";
-import { GroupRecord } from "@/types/groups";
+import type { GroupRecord } from "@/types/groups";
+import type { PermissionBundleRecord } from "@/types/groups";
 import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { listGroups, listPermissionsPage, updateGroup } from "../../../actions";
+import { listGroups, listPermissionBundles, updateGroup } from "../../../actions";
+import {
+  buildEmptyAppAccess,
+  type AccessLevel,
+  type AppAccessSelection,
+} from "@/components/permissions/permissions-by-app.constants";
+
+const levelPriority: Record<AccessLevel, number> = {
+  none: 0,
+  read: 1,
+  edit: 2,
+  admin: 3,
+};
+
+/**
+ * This function is used to convert a bundle label to an app key.
+ * This function is only here because there can be inconsistencies in the bundle labels, i.e. phone_management vs phone_mgmt.
+ * It is used to convert the app label from the bundle to the app key.
+ */
+function appKeyFromBundleLabel(
+  appLabel: string,
+): keyof AppAccessSelection | null {
+  const MAP: Record<string, keyof AppAccessSelection> = {
+    phone_management: "phone_mgmt",
+    assets: "assets",
+    contracts: "contracts",
+    ipam: "ipam",
+    telecom: "telecom",
+  };
+  if (MAP[appLabel]) return MAP[appLabel];
+  if (["users", "infrastructure", "notifications", "auth", "admin", "contenttypes", "sessions"].includes(appLabel)) {
+    return "users";
+  }
+  return null;
+}
+
+function levelFromBundleCode(code: string): Exclude<AccessLevel, "none"> | null {
+  if (code.endsWith("_admin_all")) return "admin";
+  if (code.endsWith("_edit_all")) return "edit";
+  if (code.endsWith("_read_all")) return "read";
+  return null;
+}
+
+/** Derive UI app access levels from bundle assignments on an existing group. */
+function appAccessFromBundles(
+  bundleIds: number[],
+  bundles: PermissionBundleRecord[],
+): AppAccessSelection {
+  const access = buildEmptyAppAccess();
+  const bundleIdSet = new Set(bundleIds);
+  for (const bundle of bundles) {
+    if (!bundleIdSet.has(bundle.id)) continue;
+    const appKey = appKeyFromBundleLabel((bundle.app ?? "").trim());
+    const level = levelFromBundleCode(bundle.code ?? "");
+    if (!appKey || !level) continue;
+    if (levelPriority[level] > levelPriority[access[appKey]]) {
+      access[appKey] = level;
+    }
+  }
+  return access;
+}
 
 export default function EditGroupPage() {
   const params = useParams();
@@ -40,10 +101,7 @@ export default function EditGroupPage() {
     const load = async () => {
       setLoadingInitial(true);
       try {
-        const [groupsList, permissionsPage] = await Promise.all([
-          listGroups(),
-          listPermissionsPage(1),
-        ]);
+        const [groupsList, bundles] = await Promise.all([listGroups(), listPermissionBundles()]);
 
         const group = (Array.isArray(groupsList) ? groupsList : []).find(
           (g: GroupRecord) => g.id === groupId
@@ -57,7 +115,7 @@ export default function EditGroupPage() {
 
         form.initialize({
           group,
-          permissionsPage,
+          appAccess: appAccessFromBundles(group.permission_bundle_ids ?? [], bundles),
         });
       } catch (error) {
         console.error("Failed to load group:", error);
@@ -69,7 +127,6 @@ export default function EditGroupPage() {
     };
 
     void load();
-    // form.initialize is stable (useCallback with stable deps)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId, router]);
 
@@ -83,12 +140,7 @@ export default function EditGroupPage() {
 
     setSubmitting(true);
     try {
-      const result = await updateGroup(
-        groupId,
-        form.name,
-        form.selectedPermissions,
-        form.selectedBundleIds,
-      );
+      const result = await updateGroup(groupId, form.name, form.appAccess);
       if (result.success) {
         toast.success(result.message || "Group updated successfully!");
         router.push("/settings/groups");
