@@ -54,7 +54,7 @@ export default function AssetDetailPage() {
 
   if (assetId === null) {
     return (
-      <ProtectedRoute requiredPermission="assets.view_asset">
+      <ProtectedRoute>
         <AppShell>
           <div className="flex-1 overflow-auto bg-gray-50">
             <div className="max-w-7xl mx-auto p-4 space-y-4">
@@ -74,7 +74,7 @@ export default function AssetDetailPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute requiredPermission="assets.view_asset">
+      <ProtectedRoute>
         <AppShell>
           <div className="flex-1 overflow-auto bg-gray-50">
             <div className="max-w-7xl mx-auto p-8">
@@ -90,7 +90,7 @@ export default function AssetDetailPage() {
 
   if (error || !asset) {
     return (
-      <ProtectedRoute requiredPermission="assets.view_asset">
+      <ProtectedRoute>
         <AppShell>
           <div className="flex-1 overflow-auto bg-gray-50">
             <div className="max-w-7xl mx-auto p-4 space-y-4">
@@ -109,7 +109,7 @@ export default function AssetDetailPage() {
   }
 
   return (
-    <ProtectedRoute requiredPermission="assets.view_asset">
+    <ProtectedRoute>
       <AppShell>
         <AssetDetail assetId={assetId} />
       </AppShell>

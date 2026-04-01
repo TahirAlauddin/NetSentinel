@@ -88,7 +88,7 @@ export default function PhoneManagementPage() {
   );
 
   return (
-    <ProtectedRoute requiredPermission="phone_management.view_managedphonenumber">
+    <ProtectedRoute>
       <AppShell>
         <div className="flex-1 p-6 space-y-6">
           <TelecomBreadcrumb

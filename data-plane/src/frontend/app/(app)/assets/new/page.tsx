@@ -9,7 +9,7 @@ import { ProtectedRoute } from "@/components/feedback/protected-route";
 
 export default function NewAssetPage() {
   return (
-    <ProtectedRoute requiredPermission="assets.add_asset">
+    <ProtectedRoute>
       <Suspense fallback={<LoadingState message="Loading new asset page..." />}>
         <AppShell>
           <AssetForm assetId={null} mode="create" />

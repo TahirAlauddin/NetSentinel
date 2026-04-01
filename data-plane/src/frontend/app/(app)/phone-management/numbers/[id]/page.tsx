@@ -52,7 +52,7 @@ export default function ManagedNumberDetailPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute requiredPermission="phone_management.view_managedphonenumber">
+      <ProtectedRoute>
         <AppShell>
           <div className="flex-1 p-6">Loading…</div>
         </AppShell>
@@ -62,7 +62,7 @@ export default function ManagedNumberDetailPage() {
 
   if (!record) {
     return (
-      <ProtectedRoute requiredPermission="phone_management.view_managedphonenumber">
+      <ProtectedRoute>
         <AppShell>
           <div className="flex-1 p-6">
             <p className="text-muted-foreground">Managed number not found.</p>
@@ -76,7 +76,7 @@ export default function ManagedNumberDetailPage() {
   }
 
   return (
-    <ProtectedRoute requiredPermission="phone_management.view_managedphonenumber">
+    <ProtectedRoute>
       <AppShell>
         <div className="flex-1 p-6 space-y-6">
           <TelecomBreadcrumb

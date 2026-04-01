@@ -25,13 +25,13 @@ export default function EditAssetPage() {
 
   if (assetId === null) {
     return (
-      <ProtectedRoute requiredPermission="assets.change_asset">
+      <ProtectedRoute>
         <LoadingState message="Redirecting..." />
       </ProtectedRoute>
     );
   }
   return (
-    <ProtectedRoute requiredPermission="assets.change_asset">
+    <ProtectedRoute>
       <AppShell>
         <div className="flex-1 overflow-auto bg-gray-50">
           <AssetForm assetId={assetId} mode="edit" />

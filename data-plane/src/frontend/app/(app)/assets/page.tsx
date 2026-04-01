@@ -111,7 +111,7 @@ export default function AssetsPage() {
   // ==================== Render ====================
 
   return (
-    <ProtectedRoute requiredPermission="assets.view_asset">
+    <ProtectedRoute>
       <AppShell>
       <div className="flex-1 overflow-auto bg-gray-50">
         <div className="max-w-7xl mx-auto p-8">

@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
 import { Can, usePermissions } from "@/contexts/permissions-context";
-import { getRequiredPermissionForPathname } from "@/constants/route-permissions";
+import { getLayoutRequiredPermission } from "@/lib/layout-required-permissions";
 
 export default function NotificationsLayout({
   children,
@@ -15,7 +15,7 @@ export default function NotificationsLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { can } = usePermissions();
-  const requiredPermission = getRequiredPermissionForPathname(pathname);
+  const requiredPermission = getLayoutRequiredPermission("notifications", pathname);
   const isAllowed = !requiredPermission || can(requiredPermission);
 
   useEffect(() => {

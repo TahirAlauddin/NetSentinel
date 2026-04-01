@@ -156,7 +156,7 @@ export default function AssetsListPage() {
   );
 
   return (
-    <ProtectedRoute requiredPermission="assets.view_asset">
+    <ProtectedRoute>
       <AppShell>
       <div className="space-y-6">
         <nav className="flex items-center gap-2 text-sm text-muted-foreground">

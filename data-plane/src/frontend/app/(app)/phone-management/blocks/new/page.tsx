@@ -80,7 +80,7 @@ export default function NewManagedBlockPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute requiredPermission="phone_management.add_phonenumberblock">
+      <ProtectedRoute>
         <AppShell>
           <div className="flex-1 p-6">Loading…</div>
         </AppShell>
@@ -89,7 +89,7 @@ export default function NewManagedBlockPage() {
   }
 
   return (
-    <ProtectedRoute requiredPermission="phone_management.add_phonenumberblock">
+    <ProtectedRoute>
       <AppShell>
         <div className="flex-1 p-6 space-y-6">
           <TelecomBreadcrumb

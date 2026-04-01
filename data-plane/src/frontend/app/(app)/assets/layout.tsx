@@ -4,14 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
 import { Can, usePermissions } from "@/contexts/permissions-context";
-import { getRequiredPermissionForPathname } from "@/constants/route-permissions";
-
-function getAssetsRequiredPermission(pathname: string): string | undefined {
-  const p = pathname || "";
-  if (p.startsWith("/assets/new")) return "assets.add_asset";
-  if (p.startsWith("/assets/edit/")) return "assets.change_asset";
-  return getRequiredPermissionForPathname(p);
-}
+import { getLayoutRequiredPermission } from "@/lib/layout-required-permissions";
 
 export default function AssetsLayout({
   children,
@@ -21,7 +14,7 @@ export default function AssetsLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { can } = usePermissions();
-  const requiredPermission = getAssetsRequiredPermission(pathname);
+  const requiredPermission = getLayoutRequiredPermission("assets", pathname);
   const isAllowed = !requiredPermission || can(requiredPermission);
 
   useEffect(() => {

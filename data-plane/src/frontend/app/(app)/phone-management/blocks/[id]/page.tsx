@@ -41,7 +41,7 @@ export default function ManagedBlockDetailPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute requiredPermission="phone_management.view_managedphonenumberblock">
+      <ProtectedRoute>
         <AppShell>
           <div className="flex-1 p-6">Loading…</div>
         </AppShell>
@@ -51,7 +51,7 @@ export default function ManagedBlockDetailPage() {
 
   if (!record) {
     return (
-      <ProtectedRoute requiredPermission="phone_management.view_managedphonenumberblock">
+      <ProtectedRoute>
         <AppShell>
           <div className="flex-1 p-6">
             <p className="text-muted-foreground">Number block not found.</p>
@@ -65,7 +65,7 @@ export default function ManagedBlockDetailPage() {
   }
 
   return (
-    <ProtectedRoute requiredPermission="phone_management.view_managedphonenumberblock">
+    <ProtectedRoute>
       <AppShell>
         <div className="flex-1 p-6 space-y-6">
           <TelecomBreadcrumb

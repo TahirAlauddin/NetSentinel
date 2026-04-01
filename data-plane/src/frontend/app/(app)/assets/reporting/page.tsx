@@ -131,7 +131,7 @@ export default function AssetReportingPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute requiredPermission="assets.view_asset">
+      <ProtectedRoute>
         <AppShell>
           <div className="flex-1 overflow-auto bg-gray-50">
             <div className="max-w-7xl mx-auto p-8">
@@ -146,7 +146,7 @@ export default function AssetReportingPage() {
   }
 
   return (
-    <ProtectedRoute requiredPermission="assets.view_asset">
+    <ProtectedRoute>
       <AppShell>
       <div className="flex-1 overflow-auto bg-gray-50">
         <div className="max-w-7xl mx-auto p-8">

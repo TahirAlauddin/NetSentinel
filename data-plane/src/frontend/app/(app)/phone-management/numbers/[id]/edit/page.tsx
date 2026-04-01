@@ -117,7 +117,7 @@ export default function EditManagedNumberPage() {
 
   if (loading || !record) {
     return (
-      <ProtectedRoute requiredPermission="phone_management.change_managedphonenumber">
+      <ProtectedRoute>
         <AppShell>
           <div className="flex-1 p-6">
             {loading ? "Loading…" : "Managed number not found."}
@@ -128,7 +128,7 @@ export default function EditManagedNumberPage() {
   }
 
   return (
-    <ProtectedRoute requiredPermission="phone_management.change_managedphonenumber">
+    <ProtectedRoute>
       <AppShell>
         <div className="flex-1 p-6 space-y-6">
           <TelecomBreadcrumb
