@@ -2,6 +2,7 @@ from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.request import Request
 from rest_framework.response import Response
+from django.conf import settings
 
 
 @api_view(["GET"])
@@ -17,8 +18,14 @@ def api_info_view(request: Request) -> Response:
             "version": "v1",
             "endpoints": {
                 "authentication": "/api/v1/auth/",
+                "users": "/api/v1/users/",
                 "infrastructure": "/api/v1/infrastructure/",
                 "assets": "/api/v1/assets/",
+                "telecom": "/api/v1/telecom/",
+                "ipam": "/api/v1/ipam/",
+                "contracts": "/api/v1/contracts/",
+                "phone_management": "/api/v1/phone-management/",
+                "notifications": "/api/v1/notifications/",
                 "user_stats": "/api/v1/stats/",
                 "documentation": "/swagger/",
             },
@@ -27,5 +34,21 @@ def api_info_view(request: Request) -> Response:
                 "Use /api/v1/auth/users/ to register or "
                 "/api/v1/auth/jwt/create/ to login."
             ),
+        }
+    )
+
+
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def company_profile_view(_request: Request) -> Response:
+    """Return company profile values from Django settings."""
+    profile = getattr(settings, "COMPANY_PROFILE", {})
+    return Response(
+        {
+            "company_name": profile.get("company_name", "NetSentinel Corp"),
+            "subdomain": profile.get("subdomain", "netsentinel.app"),
+            "main_contact": profile.get("main_contact", "admin@netsentinel.com"),
+            "phone_number": profile.get("phone_number", ""),
+            "time_zone": profile.get("time_zone", "UTC"),
         }
     )

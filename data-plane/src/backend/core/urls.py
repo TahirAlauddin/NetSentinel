@@ -34,7 +34,7 @@ from users.views import (
 )
 
 from .health import health_check
-from .views import api_info_view
+from .views import api_info_view, company_profile_view
 
 # Aliases for /api/v1/groups/ and /api/v1/permissions/ (same ViewSets as users.urls).
 # Must be included after all other path("api/v1/<app>/", ...) entries so they are not shadowed.
@@ -73,6 +73,7 @@ urlpatterns = [
     path("api/v1/contracts/", include("contracts.urls")),
     path("api/v1/phone-management/", include("phone_management.urls")),
     path("api/v1/notifications/", include("notifications.urls")),
+    path("api/v1/core/company-profile/", company_profile_view, name="company-profile"),
     # Djoser endpoints for authentication and user management
     path("api/v1/auth/", include("djoser.urls")),
     path("api/v1/auth/", include("djoser.urls.jwt")),

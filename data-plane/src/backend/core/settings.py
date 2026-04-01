@@ -336,3 +336,12 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "False").lower() == "true"
 EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False").lower() == "true"
+
+# Company profile shown in frontend Settings -> Overview
+COMPANY_PROFILE = {
+    "company_name": "NetSentinel Corp",
+    "subdomain": "netsentinel.app",
+    "main_contact": "admin@netsentinel.com",
+    "phone_number": "",
+    "time_zone": "Eastern Time (US & Canada)",
+}

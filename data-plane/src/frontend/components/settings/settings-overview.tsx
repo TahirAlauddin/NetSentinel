@@ -4,17 +4,16 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EditCompany } from "@/components/edit-company";
 
-export function SettingsOverview() {
-  const [isEditing, setIsEditing] = useState(false);
+type CompanyData = {
+  companyName: string;
+  subdomain: string;
+  mainContact: string;
+  phoneNumber: string;
+  timeZone: string;
+};
 
-  // Mock data - in real app, this would come from props or API
-  const companyData = {
-    companyName: "NetSentinel Corp",
-    subdomain: "netsentinel.app",
-    mainContact: "admin@netsentinel.com",
-    phoneNumber: "No phone number set",
-    timeZone: "Eastern Time (US & Canada)",
-  };
+export function SettingsOverview({ companyData }: { companyData: CompanyData }) {
+  const [isEditing, setIsEditing] = useState(false);
 
   if (isEditing) {
     return (
