@@ -225,3 +225,27 @@ class UtilityContact(models.Model):
     def __str__(self):
         utility_type_display = self.get_utility_type_display() if self.utility_type else "Unknown"
         return f"{self.name} ({utility_type_display}) - {self.location}"
+
+
+class CompanyProfile(models.Model):
+    """
+    Tenant/company settings editable from frontend Settings -> Overview.
+    """
+
+    company_name = models.CharField(max_length=255, default="NetSentinel Corp")
+    subdomain = models.CharField(max_length=255, default="netsentinel.app")
+    company_url = models.URLField(blank=True, default="")
+    main_contact = models.EmailField(default="admin@netsentinel.com")
+    phone_country = models.CharField(max_length=8, blank=True, default="+1")
+    phone_number = models.CharField(max_length=30, blank=True, default="")
+    phone_extension = models.CharField(max_length=16, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Company Profile"
+        verbose_name_plural = "Company Profiles"
+        ordering = ["id"]
+
+    def __str__(self):
+        return self.company_name

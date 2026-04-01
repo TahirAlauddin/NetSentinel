@@ -3,6 +3,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.request import Request
 from rest_framework.response import Response
 from django.conf import settings
+from infrastructure.models import CompanyProfile
+from infrastructure.serializers import CompanyProfileSerializer
 
 
 @api_view(["GET"])
@@ -38,17 +40,32 @@ def api_info_view(request: Request) -> Response:
     )
 
 
-@api_view(["GET"])
+@api_view(["GET", "PATCH", "PUT"])
 @permission_classes([permissions.IsAuthenticated])
-def company_profile_view(_request: Request) -> Response:
-    """Return company profile values from Django settings."""
-    profile = getattr(settings, "COMPANY_PROFILE", {})
-    return Response(
-        {
-            "company_name": profile.get("company_name", "NetSentinel Corp"),
-            "subdomain": profile.get("subdomain", "netsentinel.app"),
-            "main_contact": profile.get("main_contact", "admin@netsentinel.com"),
-            "phone_number": profile.get("phone_number", ""),
-            "time_zone": profile.get("time_zone", "UTC"),
-        }
+def company_profile_view(request: Request) -> Response:
+    """
+    Get or update singleton company profile.
+    Uses DB row, falling back to Django settings defaults for initial creation.
+    """
+    defaults = getattr(settings, "COMPANY_PROFILE", {})
+    profile, _created = CompanyProfile.objects.get_or_create(
+        id=1,
+        defaults={
+            "company_name": defaults.get("company_name", "NetSentinel Corp"),
+            "subdomain": defaults.get("subdomain", "netsentinel.app"),
+            "company_url": defaults.get("company_url", ""),
+            "main_contact": defaults.get("main_contact", "admin@netsentinel.com"),
+            "phone_country": defaults.get("phone_country", "+1"),
+            "phone_number": defaults.get("phone_number", ""),
+            "phone_extension": defaults.get("phone_extension", ""),
+        },
     )
+
+    if request.method == "GET":
+        return Response(CompanyProfileSerializer(profile).data)
+
+    partial = request.method == "PATCH"
+    serializer = CompanyProfileSerializer(profile, data=request.data, partial=partial)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(serializer.data)

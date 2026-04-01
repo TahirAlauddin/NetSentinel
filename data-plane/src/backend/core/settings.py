@@ -341,7 +341,9 @@ EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False").lower() == "true"
 COMPANY_PROFILE = {
     "company_name": "NetSentinel Corp",
     "subdomain": "netsentinel.app",
+    "company_url": "",
     "main_contact": "admin@netsentinel.com",
+    "phone_country": "+1",
     "phone_number": "",
-    "time_zone": "Eastern Time (US & Canada)",
+    "phone_extension": "",
 }

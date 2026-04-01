@@ -3,7 +3,7 @@ import type { BaseApiResponse } from "../../types/api-client";
 
 /**
  * Company/settings payload for update (matches backend when implemented).
- * Backend endpoint: PATCH /api/v1/settings/company/ (or equivalent).
+ * Backend endpoint: PATCH /api/v1/core/company-profile/
  */
 export interface CompanyUpdateDto {
   company_name?: string;
@@ -13,12 +13,6 @@ export interface CompanyUpdateDto {
   phone_country?: string;
   phone_number?: string;
   phone_extension?: string;
-  time_zone?: string;
-  fiscal_year_month?: string;
-  fiscal_year_day?: string;
-  isolate_workspaces?: boolean;
-  show_free_modules?: boolean;
-  enable_chat_support?: boolean;
 }
 
 /**
@@ -28,10 +22,10 @@ export interface CompanyUpdateDto {
 class SettingsApiClient extends BaseApiClient {
   /**
    * Update company settings.
-   * Calls PATCH /settings/company/ when backend is available.
+   * Calls PATCH /core/company-profile/.
    */
   async updateCompany<T = unknown>(data: CompanyUpdateDto): Promise<BaseApiResponse<T>> {
-    return this.patch<T>("/settings/company/", data);
+    return this.patch<T>("/core/company-profile/", data);
   }
 }
 

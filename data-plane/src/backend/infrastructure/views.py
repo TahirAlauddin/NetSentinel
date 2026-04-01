@@ -4,6 +4,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from .models import (
+    CompanyProfile,
     CarrierContact,
     Category,
     Circuit,
@@ -14,6 +15,7 @@ from .models import (
     UtilityContact,
 )
 from .serializers import (
+    CompanyProfileSerializer,
     CarrierContactSerializer,
     CategorySerializer,
     CircuitSerializer,
@@ -111,3 +113,12 @@ class UtilityContactViewSet(viewsets.ModelViewSet):
 
     queryset = UtilityContact.objects.select_related("location").all()
     serializer_class = UtilityContactSerializer
+
+
+class CompanyProfileViewSet(viewsets.ModelViewSet):
+    """
+    CRUD for company profile settings.
+    """
+
+    queryset = CompanyProfile.objects.all().order_by("id")
+    serializer_class = CompanyProfileSerializer

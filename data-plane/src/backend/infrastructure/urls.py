@@ -2,6 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
+    CompanyProfileViewSet,
     CarrierContactViewSet,
     CategoryViewSet,
     CircuitViewSet,
@@ -21,6 +22,7 @@ router.register(r"categories", CategoryViewSet, basename="category")
 router.register(r"contacts", ContactViewSet, basename="contact")
 router.register(r"carrier-contacts", CarrierContactViewSet, basename="carrier-contact")
 router.register(r"utility-contacts", UtilityContactViewSet, basename="utility-contact")
+router.register(r"company-profiles", CompanyProfileViewSet, basename="company-profile")
 
 urlpatterns = [
     path("", include(router.urls)),
