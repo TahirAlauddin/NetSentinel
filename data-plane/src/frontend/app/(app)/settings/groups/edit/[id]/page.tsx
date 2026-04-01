@@ -17,7 +17,7 @@ import {
   buildEmptyAppAccess,
   type AccessLevel,
   type AppAccessSelection,
-} from "@/components/permissions/permissions-by-app.constants";
+} from "@/constants/permissions-by-app";
 
 const levelPriority: Record<AccessLevel, number> = {
   none: 0,

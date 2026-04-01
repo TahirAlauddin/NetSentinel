@@ -7,7 +7,7 @@ import {
   type AccessLevel,
   type AppAccessSelection,
   type AppKey,
-} from "@/components/permissions/permissions-by-app.constants";
+} from "@/constants/permissions-by-app";
 
 export type { AppAccessSelection, AccessLevel };
 

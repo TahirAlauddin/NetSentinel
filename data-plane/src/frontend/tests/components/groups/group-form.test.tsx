@@ -6,7 +6,7 @@ import { render, screen, waitFor } from "@/tests/__utils__/test-utils";
 import userEvent from "@testing-library/user-event";
 import GroupForm from "@/components/groups/group-form";
 import type { UseGroupFormReturn } from "@/hooks/use-group-form";
-import { buildEmptyAppAccess } from "@/components/permissions/permissions-by-app.constants";
+import { buildEmptyAppAccess } from "@/constants/permissions-by-app";
 
 
 describe("GroupForm", () => {

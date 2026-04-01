@@ -10,7 +10,7 @@
  *   - Admin     → all permissions in that UI app bucket (including add_/delete_/unlisted codenames).
  */
 
-import type { AppKey } from "@/components/permissions/permissions-by-app.constants";
+import type { AppKey } from "@/constants/permissions-by-app";
 
 /** `app_label` from Django — for documentation / maintenance only. */
 export const DJANGO_APP_MODEL_STEMS = {

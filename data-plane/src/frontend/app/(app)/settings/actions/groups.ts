@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth"
 import { serverApi } from "@/lib/server-api"
 import { GroupRecord } from "@/types/groups"
 import { groupSchema, idSchema, validateData } from "@/lib/security/validation-schemas"
-import type { AppAccessSelection } from "@/components/permissions/permissions-by-app.constants"
+import type { AppAccessSelection } from "@/constants/permissions-by-app"
 
 /**
  * Server actions for group CRUD.

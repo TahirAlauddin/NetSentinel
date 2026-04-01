@@ -5,7 +5,7 @@ import type { GroupRecord } from "@/types/groups";
 import {
   buildEmptyAppAccess,
   type AppAccessSelection,
-} from "@/components/permissions/permissions-by-app.constants";
+} from "@/constants/permissions-by-app";
 
 export type UseGroupFormReturn = {
   name: string;
