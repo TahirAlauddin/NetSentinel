@@ -12,6 +12,7 @@ import { AssetChart } from "@/components/apps/assets/AssetChart";
 import { AssetsDashboardNav } from "@/components/apps/assets/AssetsDashboardNav";
 import { calculateAssetMetrics } from "@/components/apps/assets/utils";
 import { Can } from "@/contexts/permissions-context";
+import { ProtectedRoute } from "@/components/feedback/protected-route";
 
 /**
  * AssetsPage component - Main page for asset management
@@ -110,7 +111,8 @@ export default function AssetsPage() {
   // ==================== Render ====================
 
   return (
-    <AppShell>
+    <ProtectedRoute requiredPermission="assets.view_asset">
+      <AppShell>
       <div className="flex-1 overflow-auto bg-gray-50">
         <div className="max-w-7xl mx-auto p-8">
           {/* Header */}
@@ -174,6 +176,7 @@ export default function AssetsPage() {
           )}
         </div>
       </div>
-    </AppShell>
+      </AppShell>
+    </ProtectedRoute>
   );
 }
