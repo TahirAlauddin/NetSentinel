@@ -5,22 +5,23 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { usePermissions } from "@/contexts/permissions-context";
 import { getRequiredPermissionForPathname } from "@/constants/route-permissions";
+import { logPermissions } from "@/lib/permissions-debug";
+
+function SessionWaitSpinner({ label }: { label: string }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
+      <div className="ml-4 text-lg">{label}</div>
+    </div>
+  );
+}
 
 /**
  * RoutePermissionGuard Component
- * 
- * A wrapper component that protects routes by checking authentication and authorization.
- * This component ensures that only authenticated users can access protected content,
- * and optionally enforces role-based access control for admin-only areas.
- * 
- * Features:
- * - Authentication check (user must be logged in)
- * - Authorization check (user must have the required permission)
- * - Automatic redirection to unauthorized page if access is denied
- * - Loading state during authentication checks
- * 
- * @param children - The content to render if access is granted
- * @returns The RoutePermissionGuard component
+ *
+ * Wraps the authenticated app shell. While NextAuth session is loading, permissions are
+ * empty in context — nested layouts must not run (they would treat that as “denied” and
+ * redirect to /unauthorized). We block children until status is known, then enforce RBAC.
  */
 export function RoutePermissionGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -32,13 +33,35 @@ export function RoutePermissionGuard({ children }: { children: React.ReactNode }
   const isAllowed = !requiredPermission || can(requiredPermission);
 
   useEffect(() => {
-    if (status !== "authenticated") return;
-    if (isAllowed) return;
-    router.replace("/unauthorized");
-  }, [status, isAllowed, router]);
+    if (status === "loading") {
+      return;
+    }
 
-  if (status !== "authenticated") return <>{children}</>;
-  if (!isAllowed) return null;
+    if (status === "unauthenticated") {
+      router.replace("/login");
+      return;
+    }
+
+    if (status !== "authenticated") return;
+
+
+    if (!requiredPermission) return;
+    if (!can(requiredPermission)) {
+      router.replace("/unauthorized");
+    }
+  }, [status, pathname, requiredPermission, can, router]);
+
+  if (status === "loading") {
+    return <SessionWaitSpinner label="Loading session…" />;
+  }
+
+  if (status === "unauthenticated") {
+    return <SessionWaitSpinner label="Redirecting to sign in…" />;
+  }
+
+  if (!isAllowed) {
+    return <SessionWaitSpinner label="Redirecting…" />;
+  }
 
   return <>{children}</>;
 }

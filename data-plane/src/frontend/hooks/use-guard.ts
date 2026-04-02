@@ -14,12 +14,15 @@ export function useGuard(permission?: string) {
   const isAllowed = status === "authenticated" && (!permission || can(permission));
 
   useEffect(() => {
-    if (status === "loading") return;
+    if (status === "loading") {
+      return;
+    }
 
     if (status !== "authenticated") {
       router.replace("/login");
       return;
     }
+
 
     if (permission && !can(permission)) {
       router.replace("/unauthorized");
