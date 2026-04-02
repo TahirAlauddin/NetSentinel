@@ -232,4 +232,3 @@ class UserAssignmentsUpdateSerializer(serializers.Serializer):
         required=True,
         allow_empty=True,
     )
-
