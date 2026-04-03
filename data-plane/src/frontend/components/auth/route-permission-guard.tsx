@@ -34,19 +34,31 @@ export function RoutePermissionGuard({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     if (status === "loading") {
+      logPermissions("RoutePermissionGuard:session_loading", { pathname });
       return;
     }
 
     if (status === "unauthenticated") {
+      logPermissions("RoutePermissionGuard:redirect_login", { pathname, status });
       router.replace("/login");
       return;
     }
 
     if (status !== "authenticated") return;
 
+    logPermissions("RoutePermissionGuard:check", {
+      pathname,
+      requiredPermission: requiredPermission ?? "(none)",
+      hasRequired: Boolean(requiredPermission),
+      allowed: !requiredPermission || can(requiredPermission),
+    });
 
     if (!requiredPermission) return;
     if (!can(requiredPermission)) {
+      logPermissions("RoutePermissionGuard:redirect_unauthorized", {
+        pathname,
+        requiredPermission,
+      });
       router.replace("/unauthorized");
     }
   }, [status, pathname, requiredPermission, can, router]);
