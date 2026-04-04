@@ -15,18 +15,18 @@ from infrastructure.models import Category, Circuit, Department, Location, Point
 class TestInvalidDataFormats:
     """Test handling of invalid data formats."""
 
-    def test_invalid_json_payload(self, authenticated_api_client):
+    def test_invalid_json_payload(self, authenticated_api_client_with_assets_perms):
         """Test that invalid JSON returns 400."""
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/tags/",
             data="invalid json{",
             content_type="application/json",
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_invalid_content_type(self, authenticated_api_client):
+    def test_invalid_content_type(self, authenticated_api_client_with_assets_perms):
         """Test that invalid content type is handled."""
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/tags/",
             data={"name": "Test"},
             content_type="text/plain",
@@ -37,7 +37,7 @@ class TestInvalidDataFormats:
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         ]
 
-    def test_invalid_date_format(self, authenticated_api_client, user):
+    def test_invalid_date_format(self, authenticated_api_client_with_assets_perms, user):
         """Test that invalid date format returns validation error."""
         category = AssetCategory.objects.create(name="Laptop")
         data = {
@@ -45,7 +45,7 @@ class TestInvalidDataFormats:
             "category": category.id,
             "purchase_date": "invalid-date",
         }
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/",
             data,
             format="json",
@@ -77,26 +77,26 @@ class TestInvalidDataFormats:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_invalid_url_format(self, authenticated_api_client):
+    def test_invalid_url_format(self, authenticated_api_client_with_assets_perms):
         """Test that invalid URL format returns validation error."""
         data = {
             "name": "Test Vendor",
             "website": "not-a-valid-url",
         }
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/vendors/",
             data,
             format="json",
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_invalid_hex_color_format(self, authenticated_api_client):
+    def test_invalid_hex_color_format(self, authenticated_api_client_with_assets_perms):
         """Test that invalid hex color format returns validation error."""
         data = {
             "name": "Test Tag",
             "color": "invalid-color",
         }
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/tags/",
             data,
             format="json",
@@ -117,12 +117,12 @@ class TestInvalidDataFormats:
 class TestMissingRequiredFields:
     """Test handling of missing required fields."""
 
-    def test_create_asset_without_category(self, authenticated_api_client):
+    def test_create_asset_without_category(self, authenticated_api_client_with_assets_perms):
         """Test that creating asset without category returns 400."""
         data = {
             "name": "Test Asset",
         }
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/",
             data,
             format="json",
@@ -176,22 +176,22 @@ class TestMissingRequiredFields:
 class TestDuplicateEntries:
     """Test handling of duplicate entries (unique constraints)."""
 
-    def test_duplicate_asset_tag_name(self, authenticated_api_client):
+    def test_duplicate_asset_tag_name(self, authenticated_api_client_with_assets_perms):
         """Test that duplicate asset tag name returns 400."""
         AssetTag.objects.create(name="Duplicate Tag")
         data = {"name": "Duplicate Tag"}
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/tags/",
             data,
             format="json",
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_duplicate_vendor_name(self, authenticated_api_client):
+    def test_duplicate_vendor_name(self, authenticated_api_client_with_assets_perms):
         """Test that duplicate vendor name returns 400."""
         Vendor.objects.create(name="Duplicate Vendor")
         data = {"name": "Duplicate Vendor"}
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/vendors/",
             data,
             format="json",
@@ -220,7 +220,7 @@ class TestDuplicateEntries:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_duplicate_asset_relation(self, authenticated_api_client):
+    def test_duplicate_asset_relation(self, authenticated_api_client_with_assets_perms):
         """Test that duplicate asset relation returns 400."""
         category = AssetCategory.objects.create(name="Laptop")
         asset1 = Asset.objects.create(name="Asset 1", category=category)
@@ -234,7 +234,7 @@ class TestDuplicateEntries:
             "asset": asset1.id,
             "related_asset": asset2.id,
         }
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/relations/",
             data,
             format="json",
@@ -280,13 +280,13 @@ class TestDuplicateEntries:
 class TestForeignKeyViolations:
     """Test handling of foreign key violations."""
 
-    def test_asset_with_nonexistent_category(self, authenticated_api_client):
+    def test_asset_with_nonexistent_category(self, authenticated_api_client_with_assets_perms):
         """Test that creating asset with nonexistent category returns 400."""
         data = {
             "name": "Test Asset",
             "category": 99999,  # Non-existent ID
         }
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/",
             data,
             format="json",
@@ -322,13 +322,13 @@ class TestForeignKeyViolations:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_asset_attachment_with_nonexistent_asset(self, authenticated_api_client, user):
+    def test_asset_attachment_with_nonexistent_asset(self, authenticated_api_client_with_assets_perms, user):
         """Test that creating attachment with nonexistent asset returns 400."""
         data = {
             "asset": 99999,  # Non-existent ID
             "name": "Test Attachment",
         }
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/attachments/",
             data,
             format="json",
@@ -420,28 +420,28 @@ class TestAuthenticationFailures:
 class TestNotFoundErrors:
     """Test 404 Not Found error scenarios."""
 
-    def test_get_nonexistent_asset(self, authenticated_api_client):
+    def test_get_nonexistent_asset(self, authenticated_api_client_with_assets_perms):
         """Test that getting nonexistent asset returns 404."""
-        response = authenticated_api_client.get("/api/v1/assets/99999/")
+        response = authenticated_api_client_with_assets_perms.get("/api/v1/assets/99999/")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_update_nonexistent_asset(self, authenticated_api_client):
+    def test_update_nonexistent_asset(self, authenticated_api_client_with_assets_perms):
         """Test that updating nonexistent asset returns 404."""
         category = AssetCategory.objects.create(name="Laptop")
         data = {
             "name": "Updated Asset",
             "category": category.id,
         }
-        response = authenticated_api_client.put(
+        response = authenticated_api_client_with_assets_perms.put(
             "/api/v1/assets/99999/",
             data,
             format="json",
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_delete_nonexistent_asset(self, authenticated_api_client):
+    def test_delete_nonexistent_asset(self, authenticated_api_client_with_assets_perms):
         """Test that deleting nonexistent asset returns 404."""
-        response = authenticated_api_client.delete("/api/v1/assets/99999/")
+        response = authenticated_api_client_with_assets_perms.delete("/api/v1/assets/99999/")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_get_nonexistent_location(self, authenticated_api_client):
@@ -449,9 +449,9 @@ class TestNotFoundErrors:
         response = authenticated_api_client.get("/api/v1/infrastructure/locations/99999/")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_get_nonexistent_category(self, authenticated_api_client):
+    def test_get_nonexistent_category(self, authenticated_api_client_with_assets_perms):
         """Test that getting nonexistent category returns 404."""
-        response = authenticated_api_client.get("/api/v1/assets/categories/99999/")
+        response = authenticated_api_client_with_assets_perms.get("/api/v1/assets/categories/99999/")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
@@ -460,7 +460,7 @@ class TestNotFoundErrors:
 class TestValidationErrors:
     """Test validation error scenarios (400 Bad Request)."""
 
-    def test_asset_impact_out_of_range(self, authenticated_api_client):
+    def test_asset_impact_out_of_range(self, authenticated_api_client_with_assets_perms):
         """Test that asset impact out of valid range returns 400."""
         category = AssetCategory.objects.create(name="Laptop")
         data = {
@@ -468,7 +468,7 @@ class TestValidationErrors:
             "category": category.id,
             "impact": 5,  # Valid range is 1-3
         }
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/",
             data,
             format="json",
@@ -494,7 +494,7 @@ class TestValidationErrors:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_asset_purchase_price_negative(self, authenticated_api_client):
+    def test_asset_purchase_price_negative(self, authenticated_api_client_with_assets_perms):
         """Test that negative purchase price returns 400."""
         category = AssetCategory.objects.create(name="Laptop")
         data = {
@@ -502,7 +502,7 @@ class TestValidationErrors:
             "category": category.id,
             "purchase_price": -100,
         }
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/",
             data,
             format="json",
@@ -534,7 +534,7 @@ class TestValidationErrors:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_asset_status_invalid_choice(self, authenticated_api_client):
+    def test_asset_status_invalid_choice(self, authenticated_api_client_with_assets_perms):
         """Test that invalid asset status choice returns 400."""
         category = AssetCategory.objects.create(name="Laptop")
         data = {
@@ -542,7 +542,7 @@ class TestValidationErrors:
             "category": category.id,
             "status": "invalid_status",  # Must be one of the valid choices
         }
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/",
             data,
             format="json",
@@ -555,7 +555,7 @@ class TestValidationErrors:
 class TestLargePayloadHandling:
     """Test handling of large payloads."""
 
-    def test_large_asset_name(self, authenticated_api_client):
+    def test_large_asset_name(self, authenticated_api_client_with_assets_perms):
         """Test that very long asset name is handled."""
         category = AssetCategory.objects.create(name="Laptop")
         # Create a name longer than max_length (255)
@@ -564,7 +564,7 @@ class TestLargePayloadHandling:
             "name": long_name,
             "category": category.id,
         }
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/",
             data,
             format="json",
@@ -575,7 +575,7 @@ class TestLargePayloadHandling:
             status.HTTP_201_CREATED,
         ]
 
-    def test_large_text_field(self, authenticated_api_client):
+    def test_large_text_field(self, authenticated_api_client_with_assets_perms):
         """Test that large text field is handled."""
         category = AssetCategory.objects.create(name="Laptop")
         large_notes = "A" * 10000  # Very large notes field
@@ -584,7 +584,7 @@ class TestLargePayloadHandling:
             "category": category.id,
             "notes": large_notes,
         }
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/",
             data,
             format="json",
@@ -592,7 +592,7 @@ class TestLargePayloadHandling:
         # Should accept it (text fields don't have max_length)
         assert response.status_code == status.HTTP_201_CREATED
 
-    def test_many_related_objects(self, authenticated_api_client, user):
+    def test_many_related_objects(self, authenticated_api_client_with_assets_perms, user):
         """Test creating asset with many related objects."""
         category = AssetCategory.objects.create(name="Laptop")
         location = Location.objects.create(
@@ -612,7 +612,7 @@ class TestLargePayloadHandling:
             "vendor": vendor.id,
             "tags": [tag.id for tag in tags],
         }
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/",
             data,
             format="json",
@@ -625,7 +625,7 @@ class TestLargePayloadHandling:
 class TestSQLInjectionAttempts:
     """Test SQL injection attempt handling."""
 
-    def test_sql_injection_in_name_field(self, authenticated_api_client):
+    def test_sql_injection_in_name_field(self, authenticated_api_client_with_assets_perms):
         """Test that SQL injection attempts in name field are sanitized."""
         category = AssetCategory.objects.create(name="Laptop")
         # Common SQL injection patterns
@@ -641,7 +641,7 @@ class TestSQLInjectionAttempts:
                 "name": sql_injection,
                 "category": category.id,
             }
-            response = authenticated_api_client.post(
+            response = authenticated_api_client_with_assets_perms.post(
                 "/api/v1/assets/",
                 data,
                 format="json",
@@ -657,26 +657,26 @@ class TestSQLInjectionAttempts:
                 asset = Asset.objects.get(name=sql_injection)
                 assert asset.name == sql_injection
 
-    def test_sql_injection_in_search_query(self, authenticated_api_client):
+    def test_sql_injection_in_search_query(self, authenticated_api_client_with_assets_perms):
         """Test that SQL injection in search query is handled safely."""
         category = AssetCategory.objects.create(name="Laptop")
         Asset.objects.create(name="Test Asset", category=category)
 
         sql_injection = "'; DROP TABLE assets_asset; --"
-        response = authenticated_api_client.get(f"/api/v1/assets/?search={sql_injection}")
+        response = authenticated_api_client_with_assets_perms.get(f"/api/v1/assets/?search={sql_injection}")
         # Should not crash or execute SQL
         assert response.status_code in [
             status.HTTP_200_OK,
             status.HTTP_400_BAD_REQUEST,
         ]
 
-    def test_sql_injection_in_filter_parameter(self, authenticated_api_client):
+    def test_sql_injection_in_filter_parameter(self, authenticated_api_client_with_assets_perms):
         """Test that SQL injection in filter parameter is handled safely."""
         category = AssetCategory.objects.create(name="Laptop")
         Asset.objects.create(name="Test Asset", category=category)
 
         sql_injection = "1' OR '1'='1"
-        response = authenticated_api_client.get(f"/api/v1/assets/?category={sql_injection}")
+        response = authenticated_api_client_with_assets_perms.get(f"/api/v1/assets/?category={sql_injection}")
         # Should not crash or execute SQL
         assert response.status_code in [
             status.HTTP_200_OK,
@@ -690,7 +690,7 @@ class TestSQLInjectionAttempts:
 class TestXSSAttempts:
     """Test XSS (Cross-Site Scripting) attempt handling."""
 
-    def test_xss_in_name_field(self, authenticated_api_client):
+    def test_xss_in_name_field(self, authenticated_api_client_with_assets_perms):
         """Test that XSS attempts in name field are sanitized or escaped."""
         category = AssetCategory.objects.create(name="Laptop")
         xss_attempts = [
@@ -706,7 +706,7 @@ class TestXSSAttempts:
                 "name": xss_attempt,
                 "category": category.id,
             }
-            response = authenticated_api_client.post(
+            response = authenticated_api_client_with_assets_perms.post(
                 "/api/v1/assets/",
                 data,
                 format="json",
@@ -717,12 +717,12 @@ class TestXSSAttempts:
             asset = Asset.objects.get(name=xss_attempt)
             assert asset.name == xss_attempt
             # The API response should escape HTML in JSON
-            get_response = authenticated_api_client.get(f"/api/v1/assets/{asset.id}/")
+            get_response = authenticated_api_client_with_assets_perms.get(f"/api/v1/assets/{asset.id}/")
             assert get_response.status_code == status.HTTP_200_OK
             # JSON should contain the literal string, not execute script
             assert xss_attempt in str(get_response.data["name"])
 
-    def test_xss_in_text_field(self, authenticated_api_client):
+    def test_xss_in_text_field(self, authenticated_api_client_with_assets_perms):
         """Test that XSS attempts in text fields are handled."""
         category = AssetCategory.objects.create(name="Laptop")
         xss_attempt = "<script>alert('XSS')</script>"
@@ -731,7 +731,7 @@ class TestXSSAttempts:
             "category": category.id,
             "notes": xss_attempt,
         }
-        response = authenticated_api_client.post(
+        response = authenticated_api_client_with_assets_perms.post(
             "/api/v1/assets/",
             data,
             format="json",
