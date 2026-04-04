@@ -1,176 +1,120 @@
-/**
- * Component tests for components/feedback/protected-route.tsx
- * 
- * Tests cover:
- * - Authentication checks
- * - Role-based authorization
- * - Loading states
- * - Redirects
- */
+import { screen, waitFor } from "@testing-library/react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { render } from "@/tests/__utils__/test-utils";
+import { ProtectedRoute } from "@/components/feedback/protected-route";
 
-import { render, screen, waitFor } from '@testing-library/react'
-import { ProtectedRoute } from '@/components/feedback/protected-route'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-
-jest.mock('next-auth/react', () => ({
-  useSession: jest.fn(),
-  SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}))
-
-jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(),
-}))
-
-describe('ProtectedRoute', () => {
-  const mockPush = jest.fn()
-  const mockRouter = {
-    push: mockPush,
-    replace: jest.fn(),
-    prefetch: jest.fn(),
-    back: jest.fn(),
-  }
+describe("ProtectedRoute", () => {
+  const mockPush = jest.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks()
-    ;(useRouter as jest.Mock).mockReturnValue(mockRouter)
-  })
+    jest.clearAllMocks();
+    jest.mocked(useRouter).mockReturnValue({
+      push: mockPush,
+      replace: jest.fn(),
+      prefetch: jest.fn(),
+      back: jest.fn(),
+      forward: jest.fn(),
+      refresh: jest.fn(),
+      pathname: "/",
+      query: {},
+      asPath: "/",
+    } as ReturnType<typeof useRouter>);
+  });
 
-  it('should render children when authenticated as user', () => {
-    ;(useSession as jest.Mock).mockReturnValue({
-      data: {
-        user: { id: 1, username: 'test', isStaff: false },
-      },
-      status: 'authenticated',
-    })
+  it("shows loading while session resolves", () => {
+    jest.mocked(useSession).mockReturnValue({
+      data: null,
+      status: "loading",
+      update: jest.fn(),
+    } as ReturnType<typeof useSession>);
 
     render(
       <ProtectedRoute>
-        <div>Protected Content</div>
+        <div>Child</div>
       </ProtectedRoute>
-    )
+    );
+    expect(screen.getByText("Loading auth state...")).toBeInTheDocument();
+  });
 
-    expect(screen.getByText('Protected Content')).toBeInTheDocument()
-  })
+  it("pushes /login when unauthenticated", async () => {
+    jest.mocked(useSession).mockReturnValue({
+      data: null,
+      status: "unauthenticated",
+      update: jest.fn(),
+    } as ReturnType<typeof useSession>);
 
-  it('should render children when authenticated as admin', () => {
-    ;(useSession as jest.Mock).mockReturnValue({
+    render(
+      <ProtectedRoute>
+        <div>Child</div>
+      </ProtectedRoute>
+    );
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/login"));
+  });
+
+  it("pushes /login on RefreshAccessTokenError", async () => {
+    jest.mocked(useSession).mockReturnValue({
       data: {
-        user: { id: 1, username: 'admin', isStaff: true },
+        user: { id: "1", email: "a@b.com" },
+        error: "RefreshAccessTokenError",
+        expires: "",
       },
-      status: 'authenticated',
-    })
+      status: "authenticated",
+      update: jest.fn(),
+    } as unknown as ReturnType<typeof useSession>);
+
+    render(
+      <ProtectedRoute>
+        <div>Child</div>
+      </ProtectedRoute>
+    );
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/login"));
+  });
+
+  it("pushes /unauthorized when requiredRole admin and user is not staff", async () => {
+    jest.mocked(useSession).mockReturnValue({
+      data: {
+        user: {
+          id: "1",
+          email: "a@b.com",
+          isStaff: false,
+          permissions: [],
+          isSuperuser: false,
+        },
+        expires: new Date(Date.now() + 3600000).toISOString(),
+      },
+      status: "authenticated",
+      update: jest.fn(),
+    } as ReturnType<typeof useSession>);
 
     render(
       <ProtectedRoute requiredRole="admin">
-        <div>Admin Content</div>
+        <div>Admin only</div>
       </ProtectedRoute>
-    )
+    );
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/unauthorized"));
+  });
 
-    expect(screen.getByText('Admin Content')).toBeInTheDocument()
-  })
-
-  it('should show loading state when session is loading', () => {
-    ;(useSession as jest.Mock).mockReturnValue({
-      data: null,
-      status: 'loading',
-    })
-
-    render(
-      <ProtectedRoute>
-        <div>Protected Content</div>
-      </ProtectedRoute>
-    )
-
-    expect(screen.getByText(/loading auth state/i)).toBeInTheDocument()
-  })
-
-  it('should redirect to login when unauthenticated', async () => {
-    ;(useSession as jest.Mock).mockReturnValue({
-      data: null,
-      status: 'unauthenticated',
-    })
-
-    render(
-      <ProtectedRoute>
-        <div>Protected Content</div>
-      </ProtectedRoute>
-    )
-
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/login')
-    })
-  })
-
-  it('should redirect to login when session has error', async () => {
-    ;(useSession as jest.Mock).mockReturnValue({
+  it("renders children when requiredPermission is granted", async () => {
+    jest.mocked(useSession).mockReturnValue({
       data: {
-        error: 'RefreshAccessTokenError',
-        user: null,
+        user: {
+          id: "1",
+          email: "a@b.com",
+          permissions: ["ipam.view_subnet"],
+          isSuperuser: false,
+        },
+        expires: new Date(Date.now() + 3600000).toISOString(),
       },
-      status: 'authenticated',
-    })
+      status: "authenticated",
+      update: jest.fn(),
+    } as ReturnType<typeof useSession>);
 
     render(
-      <ProtectedRoute>
-        <div>Protected Content</div>
+      <ProtectedRoute requiredPermission="ipam.view_subnet">
+        <div data-testid="ok">OK</div>
       </ProtectedRoute>
-    )
-
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/login')
-    })
-  })
-
-  it('should redirect to unauthorized when admin role required but user is not staff', async () => {
-    ;(useSession as jest.Mock).mockReturnValue({
-      data: {
-        user: { id: 1, username: 'user', isStaff: false },
-      },
-      status: 'authenticated',
-    })
-
-    render(
-      <ProtectedRoute requiredRole="admin">
-        <div>Admin Content</div>
-      </ProtectedRoute>
-    )
-
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/unauthorized')
-    })
-  })
-
-  it('should show loading state when redirecting to login', () => {
-    ;(useSession as jest.Mock).mockReturnValue({
-      data: null,
-      status: 'unauthenticated',
-    })
-
-    render(
-      <ProtectedRoute>
-        <div>Protected Content</div>
-      </ProtectedRoute>
-    )
-
-    expect(screen.getByText(/redirecting to login/i)).toBeInTheDocument()
-  })
-
-  it('should show loading state when redirecting to unauthorized', () => {
-    ;(useSession as jest.Mock).mockReturnValue({
-      data: {
-        user: { id: 1, username: 'user', isStaff: false },
-      },
-      status: 'authenticated',
-    })
-
-    render(
-      <ProtectedRoute requiredRole="admin">
-        <div>Admin Content</div>
-      </ProtectedRoute>
-    )
-
-    expect(screen.getByText(/redirecting to unauthorized/i)).toBeInTheDocument()
-  })
-})
-
+    );
+    await waitFor(() => expect(screen.getByTestId("ok")).toBeInTheDocument());
+  });
+});

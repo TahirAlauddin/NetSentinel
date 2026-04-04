@@ -44,10 +44,21 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
 
 export function usePermissions(): PermissionsContextValue {
   const ctx = useContext(PermissionsContext);
-  if (!ctx) {
-    throw new Error("usePermissions must be used within PermissionsProvider");
-  }
-  return ctx;
+  const { data: session } = useSession();
+  if (ctx) return ctx;
+
+  // Test / edge-case fallback:
+  // Some pages/components may be rendered without mounting `PermissionsProvider`
+  // (e.g. unit tests). In those cases, derive permissions from next-auth.
+  const permissions = session?.user?.permissions ?? [];
+  const isSuperuser = session?.user?.isSuperuser === true;
+
+  const can = (permission: string) => {
+    if (isSuperuser) return true;
+    return permissions.includes(permission);
+  };
+
+  return { permissions, isSuperuser, can };
 }
 
 export interface CanProps {

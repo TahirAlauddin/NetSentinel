@@ -12,6 +12,13 @@ import { render, screen, waitFor } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
 import { SettingsOverview } from '@/components/settings/settings-overview'
 
+const defaultCompanyData = {
+  companyName: 'NetSentinel Corp',
+  subdomain: 'netsentinel.app',
+  mainContact: 'admin@netsentinel.com',
+  phoneNumber: 'No phone number set',
+}
+
 // Mock EditCompany component
 jest.mock('@/components/edit-company', () => ({
   EditCompany: ({ onCancel, initialData }: { onCancel: () => void; initialData: unknown }) => (
@@ -24,28 +31,26 @@ jest.mock('@/components/edit-company', () => ({
 
 describe('SettingsOverview', () => {
   it('should render company information', () => {
-    render(<SettingsOverview />)
+    render(<SettingsOverview companyData={defaultCompanyData} />)
 
     expect(screen.getByText('Company Information')).toBeInTheDocument()
     expect(screen.getByText('NetSentinel Corp')).toBeInTheDocument()
     expect(screen.getByText('netsentinel.app')).toBeInTheDocument()
     expect(screen.getByText('admin@netsentinel.com')).toBeInTheDocument()
     expect(screen.getByText('No phone number set')).toBeInTheDocument()
-    expect(screen.getByText('Eastern Time (US & Canada)')).toBeInTheDocument()
   })
 
   it('should display all company data fields', () => {
-    render(<SettingsOverview />)
+    render(<SettingsOverview companyData={defaultCompanyData} />)
 
     expect(screen.getByText('Company Name')).toBeInTheDocument()
     expect(screen.getByText('Subdomain')).toBeInTheDocument()
     expect(screen.getByText('Main Contact')).toBeInTheDocument()
     expect(screen.getByText('Main Phone Number')).toBeInTheDocument()
-    expect(screen.getByText('Time Zone')).toBeInTheDocument()
   })
 
   it('should show Edit button', () => {
-    render(<SettingsOverview />)
+    render(<SettingsOverview companyData={defaultCompanyData} />)
 
     const editButton = screen.getByRole('button', { name: /edit/i })
     expect(editButton).toBeInTheDocument()
@@ -53,7 +58,7 @@ describe('SettingsOverview', () => {
 
   it('should switch to edit mode when Edit button is clicked', async () => {
     const user = userEvent.setup()
-    render(<SettingsOverview />)
+    render(<SettingsOverview companyData={defaultCompanyData} />)
 
     const editButton = screen.getByRole('button', { name: /edit/i })
     await user.click(editButton)
@@ -64,7 +69,7 @@ describe('SettingsOverview', () => {
 
   it('should pass correct initial data to EditCompany', async () => {
     const user = userEvent.setup()
-    render(<SettingsOverview />)
+    render(<SettingsOverview companyData={defaultCompanyData} />)
 
     const editButton = screen.getByRole('button', { name: /edit/i })
     await user.click(editButton)
@@ -75,12 +80,12 @@ describe('SettingsOverview', () => {
     expect(initialData.companyName).toBe('NetSentinel Corp')
     expect(initialData.subdomain).toBe('netsentinel')
     expect(initialData.mainContact).toBe('admin@netsentinel.com')
-    expect(initialData.timeZone).toBe('Eastern Time (US & Canada)')
+    expect(initialData.phoneNumber).toBe('No phone number set')
   })
 
   it('should return to view mode when cancel is clicked', async () => {
     const user = userEvent.setup()
-    render(<SettingsOverview />)
+    render(<SettingsOverview companyData={defaultCompanyData} />)
 
     // Enter edit mode
     const editButton = screen.getByRole('button', { name: /edit/i })

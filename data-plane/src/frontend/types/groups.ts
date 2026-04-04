@@ -13,8 +13,6 @@ export interface GroupRecord {
   permission_bundle_ids?: number[];
   /** UI-level count with users-family collapsed to a single app. */
   app_level_permission_count?: number;
-  /** Only returned by the single-group GET /groups/{id}/ endpoint. */
-  permissions_detail?: PermissionRecord[];
   user_count?: number;
 }
 
@@ -25,7 +23,5 @@ export interface PermissionBundleRecord {
   app?: string | null;
   description?: string | null;
   permissions: number[]; // Permission IDs (always present)
-  /** Only returned by the single-bundle GET /permission-bundles/{id}/ endpoint. */
-  permissions_detail?: PermissionRecord[];
 }
 

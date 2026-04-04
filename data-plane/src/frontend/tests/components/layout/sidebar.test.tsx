@@ -9,8 +9,10 @@
  * - onClose callback handling
  */
 
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useSession } from 'next-auth/react'
+import { render } from '@/tests/__utils__/test-utils'
 import { Sidebar } from '@/components/layout/sidebar'
 import { NavigationItem } from '@/types/navigation'
 
@@ -52,6 +54,20 @@ jest.mock('@/constants/navigation', () => ({
 describe('Sidebar', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    jest.mocked(useSession).mockReturnValue({
+      data: {
+        user: {
+          id: '1',
+          email: 'test@example.com',
+          name: 'Test User',
+          permissions: [] as string[],
+          isSuperuser: false,
+        },
+        expires: new Date(Date.now() + 3600000).toISOString(),
+      },
+      status: 'authenticated',
+      update: jest.fn(),
+    } as ReturnType<typeof useSession>)
   })
 
   it('should render sidebar with all components', () => {

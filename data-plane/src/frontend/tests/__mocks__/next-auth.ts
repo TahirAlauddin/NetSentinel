@@ -10,24 +10,36 @@ export const mockSession = {
     id: '1',
     email: 'test@example.com',
     name: 'Test User',
+    /** Mirrors JWT session used by PermissionsProvider / RBAC guards */
+    permissions: [
+      "assets.add_asset",
+      "assets.change_asset",
+      "assets.delete_asset",
+    ] as string[],
+    isSuperuser: false,
   },
   accessToken: 'mock-access-token',
   refreshToken: 'mock-refresh-token',
   expires: new Date(Date.now() + 3600000).toISOString(),
 }
 
-export const mockUseSession = jest.fn(() => ({
+/** Return shape for `useSession` in tests (supports unauthenticated reset). */
+export type MockUseSessionReturn =
+  | { data: typeof mockSession; status: 'authenticated' }
+  | { data: null; status: 'unauthenticated' }
+
+export const mockUseSession = jest.fn((): MockUseSessionReturn => ({
   data: mockSession,
-  status: 'authenticated' as const,
+  status: 'authenticated',
 }))
 
 export const mockSignIn = jest.fn()
 export const mockSignOut = jest.fn()
 
 // Module exports for jest.mock() - matches next-auth/react structure
-export const useSession = jest.fn(() => ({
-  data: null,
-  status: 'unauthenticated' as const,
+export const useSession = jest.fn((): MockUseSessionReturn => ({
+  data: mockSession,
+  status: 'authenticated',
 }))
 
 export const signIn = jest.fn()
