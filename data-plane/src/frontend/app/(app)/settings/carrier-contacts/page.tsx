@@ -2,7 +2,6 @@
 
 import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
-import { SettingsNavTabs } from "@/components/settings/settings-nav-tabs";
 import { SettingsHeader } from "@/components/settings/settings-header";
 import { CarrierContactRecord, CarrierContactCreateDto } from "@/types/carrier-contacts";
 import { InfrastructureApiClient } from "@/lib/api-client/infrastructure";
@@ -264,7 +263,6 @@ export default function CarrierContactsPage() {
           <div className="p-8">
             <div className="space-y-6">
               <SettingsHeader currentPage="Carrier Contacts" />
-              <SettingsNavTabs />
 
               {/* Content area */}
               <div className="flex gap-8">

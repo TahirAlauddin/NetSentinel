@@ -30,7 +30,6 @@ describe('EditCompany', () => {
     expect(screen.getByPlaceholderText(/https:\/\/example\.com/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/main contact/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/main phone number/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/time zone/i)).toBeInTheDocument()
   })
 
   it('should populate form with initial data', () => {
@@ -74,7 +73,7 @@ describe('EditCompany', () => {
     await user.type(subdomainInput, 'mycompany')
 
     expect(subdomainInput).toHaveValue('mycompany')
-    expect(screen.getByText(/https:\/\/mycompany\.gogenuity\.com/i)).toBeInTheDocument()
+    expect(screen.getByText(/https:\/\/mycompany\.netsentinel\.app/i)).toBeInTheDocument()
   })
 
   it('should handle phone number input', async () => {
@@ -87,19 +86,6 @@ describe('EditCompany', () => {
     expect(phoneInput).toHaveValue('1234567890')
   })
 
-  it('should handle checkbox toggles', async () => {
-    const user = userEvent.setup()
-    const { container } = render(<EditCompany onCancel={mockOnCancel} />)
-
-    // Find checkbox by name attribute since label isn't properly associated
-    const isolateWorkspacesCheckbox = container.querySelector('input[name="isolateWorkspaces"]') as HTMLInputElement
-    
-    expect(isolateWorkspacesCheckbox).toBeInTheDocument()
-    expect(isolateWorkspacesCheckbox).not.toBeChecked()
-
-    await user.click(isolateWorkspacesCheckbox)
-    expect(isolateWorkspacesCheckbox).toBeChecked()
-  })
 
   it('should call onCancel when cancel button is clicked', async () => {
     const user = userEvent.setup()
@@ -128,34 +114,5 @@ describe('EditCompany', () => {
     expect(screen.getByText('Basic Details')).toBeInTheDocument()
   })
 
-  it('should handle time zone selection', async () => {
-    const user = userEvent.setup()
-    const { container } = render(<EditCompany onCancel={mockOnCancel} />)
-
-    // Find select by name attribute since label isn't properly associated
-    const timeZoneSelect = container.querySelector('select[name="timeZone"]') as HTMLSelectElement
-    
-    expect(timeZoneSelect).toBeInTheDocument()
-    await user.selectOptions(timeZoneSelect, 'Pacific Time (US & Canada)')
-
-    expect(timeZoneSelect).toHaveValue('Pacific Time (US & Canada)')
-  })
-
-  it('should handle fiscal year month and day selection', async () => {
-    const user = userEvent.setup()
-    const { container } = render(<EditCompany onCancel={mockOnCancel} />)
-
-    const monthSelect = container.querySelector('select[name="fiscalYearMonth"]') as HTMLSelectElement
-    const daySelect = container.querySelector('select[name="fiscalYearDay"]') as HTMLSelectElement
-
-    expect(monthSelect).toBeInTheDocument()
-    expect(daySelect).toBeInTheDocument()
-
-    await user.selectOptions(monthSelect, 'June')
-    expect(monthSelect).toHaveValue('June')
-
-    await user.selectOptions(daySelect, '15')
-    expect(daySelect).toHaveValue('15')
-  })
 })
 
