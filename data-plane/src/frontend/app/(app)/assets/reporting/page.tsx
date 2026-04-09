@@ -7,6 +7,7 @@ import { listAssets } from "../actions/index";
 import { AssetsDashboardNav } from "@/components/apps/assets/AssetsDashboardNav";
 import { ReportingInsightsSection } from "@/components/apps/assets/reporting/ReportingInsightsSection";
 import { InsightDetailModal } from "@/components/apps/assets/reporting/InsightDetailModal";
+import { ProtectedRoute } from "@/components/feedback/protected-route";
 import {
   calculateCategoryDistribution,
   calculateOSDistribution,
@@ -130,20 +131,23 @@ export default function AssetReportingPage() {
 
   if (loading) {
     return (
-      <AppShell>
-        <div className="flex-1 overflow-auto bg-gray-50">
-          <div className="max-w-7xl mx-auto p-8">
-            <div className="text-center py-12">
-              <div className="text-muted-foreground">Loading reporting data...</div>
+      <ProtectedRoute>
+        <AppShell>
+          <div className="flex-1 overflow-auto bg-gray-50">
+            <div className="max-w-7xl mx-auto p-8">
+              <div className="text-center py-12">
+                <div className="text-muted-foreground">Loading reporting data...</div>
+              </div>
             </div>
           </div>
-        </div>
-      </AppShell>
+        </AppShell>
+      </ProtectedRoute>
     );
   }
 
   return (
-    <AppShell>
+    <ProtectedRoute>
+      <AppShell>
       <div className="flex-1 overflow-auto bg-gray-50">
         <div className="max-w-7xl mx-auto p-8">
           {/* Header */}
@@ -223,6 +227,7 @@ export default function AssetReportingPage() {
           )}
         </div>
       </div>
-    </AppShell>
+      </AppShell>
+    </ProtectedRoute>
   );
 }

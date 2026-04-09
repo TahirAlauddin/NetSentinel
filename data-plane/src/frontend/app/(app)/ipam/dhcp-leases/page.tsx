@@ -8,12 +8,14 @@ import { DhcpLeaseTable } from "@/components/apps/ipam/dhcp-lease-table";
 import { DHCPLease } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { extractIpamArrayData } from "@/lib/ipam-utils";
+import { usePermissions } from "@/contexts/permissions-context";
 
 const ipamApi = new IpamApiClient();
 
 export default function DhcpLeasesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { can } = usePermissions();
   const scopeId = searchParams.get("scope");
   const [leases, setLeases] = useState<DHCPLease[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,8 +91,8 @@ export default function DhcpLeasesPage() {
       ) : (
         <DhcpLeaseTable
           leases={leases}
-          onAdd={handleAdd}
-          onRelease={handleRelease}
+          onAdd={can("ipam.add_dhcplease") ? handleAdd : undefined}
+          onRelease={can("ipam.delete_dhcplease") ? handleRelease : undefined}
         />
       )}
     </div>

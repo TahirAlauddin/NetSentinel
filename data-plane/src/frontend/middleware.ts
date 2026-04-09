@@ -37,10 +37,19 @@ function applyNonceCsp(req: NextRequest): { requestHeaders: Headers; cspHeader: 
   const scriptSrc = isDev
     ? `'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval'`
     : `'self' 'nonce-${nonce}' 'strict-dynamic'`
+  // style-src nonce only covers <style> tags Next.js tags with a nonce. React style={{ }},
+  // Radix, etc. use style attributes / JS "Applying style" — those need style-src-attr or
+  // unsafe-inline. Next.js recommends unsafe-inline for style-src in dev (HMR); in prod we
+  // keep nonced <style> and allow attributes via CSP Level 3 style-src-attr.
+  const styleSrc = isDev
+    ? `'self' 'unsafe-inline'`
+    : `'self' 'nonce-${nonce}'`
   const cspParts = [
     "default-src 'self'",
     `script-src ${scriptSrc}`,
-    `style-src 'self' 'nonce-${nonce}'`,
+    // if this doesn't work, revert back to 'self' 'nonce-${nonce}'
+    `style-src ${styleSrc}`,
+    ...(isDev ? [] : ["style-src-attr 'unsafe-inline'"]),
     "img-src 'self' data: https: blob:",
     "font-src 'self' data:",
     `connect-src ${connectSrc}`,

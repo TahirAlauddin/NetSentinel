@@ -2,8 +2,10 @@
 Device ViewSets for IPAM.
 """
 
+from django.db.models import Count
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from ..models import Device, DeviceType, Rack
@@ -112,16 +114,19 @@ class DeviceViewSet(viewsets.ModelViewSet):
         return queryset
 
     @action(detail=False, methods=["get"])
-    def statistics(self, request):
+    def statistics(self, request: Request) -> Response:
         """Get device statistics."""
         total_devices = Device.objects.count()
         active_devices = Device.objects.filter(is_active=True).count()
-        devices_by_type = {}
 
-        for device_type in DeviceType.objects.all():
-            count = Device.objects.filter(device_type=device_type, is_active=True).count()
-            if count > 0:
-                devices_by_type[device_type.name] = count
+        active_by_type = (
+            DeviceType.objects.filter(device__is_active=True)
+            .annotate(active_count=Count("device"))
+            .values("name", "active_count")
+        )
+        devices_by_type = {
+            row["name"]: row["active_count"] for row in active_by_type if row["active_count"] > 0
+        }
 
         return Response(
             {

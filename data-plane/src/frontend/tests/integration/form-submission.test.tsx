@@ -1,7 +1,7 @@
 /**
  * Integration tests for form submission flows.
  * Tests: form render, user input, validation, API submit, success/error handling.
- * TODO: Implement using test-utils, userEvent, api-mock-helpers and AssetForm.
+ * Placeholder; implement with test-utils, userEvent, api-mock-helpers and AssetForm. See docs/TECHNICAL_DEBT.md § TODOs (Tests).
  */
 
 describe('Form Submission Integration', () => {

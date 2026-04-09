@@ -8,6 +8,7 @@ import threading
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from ..models import NetworkScan, ScanResult
@@ -54,7 +55,7 @@ class NetworkScanViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request: Request, *args, **kwargs) -> Response:
         """Create and start a network scan."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -80,7 +81,7 @@ class NetworkScanViewSet(viewsets.ModelViewSet):
         )
 
         # Start scan in background thread to avoid blocking the HTTP request
-        def run_scan():
+        def run_scan() -> None:
             try:
                 logger.info(f"Starting network scan {scan.id} for subnet {subnet.network}")
                 scan_subnet(
@@ -109,7 +110,7 @@ class NetworkScanViewSet(viewsets.ModelViewSet):
         return Response(response_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     @action(detail=True, methods=["get"])
-    def results(self, request, pk=None):
+    def results(self, request: Request, pk=None) -> Response:
         """Get scan results for a specific scan."""
         scan = self.get_object()
         results = scan.results.all()
@@ -117,7 +118,7 @@ class NetworkScanViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["get"])
-    def summary(self, request, pk=None):
+    def summary(self, request: Request, pk=None) -> Response:
         """Get scan summary statistics."""
         from ..services.network_scanning import get_scan_summary
 
@@ -126,7 +127,7 @@ class NetworkScanViewSet(viewsets.ModelViewSet):
         return Response(summary, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"])
-    def import_results(self, request, pk=None):
+    def import_results(self, request: Request, pk=None) -> Response:
         """Import scan results into IPAM."""
         from ..services.network_scanning import import_scan_results_to_ipam
 

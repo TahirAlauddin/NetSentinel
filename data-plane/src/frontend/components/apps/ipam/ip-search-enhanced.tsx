@@ -1,7 +1,5 @@
-/* eslint-disable max-lines */
 "use client";
 
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,252 +14,63 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { IpamApiClient } from "@/lib/api-client/ipam";
-import { extractIpamArrayData } from "@/lib/ipam-utils";
-import type { IPAddress, Subnet, Customer } from "@/types/ipam";
-import { toast } from "sonner";
-import { listAssets } from "@/app/(app)/assets/actions";
-
-const ipamApi = new IpamApiClient();
+import type { IPAddress } from "@/types/ipam";
+import { useIpSearchEnhanced, type IpSearchMode } from "@/hooks/useIpSearchEnhanced";
 
 interface IPSearchEnhancedProps {
   onIPSelect?: (ip: IPAddress) => void;
 }
 
-interface SearchHistoryItem {
-  query: string;
-  timestamp: number;
-  resultCount: number;
+const STATUS_BADGE_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  assigned: "default",
+  reserved: "secondary",
+  available: "outline",
+  dhcp: "secondary",
+  deprecated: "destructive",
+};
+
+function renderStatusBadge(status: string) {
+  return <Badge variant={STATUS_BADGE_VARIANTS[status] || "outline"}>{status}</Badge>;
 }
 
-const SEARCH_HISTORY_KEY = "ipam_search_history";
-const MAX_HISTORY_ITEMS = 10;
-
 export function IPSearchEnhanced({ onIPSelect }: IPSearchEnhancedProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [subnetFilter, setSubnetFilter] = useState<string>("");
-  const [customerFilter, setCustomerFilter] = useState<string>("");
-  const [assetFilter, setAssetFilter] = useState<string>("");
-  const [rangeStart, setRangeStart] = useState("");
-  const [rangeEnd, setRangeEnd] = useState("");
-  const [hostnameQuery, setHostnameQuery] = useState("");
-  const [results, setResults] = useState<IPAddress[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  const [searchMode, setSearchMode] = useState<"basic" | "range" | "hostname">("basic");
-  const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
-
-  // Filter options
-  const [subnets, setSubnets] = useState<Subnet[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [assets, setAssets] = useState<Array<{ id: number; name: string }>>([]);
-
-  // Load filter options
-  useEffect(() => {
-    const loadFilterOptions = async () => {
-      try {
-        const [subnetsRes, customersRes, assetsRes] = await Promise.all([
-          ipamApi.getSubnets(),
-          ipamApi.getCustomers(),
-          listAssets(),
-        ]);
-
-        if (subnetsRes.data) {
-          setSubnets(extractIpamArrayData<Subnet>(subnetsRes.data));
-        }
-        if (customersRes.data) {
-          setCustomers(extractIpamArrayData<Customer>(customersRes.data));
-        }
-        if (assetsRes) {
-          setAssets(assetsRes.map((a) => ({ id: a.id, name: a.name })));
-        }
-      } catch (error) {
-        console.error("Error loading filter options:", error);
-      }
-    };
-
-    loadFilterOptions();
-    loadSearchHistory();
-  }, []);
-
-  const loadSearchHistory = () => {
-    try {
-      const stored = localStorage.getItem(SEARCH_HISTORY_KEY);
-      if (stored) {
-        setSearchHistory(JSON.parse(stored));
-      }
-    } catch (error) {
-      console.error("Error loading search history:", error);
-    }
-  };
-
-  const saveToHistory = (query: string, resultCount: number) => {
-    const newItem: SearchHistoryItem = {
-      query,
-      timestamp: Date.now(),
-      resultCount,
-    };
-
-    const updated = [
-      newItem,
-      ...searchHistory.filter((item) => item.query !== query),
-    ].slice(0, MAX_HISTORY_ITEMS);
-
-    setSearchHistory(updated);
-    try {
-      localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
-    } catch (error) {
-      console.error("Error saving search history:", error);
-    }
-  };
-
-  const handleBasicSearch = async () => {
-    if (!searchQuery.trim() && !statusFilter && !subnetFilter && !customerFilter && !assetFilter) {
-      toast.error("Please enter a search query or select at least one filter");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const params: Record<string, unknown> = {};
-      if (searchQuery.trim()) {
-        params.q = searchQuery.trim();
-      }
-      if (statusFilter) {
-        params.status = statusFilter;
-      }
-      if (subnetFilter) {
-        params.subnet = subnetFilter;
-      }
-      if (customerFilter) {
-        params.customer = customerFilter;
-      }
-      if (assetFilter) {
-        params.assigned_to_asset = assetFilter;
-      }
-
-      const response = await ipamApi.searchIPAddresses(params);
-      if (response.error) {
-        throw new Error(response.error);
-      }
-
-      const resultData = Array.isArray(response.data) ? response.data : [];
-      setResults(resultData);
-      
-      if (searchQuery.trim()) {
-        saveToHistory(searchQuery.trim(), resultData.length);
-      }
-    } catch (error) {
-      console.error("Error searching IPs:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to search IP addresses");
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRangeSearch = async () => {
-    if (!rangeStart.trim() || !rangeEnd.trim()) {
-      toast.error("Please enter both start and end IP addresses");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const subnetId = subnetFilter ? parseInt(subnetFilter) : undefined;
-      const response = await ipamApi.searchIPRange(rangeStart.trim(), rangeEnd.trim(), subnetId);
-      
-      if (response.error) {
-        throw new Error(response.error);
-      }
-
-      const resultData = Array.isArray(response.data) ? response.data : [];
-      setResults(resultData);
-      saveToHistory(`${rangeStart} - ${rangeEnd}`, resultData.length);
-    } catch (error) {
-      console.error("Error searching IP range:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to search IP range");
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleHostnameSearch = async () => {
-    if (!hostnameQuery.trim()) {
-      toast.error("Please enter a hostname");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await ipamApi.searchByHostname(hostnameQuery.trim());
-      
-      if (response.error) {
-        throw new Error(response.error);
-      }
-
-      const resultData = Array.isArray(response.data) ? response.data : [];
-      setResults(resultData);
-      saveToHistory(hostnameQuery.trim(), resultData.length);
-    } catch (error) {
-      console.error("Error searching by hostname:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to search by hostname");
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSearch = () => {
-    if (searchMode === "range") {
-      handleRangeSearch();
-    } else if (searchMode === "hostname") {
-      handleHostnameSearch();
-    } else {
-      handleBasicSearch();
-    }
-  };
-
-  const handleClear = () => {
-    setSearchQuery("");
-    setStatusFilter("");
-    setSubnetFilter("");
-    setCustomerFilter("");
-    setAssetFilter("");
-    setRangeStart("");
-    setRangeEnd("");
-    setHostnameQuery("");
-    setResults([]);
-  };
-
-  const handleHistoryClick = (item: SearchHistoryItem) => {
-    setSearchQuery(item.query);
-    setSearchMode("basic");
-    // Trigger search after a short delay
-    setTimeout(() => {
-      handleBasicSearch();
-    }, 100);
-  };
-
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      assigned: "default",
-      reserved: "secondary",
-      available: "outline",
-      dhcp: "secondary",
-      deprecated: "destructive",
-    };
-    return <Badge variant={variants[status] || "outline"}>{status}</Badge>;
-  };
-
-  const hasActiveFilters = searchQuery || statusFilter || subnetFilter || customerFilter || assetFilter || rangeStart || rangeEnd || hostnameQuery;
+  const {
+    searchQuery,
+    setSearchQuery,
+    statusFilter,
+    setStatusFilter,
+    subnetFilter,
+    setSubnetFilter,
+    customerFilter,
+    setCustomerFilter,
+    assetFilter,
+    setAssetFilter,
+    rangeStart,
+    setRangeStart,
+    rangeEnd,
+    setRangeEnd,
+    hostnameQuery,
+    setHostnameQuery,
+    searchMode,
+    setSearchMode,
+    results,
+    loading,
+    showFilters,
+    setShowFilters,
+    searchHistory,
+    hasActiveFilters,
+    subnets,
+    customers,
+    assets,
+    handleSearch,
+    handleClear,
+    handleHistoryClick,
+  } = useIpSearchEnhanced();
 
   return (
     <div className="space-y-4">
       {/* Search Tabs */}
-      <Tabs value={searchMode} onValueChange={(v) => setSearchMode(v as typeof searchMode)}>
+      <Tabs value={searchMode} onValueChange={(v) => setSearchMode(v as IpSearchMode)}>
         <TabsList>
           <TabsTrigger value="basic">Basic Search</TabsTrigger>
           <TabsTrigger value="range">IP Range</TabsTrigger>
@@ -527,7 +336,7 @@ export function IPSearchEnhanced({ onIPSelect }: IPSearchEnhancedProps) {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-medium">{ip.address}</span>
-                        {getStatusBadge(ip.status)}
+                        {renderStatusBadge(ip.status)}
                       </div>
                       {ip.subnet_detail && (
                         <div className="text-sm text-muted-foreground mt-1">

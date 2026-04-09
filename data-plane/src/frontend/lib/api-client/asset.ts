@@ -19,6 +19,16 @@ export class AssetsApiClient extends BaseApiClient {
   }
 
   /**
+   * Update an asset by ID (partial update supported).
+   */
+  async updateAsset<T = unknown>(
+    id: number | string,
+    data: Record<string, unknown>
+  ): Promise<BaseApiResponse<T>> {
+    return this.patch<T>(`/assets/${id}/`, data);
+  }
+
+  /**
    * Get all asset tags
    */
   async getAssetTags<T = unknown>(params?: Record<string, unknown>): Promise<BaseApiResponse<T>> {

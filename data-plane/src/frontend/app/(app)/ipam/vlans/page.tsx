@@ -8,11 +8,13 @@ import { VlanTable } from "@/components/apps/ipam/vlan-table";
 import { VLAN } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { extractIpamArrayData } from "@/lib/ipam-utils";
+import { usePermissions } from "@/contexts/permissions-context";
 
 const ipamApi = new IpamApiClient();
 
 export default function VlansPage() {
   const router = useRouter();
+  const { can } = usePermissions();
   const [vlans, setVlans] = useState<VLAN[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,9 +92,9 @@ export default function VlansPage() {
       ) : (
         <VlanTable
           vlans={vlans}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onAdd={handleAdd}
+          onEdit={can("ipam.change_vlan") ? handleEdit : undefined}
+          onDelete={can("ipam.delete_vlan") ? handleDelete : undefined}
+          onAdd={can("ipam.add_vlan") ? handleAdd : undefined}
         />
       )}
     </div>

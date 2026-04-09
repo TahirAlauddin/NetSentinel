@@ -10,6 +10,7 @@ import { SubnetFindDialog } from "@/components/apps/ipam/subnet-find-dialog";
 import { Subnet } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { extractIpamArrayData } from "@/lib/ipam-utils";
+import { usePermissions } from "@/contexts/permissions-context";
 
 const ipamApi = new IpamApiClient();
 
@@ -19,6 +20,7 @@ const ipamApi = new IpamApiClient();
  */
 export default function SubnetsPage() {
   const router = useRouter();
+  const { can } = usePermissions();
   const [subnets, setSubnets] = useState<Subnet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -138,9 +140,9 @@ export default function SubnetsPage() {
           ) : (
             <SubnetTable
               subnets={subnets}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onAdd={handleAdd}
+              onEdit={can("ipam.change_subnet") ? handleEdit : undefined}
+              onDelete={can("ipam.delete_subnet") ? handleDelete : undefined}
+              onAdd={can("ipam.add_subnet") ? handleAdd : undefined}
               onFind={handleFind}
               onToggleFavorite={handleToggleFavorite}
             />

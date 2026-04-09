@@ -40,6 +40,14 @@ export const authConfig = {
    * Required in production
    */
   url: process.env.NEXTAUTH_URL,
+
+  /**
+   * Force secure cookies (e.g. for production behind HTTPS).
+   * When true, session cookie uses __Secure- prefix and secure flag.
+   * When false or unset, derived from url (https => secure).
+   * Set NEXTAUTH_USE_SECURE_COOKIES=true in production if needed.
+   */
+  useSecureCookies: process.env.NEXTAUTH_USE_SECURE_COOKIES === "true",
 } as const
 
 /**

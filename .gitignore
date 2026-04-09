@@ -22,3 +22,5 @@ __pycache__
 # Node
 node_modules
 
+# OpenAPI
+.openapi3.json

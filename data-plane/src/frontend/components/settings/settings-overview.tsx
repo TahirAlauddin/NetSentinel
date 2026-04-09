@@ -1,30 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EditCompany } from "@/components/edit-company";
 
-export function SettingsOverview() {
-  const [isEditing, setIsEditing] = useState(false);
+type CompanyData = {
+  companyName: string;
+  subdomain: string;
+  mainContact: string;
+  phoneNumber: string;
+};
 
-  // Mock data - in real app, this would come from props or API
-  const companyData = {
-    companyName: "NetSentinel Corp",
-    subdomain: "netsentinel.app",
-    mainContact: "admin@netsentinel.com",
-    phoneNumber: "No phone number set",
-    timeZone: "Eastern Time (US & Canada)",
-  };
+export function SettingsOverview({ companyData }: { companyData: CompanyData }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentCompanyData, setCurrentCompanyData] = useState(companyData);
+
+  useEffect(() => {
+    setCurrentCompanyData(companyData);
+  }, [companyData]);
 
   if (isEditing) {
     return (
       <EditCompany
         onCancel={() => setIsEditing(false)}
+        onSaved={(updated) => setCurrentCompanyData(updated)}
         initialData={{
-          companyName: companyData.companyName,
-          subdomain: companyData.subdomain.split(".")[0],
-          mainContact: companyData.mainContact,
-          timeZone: companyData.timeZone,
+          companyName: currentCompanyData.companyName,
+          subdomain: currentCompanyData.subdomain.split(".")[0],
+          mainContact: currentCompanyData.mainContact,
+          phoneNumber: currentCompanyData.phoneNumber,
         }}
       />
     );
@@ -41,23 +45,19 @@ export function SettingsOverview() {
       <div className="space-y-4">
         <div className="flex justify-between items-center py-3 border-b border-border/50">
           <span className="text-sm text-muted-foreground">Company Name</span>
-          <span className="text-sm font-medium">{companyData.companyName}</span>
+          <span className="text-sm font-medium">{currentCompanyData.companyName}</span>
         </div>
         <div className="flex justify-between items-center py-3 border-b border-border/50">
           <span className="text-sm text-muted-foreground">Subdomain</span>
-          <span className="text-sm font-medium">{companyData.subdomain}</span>
+          <span className="text-sm font-medium">{currentCompanyData.subdomain}</span>
         </div>
         <div className="flex justify-between items-center py-3 border-b border-border/50">
           <span className="text-sm text-muted-foreground">Main Contact</span>
-          <span className="text-sm font-medium">{companyData.mainContact}</span>
+          <span className="text-sm font-medium">{currentCompanyData.mainContact}</span>
         </div>
         <div className="flex justify-between items-center py-3 border-b border-border/50">
           <span className="text-sm text-muted-foreground">Main Phone Number</span>
-          <span className="text-sm font-medium">{companyData.phoneNumber}</span>
-        </div>
-        <div className="flex justify-between items-center py-3 border-b border-border/50">
-          <span className="text-sm text-muted-foreground">Time Zone</span>
-          <span className="text-sm font-medium">{companyData.timeZone}</span>
+          <span className="text-sm font-medium">{currentCompanyData.phoneNumber}</span>
         </div>
       </div>
     </div>

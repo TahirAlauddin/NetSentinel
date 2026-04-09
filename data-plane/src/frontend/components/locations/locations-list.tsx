@@ -24,8 +24,7 @@ const LocationsList = ({ locations }: { locations: LocationRecord[] }) => {
                 {location.address1}
               </td>
               <td className="py-2 pr-2 sm:pr-6">
-                {/* //TODO: Hardcoding Circuits for now */}
-                {0}
+                {location.circuits_count ?? 0}
               </td>
               <td className="py-2 pr-0 text-xs text-muted-foreground hidden md:table-cell">
                 {location.id}

@@ -3,9 +3,12 @@ Tests for User model and related functionality.
 """
 
 import pytest
-from django.contrib.auth.models import Group
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
 
-from users.models import AppPermission, AppPermissionGroup
+from tests.rbac_helpers import grant_user_permission_through_bundle
+from users.models import ExtendedGroup, PermissionBundle
 
 
 @pytest.mark.django_db
@@ -34,141 +37,61 @@ class TestUserModel:
         """Test get_short_name method."""
         assert user.get_short_name() == "Test"
 
-    def test_superuser_has_all_permissions(self, admin_user):
-        """Test that superuser has all app permissions."""
-        AppPermission.objects.create(
-            codename="test_permission",
-            name="Test Permission",
-            category="test",
-        )
-        assert admin_user.has_app_permission("test_permission") is True
+    def test_superuser_has_arbitrary_perm(self, admin_user):
+        """Superusers pass has_perm for any codename."""
+        UserModel = get_user_model()
+        ct = ContentType.objects.get_for_model(UserModel)
+        assert admin_user.has_perm(f"{ct.app_label}.made_up_perm") is True
 
-    def test_user_has_app_permission_direct(self, user):
-        """Test user has direct app permission."""
-        permission = AppPermission.objects.create(
-            codename="view_assets",
-            name="View Assets",
-            category="assets",
-        )
-        user.app_permissions.add(permission)
-        assert user.has_app_permission("view_assets") is True
-
-    def test_user_has_app_permission_via_group(self, user):
-        """Test user has app permission through group."""
-        permission = AppPermission.objects.create(
-            codename="create_assets",
-            name="Create Assets",
-            category="assets",
-        )
-        group = Group.objects.create(name="Asset Managers")
-        user.groups.add(group)
-        AppPermissionGroup.objects.create(group=group, permission=permission)
-        assert user.has_app_permission("create_assets") is True
+    def test_user_has_perm_via_bundle(self, user):
+        perm_str = grant_user_permission_through_bundle(user, codename="view_assets_rbac")
+        assert user.has_perm(perm_str) is True
 
     def test_user_does_not_have_permission(self, user):
-        """Test user does not have a permission they weren't granted."""
-        assert user.has_app_permission("nonexistent_permission") is False
-
-    def test_user_has_any_app_permission(self, user):
-        """Test has_any_app_permission method."""
-        permission1 = AppPermission.objects.create(
-            codename="permission1",
-            name="Permission 1",
-            category="test",
-        )
-        user.app_permissions.add(permission1)
-        assert user.has_any_app_permission(["permission1", "permission2"]) is True
-        assert user.has_any_app_permission(["permission2", "permission3"]) is False
-
-    def test_user_has_all_app_permissions(self, user):
-        """Test has_all_app_permissions method."""
-        permission1 = AppPermission.objects.create(
-            codename="permission1",
-            name="Permission 1",
-            category="test",
-        )
-        permission2 = AppPermission.objects.create(
-            codename="permission2",
-            name="Permission 2",
-            category="test",
-        )
-        user.app_permissions.add(permission1, permission2)
-        assert user.has_all_app_permissions(["permission1", "permission2"]) is True
-        assert user.has_all_app_permissions(["permission1", "permission3"]) is False
-
-    def test_user_get_app_permissions(self, user):
-        """Test get_app_permissions method returns all user permissions."""
-        permission1 = AppPermission.objects.create(
-            codename="permission1",
-            name="Permission 1",
-            category="test",
-        )
-        permission2 = AppPermission.objects.create(
-            codename="permission2",
-            name="Permission 2",
-            category="test",
-        )
-        user.app_permissions.add(permission1, permission2)
-        permissions = user.get_app_permissions()
-        assert permissions.count() == 2
-        assert permission1 in permissions
-        assert permission2 in permissions
-
-    def test_inactive_permission_not_returned(self, user):
-        """Test that inactive permissions are not returned."""
-        permission = AppPermission.objects.create(
-            codename="inactive_permission",
-            name="Inactive Permission",
-            category="test",
-            is_active=False,
-        )
-        user.app_permissions.add(permission)
-        assert user.has_app_permission("inactive_permission") is False
-        assert permission not in user.get_app_permissions()
+        UserModel = get_user_model()
+        ct = ContentType.objects.get_for_model(UserModel)
+        assert user.has_perm(f"{ct.app_label}.nonexistent_permission") is False
 
 
 @pytest.mark.django_db
-class TestAppPermission:
-    """Test cases for AppPermission model."""
+class TestPermissionBundle:
+    """Test cases for PermissionBundle model."""
 
-    def test_app_permission_creation(self):
-        """Test that an app permission can be created."""
-        permission = AppPermission.objects.create(
-            codename="test_permission",
-            name="Test Permission",
-            description="A test permission",
-            category="test",
-            app_label="test_app",
+    def test_permission_bundle_creation(self):
+        bundle = PermissionBundle.objects.create(
+            name="Test Bundle",
+            code="test_bundle_code",
+            app="users",
+            description="desc",
         )
-        assert permission.codename == "test_permission"
-        assert permission.name == "Test Permission"
-        assert permission.is_active is True
+        assert bundle.name == "Test Bundle"
+        assert bundle.code == "test_bundle_code"
+        assert bundle.app == "users"
 
-    def test_app_permission_str_representation(self):
-        """Test app permission string representation."""
-        permission = AppPermission.objects.create(
-            codename="test_permission",
-            name="Test Permission",
-        )
-        assert str(permission) == "Test Permission (test_permission)"
+    def test_permission_bundle_str(self):
+        bundle = PermissionBundle.objects.create(name="My Bundle", code="my_bundle")
+        assert str(bundle) == "My Bundle"
 
 
 @pytest.mark.django_db
-class TestAppPermissionGroup:
-    """Test cases for AppPermissionGroup model."""
+class TestExtendedGroup:
+    """Test cases for ExtendedGroup model."""
 
-    def test_app_permission_group_creation(self, user):
-        """Test that an app permission group can be created."""
-        permission = AppPermission.objects.create(
-            codename="test_permission",
-            name="Test Permission",
+    def test_extended_group_links_group_and_bundles(self, user):
+        UserModel = get_user_model()
+        ct = ContentType.objects.get_for_model(UserModel)
+        perm, _ = Permission.objects.get_or_create(
+            codename="ext_group_perm",
+            content_type=ct,
+            defaults={"name": "Can ext group"},
         )
-        group = Group.objects.create(name="Test Group")
-        perm_group = AppPermissionGroup.objects.create(
-            group=group,
-            permission=permission,
-            granted_by=user,
-        )
-        assert perm_group.group == group
-        assert perm_group.permission == permission
-        assert perm_group.granted_by == user
+        bundle = PermissionBundle.objects.create(name="B", code="b_ext_group", app="users")
+        bundle.permissions.add(perm)
+        django_group = Group.objects.create(name="Ext Test Group")
+        ext = ExtendedGroup.objects.create(group=django_group)
+        ext.bundles.add(bundle)
+        user.groups.add(django_group)
+
+        assert ext.group == django_group
+        assert bundle in ext.bundles.all()
+        assert user.has_perm(f"{ct.app_label}.ext_group_perm") is True

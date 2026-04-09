@@ -3,6 +3,7 @@
 import { SessionProvider } from "next-auth/react"
 import { useEffect } from "react"
 import { useSession, signOut } from "next-auth/react"
+import { PermissionsProvider } from "@/contexts/permissions-context"
 
 function SessionErrorHandler({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession()
@@ -19,8 +20,10 @@ function SessionErrorHandler({ children }: { children: React.ReactNode }) {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <SessionErrorHandler>             
-        {children}
+      <SessionErrorHandler>
+        <PermissionsProvider>
+          {children}
+        </PermissionsProvider>
       </SessionErrorHandler>
     </SessionProvider>
   )

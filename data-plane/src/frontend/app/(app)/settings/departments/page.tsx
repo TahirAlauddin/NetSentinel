@@ -2,7 +2,6 @@
 
 import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/feedback/protected-route";
-import { SettingsNavTabs } from "@/components/settings/settings-nav-tabs";
 import { SettingsHeader } from "@/components/settings/settings-header";
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
@@ -202,7 +201,6 @@ export default function DepartmentsPage() {
           <div className="p-8">
             <div className="space-y-6">
               <SettingsHeader currentPage="Departments" />
-              <SettingsNavTabs />
 
               {/* Content area */}
               <div className="flex gap-8">

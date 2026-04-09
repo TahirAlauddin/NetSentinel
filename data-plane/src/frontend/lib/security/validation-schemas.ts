@@ -45,6 +45,37 @@ export const groupSchema = z.object({
   permissionIds: z
     .array(z.number().int().positive())
     .min(0, "Permission IDs must be an array"),
+  permissionBundleIds: z
+    .array(z.number().int().positive())
+    .min(0, "Permission bundle IDs must be an array"),
+});
+
+/**
+ * Permission bundle creation/update schema
+ *
+ * PermissionBundle (backend) constraints:
+ * - name/code: max_length=100
+ * - app: max_length=50, nullable
+ * - description: TextField, nullable
+ */
+export const permissionBundleSchema = z.object({
+  name: z.string().min(1, "Bundle name is required").max(100, "Bundle name is too long"),
+  code: z
+    .string()
+    .min(1, "Bundle code is required")
+    .max(100, "Bundle code is too long")
+    .regex(/^[a-z0-9_\\-]+$/i, "Bundle code contains invalid characters"),
+  app: z
+    .string()
+    .max(50, "App label is too long")
+    .optional()
+    .nullable(),
+  description: z
+    .string()
+    .max(5000, "Description is too long")
+    .optional()
+    .nullable(),
+  permissionIds: z.array(z.number().int().positive()).min(0, "Permission IDs must be an array"),
 });
 
 /**

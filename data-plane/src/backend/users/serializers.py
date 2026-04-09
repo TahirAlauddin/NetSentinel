@@ -1,7 +1,7 @@
 from django.contrib.auth.models import Group, Permission
 from rest_framework import serializers
 
-from .models import AppPermission, AppPermissionGroup, User
+from .models import ExtendedGroup, PermissionBundle, User
 
 
 class PermissionSerializer(serializers.ModelSerializer):
@@ -16,16 +16,97 @@ class PermissionSerializer(serializers.ModelSerializer):
 
 
 class GroupSerializer(serializers.ModelSerializer):
-    """Serializer for Group."""
+    """Lightweight serializer for Group list responses (no permissions_detail)."""
 
-    permissions_detail = PermissionSerializer(source="permissions", many=True, read_only=True)
     permissions = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Permission.objects.all(), required=False
     )
     user_count = serializers.SerializerMethodField()
+    permission_bundle_ids = serializers.SerializerMethodField()
+    app_level_permission_count = serializers.SerializerMethodField()
 
     def get_user_count(self, obj):
         return obj.user_set.count()
+
+    def get_permission_bundle_ids(self, obj):
+        try:
+            ext = obj.extended
+            return list(ext.bundles.values_list("id", flat=True))
+        except ExtendedGroup.DoesNotExist:
+            return []
+
+    def get_app_level_permission_count(self, obj):
+        """Return unique app count as shown in UI tabs/cards."""
+        try:
+            app_labels = list(obj.extended.bundles.values_list("app", flat=True))
+        except ExtendedGroup.DoesNotExist:
+            return 0
+
+        ui_apps = set()
+        for label in app_labels:
+            if not label:
+                continue
+            if label == "phone_management":
+                ui_apps.add("phone_mgmt")
+            elif label in {
+                "users",
+                "infrastructure",
+                "notifications",
+                "auth",
+                "admin",
+                "contenttypes",
+                "sessions",
+            }:
+                ui_apps.add("users")
+            else:
+                ui_apps.add(label)
+        return len(ui_apps)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._bundle_ids_to_set = None
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        request = self.context.get("request")
+        self._bundle_ids_to_set = None
+        if request and hasattr(request, "data") and "permission_bundle_ids" in request.data:
+            raw = request.data.get("permission_bundle_ids")
+            if raw is None:
+                raw = []
+            if not isinstance(raw, list):
+                raise serializers.ValidationError(
+                    {"permission_bundle_ids": "Expected a list of bundle IDs."}
+                )
+            bundle_ids = []
+            for x in raw:
+                try:
+                    bid = int(x)
+                except (TypeError, ValueError):
+                    raise serializers.ValidationError(
+                        {"permission_bundle_ids": "Each bundle id must be an integer."}
+                    )
+                if bid < 1:
+                    raise serializers.ValidationError(
+                        {"permission_bundle_ids": "Each bundle id must be a positive integer."}
+                    )
+                bundle_ids.append(bid)
+            self._bundle_ids_to_set = bundle_ids
+        return attrs
+
+    def create(self, validated_data):
+        group = super().create(validated_data)
+        if self._bundle_ids_to_set is not None:
+            ext, _ = ExtendedGroup.objects.get_or_create(group=group)
+            ext.bundles.set(PermissionBundle.objects.filter(id__in=self._bundle_ids_to_set))
+        return group
+
+    def update(self, instance, validated_data):
+        group = super().update(instance, validated_data)
+        if self._bundle_ids_to_set is not None:
+            ext, _ = ExtendedGroup.objects.get_or_create(group=group)
+            ext.bundles.set(PermissionBundle.objects.filter(id__in=self._bundle_ids_to_set))
+        return group
 
     class Meta:
         model = Group
@@ -33,10 +114,49 @@ class GroupSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "permissions",
-            "permissions_detail",
             "user_count",
+            "permission_bundle_ids",
+            "app_level_permission_count",
         ]
         read_only_fields = ["id"]
+
+
+class GroupDetailSerializer(GroupSerializer):
+    """Full serializer for single-group retrieval — includes permissions_detail."""
+
+    permissions_detail = PermissionSerializer(source="permissions", many=True, read_only=True)
+
+    class Meta(GroupSerializer.Meta):
+        fields = GroupSerializer.Meta.fields + ["permissions_detail"]
+
+
+class PermissionBundleSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for PermissionBundle list responses (no permissions_detail)."""
+
+    permissions = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Permission.objects.all(), required=False
+    )
+
+    class Meta:
+        model = PermissionBundle
+        fields = [
+            "id",
+            "name",
+            "code",
+            "app",
+            "description",
+            "permissions",
+        ]
+        read_only_fields = ["id"]
+
+
+class PermissionBundleDetailSerializer(PermissionBundleSerializer):
+    """Full serializer for single-bundle retrieval — includes permissions_detail."""
+
+    permissions_detail = PermissionSerializer(source="permissions", many=True, read_only=True)
+
+    class Meta(PermissionBundleSerializer.Meta):
+        fields = PermissionBundleSerializer.Meta.fields + ["permissions_detail"]
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -94,108 +214,21 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return user
 
 
-class AppPermissionSerializer(serializers.ModelSerializer):
-    """Serializer for App Permission."""
+class UserAssignmentsUpdateSerializer(serializers.Serializer):
+    """
+    Assign groups and direct Django permissions to a user.
+    Effective permissions are derived from:
+      - user.user_permissions (direct grants)
+      - user.groups -> ExtendedGroup -> PermissionBundle -> permissions
+    """
 
-    class Meta:
-        model = AppPermission
-        fields = [
-            "id",
-            "codename",
-            "name",
-            "description",
-            "app_label",
-            "category",
-            "is_active",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = ["id", "created_at", "updated_at"]
-
-
-class AppPermissionGroupSerializer(serializers.ModelSerializer):
-    """Serializer for Group App Permission."""
-
-    permission_detail = AppPermissionSerializer(source="permission", read_only=True)
-    group_name = serializers.CharField(source="group.name", read_only=True)
-
-    class Meta:
-        model = AppPermissionGroup
-        fields = [
-            "id",
-            "group",
-            "group_name",
-            "permission",
-            "permission_detail",
-            "granted_at",
-            "granted_by",
-        ]
-        read_only_fields = ["id", "granted_at"]
-
-
-class GroupWithAppPermissionsSerializer(GroupSerializer):
-    """Extended Group serializer with app permissions."""
-
-    app_permissions_detail = serializers.SerializerMethodField()
-    app_permissions = serializers.SerializerMethodField()
-
-    # Write-only field for creating/updating
-    app_permissions_write = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=AppPermission.objects.filter(is_active=True),
-        required=False,
-        write_only=True,
+    group_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=True,
+        allow_empty=True,
     )
-
-    def get_app_permissions(self, obj):
-        """Get app permission IDs through the AppPermissionGroup relationship."""
-        app_permission_groups = obj.app_permissions.select_related("permission").all()
-        return [apg.permission.id for apg in app_permission_groups]
-
-    def get_app_permissions_detail(self, obj):
-        """Get app permissions through the AppPermissionGroup relationship."""
-        app_permission_groups = obj.app_permissions.select_related("permission").all()
-        permissions = [apg.permission for apg in app_permission_groups]
-        return AppPermissionSerializer(permissions, many=True).data
-
-    class Meta(GroupSerializer.Meta):
-        fields = GroupSerializer.Meta.fields + [
-            "app_permissions",
-            "app_permissions_detail",
-            "app_permissions_write",
-        ]
-
-    def update(self, instance, validated_data):
-        """Update group app permissions."""
-        # app_permissions_write is the write-only field name
-        app_permissions = validated_data.pop("app_permissions_write", None)
-        group = super().update(instance, validated_data)
-
-        if app_permissions is not None:
-            # Clear existing app permissions
-            AppPermissionGroup.objects.filter(group=group).delete()
-            # Add new app permissions
-            for permission in app_permissions:
-                AppPermissionGroup.objects.create(
-                    group=group,
-                    permission=permission,
-                    granted_by=self.context["request"].user,
-                )
-
-        return group
-
-    def create(self, validated_data):
-        """Create group with app permissions."""
-        # app_permissions_write is the write-only field name
-        app_permissions = validated_data.pop("app_permissions_write", [])
-        group = super().create(validated_data)
-
-        # Add app permissions
-        for permission in app_permissions:
-            AppPermissionGroup.objects.create(
-                group=group,
-                permission=permission,
-                granted_by=self.context["request"].user,
-            )
-
-        return group
+    permission_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=True,
+        allow_empty=True,
+    )

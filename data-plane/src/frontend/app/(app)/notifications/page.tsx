@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Bell, Smartphone, Phone, Settings, Loader2, Inbox } from "lucide-react";
+import { Bell, Smartphone, Settings, Loader2, Inbox, Mail, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/contexts/notification-context";
@@ -13,6 +13,13 @@ import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 
 const channelCards = [
+  {
+    title: "Email",
+    description: "Send alerts via SMTP to your email inbox.",
+    href: "/notifications/email",
+    icon: Mail,
+    enabledKey: "email" as const,
+  },
   {
     title: "Slack",
     description: "Send alerts to Slack channels via webhook.",
@@ -32,13 +39,6 @@ const channelCards = [
     description: "Get critical alerts via SMS. Coming soon.",
     href: "/notifications/sms",
     icon: Smartphone,
-    comingSoon: true,
-  },
-  {
-    title: "Voice",
-    description: "Receive voice call alerts. Coming soon.",
-    href: "/notifications/voice",
-    icon: Phone,
     comingSoon: true,
   },
 ];
@@ -193,7 +193,7 @@ export default function NotificationsPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
         <p className="text-muted-foreground mt-1">
-          Configure how you receive alerts — Slack, Discord, and more.
+          Configure how you receive alerts — Email, Slack, Discord, and more.
         </p>
       </div>
 
@@ -201,10 +201,10 @@ export default function NotificationsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Inbox className="h-5 w-5" />
-            Notifications
+            Inbox
           </CardTitle>
           <CardDescription>
-            Unread at the top, read below. Mark items read or unread.
+            Recent alerts. Unread at the top — mark items read or unread as needed.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -249,7 +249,7 @@ export default function NotificationsPage() {
             Channels
           </CardTitle>
           <CardDescription>
-            Choose where to send notifications. Connect Slack or Discord to get started; SMS and voice are coming soon.
+            Choose where to send notifications. Connect Email, Slack, or Discord to get started.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -264,7 +264,7 @@ export default function NotificationsPage() {
                   key={channel.href}
                   href={channel.href}
                   className={cn(
-                    "flex items-start gap-4 rounded-xl border p-5 transition-colors hover:bg-muted/50",
+                    "flex items-start gap-4 rounded-xl border p-5 transition-colors hover:bg-muted/50 group",
                     channel.comingSoon && "opacity-75"
                   )}
                 >
@@ -299,6 +299,7 @@ export default function NotificationsPage() {
                       {channel.description}
                     </p>
                   </div>
+                  <ChevronRight className="size-5 shrink-0 text-muted-foreground mt-1 group-hover:text-foreground transition-colors" aria-hidden />
                 </Link>
               );
             })}

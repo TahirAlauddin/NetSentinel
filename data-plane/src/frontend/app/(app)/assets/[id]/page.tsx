@@ -10,6 +10,7 @@ import { Asset } from "@/types/assets"
 import { validateId } from "@/lib/security/input-validation"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
+import { ProtectedRoute } from "@/components/feedback/protected-route"
 
 export default function AssetDetailPage() {
   const params = useParams()
@@ -53,57 +54,65 @@ export default function AssetDetailPage() {
 
   if (assetId === null) {
     return (
-      <AppShell>
-        <div className="flex-1 overflow-auto bg-gray-50">
-          <div className="max-w-7xl mx-auto p-4 space-y-4">
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded text-amber-800">
-              Invalid asset ID. Please use a valid link or go back to the list.
+      <ProtectedRoute>
+        <AppShell>
+          <div className="flex-1 overflow-auto bg-gray-50">
+            <div className="max-w-7xl mx-auto p-4 space-y-4">
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded text-amber-800">
+                Invalid asset ID. Please use a valid link or go back to the list.
+              </div>
+              <Button variant="outline" onClick={() => router.push("/assets")}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to assets
+              </Button>
             </div>
-            <Button variant="outline" onClick={() => router.push("/assets")}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to assets
-            </Button>
           </div>
-        </div>
-      </AppShell>
+        </AppShell>
+      </ProtectedRoute>
     )
   }
 
   if (loading) {
     return (
-      <AppShell>
-        <div className="flex-1 overflow-auto bg-gray-50">
-          <div className="max-w-7xl mx-auto p-8">
-            <div className="text-center py-12">
-              <div className="text-gray-500">Loading asset data...</div>
+      <ProtectedRoute>
+        <AppShell>
+          <div className="flex-1 overflow-auto bg-gray-50">
+            <div className="max-w-7xl mx-auto p-8">
+              <div className="text-center py-12">
+                <div className="text-gray-500">Loading asset data...</div>
+              </div>
             </div>
           </div>
-        </div>
-      </AppShell>
+        </AppShell>
+      </ProtectedRoute>
     )
   }
 
   if (error || !asset) {
     return (
-      <AppShell>
-        <div className="flex-1 overflow-auto bg-gray-50">
-          <div className="max-w-7xl mx-auto p-4 space-y-4">
-            <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700">
-              {error || "Asset not found"}
+      <ProtectedRoute>
+        <AppShell>
+          <div className="flex-1 overflow-auto bg-gray-50">
+            <div className="max-w-7xl mx-auto p-4 space-y-4">
+              <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700">
+                {error || "Asset not found"}
+              </div>
+              <Button variant="outline" onClick={() => router.push("/assets")}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to assets
+              </Button>
             </div>
-            <Button variant="outline" onClick={() => router.push("/assets")}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to assets
-            </Button>
           </div>
-        </div>
-      </AppShell>
+        </AppShell>
+      </ProtectedRoute>
     )
   }
 
   return (
-    <AppShell>
-      <AssetDetail assetId={assetId} />
-    </AppShell>
+    <ProtectedRoute>
+      <AppShell>
+        <AssetDetail assetId={assetId} />
+      </AppShell>
+    </ProtectedRoute>
   )
 }

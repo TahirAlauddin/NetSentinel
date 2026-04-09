@@ -2,6 +2,8 @@
 IP Tag serializers for IPAM.
 """
 
+from typing import Any, Dict
+
 from rest_framework import serializers
 
 from ..models import IPAddress, IPAddressTag, IPTag
@@ -13,7 +15,7 @@ class IPTagSerializer(serializers.ModelSerializer):
     usage_count = serializers.SerializerMethodField()
     color_display = serializers.CharField(source="get_color_display", read_only=True)
 
-    def get_usage_count(self, obj):
+    def get_usage_count(self, obj: IPTag) -> int:
         """Return count of IP addresses using this tag."""
         return obj.get_usage_count()
 
@@ -45,7 +47,7 @@ class IPTagCreateUpdateSerializer(serializers.ModelSerializer):
             "is_active",
         ]
 
-    def validate_name(self, value):
+    def validate_name(self, value: str) -> str:
         """Validate tag name format."""
         if not value:
             raise serializers.ValidationError("Tag name cannot be empty")
@@ -60,7 +62,7 @@ class IPAddressTagSerializer(serializers.ModelSerializer):
     ip_address_detail = serializers.SerializerMethodField()
     applied_by_username = serializers.CharField(source="applied_by.username", read_only=True)
 
-    def get_ip_address_detail(self, obj):
+    def get_ip_address_detail(self, obj: IPAddressTag) -> Dict[str, Any]:
         """Return basic IP address info."""
         return {
             "id": obj.ip_address.id,
@@ -99,7 +101,7 @@ class IPAddressTagCreateSerializer(serializers.ModelSerializer):
             "notes",
         ]
 
-    def validate(self, data):
+    def validate(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Validate that IP address and tag combination is unique."""
         ip_address = data.get("ip_address")
         tag = data.get("tag")
@@ -118,7 +120,7 @@ class IPAddressWithTagsSerializer(serializers.ModelSerializer):
 
     tags_detail = IPTagSerializer(source="tags", many=True, read_only=True)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize serializer and set tag queryset."""
         super().__init__(*args, **kwargs)
         # Set queryset for tag_ids field

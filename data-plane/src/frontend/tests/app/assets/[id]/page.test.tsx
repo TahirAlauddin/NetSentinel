@@ -2,7 +2,9 @@
  * Tests for app/(app)/assets/[id]/page.tsx
  */
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { render } from "@/tests/__utils__/test-utils";
+import { useSession } from "next-auth/react";
 import AssetDetailPage from "@/app/(app)/assets/[id]/page";
 import { AssetsApiClient } from "@/lib/api-client/asset";
 import { useParams } from "next/navigation";
@@ -40,6 +42,20 @@ describe("AssetDetailPage", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.mocked(useSession).mockReturnValue({
+      data: {
+        user: {
+          id: "1",
+          email: "test@example.com",
+          name: "Test",
+          permissions: ["assets.view_asset"],
+          isSuperuser: false,
+        },
+        expires: new Date(Date.now() + 3600000).toISOString(),
+      },
+      status: "authenticated",
+      update: jest.fn(),
+    } as ReturnType<typeof useSession>);
     mockGetAsset = jest.fn();
     (AssetsApiClient as jest.MockedClass<typeof AssetsApiClient>).mockImplementation(
       () =>

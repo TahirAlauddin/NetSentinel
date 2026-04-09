@@ -1,8 +1,13 @@
 import { api } from "@/lib/utils";
 import { handleApiResponse } from "@/lib/utils";
-import type { InAppNotificationDto } from "@/types/notifications";
-
-const BASE = "/notifications";
+import {
+  NOTIFICATION_LIMIT_MIN,
+  NOTIFICATION_LIMIT_MAX,
+  NOTIFICATION_LIMIT_DEFAULT_UNREAD,
+  NOTIFICATION_LIMIT_DEFAULT_ALL,
+  type InAppNotificationDto,
+} from "@/types/notifications";
+import { NOTIFICATIONS } from "@/constants/api-paths";
 
 /** Backend notification config (snake_case). Used for GET/PATCH /notifications/config/ */
 export interface BackendNotificationConfig {
@@ -12,6 +17,10 @@ export interface BackendNotificationConfig {
   slack_default_channel: string;
   discord_enabled: boolean;
   discord_webhook_url: string;
+  email_enabled: boolean;
+  email_recipient?: string;
+  sms_enabled: boolean;
+  sms_recipient?: string;
   updated_at?: string;
 }
 
@@ -21,8 +30,11 @@ export const notificationClient = {
    * @param options.limit - Max number to return (1–100). Bell uses 5, view-all uses 50.
    */
   async getUnread(options?: { limit?: number }): Promise<InAppNotificationDto[]> {
-    const limit = Math.max(1, Math.min(100, options?.limit ?? 20));
-    const endpoint = `${BASE}/in-app/?unread_only=true&limit=${limit}`;
+    const limit = Math.max(
+      NOTIFICATION_LIMIT_MIN,
+      Math.min(NOTIFICATION_LIMIT_MAX, options?.limit ?? NOTIFICATION_LIMIT_DEFAULT_UNREAD)
+    );
+    const endpoint = `${NOTIFICATIONS.BASE}/in-app/?unread_only=true&limit=${limit}`;
     const res = await api.get<InAppNotificationDto[]>(endpoint, { requireAuth: true });
     const data = handleApiResponse(res);
     return Array.isArray(data) ? data : [];
@@ -33,8 +45,11 @@ export const notificationClient = {
    * @param options.limit - Max number to return (1–100). Default 50.
    */
   async getAll(options?: { limit?: number }): Promise<InAppNotificationDto[]> {
-    const limit = Math.max(1, Math.min(100, options?.limit ?? 50));
-    const endpoint = `${BASE}/in-app/?limit=${limit}`;
+    const limit = Math.max(
+      NOTIFICATION_LIMIT_MIN,
+      Math.min(NOTIFICATION_LIMIT_MAX, options?.limit ?? NOTIFICATION_LIMIT_DEFAULT_ALL)
+    );
+    const endpoint = `${NOTIFICATIONS.BASE}/in-app/?limit=${limit}`;
     const res = await api.get<InAppNotificationDto[]>(endpoint, { requireAuth: true });
     const data = handleApiResponse(res);
     return Array.isArray(data) ? data : [];
@@ -43,7 +58,7 @@ export const notificationClient = {
   /** Mark a single notification as read for the current user. */
   async markRead(id: number | string): Promise<void> {
     const res = await api.post<{ ok: boolean }>(
-      `${BASE}/in-app/${id}/mark-read/`,
+      NOTIFICATIONS.IN_APP_MARK_READ(id),
       {},
       { requireAuth: true }
     );
@@ -53,7 +68,7 @@ export const notificationClient = {
   /** Mark a single notification as unread for the current user. */
   async markUnread(id: number | string): Promise<void> {
     const res = await api.post<{ ok: boolean }>(
-      `${BASE}/in-app/${id}/mark-unread/`,
+      NOTIFICATIONS.IN_APP_MARK_UNREAD(id),
       {},
       { requireAuth: true }
     );
@@ -63,7 +78,7 @@ export const notificationClient = {
   /** Mark all notifications as read for the current user. */
   async markAllRead(): Promise<{ marked_count: number }> {
     const res = await api.post<{ ok: boolean; marked_count: number }>(
-      `${BASE}/in-app/mark-all-read/`,
+      NOTIFICATIONS.IN_APP_MARK_ALL_READ,
       {},
       { requireAuth: true }
     );
@@ -76,7 +91,7 @@ export const notificationClient = {
    * Used so alerts (e.g. subnet threshold) use the same webhook URLs you configure in the UI.
    */
   async getConfig(): Promise<BackendNotificationConfig | null> {
-    const res = await api.get<BackendNotificationConfig>(`${BASE}/config/`, { requireAuth: true });
+    const res = await api.get<BackendNotificationConfig>(NOTIFICATIONS.CONFIG, { requireAuth: true });
     if (res.error) return null;
     return (res.data as BackendNotificationConfig) ?? null;
   },
@@ -88,7 +103,7 @@ export const notificationClient = {
   async patchConfig(
     data: Partial<Omit<BackendNotificationConfig, "id" | "updated_at">>
   ): Promise<BackendNotificationConfig | null> {
-    const res = await api.patch<BackendNotificationConfig>(`${BASE}/config/`, data, {
+    const res = await api.patch<BackendNotificationConfig>(NOTIFICATIONS.CONFIG, data, {
       requireAuth: true,
     });
     if (res.error) return null;
@@ -104,9 +119,9 @@ export const notificationClient = {
     message?: string;
     type?: "info" | "warning" | "error" | "success";
     link?: string;
-  }): Promise<InAppNotificationDto | null> {
+  }  ): Promise<InAppNotificationDto | null> {
     const res = await api.post<InAppNotificationDto>(
-      `${BASE}/in-app/create-test/`,
+      NOTIFICATIONS.IN_APP_CREATE_TEST,
       options ?? {},
       { requireAuth: true }
     );
@@ -115,31 +130,43 @@ export const notificationClient = {
   },
 
   /**
-   * Send a test notification to one channel only (slack or discord).
-   * Returns { slack_ok, discord_ok, slack_error?, discord_error? } or null on request failure.
-   * Error codes: no_config | slack_disabled | discord_disabled | no_webhook | webhook_failed
+   * Send a test notification to one channel only (slack, discord, email, or sms).
+   * Returns { slack_ok, discord_ok, email_ok, sms_ok, slack_error?, discord_error?, email_error?, sms_error? } or null on request failure.
+   * Error codes: no_config | slack_disabled | discord_disabled | email_disabled | sms_disabled | no_webhook | no_recipient | webhook_failed | smtp_failed | twilio_failed
    */
-  async sendTest(options: { channel: "slack" | "discord" }): Promise<{
+  async sendTest(options: { channel: "slack" | "discord" | "email" | "sms" }): Promise<{
     slack_ok: boolean;
     discord_ok: boolean;
+    email_ok: boolean;
+    sms_ok: boolean;
     slack_error?: string | null;
     discord_error?: string | null;
+    email_error?: string | null;
+    sms_error?: string | null;
   } | null> {
     const { channel } = options;
     const res = await api.post<{
       slack_ok: boolean;
       discord_ok: boolean;
+      email_ok: boolean;
+      sms_ok: boolean;
       slack_error?: string | null;
       discord_error?: string | null;
-    }>(`${BASE}/config/test/?channel=${channel}`, {}, { requireAuth: true });
+      email_error?: string | null;
+      sms_error?: string | null;
+    }>(`${NOTIFICATIONS.CONFIG_TEST}?channel=${channel}`, {}, { requireAuth: true });
     if (res.error) return null;
     const data = res.data as Record<string, unknown>;
     return data
       ? {
           slack_ok: !!data.slack_ok,
           discord_ok: !!data.discord_ok,
+          email_ok: !!data.email_ok,
+          sms_ok: !!data.sms_ok,
           slack_error: (data.slack_error as string | null) ?? null,
           discord_error: (data.discord_error as string | null) ?? null,
+          email_error: (data.email_error as string | null) ?? null,
+          sms_error: (data.sms_error as string | null) ?? null,
         }
       : null;
   },

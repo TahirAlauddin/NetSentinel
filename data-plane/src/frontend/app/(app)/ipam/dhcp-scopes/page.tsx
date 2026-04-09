@@ -8,11 +8,13 @@ import { DhcpScopeTable } from "@/components/apps/ipam/dhcp-scope-table";
 import { DHCPScope } from "@/types/ipam";
 import { IpamApiClient } from "@/lib/api-client/ipam";
 import { extractIpamArrayData } from "@/lib/ipam-utils";
+import { usePermissions } from "@/contexts/permissions-context";
 
 const ipamApi = new IpamApiClient();
 
 export default function DhcpScopesPage() {
   const router = useRouter();
+  const { can } = usePermissions();
   const [scopes, setScopes] = useState<DHCPScope[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,9 +98,9 @@ export default function DhcpScopesPage() {
       ) : (
         <DhcpScopeTable
           scopes={scopes}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onAdd={handleAdd}
+          onEdit={can("ipam.change_dhcpscope") ? handleEdit : undefined}
+          onDelete={can("ipam.delete_dhcpscope") ? handleDelete : undefined}
+          onAdd={can("ipam.add_dhcpscope") ? handleAdd : undefined}
           onViewLeases={handleViewLeases}
           onViewReservations={handleViewReservations}
         />

@@ -17,6 +17,7 @@ import {
   formatWarrantyStatus,
   calculateWarrantyStatus,
 } from "@/components/apps/assets/utils";
+import { Can } from "@/contexts/permissions-context";
 
 export interface AssetsListTableProps {
   assets: Asset[];
@@ -28,6 +29,7 @@ export interface AssetsListTableProps {
 
 /**
  * Table view for the assets list page: type, name, source, tags, warranty status, actions.
+ * Edit/Delete buttons are gated by Can (assets.change_asset / assets.delete_asset).
  */
 export function AssetsListTable({
   assets,
@@ -115,14 +117,16 @@ export function AssetsListTable({
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onEdit(asset)}
-                          className="gap-1"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
+                        <Can permission="assets.change_asset">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onEdit(asset)}
+                            className="gap-1"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                        </Can>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -131,14 +135,16 @@ export function AssetsListTable({
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onDelete(asset.id)}
-                          className="gap-1 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <Can permission="assets.delete_asset">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onDelete(asset.id)}
+                            className="gap-1 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </Can>
                       </div>
                     </TableCell>
                   </TableRow>

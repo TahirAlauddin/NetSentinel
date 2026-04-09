@@ -20,6 +20,7 @@ import {
 import { TelecomApiClient } from "@/lib/api-client/telecom";
 import { ProviderRecord } from "@/types/providers";
 import { ServiceRecord } from "@/types/services";
+import { Can } from "@/contexts/permissions-context";
 import { getSafeAbsoluteUrl } from "@/lib/security/url";
 import { Search } from "lucide-react";
 
@@ -124,9 +125,11 @@ export default function ServicesPage() {
                 Manage your telecom services.
               </p>
             </div>
-            <Button asChild>
-              <Link href="/telecom-management/services/new">Add Service</Link>
-            </Button>
+            <Can permission="telecom.add_service">
+              <Button asChild>
+                <Link href="/telecom-management/services/new">Add Service</Link>
+              </Button>
+            </Can>
           </div>
 
           <Card>

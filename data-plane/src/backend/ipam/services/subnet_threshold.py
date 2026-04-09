@@ -203,7 +203,11 @@ The subnet is now operating within normal utilization levels.
             InAppNotification.objects.create(
                 title=subject,
                 message=message.strip(),
-                type="critical" if alert_type == "critical" else "warning" if alert_type == "warning" else "success",
+                type=(
+                    "critical"
+                    if alert_type == "critical"
+                    else "warning" if alert_type == "warning" else "success"
+                ),
                 # Could later add a deep link into the UI, e.g. subnet detail page
             )
 
@@ -211,7 +215,11 @@ The subnet is now operating within normal utilization levels.
             send_notification(
                 title=subject,
                 message=message.strip(),
-                alert_type="critical" if alert_type == "critical" else "warning" if alert_type == "warning" else "recovery",
+                alert_type=(
+                    "critical"
+                    if alert_type == "critical"
+                    else "warning" if alert_type == "warning" else "recovery"
+                ),
                 user=None,
             )
         except Exception as e:

@@ -13,6 +13,7 @@ import {
   calculateWarrantyStatus,
 } from "./utils";
 import { useRouter } from "next/navigation";
+import { Can } from "@/contexts/permissions-context";
 
 export interface AssetTableProps {
   /**
@@ -150,14 +151,16 @@ export function AssetTable({
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onEditClick(asset)}
-                          className="gap-1 cursor-pointer"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
+                        <Can permission="assets.change_asset">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onEditClick(asset)}
+                            className="gap-1 cursor-pointer"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                        </Can>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -169,14 +172,16 @@ export function AssetTable({
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onDeleteClick(asset.id)}
-                          className="gap-1 text-red-600 hover:text-red-700 cursor-pointer"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <Can permission="assets.delete_asset">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onDeleteClick(asset.id)}
+                            className="gap-1 text-red-600 hover:text-red-700 cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </Can>
                       </div>
                     </td>
                   </tr>

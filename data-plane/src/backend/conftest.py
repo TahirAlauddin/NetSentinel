@@ -5,6 +5,36 @@ Pytest configuration and shared fixtures for the NetSentinel data plane backend.
 import pytest
 
 
+def grant_all_django_permissions_for_app(user, app_label: str) -> None:
+    """Attach every Permission for models in ``app_label`` (e.g. ``assets``) to ``user``."""
+    from django.contrib.auth.models import Permission
+
+    perm_list = list(Permission.objects.filter(content_type__app_label=app_label))
+    if perm_list:
+        user.user_permissions.add(*perm_list)
+
+
+@pytest.fixture
+def user_with_assets_perms(db, user):
+    """Regular user with all ``assets`` Django model permissions (for ViewSets using
+    DjangoModelPermissions)."""
+    grant_all_django_permissions_for_app(user, "assets")
+    return user
+
+
+@pytest.fixture
+def authenticated_api_client_with_assets_perms(db, user_with_assets_perms):
+    """JWT-authenticated API client whose user has full ``assets`` model permissions."""
+    from rest_framework.test import APIClient
+    from rest_framework_simplejwt.tokens import RefreshToken
+
+    client = APIClient()
+    refresh = RefreshToken.for_user(user_with_assets_perms)
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+    client.user = user_with_assets_perms
+    return client
+
+
 @pytest.fixture
 def api_client():
     """Provides an unauthenticated API client."""

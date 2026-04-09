@@ -21,11 +21,13 @@ import { ContractsBreadcrumb } from "@/components/apps/contracts/contracts-bread
 import { ContractDetailHeader } from "@/components/apps/contracts/contract-detail-header";
 import { ContractDetailInfo } from "@/components/apps/contracts/contract-detail-info";
 import { ContractDetailMeta } from "@/components/apps/contracts/contract-detail-meta";
+import { usePermissions } from "@/contexts/permissions-context";
 
 export default function ContractDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
+  const { can } = usePermissions();
 
   const [contract, setContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
@@ -166,8 +168,8 @@ export default function ContractDetailPage() {
         <ContractDetailHeader
           contract={contract}
           logoUrl={logoUrl}
-          editHref={`/contracts/edit/${id}`}
-          onDeleteClick={() => setDeleteOpen(true)}
+          editHref={can("contracts.change_contract") ? `/contracts/edit/${id}` : undefined}
+          onDeleteClick={can("contracts.delete_contract") ? () => setDeleteOpen(true) : undefined}
         />
 
         <ContractDetailInfo

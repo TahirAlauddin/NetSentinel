@@ -4,9 +4,9 @@ import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import { AppShell } from "@/components/layout/app-shell";
-
 import { AssetForm } from "@/components/apps/assets/shared/form/AssetForm";
 import { LoadingState } from "@/components/feedback/loading-state";
+import { ProtectedRoute } from "@/components/feedback/protected-route";
 import { validateId } from "@/lib/security/input-validation";
 
 /**
@@ -24,15 +24,20 @@ export default function EditAssetPage() {
   }, [assetId, router]);
 
   if (assetId === null) {
-    return <LoadingState message="Redirecting..." />;
+    return (
+      <ProtectedRoute>
+        <LoadingState message="Redirecting..." />
+      </ProtectedRoute>
+    );
   }
-
   return (
-    <AppShell>
-      <div className="flex-1 overflow-auto bg-gray-50">
-        <AssetForm assetId={assetId} mode="edit" />
-      </div>
-    </AppShell>
+    <ProtectedRoute>
+      <AppShell>
+        <div className="flex-1 overflow-auto bg-gray-50">
+          <AssetForm assetId={assetId} mode="edit" />
+        </div>
+      </AppShell>
+    </ProtectedRoute>
   );
 }
 

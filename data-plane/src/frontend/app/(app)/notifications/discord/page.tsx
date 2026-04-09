@@ -122,18 +122,29 @@ function DiscordForm({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="discord-enabled">Enable Discord notifications</Label>
-              <p className="text-sm text-muted-foreground">
-                When enabled, alerts will be sent to your webhook URL.
-              </p>
+          <div className="rounded-lg border-2 border-border bg-muted/80 p-4 space-y-3 shadow-sm">
+            <p className="text-sm font-medium text-foreground">Step 1: Enable and save</p>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label htmlFor="discord-enabled" className="text-base font-medium text-foreground">
+                  Enable Discord notifications
+                </Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Turn the switch on → then click <strong>Save</strong> below.
+                </p>
+              </div>
+              <div className="shrink-0 rounded-full p-1 ring-2 ring-border ring-offset-2 ring-offset-background bg-muted/50">
+                <Switch
+                  id="discord-enabled"
+                  checked={enabled}
+                  onCheckedChange={setEnabled}
+                  aria-describedby="discord-enabled-desc"
+                />
+              </div>
             </div>
-            <Switch
-              id="discord-enabled"
-              checked={enabled}
-              onCheckedChange={setEnabled}
-            />
+            <p id="discord-enabled-desc" className="text-xs text-muted-foreground">
+              {enabled ? "Discord is on — remember to click Save." : "Switch is off — turn it on, then Save."}
+            </p>
           </div>
 
           <div className="space-y-2">

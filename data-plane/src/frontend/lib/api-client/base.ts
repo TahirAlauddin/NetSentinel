@@ -1,15 +1,20 @@
 /**
- * Base API client with shared functionality
- * This class contains common logic used by both client and server API clients
+ * Base API client with shared functionality for HTTP requests.
+ * Contains common logic used by both browser (BaseApiClient) and server API clients.
+ * Subclasses must implement getApiBaseUrl(), getSession(), and refreshToken().
+ *
+ * @abstract
  */
-
 import { parseApiError } from "./error-parser";
 import type { BaseApiResponse, BaseApiRequestOptions } from "../../types/api-client";
 import type { JWT } from "next-auth/jwt";
 
 export abstract class BaseApiClientCore {
+  /** Return the API base URL (e.g. from env). */
   protected abstract getApiBaseUrl(): string;
+  /** Return current session or null. */
   protected abstract getSession(): Promise<JWT | null>;
+  /** Refresh access token; return new token or null. */
   protected abstract refreshToken(refreshToken: string): Promise<string | null>;
 
   /**

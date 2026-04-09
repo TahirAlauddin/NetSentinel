@@ -115,6 +115,7 @@ const PHONE_MANAGEMENT_NAV_ITEMS = [
  */
 const NOTIFICATIONS_NAV_ITEMS = [
   { href: "/notifications", label: "Overview" },
+  { href: "/notifications/email", label: "Email" },
   { href: "/notifications/slack", label: "Slack" },
   { href: "/notifications/discord", label: "Discord" },
   { href: "/notifications/preferences", label: "Preferences" },
@@ -136,6 +137,7 @@ export function SectionalNavigation() {
   const isTelecomRoute = pathname.startsWith("/telecom-management");
   const isPhoneManagementRoute = pathname.startsWith("/phone-management");
   const isNotificationsRoute = pathname.startsWith("/notifications");
+  const isDashboardRoute = pathname.startsWith("/dashboard");
 
   // Show IPAM navigation when on IPAM routes
   if (isIpamRoute) {
@@ -170,6 +172,10 @@ export function SectionalNavigation() {
   // Show Notifications navigation when on Notifications routes
   if (isNotificationsRoute) {
     return <NotificationsNavigation pathname={pathname} />;
+  }
+
+  if (isDashboardRoute) {
+    return <></>;
   }
 
   // Default navigation for other routes
@@ -483,6 +489,24 @@ function DefaultNavigation() {
       <li className="flex-shrink-0">
         <Link className="hover:underline whitespace-nowrap" href="#">
           Dashboard
+        </Link>
+        <Link className="hover:underline whitespace-nowrap" href="/site-surveys">
+          Site Surveys
+        </Link>
+        <Link className="hover:underline whitespace-nowrap" href="/assets">
+          Assets
+        </Link>
+        <Link className="hover:underline whitespace-nowrap" href="/contracts">
+          Contracts
+        </Link>
+        <Link className="hover:underline whitespace-nowrap" href="/vendors-saas">
+          Vendors/SaaS
+        </Link>
+        <Link className="hover:underline whitespace-nowrap" href="/telecom-management">
+          Telecom Expense Management
+        </Link>
+        <Link className="hover:underline whitespace-nowrap" href="/monitoring">
+          Monitoring
         </Link>
       </li>
     </ul>

@@ -21,7 +21,6 @@ interface CostDepreciationSectionProps {
 }
 
 export function CostDepreciationSection({ asset, onEdit }: CostDepreciationSectionProps) {
-  // TODO: Map asset fields to costDepreciation structure
   const costDepreciation = {
     purchasePrice: asset.purchase_price || undefined,
     replacementCost: asset.replacement_cost || undefined,

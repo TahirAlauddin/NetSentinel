@@ -1,42 +1,42 @@
 /**
  * Component tests for app/(app)/settings/page.tsx
- * 
- * Tests cover:
- * - Page rendering
- * - Component integration
+ *
+ * Server component: mocks getCompanyProfile and child shells.
  */
 
-import { render, screen } from '@/tests/__utils__/test-utils'
-import SettingsPage from '@/app/(app)/settings/page'
+import { render, screen } from "@/tests/__utils__/test-utils";
+import SettingsPage from "@/app/(app)/settings/page";
 
-// Mock all child components
-jest.mock('@/components/layout/app-shell', () => ({
+jest.mock("@/app/(app)/settings/actions/company-profile", () => ({
+  getCompanyProfile: jest.fn().mockResolvedValue({
+    companyName: "Test Co",
+    subdomain: "test.app",
+    mainContact: "admin@test.com",
+    phoneNumber: "No phone number set",
+  }),
+}));
+
+jest.mock("@/components/layout/app-shell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="app-shell">{children}</div>
   ),
-}))
+}));
 
-jest.mock('@/components/settings/settings-nav-tabs', () => ({
-  SettingsNavTabs: () => <div data-testid="settings-nav-tabs">Nav Tabs</div>,
-}))
-
-jest.mock('@/components/settings/settings-header', () => ({
+jest.mock("@/components/settings/settings-header", () => ({
   SettingsHeader: () => <div data-testid="settings-header">Header</div>,
-}))
+}));
 
-jest.mock('@/components/settings/settings-overview', () => ({
+jest.mock("@/components/settings/settings-overview", () => ({
   SettingsOverview: () => <div data-testid="settings-overview">Overview</div>,
-}))
+}));
 
-describe('SettingsPage', () => {
-  it('should render all components', async () => {
-    const page = await SettingsPage()
-    render(page)
+describe("SettingsPage", () => {
+  it("should render shell, header, and overview", async () => {
+    const page = await SettingsPage();
+    render(page);
 
-    expect(screen.getByTestId('app-shell')).toBeInTheDocument()
-    expect(screen.getByTestId('settings-nav-tabs')).toBeInTheDocument()
-    expect(screen.getByTestId('settings-header')).toBeInTheDocument()
-    expect(screen.getByTestId('settings-overview')).toBeInTheDocument()
-  })
-})
-
+    expect(screen.getByTestId("app-shell")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-header")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-overview")).toBeInTheDocument();
+  });
+});

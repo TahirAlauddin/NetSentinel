@@ -1,31 +1,45 @@
 """
 Notification delivery service.
 
-Sends messages to Slack and Discord webhooks when alerts are triggered.
+Sends messages to Slack, Discord, Email, and SMS when alerts are triggered.
 """
 
 import json
 import logging
-from typing import Optional
-from urllib.request import Request, urlopen
+from typing import Dict, List, Literal, Optional, TypedDict
 from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 from .models import NotificationConfig
 
 logger = logging.getLogger(__name__)
 
 
+AlertType = Literal["info", "warning", "critical", "success", "recovery", "error"]
+
+
+class DiscordEmbedPayload(TypedDict, total=False):
+    title: str
+    description: str
+    color: int
+
+
+# Single hardcoded email template for notifications (no user customization).
+DEFAULT_EMAIL_SUBJECT_PREFIX = "[NetSentinel] "
+
+
 def _url_host(url: str) -> str:
     """Return host part of URL for logging (no path or query)."""
     try:
         from urllib.parse import urlparse
+
         p = urlparse(url)
         return p.netloc or "(empty)"
     except Exception:
         return "(parse error)"
 
 
-def get_channel_config(user=None):
+def get_channel_config(user=None) -> Optional[NotificationConfig]:
     """
     Get notification config: user-specific if user given, else system-wide.
     When user is None and no system-wide config exists, use the most recently
@@ -51,7 +65,7 @@ _WEBHOOK_HEADERS = {
 }
 
 
-def _post_json(url: str, payload: dict, timeout: int = 10) -> bool:
+def _post_json(url: str, payload: Dict, timeout: int = 10) -> bool:
     """POST JSON to URL; return True on success."""
     if not url or not url.strip():
         return False
@@ -78,7 +92,7 @@ def _post_json(url: str, payload: dict, timeout: int = 10) -> bool:
         return False
 
 
-def send_slack_message(webhook_url: str, text: str, blocks: Optional[list] = None) -> bool:
+def send_slack_message(webhook_url: str, text: str, blocks: Optional[List[Dict]] = None) -> bool:
     """
     POST a message to a Slack incoming webhook.
     """
@@ -88,7 +102,11 @@ def send_slack_message(webhook_url: str, text: str, blocks: Optional[list] = Non
     return _post_json(webhook_url, payload)
 
 
-def send_discord_message(webhook_url: str, content: str, embeds: Optional[list] = None) -> bool:
+def send_discord_message(
+    webhook_url: str,
+    content: str,
+    embeds: Optional[List[DiscordEmbedPayload]] = None,
+) -> bool:
     """
     POST a message to a Discord webhook.
     """
@@ -100,20 +118,92 @@ def send_discord_message(webhook_url: str, content: str, embeds: Optional[list] 
     return _post_json(webhook_url, payload)
 
 
+def send_sms_message(to_number: str, body: str) -> bool:
+    """
+    Send an SMS using the Twilio Python SDK.
+
+    Sender phone number and credentials are read from Django settings:
+    - TWILIO_ACCOUNT_SID
+    - TWILIO_AUTH_TOKEN
+    - TWILIO_PHONE_NUMBER
+    """
+    if not to_number or not to_number.strip():
+        return False
+
+    from django.conf import settings
+    from twilio.rest import Client
+
+    account_sid = getattr(settings, "TWILIO_ACCOUNT_SID", "") or ""
+    auth_token = getattr(settings, "TWILIO_AUTH_TOKEN", "") or ""
+    from_number = getattr(settings, "TWILIO_PHONE_NUMBER", "") or ""
+
+    if not (account_sid and auth_token and from_number):
+        logger.warning("Twilio SMS configuration missing; check TWILIO_* settings.")
+        return False
+
+    try:
+        client = Client(account_sid, auth_token)
+        client.messages.create(
+            to=to_number.strip(),
+            from_=from_number,
+            body=body[:1600],
+        )
+        return True
+    except Exception as e:
+        logger.warning("Twilio SMS send failed: %s", e)
+        return False
+
+
+def send_email_message(config: NotificationConfig, subject: str, body: str) -> bool:
+    """
+    Send an email using Django's configured email backend with a hardcoded template.
+    """
+    if not config.email_recipient:
+        return False
+
+    from django.conf import settings
+    from django.core.mail import EmailMultiAlternatives
+
+    if not subject.startswith(DEFAULT_EMAIL_SUBJECT_PREFIX):
+        subject = f"{DEFAULT_EMAIL_SUBJECT_PREFIX}{subject}"
+    full_body_text = body
+    full_body_html = body.replace("\n", "<br>")
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@netsentinel.local")
+
+    try:
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=full_body_text,
+            from_email=from_email,
+            to=[config.email_recipient],
+        )
+        msg.attach_alternative(full_body_html, "text/html")
+        sent = msg.send(fail_silently=False)
+        return bool(sent)
+    except Exception as e:
+        logger.warning("Email send failed: %s", e)
+        return False
+
+
 def send_notification(
     title: str,
     message: str,
-    alert_type: str = "info",
+    alert_type: AlertType = "info",
     user=None,
-) -> dict:
+) -> Dict[str, bool]:
     """
-    Send a notification to all enabled channels (Slack, Discord) for the given config.
+    Send a notification to all enabled channels (Slack, Discord, Email, SMS) for the given config.
 
     alert_type: "info" | "warning" | "critical" | "success" | "recovery"
-    Returns dict with slack_ok, discord_ok.
+    Returns dict with slack_ok, discord_ok, email_ok, sms_ok.
     """
     config = get_channel_config(user=user)
-    result = {"slack_ok": False, "discord_ok": False}
+    result: Dict[str, bool] = {
+        "slack_ok": False,
+        "discord_ok": False,
+        "email_ok": False,
+        "sms_ok": False,
+    }
     if not config:
         return result
 
@@ -145,4 +235,125 @@ def send_notification(
             config.discord_webhook_url, content, embeds=embeds
         )
 
+    # Email
+    if config.email_enabled and config.email_recipient:
+        subject = f"[{alert_type.upper()}] {title}"
+        result["email_ok"] = send_email_message(config, subject, message)
+
+    # SMS
+    if getattr(config, "sms_enabled", False) and getattr(config, "sms_recipient", ""):
+        sms_body = f"[{alert_type.upper()}] {title} — {message}"
+        result["sms_ok"] = send_sms_message(config.sms_recipient, sms_body)
+
     return result
+
+
+def _test_slack(config: NotificationConfig, response: Dict[str, object]) -> None:
+    if not config.slack_enabled:
+        response["slack_error"] = "slack_disabled"
+    elif not config.slack_webhook_url or not config.slack_webhook_url.strip():
+        response["slack_error"] = "no_webhook"
+    else:
+        text = (
+            "*NetSentinel test notification*\n" "If you see this, Slack notifications are working."
+        )
+        ok = send_slack_message(config.slack_webhook_url, text)
+        response["slack_ok"] = ok
+        if not ok:
+            response["slack_error"] = "webhook_failed"
+
+
+def _test_discord(config: NotificationConfig, response: Dict[str, object]) -> None:
+    if not config.discord_enabled:
+        response["discord_error"] = "discord_disabled"
+    elif not config.discord_webhook_url or not config.discord_webhook_url.strip():
+        response["discord_error"] = "no_webhook"
+    else:
+        content = (
+            "**NetSentinel test notification**\n"
+            "If you see this, Discord notifications are working."
+        )
+        embeds = [
+            {
+                "title": "NetSentinel test notification",
+                "description": "If you see this, Discord notifications are working.",
+                "color": 0x3498DB,
+            }
+        ]
+        ok = send_discord_message(config.discord_webhook_url, content, embeds=embeds)
+        response["discord_ok"] = ok
+        if not ok:
+            response["discord_error"] = "webhook_failed"
+
+
+def _test_email(config: NotificationConfig, response: Dict[str, object]) -> None:
+    if not config.email_enabled:
+        response["email_error"] = "email_disabled"
+    elif not config.email_recipient:
+        response["email_error"] = "no_recipient"
+    else:
+        subject = "NetSentinel test notification"
+        body = "If you see this, Email notifications are working."
+        try:
+            ok = send_email_message(config, subject, body)
+        except Exception as e:  # pragma: no cover - defensive logging
+            logger.error("Email test failed: %s", e)
+            ok = False
+        response["email_ok"] = ok
+        if not ok:
+            response["email_error"] = "smtp_failed"
+
+
+def _test_sms(config: NotificationConfig, response: Dict[str, object]) -> None:
+    if not getattr(config, "sms_enabled", False):
+        response["sms_error"] = "sms_disabled"
+    elif not getattr(config, "sms_recipient", ""):
+        response["sms_error"] = "no_recipient"
+    else:
+        body = "If you see this, SMS notifications are working."
+        ok = send_sms_message(config.sms_recipient, body)
+        response["sms_ok"] = bool(ok)
+        if not response["sms_ok"]:
+            response["sms_error"] = "twilio_failed"
+
+
+_CHANNEL_HANDLERS = {
+    "slack": _test_slack,
+    "discord": _test_discord,
+    "email": _test_email,
+    "sms": _test_sms,
+}
+
+
+def send_test_notification(
+    config: Optional[NotificationConfig],
+    channel: str,
+) -> Dict[str, object]:
+    """
+    Send a test notification to a single configured channel.
+
+    Returns a dict with *_ok and *_error keys for all channels so the
+    frontend can display consistent results.
+    """
+    response: Dict[str, object] = {
+        "slack_ok": False,
+        "discord_ok": False,
+        "email_ok": False,
+        "sms_ok": False,
+        "slack_error": None,
+        "discord_error": None,
+        "email_error": None,
+        "sms_error": None,
+    }
+
+    if not config:
+        logger.info("Notification test: no config — save settings first")
+        for key in ("slack_error", "discord_error", "email_error", "sms_error"):
+            response[key] = "no_config"
+        return response
+
+    handler = _CHANNEL_HANDLERS.get(channel)
+    if handler:
+        handler(config, response)
+
+    return response

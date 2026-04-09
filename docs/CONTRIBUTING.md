@@ -42,6 +42,24 @@ Before contributing, ensure you have:
 
 Follow the setup instructions in `data-plane/docs/DEVELOPMENT.md` to get your local environment running.
 
+### Single command to check (is the code clean?)
+
+Run these before committing to ensure format, lint, and types pass:
+
+**Backend** (from `data-plane/src/backend`):
+```bash
+black . && isort . && flake8 . --max-line-length=100 --max-complexity=10
+python manage.py check
+pytest --tb=short -v
+```
+
+**Frontend** (from `data-plane/src/frontend`):
+```bash
+npm run lint
+npx tsc --noEmit
+npm test
+```
+
 ## Development Workflow
 
 ### Branch Strategy
@@ -179,10 +197,10 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 # Install development tools
 npm install -D eslint prettier @typescript-eslint/parser
 
-# Format code
-npm run format
+# Format and fix lint
+npm run lint:fix
 
-# Lint code
+# Lint only (CI)
 npm run lint
 ```
 
@@ -359,6 +377,13 @@ npm run test:coverage
 ```
 
 ## Documentation
+
+### Documentation & Comments (Code Quality §6)
+
+- **Public API documented** – Modules, classes, and public functions must have docstrings (Python) or JSDoc (TypeScript). See examples below.
+- **Non-obvious logic explained** – Add brief “why” comments for business rules or workarounds; avoid stating the obvious.
+- **TODOs tracked** – Add new TODOs to [docs/TECHNICAL_DEBT.md](TECHNICAL_DEBT.md) §8.1 or reference a ticket. No long-lived “fix later” without owner.
+- **Deprecations marked** – Use `@deprecated` (JSDoc) or deprecation docstrings with a short migration path (e.g. “Use X instead; remove in v2”).
 
 ### Code Documentation
 

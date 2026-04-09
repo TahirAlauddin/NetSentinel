@@ -6,6 +6,7 @@
 import React, { ReactElement } from 'react'
 import { render, RenderOptions } from '@testing-library/react'
 import { SessionProvider } from 'next-auth/react'
+import { PermissionsProvider } from '@/contexts/permissions-context'
 import { mockSession } from '../__mocks__/next-auth'
 
 // Custom render function that includes providers
@@ -16,7 +17,9 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
 const AllTheProviders = ({ children, session }: { children: React.ReactNode; session?: typeof mockSession | null }) => {
   return (
     <SessionProvider session={session || mockSession}>
-      {children}
+      <PermissionsProvider>
+        {children}
+      </PermissionsProvider>
     </SessionProvider>
   )
 }

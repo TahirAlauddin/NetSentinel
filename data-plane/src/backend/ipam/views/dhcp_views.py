@@ -4,6 +4,7 @@ DHCP ViewSets for IPAM.
 
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from ..models import DHCPLease, DHCPOption, DHCPReservation, DHCPScope
@@ -55,7 +56,7 @@ class DHCPScopeViewSet(viewsets.ModelViewSet):
         return queryset
 
     @action(detail=True, methods=["get"])
-    def availability(self, request, pk=None):
+    def availability(self, request: Request, pk=None) -> Response:
         """Get scope availability statistics."""
         from ..services.dhcp import calculate_scope_availability
 
@@ -64,7 +65,7 @@ class DHCPScopeViewSet(viewsets.ModelViewSet):
         return Response(availability, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["get"])
-    def leases(self, request, pk=None):
+    def leases(self, request: Request, pk=None) -> Response:
         """Get all leases for a scope."""
         scope = self.get_object()
         leases = scope.leases.all()
@@ -77,7 +78,7 @@ class DHCPScopeViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["get"])
-    def reservations(self, request, pk=None):
+    def reservations(self, request: Request, pk=None) -> Response:
         """Get all reservations for a scope."""
         scope = self.get_object()
         reservations = scope.reservations.filter(is_active=True)
@@ -85,7 +86,7 @@ class DHCPScopeViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"])
-    def assign_ip(self, request, pk=None):
+    def assign_ip(self, request: Request, pk=None) -> Response:
         """Automatically assign an IP from the scope."""
         from ..services.dhcp import assign_ip_from_dhcp_pool
 
@@ -113,7 +114,7 @@ class DHCPScopeViewSet(viewsets.ModelViewSet):
             )
 
     @action(detail=True, methods=["get"], url_path="export-config")
-    def export_config(self, request, pk=None):
+    def export_config(self, request: Request, pk=None) -> Response:
         """Export DHCP scope configuration."""
         from ..services.dhcp import export_dhcp_config
 
@@ -160,7 +161,7 @@ class DHCPLeaseViewSet(viewsets.ModelViewSet):
         return queryset
 
     @action(detail=True, methods=["post"])
-    def release(self, request, pk=None):
+    def release(self, request: Request, pk=None) -> Response:
         """Release a DHCP lease."""
         from ..services.dhcp import release_lease
 
@@ -171,7 +172,7 @@ class DHCPLeaseViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"])
-    def expire_all(self, request):
+    def expire_all(self, request: Request) -> Response:
         """Expire all expired leases."""
         from ..services.dhcp import expire_leases
 
@@ -207,7 +208,7 @@ class DHCPReservationViewSet(viewsets.ModelViewSet):
         return queryset
 
     @action(detail=False, methods=["get"])
-    def statistics(self, request):
+    def statistics(self, request: Request) -> Response:
         """Get lease statistics."""
         from ..services.dhcp import get_lease_statistics
 

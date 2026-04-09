@@ -3,7 +3,9 @@ Integration tests for cross-app relationships and complex workflows.
 """
 
 import pytest
-from django.contrib.auth.models import Group
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 
 from assets.models import (
@@ -15,7 +17,7 @@ from assets.models import (
     ComputerDetails,
 )
 from infrastructure.models import Circuit, Location, PointOfContact
-from users.models import AppPermission, AppPermissionGroup
+from tests.rbac_helpers import grant_user_permission_through_bundle
 
 
 @pytest.mark.integration
@@ -237,67 +239,33 @@ class TestCircuitLocationIntegration:
 @pytest.mark.integration
 @pytest.mark.django_db
 class TestUserPermissionIntegration:
-    """Test integration between User and Permission models."""
+    """Test integration between User, Group, PermissionBundle, and Django Permission."""
 
-    def test_user_direct_permission(self, user):
-        """Test that users can have direct app permissions."""
-        permission = AppPermission.objects.create(
-            codename="view_assets",
-            name="View Assets",
-            category="assets",
-        )
-        user.app_permissions.add(permission)
+    def test_user_permission_via_bundle(self, user):
+        perm_str = grant_user_permission_through_bundle(user, codename="integration_view_assets")
+        assert user.has_perm(perm_str) is True
 
-        assert user.has_app_permission("view_assets") is True
-        assert permission in user.app_permissions.all()
+    def test_permission_delete_stops_granting_via_bundle(self, user):
+        UserModel = get_user_model()
+        perm_str = grant_user_permission_through_bundle(user, codename="to_delete_perm")
+        assert user.has_perm(perm_str) is True
+        _app_label, codename = perm_str.split(".", 1)
+        ct = ContentType.objects.get_for_model(UserModel)
+        Permission.objects.filter(codename=codename, content_type=ct).delete()
+        user = UserModel.objects.get(pk=user.pk)
+        assert user.has_perm(perm_str) is False
 
-    def test_user_group_permission(self, user):
-        """Test that users can have permissions through groups."""
-
-        permission = AppPermission.objects.create(
-            codename="view_assets",
-            name="View Assets",
-            category="assets",
-        )
-        django_group = Group.objects.create(name="Asset Viewers")
-        AppPermissionGroup.objects.create(group=django_group, permission=permission)
-        user.groups.add(django_group)
-
-        assert user.has_app_permission("view_assets") is True
-
-    def test_permission_deletion_removes_from_users(self, user):
-        """Test that deleting a permission removes it from users."""
-        permission = AppPermission.objects.create(
-            codename="view_assets",
-            name="View Assets",
-            category="assets",
-        )
-        user.app_permissions.add(permission)
-
-        permission_id = permission.id
-        permission.delete()
-
-        assert not user.app_permissions.filter(id=permission_id).exists()
-
-    def test_group_deletion_removes_permissions_from_users(self, user):
-        """Test that deleting a group removes its permissions from users."""
-        from django.contrib.auth.models import Group
-
-        permission = AppPermission.objects.create(
-            codename="view_assets",
-            name="View Assets",
-            category="assets",
-        )
-        django_group = Group.objects.create(name="Asset Viewers")
-        AppPermissionGroup.objects.create(group=django_group, permission=permission)
-        user.groups.add(django_group)
-
-        django_group.delete()
-
-        assert not user.groups.filter(id=django_group.id).exists()
-        # User should no longer have the permission through the group
-        user.refresh_from_db()
-        assert user.has_app_permission("view_assets") is False
+    def test_group_deletion_removes_bundle_access(self, user):
+        UserModel = get_user_model()
+        perm_str = grant_user_permission_through_bundle(user, codename="group_delete_perm")
+        assert user.has_perm(perm_str) is True
+        group = user.groups.first()
+        group_id = group.id
+        uid = user.pk
+        group.delete()
+        user = UserModel.objects.get(pk=uid)
+        assert not user.groups.filter(id=group_id).exists()
+        assert user.has_perm(perm_str) is False
 
 
 @pytest.mark.integration

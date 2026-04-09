@@ -21,9 +21,9 @@ export interface InAppNotificationDto {
 }
 
 /** Channel type for delivery */
-export type NotificationChannelType = "slack" | "discord" | "sms" | "voice";
+export type NotificationChannelType = "slack" | "discord" | "email" | "sms";
 
-/** Per-channel configuration (Slack/Discord for now) */
+/** Per-channel configuration */
 export interface SlackChannelConfig {
   enabled: boolean;
   webhookUrl: string;
@@ -35,10 +35,21 @@ export interface DiscordChannelConfig {
   webhookUrl: string;
 }
 
+export interface EmailChannelConfig {
+  enabled: boolean;
+  recipient: string;
+}
+
+export interface SmsChannelConfig {
+  enabled: boolean;
+  recipient: string;
+}
+
 export interface NotificationChannelsConfig {
   slack: SlackChannelConfig;
   discord: DiscordChannelConfig;
-  // sms / voice: coming soon, no config yet
+  email: EmailChannelConfig;
+  sms: SmsChannelConfig;
 }
 
 /** User preferences for notification behavior (sound, desktop, etc.) */
@@ -53,9 +64,25 @@ export interface NotificationPreferences {
   digestFrequency: "daily" | "weekly" | "off";
 }
 
+/** Min/max limit for in-app notification list requests (backend enforced). */
+export const NOTIFICATION_LIMIT_MIN = 1;
+export const NOTIFICATION_LIMIT_MAX = 100;
+/** Default limit for unread-only (e.g. bell dropdown). */
+export const NOTIFICATION_LIMIT_DEFAULT_UNREAD = 20;
+/** Default limit for all notifications (e.g. history). */
+export const NOTIFICATION_LIMIT_DEFAULT_ALL = 50;
+
 export const DEFAULT_CHANNELS_CONFIG: NotificationChannelsConfig = {
   slack: { enabled: false, webhookUrl: "", defaultChannel: undefined },
   discord: { enabled: false, webhookUrl: "" },
+  email: {
+    enabled: false,
+    recipient: "",
+  },
+  sms: {
+    enabled: false,
+    recipient: "",
+  },
 };
 
 export const DEFAULT_PREFERENCES: NotificationPreferences = {

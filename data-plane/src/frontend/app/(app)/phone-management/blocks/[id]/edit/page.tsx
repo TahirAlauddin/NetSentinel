@@ -30,6 +30,9 @@ async function loadLocations(): Promise<LocationRecord[]> {
   return (d as { results: LocationRecord[] }).results ?? [];
 }
 
+/**
+ * Edit managed block page - edits a managed block.
+ */
 export default function EditManagedBlockPage() {
   const params = useParams();
   const router = useRouter();

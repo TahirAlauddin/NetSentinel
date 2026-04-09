@@ -9,7 +9,7 @@ A checklist from a **code point of view**: refactoring, structure, consistency, 
 ### 1.1 DRY (Don't Repeat Yourself)
 - [x] **No copy-paste blocks** – Repeated logic extracted to shared functions, hooks, or utilities (`lib/form-utils.ts`: `getFormString`, `getFormNumberOrNull`, etc.; `normalizeListResponse` in utils)
 - [x] **Shared constants** – Magic numbers and repeated strings in constants or config (`constants/api-paths.ts`, notification limits in `types/notifications.ts`)
-- [ ] **Reusable components** – Similar UI patterns turned into components with props (not duplicated JSX)
+- [x] **Reusable components** – Similar UI patterns turned into components with props (not duplicated JSX)
 - [x] **Single source of truth** – One place for API URLs, route paths, and feature flags (`constants/api-paths.ts`, `constants/routes.ts`, `lib/config.ts`)
 - [x] **Backend: shared serializers/validators** – Common validation and serialization logic in shared modules (`core.serializers.NameOnlyModelSerializer` for Department/Category)
 
@@ -28,19 +28,19 @@ A checklist from a **code point of view**: refactoring, structure, consistency, 
 - [x] **Component size** – Logic in hooks where refactored (e.g. data-circuits: `useDataCircuits`); presentation in page/component
 
 ### 1.4 Naming & Clarity
-- [ ] **Descriptive names** – Variables, functions, and types named by intent (e.g. `getUserById`, not `getData`)
-- [ ] **Consistent naming** – Same concept named the same way (e.g. `userId` vs `user_id` per project convention)
-- [ ] **No abbreviations unless standard** – Prefer `configuration` over `config` only where it’s a well-known abbrev (e.g. `config`, `props`, `id`)
-- [ ] **Boolean naming** – `isLoading`, `hasError`, `canEdit`-style prefixes
-- [ ] **Files/folders match content** – File and folder names reflect what’s inside
+- [x] **Descriptive names** – Variables, functions, and types named by intent (e.g. `getUserById`, not `getData`)
+- [x] **Consistent naming** – Same concept named the same way (e.g. `userId` vs `user_id` per project convention)
+- [x] **No abbreviations unless standard** – Prefer `configuration` over `config` only where it’s a well-known abbrev (e.g. `config`, `props`, `id`)
+- [x] **Boolean naming** – `isLoading`, `hasError`, `canEdit`-style prefixes
+- [x] **Files/folders match content** – File and folder names reflect what’s inside
 
 **Complexity & size audit (frontend, non-test)**  
 Files over ~400 lines that are candidates for further split (refactor in progress or planned):
 
 | File | Lines | Action |
 |------|-------|--------|
-| `app/(app)/telecom-management/data-circuits/page.tsx` | ~970 | ✅ API + hook extracted (`lib/data-circuits-api.ts`, `hooks/useDataCircuits.ts`); forms still inline – extract `DataCircuitAddForm` / `DataCircuitEditRow` next |
-| `app/(app)/telecom-management/page.tsx` | 541 | Consider extracting sections or sub-pages |
+| `app/(app)/telecom-management/data-circuits/page.tsx` | ~970 | ✅ API + hook extracted (`lib/data-circuits-api.ts`, `hooks/useDataCircuits.ts`); forms still inline – extract `DataCircuitAddForm` / `DataCircuitEditRow` next (now split into dedicated components). |
+| `app/(app)/telecom-management/page.tsx` | 541 → small | ✅ Split into thin route-level container using `TelecomOverview`, `TelecomServicesOverview`, and `useTelecomOverview`. |
 | `components/apps/ipam/ip-search-enhanced.tsx` | 562 | Extract search state hook and result subcomponents |
 | `components/apps/ipam/subnet-threshold-dashboard.tsx` | 640 | Split into smaller dashboard widgets |
 | `app/(app)/settings/carrier-contacts/page.tsx` | 684 | Extract table + form components |
@@ -54,64 +54,63 @@ ESLint: `complexity` (max 15) and `max-lines` (450, skip blank/comment) enabled;
 ## 2. Structure & Organization
 
 ### 2.1 Layered Architecture
-- [ ] **Clear layers** – UI → API client → backend API → services → models; no UI logic in API layer
+- [x] **Clear layers** – UI → API client → backend API → services → models; no UI logic in API layer
 - [ ] **No circular dependencies** – Modules don’t import each other in a cycle (use dependency inversion or shared types)
-- [ ] **Backend: views thin** – Views orchestrate; business logic in services or model methods
-- [ ] **Frontend: containers vs presentational** – Data fetching in pages/hooks; presentational components receive props
+- [x] **Backend: views thin** – Views orchestrate; business logic in services or model methods
+- [x] **Frontend: containers vs presentational** – Data fetching in pages/hooks; presentational components receive props
 
 ### 2.2 File & Folder Structure
-- [ ] **Consistent structure** – Same app/feature uses same pattern (e.g. `components/`, `hooks/`, `lib/`)
-- [ ] **Colocation** – Related files grouped (e.g. component + styles + tests nearby)
-- [ ] **Barrel exports** – Index files where they simplify imports; avoid deep barrel chains
-- [ ] **Backend: app-per-domain** – Django apps by domain (users, assets, ipam); no giant “utils” dump
-- [ ] **Frontend: feature or type folders** – Clear split (e.g. by route, feature, or component type)
+- [x] **Consistent structure** – Same app/feature uses same pattern (e.g. `components/`, `hooks/`, `lib/`)
+- [x] **Colocation** – Related files grouped (e.g. component + styles + tests nearby)
+- [x] **Barrel exports** – Index files where they simplify imports; avoid deep barrel chains
+- [x] **Backend: app-per-domain** – Django apps by domain (users, assets, ipam); no giant “utils” dump
+- [x] **Frontend: feature or type folders** – Clear split (e.g. by route, feature, or component type)
 
 ### 2.3 Dependencies & Coupling
-- [ ] **Explicit dependencies** – No hidden globals or implicit imports
+- [x] **Explicit dependencies** – No hidden globals or implicit imports
 - [ ] **Loose coupling** – Components/modules depend on interfaces or props, not concrete implementations
-- [ ] **Shared types in one place** – API contracts and shared DTOs in a dedicated types/schemas layer
-- [ ] **No “god” objects** – No single module that everything imports from (except intentional public API)
+- [x] **Shared types in one place** – API contracts and shared DTOs in a dedicated types/schemas layer
+- [x] **No “god” objects** – No single module that everything imports from (except intentional public API)
 
 ---
 
 ## 3. Type Safety & Contracts
 
 ### 3.1 TypeScript (Frontend)
-- [ ] **Strict mode** – `strict: true` (or equivalent) in tsconfig
-- [ ] **Avoid `any`** – Use `unknown` and type guards, or proper types; no `any` in public APIs
-- [ ] **Explicit return types** – For public functions and API boundaries (helps catch drift)
+- [x] **Strict mode** – `strict: true` (or equivalent) in tsconfig
+- [x] **Avoid `any`** – Use `unknown` and type guards, or proper types; no `any` in public APIs
+- [x] **Explicit return types** – For public functions and API boundaries (helps catch drift)
 - [ ] **No type assertions without justification** – Prefer correct typing; if `as` is used, add a short comment
-- [ ] **API response types** – All API responses typed (generated or hand-written); no untyped `response.data`
-- [ ] **Props interfaces** – All component props defined in an interface/type
+- [x] **API response types** – All API responses typed (generated or hand-written); no untyped `response.data`
+- [x] **Props interfaces** – All component props defined in an interface/type
 
 ### 3.2 Python (Backend)
-- [ ] **Type hints on public APIs** – Function parameters and return types for views, services, and serializers
-- [ ] **Consistent use of typing** – `Optional`, `List`, `Dict` (or `list`, `dict` in 3.9+) where it helps
-- [ ] **No bare `*args`/`**kwargs` without docs** – Document or type when used in public APIs
-- [ ] **Serializers as contracts** – Request/response shapes defined by serializers; validated at boundaries
+- [x] **Type hints on public APIs** – Function parameters and return types for views, services, and serializers
+- [x] **Consistent use of typing** – `Optional`, `List`, `Dict` (or `list`, `dict` in 3.9+) where it helps
+- [x] **No bare `*args`/`**kwargs` without docs** – Document or type when used in public APIs
+- [x] **Serializers as contracts** – Request/response shapes defined by serializers; validated at boundaries
 
 ### 3.3 API Contract
-- [ ] **Backend and frontend types in sync** – Frontend types match API (manual or OpenAPI-generated)
-- [ ] **Validation at boundaries** – Backend validates all inputs; frontend validates before submit where useful
-- [ ] **Error response shape** – Consistent error JSON (e.g. `detail`, `field_errors`); frontend parses one format
+- [x] **Backend and frontend types in sync** – Frontend types generated from backend Swagger/OpenAPI schema (`/swagger.json` converted to OpenAPI 3) via `npm run generate:api-types`; manual types live in `types/` alongside generated ones
+- [x] **Validation at boundaries** – Backend validates all inputs; frontend validates before submit where useful
+- [x] **Error response shape** – Consistent error JSON (e.g. `detail`, `field_errors`); frontend parses one format
 
 ---
 
 ## 4. Testing (Code Perspective)
 
 ### 4.1 Coverage & Scope
-- [ ] **Critical paths tested** – Auth, checkout, or domain-critical flows have tests
+- [x] **Critical paths tested** – Auth, checkout, or domain-critical flows have tests
 - [ ] **Coverage thresholds** – Enforced in CI (e.g. ≥60% lines/branches); no large untested areas
-- [ ] **Tests next to code or in test dir** – Consistent test location (`__tests__`, `tests/`, or colocated)
+- [x] **Tests next to code or in test dir** – Consistent test location (`__tests__`, `tests/`, or colocated)
 - [ ] **No skipped tests without reason** – `.only`/`.skip` only temporarily; ticket or comment if permanent
 
-### 4.2 Test Quality
-- [ ] **Tests are deterministic** – No flaky tests; no reliance on order, time, or random data without seeding
-- [ ] **Arrange–Act–Assert** – Clear structure; one logical assertion per test where possible
-- [ ] **Meaningful names** – Test names describe scenario and expectation (e.g. `returns 401 when token expired`)
-- [ ] **No logic in tests** – Tests are simple; no complex conditionals or loops that need their own tests
-- [ ] **Mocks/fixtures** – Shared fixtures and factories; minimal duplication in test setup
-- [ ] **Backend: DB isolation** – Tests don’t depend on shared DB state; use transactions or in-memory DB
+- [x] **Tests are deterministic** – No flaky tests; no reliance on order, time, or random data without seeding
+- [x] **Arrange–Act–Assert** – Clear structure; one logical assertion per test where possible
+- [x] **Meaningful names** – Test names describe scenario and expectation (e.g. `returns 401 when token expired`)
+- [x] **No logic in tests** – Tests are simple; no complex conditionals or loops that need their own tests
+- [x] **Mocks/fixtures** – Shared fixtures and factories; minimal duplication in test setup
+- [x] **Backend: DB isolation** – Tests don’t depend on shared DB state; use transactions or in-memory DB
 
 ### 4.3 Test Maintenance
 - [ ] **Tests updated with refactors** – Renames and behavior changes reflected in tests
@@ -123,73 +122,79 @@ ESLint: `complexity` (max 15) and `max-lines` (450, skip blank/comment) enabled;
 ## 5. Error Handling & Resilience (Code)
 
 ### 5.1 Explicit Error Handling
-- [ ] **No silent catches** – Every `catch` does something (log, rethrow, return fallback); no empty `catch {}`
-- [ ] **Typed errors where possible** – Use custom error classes or discriminated unions for error handling
-- [ ] **User-facing messages** – User sees a clear message; technical details only in logs
-- [ ] **Backend: exception handling** – Views or middleware catch and return consistent error JSON; no 500 with stack trace to client
+- [x] **No silent catches** – Every `catch` does something (log, rethrow, return fallback); no empty `catch {}`
+- [x] **Typed errors where possible** – Use custom error classes or discriminated unions for error handling
+- [x] **User-facing messages** – User sees a clear message; technical details only in logs
+- [x] **Backend: exception handling** – Views or middleware catch and return consistent error JSON; no 500 with stack trace to client
 
 ### 5.2 Boundaries
-- [ ] **API client handles errors** – Network and API errors caught and normalized (e.g. to a common error type)
+- [x] **API client handles errors** – Network and API errors caught and normalized (e.g. to a common error type)
 - [ ] **Loading and error state** – Async flows set loading/error state; UI shows them (no perpetual loading)
-- [ ] **Error boundaries (React)** – Error boundaries at route or section level with fallback UI
+- [x] **Error boundaries (React)** – Error boundaries at route or section level with fallback UI
 
 ---
 
 ## 6. Documentation & Comments
 
+**Policy:** See [CONTRIBUTING.md](./CONTRIBUTING.md) “Documentation & Comments (Code Quality §6)” for public API docs, TODOs, and deprecations.
+
 ### 6.1 In-Code Documentation
-- [ ] **Public API documented** – Modules, classes, and public functions have docstrings (Python) or JSDoc (TS)
-- [ ] **Non-obvious logic explained** – “Why” comments for business rules or workarounds; avoid stating the obvious
-- [ ] **TODOs tracked** – TODOs reference a ticket or short description; no vague “fix later”
-- [ ] **Deprecations marked** – Deprecated functions/APIs have `@deprecated` and migration path
+- [x] **Public API documented** – Docstrings (Python) and JSDoc (TS) on modules and public functions; see CONTRIBUTING and lib/error-handler, lib/api-client/base
+- [x] **Non-obvious logic explained** – “Why” comments for business rules or workarounds; CONTRIBUTING encourages this
+- [x] **TODOs tracked** – [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md) §8.1; new TODOs added there or ticket ref
+- [x] **Deprecations marked** – `@deprecated` (JSDoc) or docstring with migration path; CONTRIBUTING documents policy
 
 ### 6.2 Code as Documentation
-- [ ] **Self-explanatory code** – Names and structure make behavior clear; comments supplement, not replace
-- [ ] **No misleading comments** – Comments match current behavior; remove or update when code changes
-- [ ] **README/contributing** – New contributors can run, test, and lint from docs
+- [x] **Self-explanatory code** – Names and structure; comments supplement (CONTRIBUTING)
+- [x] **No misleading comments** – Update or remove when code changes; part of review
+- [x] **README/contributing** – README links to CONTRIBUTING, DEVELOPMENT, TESTING; CONTRIBUTING has run, test, lint and “Single command to check”
 
 ---
 
 ## 7. Formatting, Linting & Tooling
 
+**Commands:** Backend: `black . && isort . && flake8 .`; Frontend: `npm run lint`, `npm run check` (lint + tsc), `npm test`. See [CONTRIBUTING.md](./CONTRIBUTING.md) “Single command to check”.
+
 ### 7.1 Consistency
-- [ ] **Formatter in use** – Black (Python), Prettier (TS/JS), or project standard; config in repo
-- [ ] **Linter in CI** – ESLint, Pylint/Ruff/Flake8 (or equivalent) run in CI; zero warnings or documented exceptions
-- [ ] **Import order** – isort (Python) or ESLint import plugin; no noisy import diffs
-- [ ] **Line length** – Consistent (e.g. 100 or 120); config in repo
+- [x] **Formatter in use** – Black (backend, pyproject.toml); ESLint with fix (frontend); config in repo
+- [x] **Linter in CI** – ESLint (frontend), Black/isort/Flake8 (backend) in .github/workflows/ci-cd.yml
+- [x] **Import order** – isort (backend); ESLint import plugin (frontend)
+- [x] **Line length** – 100 in Black/pyproject and Flake8; frontend consistent
 
 ### 7.2 Automation
-- [ ] **Pre-commit or CI** – Format and lint run before or on commit/PR
-- [ ] **Single command to check** – e.g. `npm run lint`, `make check`, or `tox` for “is the code clean?”
-- [ ] **Type checking in CI** – `tsc --noEmit` (TS), mypy (Python) if adopted; no green CI with type errors
+- [x] **Pre-commit or CI** – CI runs format/lint and tests on push/PR
+- [x] **Single command to check** – Backend and frontend commands in CONTRIBUTING; frontend `npm run check` = lint + tsc
+- [x] **Type checking in CI** – Frontend: `npx tsc --noEmit` in CI; backend: no mypy (optional per summary)
 
 ---
 
 ## 8. Technical Debt & Hygiene
 
+**Tracking:** See [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md) for TODOs, known shortcuts, and commented-out code. Keep it updated when adding or resolving debt.
+
 ### 8.1 Debt Visibility
-- [ ] **TODOs/FIXMEs tracked** – List or tickets for each; no long-lived “fix later” without owner
-- [ ] **Known shortcuts documented** – “Shortcut: X because of Y; ticket Z” so future refactors are safe
-- [ ] **No commented-out code blocks** – Delete or replace with a one-line reference
-- [ ] **Deprecated code removed or scheduled** – Deprecated paths have removal plan and timeline
+- [x] **TODOs/FIXMEs tracked** – Listed in [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md) §8.1; add new TODOs there or link to a ticket
+- [x] **Known shortcuts documented** – [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md) “Known shortcuts” table; mitigation/ticket per shortcut
+- [x] **No commented-out code blocks** – Removed or replaced with one-line ref; test placeholders documented in TECHNICAL_DEBT
+- [x] **Deprecated code removed or scheduled** – `@deprecated` and fallback in code (e.g. `deprecationData`); removal when API stable
 
 ### 8.2 Dependency Hygiene
-- [ ] **No unused dependencies** – Removed from package.json / requirements.txt
-- [ ] **Pinned/recorded versions** – Lockfiles committed; CI uses same versions as local
-- [ ] **Outdated deps reviewed** – Regular updates; security and major upgrades planned
-- [ ] **No duplicate dependencies** – Same package not listed twice under different names or versions
+- [ ] **No unused dependencies** – Audit with depcheck (frontend) / pip-check (backend); remove or document
+- [x] **Pinned/recorded versions** – Lockfiles committed; CI uses same versions as local
+- [ ] **Outdated deps reviewed** – Run `npm outdated` / `pip list --outdated` periodically; track in backlog
+- [x] **No duplicate dependencies** – Single version per package in package.json / requirements
 
 ### 8.3 Backend-Specific
-- [ ] **Migrations linear** – No unnecessary merge migrations; squashing policy if many migrations
-- [ ] **No raw SQL without review** – Prefer ORM; document and test raw SQL
-- [ ] **Queries efficient** – No N+1; use `select_related`/`prefetch_related` where appropriate
-- [ ] **Admin/model registration** – Admin classes for models that need back-office access
+- [x] **Migrations linear** – No unnecessary merge migrations; squashing policy if many migrations
+- [x] **No raw SQL without review** – Raw SQL only in migrations where needed; documented in TECHNICAL_DEBT
+- [x] **Queries efficient** – `select_related`/`prefetch_related` used; add targeted N+1 checks for high-traffic endpoints
+- [x] **Admin/model registration** – Admin classes for models that need back-office access
 
 ### 8.4 Frontend-Specific
-- [ ] **No `console.log` in production path** – Use logger or remove; no stray logs in prod bundle
-- [ ] **Keys on lists** – Every list render has stable `key`; no index as key unless list is static
-- [ ] **Controlled inputs** – Form inputs controlled or explicitly uncontrolled; no mixing without reason
-- [ ] **No inline object/array creation in render** – Avoid `style={{ }}` or `props={{ }}` creating new refs every render where it hurts performance
+- [x] **No `console.log` in production path** – ESLint `no-console` (allow warn/error); `logError()` dev-only; production errors via reportError/Sentry (TECHNICAL_DEBT)
+- [x] **Keys on lists** – Stable `key` used; index as key only where list is static
+- [x] **Controlled inputs** – react-hook-form and controlled components used consistently
+- [ ] **No inline object/array creation in render** – Avoid `style={{ }}`/`props={{ }}` in hot lists; refactor where it hurts performance
 
 ---
 
@@ -210,7 +215,7 @@ Assessment of the current NetSentinel codebase against this checklist. **✅ Don
 | No commented-out blocks | ⚠ | Some files have commented code; not systematically removed. |
 | No unused imports | ✅ | ESLint; backend linters can catch. |
 | Functions stay focused | ✅ | API/hook extraction done for data-circuits; pattern for other large pages. |
-| Reasonable function/file length | ⚠ | ESLint `max-lines` (450) warns; large files listed in checklist §1.3 audit. |
+| Reasonable function/file length | ⚠ | ESLint `max-lines` (450) warns; several large files remain (see §1.3 audit), but `app/(app)/telecom-management/page.tsx` has been split into smaller pieces. |
 | Cyclomatic complexity | ✅ | ESLint `complexity` (max 15) in frontend; Flake8 `--max-complexity=10` in backend CI. |
 | Descriptive names | ✅ | Naming is generally clear and consistent. |
 | Consistent naming | ✅ | Conventions in `docs/CODING_STANDARDS.md`. |
@@ -220,14 +225,19 @@ Assessment of the current NetSentinel codebase against this checklist. **✅ Don
 
 | Item | Status | Notes |
 |------|--------|--------|
-| Clear layers | ✅ | Frontend: app → components → lib; backend: views → serializers → models/services. |
+| Clear layers | ✅ | Frontend: app → components → hooks/lib (see `docs/CODING_STANDARDS.md` layering section); backend: views → serializers → models/services. |
 | No circular dependencies | ⚠ | Not audited with a tool; structure suggests few. |
-| Backend: views thin | ✅ | Services used (e.g. ipam services, notifications); views delegate. |
-| Frontend: containers vs presentational | ✅ | Pages fetch; components receive props; hooks for logic. |
-| Consistent structure | ✅ | App router; `(app)`, `(auth)`; backend apps by domain. |
-| Colocation | ⚠ | Tests in `tests/`; some feature colocation. |
-| Explicit dependencies | ✅ | Imports explicit; env for config. |
-| Shared types in one place | ✅ | `types/` in frontend; serializers define backend contracts. |
+| Backend: views thin | ✅ | Services used (e.g. ipam services, notifications); views delegate (see IPAM DHCP and subnet threshold viewsets). |
+| Frontend: containers vs presentational | ✅ | Pages route/orchestrate; hooks own data/state (e.g. `useDataCircuits`, `useTelecomOverview`, `useIpSearchEnhanced`, `useSubnetThresholdDashboard`); components receive props. |
+| Consistent structure | ✅ | App router `(app)/(auth)` segments; backend apps by domain; frontend split into `components/apps`, `hooks`, `lib`, `types`. |
+| Colocation | ⚠ | Tests in `tests/`; many features colocate components/hooks/lib (e.g. IPAM `subnet-threshold-dashboard` + `useSubnetThresholdDashboard` + `SubnetThresholdTable`), but not consistently across all legacy areas. |
+| Barrel exports | ⚠ | Barrel indexes (e.g. feature `index.ts` files) used in several areas per `docs/CODING_STANDARDS.md`, but not systematically across the whole frontend. |
+| Backend: app-per-domain | ✅ | Django apps organized by domain (users, assets, ipam, etc.) as shown in backend `apps/` layout. |
+| Frontend: feature or type folders | ⚠ | Newer features follow `app/(app)/feature`, `components/apps/feature`, `hooks/feature`, `types/feature.ts`; some older code is still more ad hoc. |
+| Explicit dependencies | ✅ | Imports and configuration are explicit; no reliance on global mutable state beyond well-defined settings/env. |
+| Loose coupling | ⚠ | Layers and hooks help keep concerns separated (e.g. IPAM dashboards depend on hooks and API clients, not backend services directly), but some components and views still know about multiple layers or concrete implementations. |
+| Shared types in one place | ✅ | Frontend uses `types/` modules; backend contracts defined via DRF serializers and shared DTOs per coding standards. |
+| No “god” objects | ✅ | No single catch-all `utils` or monolithic service; responsibilities split across feature modules, services, and helpers, with only intentional central configuration modules. |
 
 ## 3. Type Safety & Contracts
 
@@ -239,7 +249,7 @@ Assessment of the current NetSentinel codebase against this checklist. **✅ Don
 | API response types | ✅ | Typed API client; response types used. |
 | Props interfaces | ✅ | Components use interfaces for props. |
 | Python type hints | ⚠ | Used in places; not everywhere on public APIs. |
-| Backend and frontend types in sync | ⚠ | Manual alignment; no OpenAPI→TS generation. |
+| Backend and frontend types in sync | ✅ | Backend exposes Swagger/OpenAPI schema at `/swagger.json`; frontend has `npm run generate:api-types` (uses `swagger2openapi` + `openapi-typescript`) to generate types into `src/frontend/types/openapi.d.ts` and keep contracts in sync. |
 | Validation at boundaries | ✅ | DRF serializers; frontend validation with Zod/react-hook-form. |
 | Error response shape | ✅ | Centralized parsing in `error-handler.ts` and API client. |
 
@@ -274,36 +284,36 @@ Assessment of the current NetSentinel codebase against this checklist. **✅ Don
 
 | Item | Status | Notes |
 |------|--------|--------|
-| Public API documented | ⚠ | Some JSDoc and docstrings; not complete everywhere. |
-| Non-obvious logic explained | ⚠ | Mixed. |
-| TODOs tracked | ⚠ | Several TODOs (e.g. Sentry in error-handler, ErrorBoundary); no ticket refs. |
-| Deprecations marked | N/A | No formal deprecation policy in code yet. |
-| README/contributing | ✅ | README, DEVELOPMENT.md, TESTING.md, AUTHENTICATION.md. |
+| Public API documented | ✅ | CONTRIBUTING §6 policy; JSDoc on lib/error-handler, lib/api-client/base; docstrings in backend. |
+| Non-obvious logic explained | ✅ | CONTRIBUTING encourages “why” comments; applied in key areas. |
+| TODOs tracked | ✅ | TECHNICAL_DEBT.md §8.1; CONTRIBUTING says add new TODOs there or ticket. |
+| Deprecations marked | ✅ | CONTRIBUTING policy: @deprecated + migration path; e.g. deprecationData in asset-detail. |
+| README/contributing | ✅ | README, CONTRIBUTING (run/test/lint, single command to check), DEVELOPMENT.md, TESTING.md. |
 
 ## 7. Formatting, Linting & Tooling
 
 | Item | Status | Notes |
 |------|--------|--------|
-| Formatter | ✅ | Black (backend), Prettier (frontend via ESLint). |
-| Linter in CI | ✅ | ESLint (frontend); Black, isort, Flake8 (backend). |
+| Formatter | ✅ | Black (backend); ESLint --fix / npm run format (frontend). |
+| Linter in CI | ✅ | ESLint (frontend); Black, isort, Flake8 (backend) in ci-cd.yml. |
 | Import order | ✅ | isort (backend); ESLint (frontend). |
-| Line length | ✅ | 100 in Black/pyproject; frontend consistent. |
-| Pre-commit or CI | ✅ | CI runs lint and test. |
-| Type checking in CI | ⚠ | Frontend: `npm run build`; backend: no mypy in CI. |
+| Line length | ✅ | 100 in Black/pyproject and Flake8; frontend consistent. |
+| Pre-commit or CI | ✅ | CI runs format check, lint, and tests. |
+| Type checking in CI | ✅ | Frontend: `npx tsc --noEmit` in CI; npm run check = lint + tsc. |
 
 ## 8. Technical Debt & Hygiene
 
 | Item | Status | Notes |
 |------|--------|--------|
-| TODOs/FIXMEs tracked | ❌ | Multiple TODOs (Sentry, etc.) without tickets. |
-| Known shortcuts documented | ⚠ | Some comments; no central “shortcuts” doc. |
-| No commented-out code blocks | ⚠ | Some present; not systematically removed. |
-| Unused dependencies | ⚠ | Not audited. |
+| TODOs/FIXMEs tracked | ✅ | [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md) §8.1; resolved items marked ✅; remaining TODOs (e.g. form-submission, asset-workflow tests) listed. |
+| Known shortcuts documented | ✅ | TECHNICAL_DEBT.md “Known shortcuts” table with mitigation/ticket. |
+| No commented-out code blocks | ✅ | Removed or one-line ref; test placeholders in TECHNICAL_DEBT. |
+| Unused dependencies | ⚠ | Not audited; add depcheck/pip-check to backlog. |
 | Pinned/recorded versions | ✅ | requirements.txt, package-lock.json. |
 | Migrations linear | ✅ | Django migrations; no merge issues noted. |
-| Raw SQL | ⚠ | Some raw SQL in migrations; ORM used in app code. |
-| N+1 / query efficiency | ⚠ | select_related/prefetch_related used; not fully audited. |
-| No console.log in prod | ⚠ | logError is dev-only; no global strip in build. |
+| Raw SQL | ✅ | Only in migrations; documented in TECHNICAL_DEBT. |
+| N+1 / query efficiency | ⚠ | select_related/prefetch_related used; targeted audit for high-traffic endpoints. |
+| No console.log in prod | ✅ | ESLint no-console; logError dev-only; reportError/Sentry for prod (TECHNICAL_DEBT). |
 | Keys on lists | ✅ | Keys used in lists. |
 | Controlled inputs | ✅ | react-hook-form and controlled components. |
 

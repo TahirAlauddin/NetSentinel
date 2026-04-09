@@ -3,6 +3,7 @@
 import { Search, SlidersHorizontal, Plus } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Can } from "@/contexts/permissions-context";
 import { ContractApiClient } from "@/lib/api-client/contract";
 import type {
   ContractListResponse,
@@ -146,13 +147,15 @@ export default function ContractsPage() {
               <Search className="w-5 h-5" />
               Discover
             </button>
-            <Link
-              href="/contracts/new"
-              className="px-6 py-3 bg-red-500 text-white rounded-lg text-base flex items-center gap-3 hover:bg-red-700 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              Add Contract
-            </Link>
+            <Can permission="contracts.add_contract">
+              <Link
+                href="/contracts/new"
+                className="px-6 py-3 bg-red-500 text-white rounded-lg text-base flex items-center gap-3 hover:bg-red-700 transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                Add Contract
+              </Link>
+            </Can>
           </div>
         </div>
 

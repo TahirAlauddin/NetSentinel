@@ -13,6 +13,7 @@ import { AssetsDashboardNav } from "@/components/apps/assets/AssetsDashboardNav"
 import { AssetsListSearchSection } from "@/components/apps/assets/AssetsListSearchSection";
 import { AssetsListTable } from "@/components/apps/assets/AssetsListTable";
 import Link from "next/link";
+import { ProtectedRoute } from "@/components/feedback/protected-route";
 
 function getCategoryFilterBadges(
   assets: Asset[],
@@ -155,7 +156,8 @@ export default function AssetsListPage() {
   );
 
   return (
-    <AppShell>
+    <ProtectedRoute>
+      <AppShell>
       <div className="space-y-6">
         <nav className="flex items-center gap-2 text-sm text-muted-foreground">
           <Link href="/assets" className="hover:text-foreground hover:underline">
@@ -228,6 +230,7 @@ export default function AssetsListPage() {
           onFilterStatusChange={setFilterStatus}
         />
       </div>
-    </AppShell>
+      </AppShell>
+    </ProtectedRoute>
   );
 }

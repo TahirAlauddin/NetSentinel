@@ -8,6 +8,9 @@
  */
 
 import { render, screen } from '@/tests/__utils__/test-utils'
+import { useSession } from 'next-auth/react'
+import { usePathname } from 'next/navigation'
+import { mockSession } from '../../__mocks__/next-auth'
 import AppLayout from '@/app/(app)/layout'
 
 // Mock Sidebar component
@@ -16,6 +19,15 @@ jest.mock('@/components/layout/sidebar', () => ({
 }))
 
 describe('AppLayout', () => {
+  beforeEach(() => {
+    jest.mocked(usePathname).mockReturnValue('/dashboard')
+    jest.mocked(useSession).mockReturnValue({
+      data: mockSession,
+      status: 'authenticated',
+      update: jest.fn(),
+    } as ReturnType<typeof useSession>)
+  })
+
   it('should render children', () => {
     render(
       <AppLayout>

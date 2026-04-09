@@ -7,18 +7,27 @@
  * - Location list display
  */
 
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@/tests/__utils__/test-utils'
 import userEvent from '@testing-library/user-event'
+import { useSession } from 'next-auth/react'
 import LocationsPage from '@/app/(app)/settings/locations/page'
 
-// Mock dependencies
-jest.mock('next-auth/react', () => ({
-  useSession: jest.fn(() => ({
-    data: { user: { id: 1 } },
+beforeEach(() => {
+  jest.mocked(useSession).mockReturnValue({
+    data: {
+      user: {
+        id: '1',
+        email: 'test@example.com',
+        name: 'Test',
+        permissions: [],
+        isSuperuser: false,
+      },
+      expires: new Date(Date.now() + 3600000).toISOString(),
+    },
     status: 'authenticated',
-  })),
-  SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}))
+    update: jest.fn(),
+  } as ReturnType<typeof useSession>)
+})
 
 jest.mock('@/lib/api-client/infrastructure', () => ({
   InfrastructureApiClient: jest.fn().mockImplementation(() => ({
@@ -48,9 +57,6 @@ jest.mock('@/components/feedback/protected-route', () => ({
   ProtectedRoute: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
-jest.mock('@/components/settings/settings-nav-tabs', () => ({
-  SettingsNavTabs: () => <div data-testid="settings-nav-tabs">Nav Tabs</div>,
-}))
 
 jest.mock('@/components/settings/settings-header', () => ({
   SettingsHeader: () => <div data-testid="settings-header">Header</div>,

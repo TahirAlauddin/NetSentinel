@@ -13,6 +13,8 @@ export interface LocationRecord {
   type_building: string
   mpoe: string
   dmarc: string
+  /** Set when circuits API is available; optional until then. */
+  circuits_count?: number
 }
 
 export interface LocationCreateDto {

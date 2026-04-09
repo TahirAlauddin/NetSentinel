@@ -4,6 +4,8 @@ IP Address serializer for IPAM.
 This module provides serialization for individual IP address models.
 """
 
+from typing import Any, Dict, Optional
+
 from rest_framework import serializers
 
 from ..models import IPAddress
@@ -26,7 +28,7 @@ class IPAddressSerializer(serializers.ModelSerializer):
     assigned_by_detail = serializers.SerializerMethodField()
     tags_detail = IPTagSerializer(source="tags", many=True, read_only=True)
 
-    def get_assigned_to_asset_detail(self, obj):
+    def get_assigned_to_asset_detail(self, obj: IPAddress) -> Optional[Dict[str, Any]]:
         """Return asset details if assigned."""
         if obj.assigned_to_asset:
             return {
@@ -36,7 +38,7 @@ class IPAddressSerializer(serializers.ModelSerializer):
             }
         return None
 
-    def get_assigned_by_detail(self, obj):
+    def get_assigned_by_detail(self, obj: IPAddress) -> Optional[Dict[str, Any]]:
         """Return user details if assigned by someone."""
         if obj.assigned_by:
             return {
@@ -47,7 +49,7 @@ class IPAddressSerializer(serializers.ModelSerializer):
             }
         return None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize serializer and add tag_ids field for writing."""
         super().__init__(*args, **kwargs)
         # Add tag_ids as a write-only field for create/update operations
@@ -61,7 +63,7 @@ class IPAddressSerializer(serializers.ModelSerializer):
             allow_null=True,
         )
 
-    def create(self, validated_data):
+    def create(self, validated_data: Dict[str, Any]) -> IPAddress:
         """Create IP address and handle tags."""
         tag_ids = validated_data.pop("tag_ids", None)
         instance = super().create(validated_data)
@@ -69,7 +71,7 @@ class IPAddressSerializer(serializers.ModelSerializer):
             instance.tags.set(tag_ids)
         return instance
 
-    def update(self, instance, validated_data):
+    def update(self, instance: IPAddress, validated_data: Dict[str, Any]) -> IPAddress:
         """Update IP address and handle tags."""
         tag_ids = validated_data.pop("tag_ids", None)
         instance = super().update(instance, validated_data)

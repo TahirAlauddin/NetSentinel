@@ -94,23 +94,23 @@ export const isValidDate = (date: string): boolean => {
 }
 
 /**
- * Validates numeric value
+ * Validates numeric value.
+ * Edge case: "12.34.56" (multiple decimal points) is invalid and returns false.
  */
 export const isValidNumber = (value: string | number | null | undefined): boolean => {
-  // TODO: Implement edge case: 12.34.56 should be false
-
   if (value === null || value === undefined || value === "") return true; // Empty is valid (optional field)
 
   if (typeof value === "string" && value.includes(".")) {
     const parts = value.split(".");
+    // Exactly one decimal point (e.g. 12.34); "12.34.56" has length 3 => false
     if (parts.length !== 2) return false;
     if (parts[0].length === 0 || parts[1].length === 0) return false;
-    if (isNaN(parseInt(parts[0])) || isNaN(parseInt(parts[1]))) return false;
+    if (isNaN(parseInt(parts[0], 10)) || isNaN(parseInt(parts[1], 10))) return false;
     return true;
   }
-  
+
   if (typeof value === "number") return !isNaN(value) && isFinite(value);
-  
+
   const num = parseFloat(String(value));
   return !isNaN(num) && isFinite(num);
 }

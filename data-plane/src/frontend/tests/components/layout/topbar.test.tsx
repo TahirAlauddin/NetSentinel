@@ -1,20 +1,18 @@
 /**
  * Component tests for components/layout/topbar.tsx
- * 
+ *
  * Tests cover:
  * - Topbar rendering
  * - Menu toggle button (mobile)
  * - Welcome message with user name
  * - Admin badge display
- * - Date/time display
  * - Logout button when authenticated
  * - Login link when not authenticated
  * - Logout functionality
  * - Menu toggle functionality
- * - Time updates
  */
 
-import { render, screen, waitFor, act, cleanup } from '@testing-library/react'
+import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Topbar } from '@/components/layout/topbar'
 import { useSession, signOut } from 'next-auth/react'
@@ -39,12 +37,12 @@ jest.mock('next/link', () => {
 jest.mock('lucide-react', () => ({
   Menu: () => <div data-testid="menu-icon">Menu</div>,
   X: () => <div data-testid="x-icon">X</div>,
+  Bell: () => <div data-testid="bell-icon">Bell</div>,
 }))
 
 describe('Topbar', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    jest.useFakeTimers()
     ;(useSession as jest.Mock).mockReturnValue({
       data: {
         user: {
@@ -61,10 +59,6 @@ describe('Topbar', () => {
 
   afterEach(() => {
     cleanup()
-    act(() => {
-      jest.runOnlyPendingTimers()
-    })
-    jest.useRealTimers()
   })
 
   it('should render topbar with welcome message', () => {
@@ -175,7 +169,7 @@ describe('Topbar', () => {
   })
 
   it('should call onMenuToggle when menu button is clicked', async () => {
-    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
+    const user = userEvent.setup()
     const onMenuToggle = jest.fn()
     render(<Topbar onMenuToggle={onMenuToggle} />)
 
@@ -183,38 +177,6 @@ describe('Topbar', () => {
     await user.click(menuButton)
 
     expect(onMenuToggle).toHaveBeenCalledTimes(1)
-  })
-
-  it('should display current date and time', () => {
-    const mockDate = new Date('2024-01-15T10:30:00')
-    jest.setSystemTime(mockDate)
-
-    render(<Topbar onMenuToggle={jest.fn()} />)
-
-    // Date should be visible on larger screens
-    const dateTimeElement = screen.getByText(/monday, january 15, 2024/i)
-    expect(dateTimeElement).toBeInTheDocument()
-    expect(dateTimeElement).toHaveClass('hidden', 'sm:block')
-  })
-
-  it('should update time every 30 seconds', async () => {
-    const initialDate = new Date('2024-01-15T10:30:00')
-    jest.setSystemTime(initialDate)
-
-    render(<Topbar onMenuToggle={jest.fn()} />)
-
-    const initialTime = screen.getByText(/10:30/i)
-    expect(initialTime).toBeInTheDocument()
-
-    // Advance time by 30 seconds
-    act(() => {
-      jest.advanceTimersByTime(30000)
-    })
-
-    await waitFor(() => {
-      const updatedTime = screen.getByText(/10:30/i)
-      expect(updatedTime).toBeInTheDocument()
-    })
   })
 
   it('should show logout button when authenticated', () => {
@@ -237,7 +199,7 @@ describe('Topbar', () => {
   })
 
   it('should call signOut when logout button is clicked', async () => {
-    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
+    const user = userEvent.setup()
     ;(useSession as jest.Mock).mockReturnValue({
       data: {
         user: {
@@ -292,15 +254,4 @@ describe('Topbar', () => {
       'text-white'
     )
   })
-
-  it('should clean up interval on unmount', () => {
-    const clearIntervalSpy = jest.spyOn(global, 'clearInterval')
-    const { unmount } = render(<Topbar onMenuToggle={jest.fn()} />)
-
-    unmount()
-
-    expect(clearIntervalSpy).toHaveBeenCalled()
-    clearIntervalSpy.mockRestore()
-  })
 })
-

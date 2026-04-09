@@ -7,6 +7,7 @@
 
 import { parseApiError, type ParsedError } from "./api-client/error-parser";
 import type { BaseApiResponse } from "../types/api-client";
+import { reportError as sendToErrorService } from "./error-reporter";
 
 /**
  * Error types for different error scenarios
@@ -145,8 +146,8 @@ export function handleCaughtError(error: unknown): AppError {
 }
 
 /**
- * Log error for debugging and monitoring
- * TODO: Integrate with error reporting service (Sentry, etc.)
+ * Log error for debugging and monitoring.
+ * In development logs to console; in production sends to error reporting service (e.g. Sentry) when configured.
  */
 export function logError(error: AppError, context?: Record<string, unknown>): void {
   if (process.env.NODE_ENV === "development") {
@@ -161,13 +162,24 @@ export function logError(error: AppError, context?: Record<string, unknown>): vo
     });
   }
 
-  // TODO: Send to error reporting service in production
-  // Example: Sentry.captureException(error.originalError, { extra: { ...error, context } });
+  const payload = {
+    type: error.type,
+    message: error.message,
+    userMessage: error.userMessage,
+    statusCode: error.statusCode,
+    fieldErrors: error.fieldErrors,
+    ...context,
+  };
+  sendToErrorService(error.originalError ?? error, payload);
 }
 
 /**
- * Handle error and return standardized error object
- * This is the main function to use for error handling
+ * Handle error and return a standardized AppError. Prefer this for all error handling.
+ * Accepts either a thrown value or an API response object; logs and (when configured) reports to Sentry.
+ *
+ * @param error - Caught error or API response with `status` and `error`
+ * @param context - Optional extra data to attach when logging/reporting
+ * @returns Normalized AppError with type, message, userMessage, and optional fieldErrors
  */
 export function handleError(
   error: unknown | BaseApiResponse<unknown>,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AssetsApiClient } from "@/lib/api-client/asset";
 import { Asset } from "@/types/assets";
 import { STATUS_OPTIONS } from "@/constants/assets";
@@ -15,6 +15,7 @@ import {
 } from "@/components/apps/assets/pages/detail/dialogs";
 import { AssetDetailHeader } from "./pages/detail/AssetDetailHeader";
 import { AssetDetailContent } from "./pages/detail/AssetDetailContent";
+import { mapBackendAssetToDetailView } from "./utils/asset-detail-mapper";
 
 interface AssetDetailProps {
   assetId: number;
@@ -48,12 +49,13 @@ export function AssetDetail({ assetId, onUpdate }: AssetDetailProps) {
     null
   );
 
+  const assetsApiClient = useMemo(() => new AssetsApiClient(), []);
+
   // Fetch asset data
   useEffect(() => {
     const loadAsset = async () => {
       try {
         setLoading(true);
-        const assetsApiClient = new AssetsApiClient();
         const response = await assetsApiClient.getAsset<Asset>(assetId);
 
         if (response.error) {
@@ -64,8 +66,9 @@ export function AssetDetail({ assetId, onUpdate }: AssetDetailProps) {
 
         if (response.data) {
           setAsset(response.data);
-          // TODO: Map asset.managed_by to teammate if needed
-          // TODO: Map asset.location to location if needed
+          const view = mapBackendAssetToDetailView(response.data);
+          setTeammate(view.teammate);
+          setLocation(view.location);
         }
       } catch (err) {
         console.error("Error loading asset:", err);
@@ -75,7 +78,7 @@ export function AssetDetail({ assetId, onUpdate }: AssetDetailProps) {
     };
 
     loadAsset();
-  }, [assetId]);
+  }, [assetId, assetsApiClient]);
 
   const scrollToSection = (id: string) => {
     setActiveSection(id);
@@ -112,6 +115,7 @@ export function AssetDetail({ assetId, onUpdate }: AssetDetailProps) {
         asset={asset}
         currentStatus={currentStatus}
         onStatusChange={handleStatusChange}
+        onAlertsClick={() => setAlertsDialogOpen(true)}
       />
 
       <AssetDetailContent
@@ -156,11 +160,18 @@ export function AssetDetail({ assetId, onUpdate }: AssetDetailProps) {
       <CostDepreciationDialog
         open={costDialogOpen}
         onOpenChange={setCostDialogOpen}
-        onSave={(_data) => {
-          // TODO: Update asset with cost depreciation data
-          // This needs to be mapped to the correct Asset fields
-          const updatedAsset = { ...asset };
-          setAsset(updatedAsset);
+        onSave={async (data) => {
+          const response = await assetsApiClient.updateAsset(assetId, {
+            purchase_price: data.purchasePrice != null ? String(data.purchasePrice) : undefined,
+            replacement_cost: data.replacementCost != null ? String(data.replacementCost) : undefined,
+            salvage_value: data.salvageValue != null ? String(data.salvageValue) : undefined,
+            useful_life_years: data.usefulLife,
+            approaching_eol_months: data.approachingEndOfLife,
+            po_number: data.poNumber,
+          });
+          if (!response.error && response.data) {
+            setAsset(response.data as Asset);
+          }
         }}
         currentValues={{
           purchasePrice: asset.purchase_price ? Number.parseFloat(asset.purchase_price) : undefined,

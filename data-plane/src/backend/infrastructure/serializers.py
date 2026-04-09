@@ -1,10 +1,12 @@
 from rest_framework import serializers
 
 from core.serializers import NameOnlyModelSerializer
+
 from .models import (
     CarrierContact,
     Category,
     Circuit,
+    CompanyProfile,
     Contact,
     Department,
     Location,
@@ -202,6 +204,26 @@ class UtilityContactSerializer(serializers.ModelSerializer):
             "billing_phone",
             "utility_type",
             "utility_type_display",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class CompanyProfileSerializer(serializers.ModelSerializer):
+    """Serializer for tenant/company profile settings."""
+
+    class Meta:
+        model = CompanyProfile
+        fields = [
+            "id",
+            "company_name",
+            "subdomain",
+            "company_url",
+            "main_contact",
+            "phone_country",
+            "phone_number",
+            "phone_extension",
             "created_at",
             "updated_at",
         ]

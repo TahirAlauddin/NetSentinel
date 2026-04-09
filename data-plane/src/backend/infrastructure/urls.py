@@ -5,6 +5,7 @@ from .views import (
     CarrierContactViewSet,
     CategoryViewSet,
     CircuitViewSet,
+    CompanyProfileViewSet,
     ContactViewSet,
     DepartmentViewSet,
     LocationViewSet,
@@ -21,6 +22,7 @@ router.register(r"categories", CategoryViewSet, basename="category")
 router.register(r"contacts", ContactViewSet, basename="contact")
 router.register(r"carrier-contacts", CarrierContactViewSet, basename="carrier-contact")
 router.register(r"utility-contacts", UtilityContactViewSet, basename="utility-contact")
+router.register(r"company-profiles", CompanyProfileViewSet, basename="company-profile")
 
 urlpatterns = [
     path("", include(router.urls)),

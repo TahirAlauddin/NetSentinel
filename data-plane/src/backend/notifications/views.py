@@ -1,25 +1,27 @@
 import logging
+from typing import Dict
 
-from django.db.models import Exists, OuterRef
-
+from django.db.models import Exists, OuterRef, QuerySet
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import InAppNotification, NotificationConfig, NotificationReadReceipt
 from .serializers import InAppNotificationSerializer, NotificationConfigSerializer
-from .services import get_channel_config, send_notification
+from .services import get_channel_config, send_test_notification
 
 logger = logging.getLogger(__name__)
 
 
-def _get_config_for_user(user):
+def _get_config_for_user(user) -> NotificationConfig:
     config, _ = NotificationConfig.objects.get_or_create(
         user=user,
         defaults={
             "slack_enabled": False,
             "discord_enabled": False,
+            "email_enabled": False,
         },
     )
     return config
@@ -33,19 +35,19 @@ class NotificationConfigView(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def get(self, request: Request) -> Response:
         config = _get_config_for_user(request.user)
         serializer = NotificationConfigSerializer(config)
         return Response(serializer.data)
 
-    def put(self, request):
+    def put(self, request: Request) -> Response:
         config = _get_config_for_user(request.user)
         serializer = NotificationConfigSerializer(config, data=request.data, partial=False)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
 
-    def patch(self, request):
+    def patch(self, request: Request) -> Response:
         config = _get_config_for_user(request.user)
         serializer = NotificationConfigSerializer(config, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -56,71 +58,34 @@ class NotificationConfigView(APIView):
 class NotificationConfigTestView(APIView):
     """
     POST: send a test notification to one channel only.
-    Query param: channel=slack | discord (required). Only that channel is triggered.
-    Returns {"slack_ok": bool, "discord_ok": bool, "slack_error": str?, "discord_error": str?}.
+
+    Query param:
+    - channel: "slack" | "discord" | "email" | "sms" (required). Only that channel is triggered.
+    Returns a dict with *_ok and *_error keys for all channels.
     """
 
     permission_classes = [IsAuthenticated]
 
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         channel = (request.query_params.get("channel") or "").strip().lower()
-        if channel not in ("slack", "discord"):
+        if channel not in ("slack", "discord", "email", "sms"):
             return Response(
-                {"detail": "Query param 'channel' is required and must be 'slack' or 'discord'."},
+                {
+                    "detail": (
+                        "Query param 'channel' is required and must be one of "
+                        "'slack', 'discord', 'email', or 'sms'."
+                    )
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
         config = get_channel_config(user=request.user)
-        response = {
-            "slack_ok": False,
-            "discord_ok": False,
-            "slack_error": None,
-            "discord_error": None,
-        }
-        if not config:
-            logger.info(
-                "Notification test: no config for user %s — save settings first", request.user
-            )
-            response["slack_error"] = "no_config"
-            response["discord_error"] = "no_config"
-            return Response(response)
-
-        if channel == "slack":
-            if not config.slack_enabled:
-                response["slack_error"] = "slack_disabled"
-            elif not (config.slack_webhook_url or not config.slack_webhook_url.strip()):
-                response["slack_error"] = "no_webhook"
-            else:
-                from .services import send_slack_message
-
-                text = "*NetSentinel test notification*\nIf you see this, Slack notifications are working."
-                response["slack_ok"] = send_slack_message(config.slack_webhook_url, text)
-                if not response["slack_ok"]:
-                    response["slack_error"] = "webhook_failed"
-        else:  # discord
-            if not config.discord_enabled:
-                response["discord_error"] = "discord_disabled"
-            elif not (config.discord_webhook_url or not config.discord_webhook_url.strip()):
-                response["discord_error"] = "no_webhook"
-            else:
-                from .services import send_discord_message
-
-                content = "**NetSentinel test notification**\nIf you see this, Discord notifications are working."
-                embeds = [
-                    {
-                        "title": "NetSentinel test notification",
-                        "description": "If you see this, Discord notifications are working.",
-                        "color": 0x3498DB,
-                    }
-                ]
-                response["discord_ok"] = send_discord_message(
-                    config.discord_webhook_url, content, embeds=embeds
-                )
-                if not response["discord_ok"]:
-                    response["discord_error"] = "webhook_failed"
+        response: Dict[str, object] = send_test_notification(config, channel)
         return Response(response)
 
 
-def _in_app_queryset(request, *, unread_only: bool = False, limit: int = 20):
+def _in_app_queryset(
+    request, *, unread_only: bool = False, limit: int = 20
+) -> QuerySet[InAppNotification]:
     """Base queryset for in-app notifications with read annotated for current user."""
     read_receipts = NotificationReadReceipt.objects.filter(
         user=request.user,
@@ -140,12 +105,13 @@ class InAppNotificationListView(APIView):
 
     Query params:
     - unread_only: if "true", only return notifications the user has not read.
-    - limit: max number to return (1-100). Default 20. Bell uses 5, view-all unread uses 50, history uses 50.
+    - limit: max number to return (1-100). Default 20. Bell uses 5, view-all unread uses 50,
+      history uses 50.
     """
 
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def get(self, request: Request) -> Response:
         try:
             limit = int(request.query_params.get("limit", "20"))
         except ValueError:
@@ -163,7 +129,7 @@ class InAppNotificationMarkReadView(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, pk):
+    def post(self, request: Request, pk: int) -> Response:
         notification = InAppNotification.objects.filter(pk=pk).first()
         if not notification:
             return Response(
@@ -178,11 +144,12 @@ class InAppNotificationMarkReadView(APIView):
 
 
 class InAppNotificationMarkUnreadView(APIView):
-    """POST: mark a single in-app notification as unread for the current user (removes read receipt)."""
+    """POST: mark a single in-app notification as unread for the current user
+    (removes read receipt)."""
 
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, pk):
+    def post(self, request: Request, pk: int) -> Response:
         notification = InAppNotification.objects.filter(pk=pk).first()
         if not notification:
             return Response(
@@ -201,7 +168,7 @@ class InAppNotificationMarkAllReadView(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         unread_ids = list(
             _in_app_queryset(request, unread_only=True, limit=1000).values_list("id", flat=True)
         )
@@ -223,12 +190,13 @@ class InAppNotificationMarkAllReadView(APIView):
 class InAppNotificationCreateTestView(APIView):
     """
     POST: create a single in-app notification for testing (desktop notifications, DND, etc.).
-    Body (optional): title, message, type (info|warning|error|success). Defaults: test title/message.
+    Body (optional): title, message, type (info|warning|error|success).
+    Defaults: test title/message.
     """
 
     permission_classes = [IsAuthenticated]
 
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         from django.utils import timezone
 
         title = (request.data.get("title") or "Test notification").strip()[:255]

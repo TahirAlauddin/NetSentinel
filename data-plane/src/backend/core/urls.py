@@ -23,9 +23,29 @@ from django.views.generic import RedirectView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
+from rest_framework.routers import DefaultRouter
+
+from users.views import (
+    GroupViewSet,
+    PermissionBundleViewSet,
+    PermissionViewSet,
+    create_group_from_permission_bundles_view,
+    update_group_from_permission_bundles_view,
+)
 
 from .health import health_check
-from .views import api_info_view
+from .views import api_info_view, company_profile_view
+
+# Aliases for /api/v1/groups/ and /api/v1/permissions/ (same ViewSets as users.urls).
+# Must be included after all other path("api/v1/<app>/", ...) entries so they are not shadowed.
+api_v1_rbac_router = DefaultRouter()
+api_v1_rbac_router.register(r"groups", GroupViewSet, basename="api_v1_group")
+api_v1_rbac_router.register(r"permissions", PermissionViewSet, basename="api_v1_permission")
+api_v1_rbac_router.register(
+    r"permission-bundles",
+    PermissionBundleViewSet,
+    basename="api_v1_permission_bundle",
+)
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -53,9 +73,22 @@ urlpatterns = [
     path("api/v1/contracts/", include("contracts.urls")),
     path("api/v1/phone-management/", include("phone_management.urls")),
     path("api/v1/notifications/", include("notifications.urls")),
+    path("api/v1/core/company-profile/", company_profile_view, name="company-profile"),
     # Djoser endpoints for authentication and user management
     path("api/v1/auth/", include("djoser.urls")),
     path("api/v1/auth/", include("djoser.urls.jwt")),
+    # App-level group create/update aliases under /api/v1 for frontend settings flows.
+    path(
+        "api/v1/groups/app-level/",
+        create_group_from_permission_bundles_view,
+        name="groups-app-level-create",
+    ),
+    path(
+        "api/v1/groups/<int:group_id>/app-level/",
+        update_group_from_permission_bundles_view,
+        name="groups-app-level-update",
+    ),
+    path("api/v1/", include(api_v1_rbac_router.urls)),
     # API Documentation
     path(
         "swagger/",

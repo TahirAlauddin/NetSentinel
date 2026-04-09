@@ -1,54 +1,23 @@
 import React from "react";
-import { PermissionRecord } from "@/types/groups";
+import type { UseGroupFormReturn } from "@/hooks/use-group-form";
+import AppLevelPermission from "@/components/permissions/AppLevelPermission";
 
 interface GroupFormProps {
-  name: string;
-  setName: (name: string) => void;
-  selectedPermissions: number[];
-  setSelectedPermissions: (ids: number[]) => void;
-  permissions: PermissionRecord[];
+  form: UseGroupFormReturn;
   submitting: boolean;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   onCancel: () => void;
   submitLabel: string;
 }
 
-const GroupForm = ({
-  name,
-  setName,
-  selectedPermissions,
-  setSelectedPermissions,
-  permissions,
-  submitting,
-  onSubmit,
-  onCancel,
-  submitLabel,
-}: GroupFormProps) => {
-  const handlePermissionToggle = (permissionId: number) => {
-    if (selectedPermissions.includes(permissionId)) {
-      setSelectedPermissions(selectedPermissions.filter((id) => id !== permissionId));
-    } else {
-      setSelectedPermissions([...selectedPermissions, permissionId]);
-    }
-  };
-
-  // Group permissions by content type for better organization
-  const groupedPermissions = permissions.reduce((acc, perm) => {
-    const key = perm.content_type || 0;
-    if (!acc[key]) {
-      acc[key] = [];
-    }
-    acc[key].push(perm);
-    return acc;
-  }, {} as Record<number, PermissionRecord[]>);
+/** Shared create/edit group form with app-level permission selectors. */
+const GroupForm = ({ form, submitting, onSubmit, onCancel, submitLabel }: GroupFormProps) => {
+  const { name, setName, appAccess, setAppAccess } = form;
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
-        <label
-          htmlFor="name"
-          className="block text-sm font-medium mb-2"
-        >
+        <label htmlFor="name" className="block text-sm font-medium mb-2">
           Group Name
         </label>
         <input
@@ -63,41 +32,16 @@ const GroupForm = ({
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium mb-2">
-          Permissions
-        </label>
-        <div className="max-h-64 overflow-y-auto border border-border rounded-md p-3 space-y-2 bg-background">
-          {permissions.length > 0 ? (
-            Object.entries(groupedPermissions).map(([contentType, perms]) => (
-              <div key={contentType} className="space-y-1">
-                {perms.map((perm) => (
-                  <label
-                    key={perm.id}
-                    className="flex items-center gap-2 text-sm cursor-pointer hover:bg-[oklch(0.98_0_0)] p-1 rounded"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedPermissions.includes(perm.id)}
-                      onChange={() => handlePermissionToggle(perm.id)}
-                      className="rounded border-input"
-                    />
-                    <span className="text-xs">{perm.name}</span>
-                  </label>
-                ))}
-              </div>
-            ))
-          ) : (
-            <div className="text-xs text-muted-foreground text-center py-4">
-              No permissions available
-            </div>
-          )}
-        </div>
-        {selectedPermissions.length > 0 && (
-          <div className="text-xs text-muted-foreground mt-2">
-            {selectedPermissions.length} {selectedPermissions.length === 1 ? "permission" : "permissions"} selected
-          </div>
-        )}
+      <div className="space-y-2">
+        <h2 className="text-sm font-medium">Group permissions</h2>
+        <p className="text-xs text-muted-foreground">
+          Read All grants catalog view_* permissions; Edit All adds matching change_* (not add/delete); Admin grants everything in that app.
+        </p>
+        <AppLevelPermission
+          value={appAccess}
+          onChange={setAppAccess}
+          disabled={submitting}
+        />
       </div>
 
       <div className="flex gap-2">
@@ -122,4 +66,3 @@ const GroupForm = ({
 };
 
 export default GroupForm;
-

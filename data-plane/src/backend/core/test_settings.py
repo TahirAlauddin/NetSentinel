@@ -14,7 +14,7 @@ DATABASES = {
 }
 
 # Optional: disable migrations for faster tests (Django docs). Re-enable with:
-# MIGRATION_MODULES = DisableMigrations() and a class that __contains__/__getitem__ return True/None.
+# MIGRATION_MODULES = DisableMigrations() — a class where __contains__/__getitem__ return True/None.
 
 # Use faster password hasher for tests
 PASSWORD_HASHERS = [
