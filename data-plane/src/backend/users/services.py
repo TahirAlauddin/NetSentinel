@@ -13,4 +13,3 @@ def get_user_stats() -> Dict[str, int]:
         "staff_users": User.objects.filter(is_staff=True).count(),
         "superusers": User.objects.filter(is_superuser=True).count(),
     }
-

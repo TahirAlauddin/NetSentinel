@@ -1,8 +1,9 @@
+from django.conf import settings
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.request import Request
 from rest_framework.response import Response
-from django.conf import settings
+
 from infrastructure.models import CompanyProfile
 from infrastructure.serializers import CompanyProfileSerializer
 

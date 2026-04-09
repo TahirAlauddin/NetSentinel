@@ -1,11 +1,12 @@
 from rest_framework import serializers
 
 from core.serializers import NameOnlyModelSerializer
+
 from .models import (
-    CompanyProfile,
     CarrierContact,
     Category,
     Circuit,
+    CompanyProfile,
     Contact,
     Department,
     Location,
@@ -16,7 +17,7 @@ from .models import (
 
 class PointOfContactSerializer(serializers.ModelSerializer):
     """Serializer for Point of Contact."""
- 
+
     contact_type_display = serializers.CharField(source="get_contact_type_display", read_only=True)
 
     class Meta:

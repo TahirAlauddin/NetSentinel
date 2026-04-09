@@ -2,7 +2,6 @@ from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db import models
 
 
-
 class PermissionBundle(models.Model):
     """
     Layer 2 — Permission Bundles (subgroups).

@@ -26,9 +26,7 @@ def make_permission(db):
     """Factory: create (or get) a Django Permission on a given content type."""
 
     def _factory(app_label, model_name, codename, name=None):
-        ct, _ = ContentType.objects.get_or_create(
-            app_label=app_label, model=model_name
-        )
+        ct, _ = ContentType.objects.get_or_create(app_label=app_label, model=model_name)
         perm, _ = Permission.objects.get_or_create(
             codename=codename,
             content_type=ct,
@@ -137,9 +135,7 @@ def _make_app_user(app_label, level, username):
     }[level]
 
     qs = Permission.objects.filter(content_type__app_label=app_label)
-    perms = qs.filter(
-        codename__startswith=prefixes[0]  # start with first prefix
-    )
+    perms = qs.filter(codename__startswith=prefixes[0])  # start with first prefix
     for p in prefixes[1:]:
         perms = perms | qs.filter(codename__startswith=p)
     perms = perms.distinct()
@@ -283,9 +279,7 @@ def no_perm_client(no_perm_user):
 @pytest.fixture
 def superuser_client(superuser):
     client = APIClient()
-    client.credentials(
-        HTTP_AUTHORIZATION=f"Bearer {RefreshToken.for_user(superuser).access_token}"
-    )
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {RefreshToken.for_user(superuser).access_token}")
     client.user = superuser
     return client
 

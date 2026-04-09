@@ -455,7 +455,6 @@ class TechSpecs(models.Model):
         return self.name
 
 
-
 # Import all the extension models after main models are defined
 # This avoids circular imports since extension models import Asset
 # Using these files instead of adding all these attributes in the asset directly

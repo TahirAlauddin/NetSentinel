@@ -41,6 +41,51 @@ LEVEL_TO_PREFIXES = {
 }
 
 
+def _validate_access_level_item(item):
+    """Validate a single app_access_levels entry and return (app, level)."""
+    if not isinstance(item, dict):
+        raise ValueError("Each app_access_levels item must be an object.")
+    app = item.get("app")
+    level = item.get("level")
+    if app not in APP_KEY_TO_LABELS:
+        raise ValueError(f"Unsupported app key: {app}")
+    if level not in ("none", "read", "edit", "admin"):
+        raise ValueError(f"Unsupported access level: {level}")
+    return app, level
+
+
+def _collect_bundle_perms(app_label, level):
+    """Return (all_permission_ids, per_bundle_permission_ids) for one app_label + level."""
+    all_ids: set = set()
+    bundle_ids: set = set()
+    for prefix in LEVEL_TO_PREFIXES[level]:
+        ids = set(
+            Permission.objects.filter(
+                content_type__app_label=app_label,
+                codename__startswith=prefix,
+            ).values_list("id", flat=True)
+        )
+        all_ids.update(ids)
+        bundle_ids.update(ids)
+    return all_ids, bundle_ids
+
+
+def _upsert_bundle(code, spec, existing_by_code):
+    """Get-or-create a PermissionBundle for *code* and sync its permissions."""
+    bundle = existing_by_code.get(code)
+    app_title = spec["app_label"].replace("_", " ").title()
+    level_title = spec["level"].title()
+    if bundle is None:
+        bundle = PermissionBundle.objects.create(
+            code=code,
+            name=f"{app_title} {level_title} All",
+            app=spec["app_label"],
+            description=f"Auto-generated app-level bundle for {app_title} ({level_title}).",
+        )
+    bundle.permissions.set(Permission.objects.filter(id__in=spec["permission_ids"]))
+    return bundle
+
+
 def _resolve_app_level_permissions_and_bundles(app_access_levels):
     """
     Translate UI app-level selections into concrete Django permission IDs
@@ -49,59 +94,28 @@ def _resolve_app_level_permissions_and_bundles(app_access_levels):
     if not isinstance(app_access_levels, list):
         raise ValueError("app_access_levels must be a list.")
 
-    permission_ids = set()
-    bundle_specs = {}
+    permission_ids: set = set()
+    bundle_specs: dict = {}
 
     for item in app_access_levels:
-        if not isinstance(item, dict):
-            raise ValueError("Each app_access_levels item must be an object.")
-
-        app = item.get("app")
-        level = item.get("level")
-        if app not in APP_KEY_TO_LABELS:
-            raise ValueError(f"Unsupported app key: {app}")
-        if level not in ("none", "read", "edit", "admin"):
-            raise ValueError(f"Unsupported access level: {level}")
+        app, level = _validate_access_level_item(item)
         if level == "none":
             continue
-
         for app_label in APP_KEY_TO_LABELS[app]:
-            prefixes = LEVEL_TO_PREFIXES[level]
-            per_bundle_permission_ids = set()
-            for prefix in prefixes:
-                ids = set(
-                    Permission.objects.filter(
-                        content_type__app_label=app_label,
-                        codename__startswith=prefix,
-                    ).values_list("id", flat=True)
-                )
-                permission_ids.update(ids)
-                per_bundle_permission_ids.update(ids)
-
-            code = f"{app_label}_{level}_all"
-            bundle_specs[code] = {
+            all_ids, per_bundle_ids = _collect_bundle_perms(app_label, level)
+            permission_ids.update(all_ids)
+            bundle_specs[f"{app_label}_{level}_all"] = {
                 "app_label": app_label,
                 "level": level,
-                "permission_ids": sorted(per_bundle_permission_ids),
+                "permission_ids": sorted(per_bundle_ids),
             }
 
-    bundle_ids = []
     existing_by_code = {
         b.code: b for b in PermissionBundle.objects.filter(code__in=bundle_specs.keys())
     }
-    for code, spec in bundle_specs.items():
-        bundle = existing_by_code.get(code)
-        app_title = spec["app_label"].replace("_", " ").title()
-        level_title = spec["level"].title()
-        if bundle is None:
-            bundle = PermissionBundle.objects.create(
-                code=code,
-                name=f"{app_title} {level_title} All",
-                app=spec["app_label"],
-                description=f"Auto-generated app-level bundle for {app_title} ({level_title}).",
-            )
-        bundle.permissions.set(Permission.objects.filter(id__in=spec["permission_ids"]))
-        bundle_ids.append(bundle.id)
+    bundle_ids = [
+        _upsert_bundle(code, spec, existing_by_code).id for code, spec in bundle_specs.items()
+    ]
 
     return sorted(permission_ids), sorted(bundle_ids)
 

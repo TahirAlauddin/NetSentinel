@@ -43,9 +43,7 @@ class TestPermissionBundleModel:
             PermissionBundle.objects.create(code="code_b", name="Same Name")
 
     def test_app_field_stored(self):
-        bundle = PermissionBundle.objects.create(
-            code="ipam_bundle", name="IPAM Bundle", app="ipam"
-        )
+        bundle = PermissionBundle.objects.create(code="ipam_bundle", name="IPAM Bundle", app="ipam")
         assert bundle.app == "ipam"
 
     def test_description_stored(self):
@@ -175,7 +173,7 @@ class TestUserModel:
         )
         user.user_permissions.add(perm)
         user_fresh = User.objects.get(pk=user.pk)
-        assert user_fresh.has_perm(f"users.direct_perm")
+        assert user_fresh.has_perm("users.direct_perm")
 
     def test_superuser_has_all_permissions(self):
         su = User.objects.create_superuser(
@@ -216,8 +214,11 @@ class TestUserModel:
 
     def test_get_full_name(self):
         user = User.objects.create_user(
-            username="fn_u", email="fn@x.com", password="pass",
-            first_name="Alice", last_name="Smith"
+            username="fn_u",
+            email="fn@x.com",
+            password="pass",
+            first_name="Alice",
+            last_name="Smith",
         )
         assert user.get_full_name() == "Alice Smith"
 

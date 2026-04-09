@@ -18,7 +18,7 @@ Edge cases:
 """
 
 import pytest
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Group
 
 from users.models import ExtendedGroup, PermissionBundle
 
@@ -183,9 +183,7 @@ class TestAppLevelGroupCreate:
         # All assigned ipam perms should be view_ only
         assert perms.exists()
         for perm in perms:
-            assert perm.codename.startswith("view_"), (
-                f"Expected view_ only, got: {perm.codename}"
-            )
+            assert perm.codename.startswith("view_"), f"Expected view_ only, got: {perm.codename}"
 
     def test_edit_level_grants_view_and_change_permissions(self, superuser_client):
         resp = superuser_client.post(
@@ -339,7 +337,7 @@ class TestAppLevelGroupUpdate:
 
     def test_update_reuses_existing_bundle(self, superuser_client, db):
         """Second call with same app+level should reuse the auto-generated bundle."""
-        existing_bundle = PermissionBundle.objects.create(
+        PermissionBundle.objects.create(
             code="ipam_read_all",
             name="Ipam Read All",
             app="ipam",

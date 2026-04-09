@@ -16,7 +16,8 @@ def grant_all_django_permissions_for_app(user, app_label: str) -> None:
 
 @pytest.fixture
 def user_with_assets_perms(db, user):
-    """Regular user with all ``assets`` Django model permissions (for ViewSets using DjangoModelPermissions)."""
+    """Regular user with all ``assets`` Django model permissions (for ViewSets using
+    DjangoModelPermissions)."""
     grant_all_django_permissions_for_app(user, "assets")
     return user
 

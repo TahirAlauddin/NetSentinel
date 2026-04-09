@@ -284,9 +284,7 @@ class TestGroupSerializerPermissionBundles:
 
         group = Group.objects.create(name="Bundled Group")
         perm = Permission.objects.first()
-        bundle = PermissionBundle.objects.create(
-            name="Sub", code="sub_bundle_test", app="users"
-        )
+        bundle = PermissionBundle.objects.create(name="Sub", code="sub_bundle_test", app="users")
         if perm:
             bundle.permissions.add(perm)
         ext, _ = ExtendedGroup.objects.get_or_create(group=group)

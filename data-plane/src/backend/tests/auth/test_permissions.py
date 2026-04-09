@@ -3,9 +3,9 @@ Tests for permission system (bundles, Django Permission, ViewSet access).
 """
 
 import pytest
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth import get_user_model
 from rest_framework import status
 
 from tests.rbac_helpers import grant_user_permission_through_bundle

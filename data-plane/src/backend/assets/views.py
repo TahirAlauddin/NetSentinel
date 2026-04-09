@@ -5,8 +5,6 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from .permissions import StrictDjangoModelPermissions
-
 from .models import (
     Asset,
     AssetAttachment,
@@ -24,6 +22,7 @@ from .models import (
     TechSpecs,
     Vendor,
 )
+from .permissions import StrictDjangoModelPermissions
 from .serializers import (
     AssetAttachmentSerializer,
     AssetBasicDetailsSerializer,
@@ -79,7 +78,8 @@ def api_info_view(request: Request) -> Response:
 class AssetTagViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing asset tags.
-    Requires Django model permissions: assets.view_assettag, add_assettag, change_assettag, delete_assettag.
+    Requires Django model permissions: assets.view_assettag, add_assettag,
+    change_assettag, delete_assettag.
     """
 
     queryset = AssetTag.objects.all()

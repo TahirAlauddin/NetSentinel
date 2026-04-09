@@ -45,11 +45,8 @@ class Command(BaseCommand):
         with open(config_path, "r", encoding="utf-8") as f:
             config = json.load(f)
 
-
         configured_apps = {
-            app.get("app_label")
-            for app in config.get("apps", [])
-            if app.get("app_label")
+            app.get("app_label") for app in config.get("apps", []) if app.get("app_label")
         }
         roles = config.get("roles", [])
 
@@ -107,5 +104,3 @@ class Command(BaseCommand):
         if dry_run:
             self.stdout.write(self.style.WARNING("Dry run — no changes made."))
             return
-
-

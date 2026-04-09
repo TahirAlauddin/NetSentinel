@@ -3,9 +3,9 @@ Tests for User model and related functionality.
 """
 
 import pytest
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth import get_user_model
 
 from tests.rbac_helpers import grant_user_permission_through_bundle
 from users.models import ExtendedGroup, PermissionBundle
@@ -85,9 +85,7 @@ class TestExtendedGroup:
             content_type=ct,
             defaults={"name": "Can ext group"},
         )
-        bundle = PermissionBundle.objects.create(
-            name="B", code="b_ext_group", app="users"
-        )
+        bundle = PermissionBundle.objects.create(name="B", code="b_ext_group", app="users")
         bundle.permissions.add(perm)
         django_group = Group.objects.create(name="Ext Test Group")
         ext = ExtendedGroup.objects.create(group=django_group)

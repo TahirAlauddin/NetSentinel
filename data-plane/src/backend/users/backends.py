@@ -8,6 +8,7 @@ from django.contrib.auth.backends import ModelBackend
 
 from .models import ExtendedGroup
 
+
 class BundlePermissionBackend(ModelBackend):
     """
     Extends ModelBackend so that get_group_permissions() includes permissions

@@ -6,7 +6,7 @@ Sends messages to Slack, Discord, Email, and SMS when alerts are triggered.
 
 import json
 import logging
-from typing import Dict, Optional, TypedDict, List, Literal
+from typing import Dict, List, Literal, Optional, TypedDict
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -22,6 +22,7 @@ class DiscordEmbedPayload(TypedDict, total=False):
     title: str
     description: str
     color: int
+
 
 # Single hardcoded email template for notifications (no user customization).
 DEFAULT_EMAIL_SUBJECT_PREFIX = "[NetSentinel] "
@@ -91,9 +92,7 @@ def _post_json(url: str, payload: Dict, timeout: int = 10) -> bool:
         return False
 
 
-def send_slack_message(
-    webhook_url: str, text: str, blocks: Optional[List[Dict]] = None
-) -> bool:
+def send_slack_message(webhook_url: str, text: str, blocks: Optional[List[Dict]] = None) -> bool:
     """
     POST a message to a Slack incoming webhook.
     """
@@ -162,8 +161,8 @@ def send_email_message(config: NotificationConfig, subject: str, body: str) -> b
     if not config.email_recipient:
         return False
 
-    from django.core.mail import EmailMultiAlternatives
     from django.conf import settings
+    from django.core.mail import EmailMultiAlternatives
 
     if not subject.startswith(DEFAULT_EMAIL_SUBJECT_PREFIX):
         subject = f"{DEFAULT_EMAIL_SUBJECT_PREFIX}{subject}"
@@ -249,6 +248,83 @@ def send_notification(
     return result
 
 
+def _test_slack(config: NotificationConfig, response: Dict[str, object]) -> None:
+    if not config.slack_enabled:
+        response["slack_error"] = "slack_disabled"
+    elif not config.slack_webhook_url or not config.slack_webhook_url.strip():
+        response["slack_error"] = "no_webhook"
+    else:
+        text = (
+            "*NetSentinel test notification*\n" "If you see this, Slack notifications are working."
+        )
+        ok = send_slack_message(config.slack_webhook_url, text)
+        response["slack_ok"] = ok
+        if not ok:
+            response["slack_error"] = "webhook_failed"
+
+
+def _test_discord(config: NotificationConfig, response: Dict[str, object]) -> None:
+    if not config.discord_enabled:
+        response["discord_error"] = "discord_disabled"
+    elif not config.discord_webhook_url or not config.discord_webhook_url.strip():
+        response["discord_error"] = "no_webhook"
+    else:
+        content = (
+            "**NetSentinel test notification**\n"
+            "If you see this, Discord notifications are working."
+        )
+        embeds = [
+            {
+                "title": "NetSentinel test notification",
+                "description": "If you see this, Discord notifications are working.",
+                "color": 0x3498DB,
+            }
+        ]
+        ok = send_discord_message(config.discord_webhook_url, content, embeds=embeds)
+        response["discord_ok"] = ok
+        if not ok:
+            response["discord_error"] = "webhook_failed"
+
+
+def _test_email(config: NotificationConfig, response: Dict[str, object]) -> None:
+    if not config.email_enabled:
+        response["email_error"] = "email_disabled"
+    elif not config.email_recipient:
+        response["email_error"] = "no_recipient"
+    else:
+        subject = "NetSentinel test notification"
+        body = "If you see this, Email notifications are working."
+        try:
+            ok = send_email_message(config, subject, body)
+        except Exception as e:  # pragma: no cover - defensive logging
+            logger.error("Email test failed: %s", e)
+            ok = False
+        response["email_ok"] = ok
+        if not ok:
+            response["email_error"] = "smtp_failed"
+
+
+def _test_sms(config: NotificationConfig, response: Dict[str, object]) -> None:
+    if not getattr(config, "sms_enabled", False):
+        response["sms_error"] = "sms_disabled"
+    elif not getattr(config, "sms_recipient", ""):
+        response["sms_error"] = "no_recipient"
+    else:
+        body = "If you see this, SMS notifications are working."
+        ok = send_sms_message(config.sms_recipient, body)
+        response["sms_ok"] = bool(ok)
+        if not response["sms_ok"]:
+            response["sms_error"] = "twilio_failed"
+
+
+_CHANNEL_HANDLERS = {
+    "slack": _test_slack,
+    "discord": _test_discord,
+    "email": _test_email,
+    "sms": _test_sms,
+}
+
+
 def send_test_notification(
     config: Optional[NotificationConfig],
     channel: str,
@@ -272,73 +348,12 @@ def send_test_notification(
 
     if not config:
         logger.info("Notification test: no config — save settings first")
-        response["slack_error"] = "no_config"
-        response["discord_error"] = "no_config"
-        response["email_error"] = "no_config"
-        response["sms_error"] = "no_config"
+        for key in ("slack_error", "discord_error", "email_error", "sms_error"):
+            response[key] = "no_config"
         return response
 
-    if channel == "slack":
-        if not config.slack_enabled:
-            response["slack_error"] = "slack_disabled"
-        elif not config.slack_webhook_url or not config.slack_webhook_url.strip():
-            response["slack_error"] = "no_webhook"
-        else:
-            text = (
-                "*NetSentinel test notification*\n"
-                "If you see this, Slack notifications are working."
-            )
-            ok = send_slack_message(config.slack_webhook_url, text)
-            response["slack_ok"] = ok
-            if not ok:
-                response["slack_error"] = "webhook_failed"
-    elif channel == "discord":
-        if not config.discord_enabled:
-            response["discord_error"] = "discord_disabled"
-        elif not config.discord_webhook_url or not config.discord_webhook_url.strip():
-            response["discord_error"] = "no_webhook"
-        else:
-            content = (
-                "**NetSentinel test notification**\n"
-                "If you see this, Discord notifications are working."
-            )
-            embeds = [
-                {
-                    "title": "NetSentinel test notification",
-                    "description": "If you see this, Discord notifications are working.",
-                    "color": 0x3498DB,
-                }
-            ]
-            ok = send_discord_message(config.discord_webhook_url, content, embeds=embeds)
-            response["discord_ok"] = ok
-            if not ok:
-                response["discord_error"] = "webhook_failed"
-    elif channel == "email":
-        if not config.email_enabled:
-            response["email_error"] = "email_disabled"
-        elif not config.email_recipient:
-            response["email_error"] = "no_recipient"
-        else:
-            subject = "NetSentinel test notification"
-            body = "If you see this, Email notifications are working."
-            try:
-                ok = send_email_message(config, subject, body)
-            except Exception as e:  # pragma: no cover - defensive logging
-                logger.error("Email test failed: %s", e)
-                ok = False
-            response["email_ok"] = ok
-            if not ok:
-                response["email_error"] = "smtp_failed"
-    elif channel == "sms":
-        if not getattr(config, "sms_enabled", False):
-            response["sms_error"] = "sms_disabled"
-        elif not getattr(config, "sms_recipient", ""):
-            response["sms_error"] = "no_recipient"
-        else:
-            body = "If you see this, SMS notifications are working."
-            ok = send_sms_message(config.sms_recipient, body)
-            response["sms_ok"] = bool(ok)
-            if not response["sms_ok"]:
-                response["sms_error"] = "twilio_failed"
+    handler = _CHANNEL_HANDLERS.get(channel)
+    if handler:
+        handler(config, response)
 
     return response

@@ -2,7 +2,6 @@ import logging
 from typing import Dict
 
 from django.db.models import Exists, OuterRef, QuerySet
-
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -84,7 +83,9 @@ class NotificationConfigTestView(APIView):
         return Response(response)
 
 
-def _in_app_queryset(request, *, unread_only: bool = False, limit: int = 20) -> QuerySet[InAppNotification]:
+def _in_app_queryset(
+    request, *, unread_only: bool = False, limit: int = 20
+) -> QuerySet[InAppNotification]:
     """Base queryset for in-app notifications with read annotated for current user."""
     read_receipts = NotificationReadReceipt.objects.filter(
         user=request.user,
@@ -104,7 +105,8 @@ class InAppNotificationListView(APIView):
 
     Query params:
     - unread_only: if "true", only return notifications the user has not read.
-    - limit: max number to return (1-100). Default 20. Bell uses 5, view-all unread uses 50, history uses 50.
+    - limit: max number to return (1-100). Default 20. Bell uses 5, view-all unread uses 50,
+      history uses 50.
     """
 
     permission_classes = [IsAuthenticated]
@@ -142,7 +144,8 @@ class InAppNotificationMarkReadView(APIView):
 
 
 class InAppNotificationMarkUnreadView(APIView):
-    """POST: mark a single in-app notification as unread for the current user (removes read receipt)."""
+    """POST: mark a single in-app notification as unread for the current user
+    (removes read receipt)."""
 
     permission_classes = [IsAuthenticated]
 
@@ -187,7 +190,8 @@ class InAppNotificationMarkAllReadView(APIView):
 class InAppNotificationCreateTestView(APIView):
     """
     POST: create a single in-app notification for testing (desktop notifications, DND, etc.).
-    Body (optional): title, message, type (info|warning|error|success). Defaults: test title/message.
+    Body (optional): title, message, type (info|warning|error|success).
+    Defaults: test title/message.
     """
 
     permission_classes = [IsAuthenticated]

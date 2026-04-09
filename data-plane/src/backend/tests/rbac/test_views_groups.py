@@ -11,8 +11,7 @@ Key rules under test:
 """
 
 import pytest
-from django.contrib.auth.models import Group, Permission
-from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import Group
 
 from users.models import ExtendedGroup, PermissionBundle
 
@@ -72,9 +71,7 @@ class TestGroupViewSetNonSuperuser:
 
     def test_update_returns_403(self, no_perm_client, db):
         group = Group.objects.create(name="PatchTarget")
-        resp = no_perm_client.patch(
-            group_detail_url(group.pk), {"name": "Modified"}, format="json"
-        )
+        resp = no_perm_client.patch(group_detail_url(group.pk), {"name": "Modified"}, format="json")
         assert resp.status_code in (403, 404)
 
     def test_delete_returns_403(self, no_perm_client, db):

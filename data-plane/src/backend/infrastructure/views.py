@@ -4,10 +4,10 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from .models import (
-    CompanyProfile,
     CarrierContact,
     Category,
     Circuit,
+    CompanyProfile,
     Contact,
     Department,
     Location,
@@ -15,10 +15,10 @@ from .models import (
     UtilityContact,
 )
 from .serializers import (
-    CompanyProfileSerializer,
     CarrierContactSerializer,
     CategorySerializer,
     CircuitSerializer,
+    CompanyProfileSerializer,
     ContactSerializer,
     DepartmentSerializer,
     LocationSerializer,

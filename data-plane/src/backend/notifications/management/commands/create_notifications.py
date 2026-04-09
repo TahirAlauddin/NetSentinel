@@ -12,14 +12,42 @@ from django.core.management.base import BaseCommand
 from notifications.models import InAppNotification
 
 SAMPLE_NOTIFICATIONS = [
-    {"type": "info", "title": "System update", "message": "NetSentinel has been updated to the latest version."},
-    {"type": "warning", "title": "Subnet threshold", "message": "Subnet 10.0.1.0/24 is at 85% utilization."},
-    {"type": "error", "title": "Device offline", "message": "Router core-01 has been unreachable for 2 minutes."},
-    {"type": "success", "title": "Backup completed", "message": "Nightly config backup finished successfully."},
+    {
+        "type": "info",
+        "title": "System update",
+        "message": "NetSentinel has been updated to the latest version.",
+    },
+    {
+        "type": "warning",
+        "title": "Subnet threshold",
+        "message": "Subnet 10.0.1.0/24 is at 85% utilization.",
+    },
+    {
+        "type": "error",
+        "title": "Device offline",
+        "message": "Router core-01 has been unreachable for 2 minutes.",
+    },
+    {
+        "type": "success",
+        "title": "Backup completed",
+        "message": "Nightly config backup finished successfully.",
+    },
     {"type": "info", "title": "New IP request", "message": "IP request #42 is pending approval."},
-    {"type": "warning", "title": "Certificate expiring", "message": "SSL certificate for api.example.com expires in 14 days."},
-    {"type": "error", "title": "High CPU", "message": "Backend server cpu-01 is above 95% for 5 minutes."},
-    {"type": "success", "title": "Deployment done", "message": "Release v2.1.0 deployed to production."},
+    {
+        "type": "warning",
+        "title": "Certificate expiring",
+        "message": "SSL certificate for api.example.com expires in 14 days.",
+    },
+    {
+        "type": "error",
+        "title": "High CPU",
+        "message": "Backend server cpu-01 is above 95% for 5 minutes.",
+    },
+    {
+        "type": "success",
+        "title": "Deployment done",
+        "message": "Release v2.1.0 deployed to production.",
+    },
 ]
 
 

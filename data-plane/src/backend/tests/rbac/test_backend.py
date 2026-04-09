@@ -254,7 +254,9 @@ class TestBundlePermissionBackend:
             content_type=ct,
             defaults={"name": "Can view subnet test"},
         )
-        bundle = PermissionBundle.objects.create(code="ipam_view_test", name="IPAM View Test", app="ipam")
+        bundle = PermissionBundle.objects.create(
+            code="ipam_view_test", name="IPAM View Test", app="ipam"
+        )
         bundle.permissions.add(perm)
         group = _make_group_with_bundle("ipam_test_group", bundle)
         user = User.objects.create_user(username="ipam_only", email="io@x.com", password="p")

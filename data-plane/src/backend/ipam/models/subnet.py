@@ -117,7 +117,8 @@ class Subnet(models.Model):
         unique_together = [["network", "location"]]
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-        """Override save to automatically set is_ipv6 based on network, then delegate to base save()."""
+        """Override save to automatically set is_ipv6 based on network, then delegate to
+        base save()."""
         if self.network:
             try:
                 net = ipaddress.ip_network(self.network, strict=False)

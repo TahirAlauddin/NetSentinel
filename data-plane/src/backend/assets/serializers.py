@@ -546,7 +546,9 @@ class AssetLocationUsageSerializer(serializers.ModelSerializer):
             AssetLocationSerializer(instance.location).data if instance.location else None
         )
         data["departments"] = DepartmentSerializer(instance.departments.all(), many=True).data
-        data["managed_by"] = UserSerializer(instance.managed_by).data if instance.managed_by else None
+        data["managed_by"] = (
+            UserSerializer(instance.managed_by).data if instance.managed_by else None
+        )
         data["used_by"] = UserSerializer(instance.used_by).data if instance.used_by else None
         data["custom_lifecycle"] = (
             CustomLifecycleSerializer(instance.custom_lifecycle).data

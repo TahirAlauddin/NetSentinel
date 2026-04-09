@@ -35,14 +35,18 @@ class NotificationConfig(models.Model):
 
     # Email Configuration
     email_enabled = models.BooleanField(default=False)
-    email_recipient = models.CharField(max_length=255, blank=True, help_text="Default recipient email for tests and system alerts")
+    email_recipient = models.CharField(
+        max_length=255, blank=True, help_text="Default recipient email for tests and system alerts"
+    )
 
     # SMS Configuration
     sms_enabled = models.BooleanField(default=False)
     sms_recipient = models.CharField(
         max_length=64,
         blank=True,
-        help_text="Default recipient phone number (E.164, e.g. +15551234567) for SMS tests and alerts",
+        help_text=(
+            "Default recipient phone number (E.164, e.g. +15551234567) for SMS tests and alerts"
+        ),
     )
 
     updated_at = models.DateTimeField(auto_now=True)

@@ -12,7 +12,7 @@ This acts as a contract test ensuring URL structure is not accidentally broken.
 
 import pytest
 from django.contrib.auth.models import Group
-from django.urls import reverse, resolve
+from django.urls import resolve
 
 from users.views import (
     GroupViewSet,
@@ -24,7 +24,6 @@ from users.views import (
     user_assignments_view,
     user_stats_view,
 )
-
 
 # ---------------------------------------------------------------------------
 # URL Resolution (Django URL → view mapping)
@@ -166,9 +165,7 @@ class TestHTTPMethodEnforcement:
 
     # Permissions — read only
     def test_permissions_post_not_allowed(self, superuser_client):
-        resp = superuser_client.post(
-            "/api/v1/users/permissions/", {"name": "x"}, format="json"
-        )
+        resp = superuser_client.post("/api/v1/users/permissions/", {"name": "x"}, format="json")
         assert resp.status_code == 405
 
     def test_permissions_delete_not_allowed(self, superuser_client):
@@ -203,6 +200,7 @@ class TestHTTPMethodEnforcement:
     # assignments — GET + PUT
     def test_assignments_post_not_allowed(self, superuser_client, db):
         from django.contrib.auth import get_user_model
+
         User = get_user_model()
         u = User.objects.create_user(username="asgn_meth_u", email="am@x.com", password="p")
         resp = superuser_client.post(f"/api/v1/users/{u.pk}/assignments/")
@@ -210,6 +208,7 @@ class TestHTTPMethodEnforcement:
 
     def test_assignments_delete_not_allowed(self, superuser_client, db):
         from django.contrib.auth import get_user_model
+
         User = get_user_model()
         u = User.objects.create_user(username="asgn_del_u", email="ad@x.com", password="p")
         resp = superuser_client.delete(f"/api/v1/users/{u.pk}/assignments/")

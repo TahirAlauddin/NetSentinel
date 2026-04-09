@@ -32,9 +32,7 @@ def _perm(codename, app_label="users", model="user"):
 
 
 def _make_target_user(username="target_user"):
-    return User.objects.create_user(
-        username=username, email=f"{username}@x.com", password="pass"
-    )
+    return User.objects.create_user(username=username, email=f"{username}@x.com", password="pass")
 
 
 # ---------------------------------------------------------------------------
@@ -207,9 +205,7 @@ class TestAssignmentsViewPut:
 
     def test_put_missing_permission_ids_returns_400(self, superuser_client, db):
         target = _make_target_user("bad_perm_payload")
-        resp = superuser_client.put(
-            assignments_url(target.pk), {"group_ids": []}, format="json"
-        )
+        resp = superuser_client.put(assignments_url(target.pk), {"group_ids": []}, format="json")
         assert resp.status_code == 400
 
     def test_put_nonexistent_group_id_silently_ignored(self, superuser_client, db):

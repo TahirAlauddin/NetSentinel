@@ -16,7 +16,6 @@ Tests are grouped by the "attacker" app (the user) and the "target" app.
 import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
-from django.contrib.contenttypes.models import ContentType
 
 from users.models import ExtendedGroup, PermissionBundle
 
@@ -37,9 +36,7 @@ CURRENT_PERMS_URL = "/api/v1/users/current-permissions/"
 
 def _perms_for_app(app_label, prefix="view_"):
     return list(
-        Permission.objects.filter(
-            content_type__app_label=app_label, codename__startswith=prefix
-        )
+        Permission.objects.filter(content_type__app_label=app_label, codename__startswith=prefix)
     )
 
 
@@ -228,25 +225,25 @@ class TestCurrentPermissionsIsolation:
         resp = ipam_read_client.get(CURRENT_PERMS_URL)
         assert resp.status_code == 200
         perms = resp.data["permissions"]
-        assert all(p.startswith("ipam.") for p in perms), (
-            f"Non-ipam perms found: {[p for p in perms if not p.startswith('ipam.')]}"
-        )
+        assert all(
+            p.startswith("ipam.") for p in perms
+        ), f"Non-ipam perms found: {[p for p in perms if not p.startswith('ipam.')]}"
 
     def test_assets_read_user_perms_are_only_assets(self, assets_read_client):
         resp = assets_read_client.get(CURRENT_PERMS_URL)
         assert resp.status_code == 200
         perms = resp.data["permissions"]
-        assert all(p.startswith("assets.") for p in perms), (
-            f"Non-assets perms found: {[p for p in perms if not p.startswith('assets.')]}"
-        )
+        assert all(
+            p.startswith("assets.") for p in perms
+        ), f"Non-assets perms found: {[p for p in perms if not p.startswith('assets.')]}"
 
     def test_contracts_read_user_perms_are_only_contracts(self, contracts_read_client):
         resp = contracts_read_client.get(CURRENT_PERMS_URL)
         assert resp.status_code == 200
         perms = resp.data["permissions"]
-        assert all(p.startswith("contracts.") for p in perms), (
-            f"Non-contracts perms found: {[p for p in perms if not p.startswith('contracts.')]}"
-        )
+        assert all(
+            p.startswith("contracts.") for p in perms
+        ), f"Non-contracts perms found: {[p for p in perms if not p.startswith('contracts.')]}"
 
     def test_no_perm_user_has_empty_permissions(self, no_perm_client):
         resp = no_perm_client.get(CURRENT_PERMS_URL)
@@ -267,9 +264,9 @@ class TestCurrentPermissionsIsolation:
         assert resp.status_code == 200
         perms = resp.data["permissions"]
         codenames = [p.split(".", 1)[1] for p in perms if p.startswith("assets.")]
-        assert all(c.startswith("view_") for c in codenames), (
-            f"Non-view_ assets codenames: {[c for c in codenames if not c.startswith('view_')]}"
-        )
+        assert all(
+            c.startswith("view_") for c in codenames
+        ), f"Non-view_ assets codenames: {[c for c in codenames if not c.startswith('view_')]}"
 
 
 # ---------------------------------------------------------------------------
@@ -281,9 +278,7 @@ class TestCurrentPermissionsIsolation:
 class TestCrossUserPermissionBleed:
     """Ensure one user's bundle assignment never leaks into another user's perm set."""
 
-    def test_ipam_user_and_assets_user_have_disjoint_perms(
-        self, ipam_read_user, assets_read_user
-    ):
+    def test_ipam_user_and_assets_user_have_disjoint_perms(self, ipam_read_user, assets_read_user):
         ipam_perms = ipam_read_user.get_all_permissions()
         assets_perms = assets_read_user.get_all_permissions()
         overlap = ipam_perms & assets_perms
