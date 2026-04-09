@@ -2,9 +2,10 @@ from django.db import IntegrityError
 from django.db.models import Q
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.permissions import DjangoModelPermissions
 from rest_framework.request import Request
 from rest_framework.response import Response
+
+from .permissions import StrictDjangoModelPermissions
 
 from .models import (
     Asset,
@@ -83,7 +84,7 @@ class AssetTagViewSet(viewsets.ModelViewSet):
 
     queryset = AssetTag.objects.all()
     serializer_class = AssetTagSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
 
 class CustomLifecycleViewSet(viewsets.ModelViewSet):
@@ -94,7 +95,7 @@ class CustomLifecycleViewSet(viewsets.ModelViewSet):
 
     queryset = CustomLifecycle.objects.all()
     serializer_class = CustomLifecycleSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
 
 class VendorViewSet(viewsets.ModelViewSet):
@@ -105,7 +106,7 @@ class VendorViewSet(viewsets.ModelViewSet):
 
     queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
 
 class TechSpecsViewSet(viewsets.ModelViewSet):
@@ -116,7 +117,7 @@ class TechSpecsViewSet(viewsets.ModelViewSet):
 
     queryset = TechSpecs.objects.all()
     serializer_class = TechSpecsSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
 
 class AssetCategoryViewSet(viewsets.ModelViewSet):
@@ -127,7 +128,7 @@ class AssetCategoryViewSet(viewsets.ModelViewSet):
 
     queryset = AssetCategory.objects.select_related("tech_specs").all()
     serializer_class = AssetCategorySerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
     @action(detail=True, methods=["get"])
     def assets(self, request, pk=None):
@@ -165,7 +166,7 @@ class AssetViewSet(viewsets.ModelViewSet):
         )
         .all()
     )
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
     def get_serializer_class(self):
         """Use different serializers for read vs write operations."""
@@ -325,7 +326,7 @@ class AssetAttachmentViewSet(viewsets.ModelViewSet):
 
     queryset = AssetAttachment.objects.select_related("uploaded_by").all()
     serializer_class = AssetAttachmentSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
     def perform_create(self, serializer):
         """Set the uploaded_by field to the current user."""
@@ -341,7 +342,7 @@ class AssetRelationViewSet(viewsets.ModelViewSet):
 
     queryset = AssetRelation.objects.select_related("asset", "related_asset").all()
     serializer_class = AssetRelationSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
     def get_queryset(self):
         """Filter relations by the asset ID from the nested route if present."""
@@ -384,7 +385,7 @@ class ComputerDetailsViewSet(viewsets.ReadOnlyModelViewSet):
     # Ensure deterministic ordering for pagination to avoid UnorderedObjectListWarning
     queryset = ComputerDetails.objects.select_related("asset").order_by("asset_id")
     serializer_class = ComputerDetailsSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
 
 class NetworkDetailsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -395,7 +396,7 @@ class NetworkDetailsViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = NetworkDetails.objects.select_related("asset").all()
     serializer_class = NetworkDetailsSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
 
 class DisplayDetailsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -406,7 +407,7 @@ class DisplayDetailsViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = DisplayDetails.objects.select_related("asset").all()
     serializer_class = DisplayDetailsSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
 
 class PhoneDetailsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -417,7 +418,7 @@ class PhoneDetailsViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = PhoneDetails.objects.select_related("asset").all()
     serializer_class = PhoneDetailsSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
 
 class PeripheralDetailsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -428,7 +429,7 @@ class PeripheralDetailsViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = PeripheralDetails.objects.select_related("asset").all()
     serializer_class = PeripheralDetailsSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
 
 # ---------------------
@@ -444,7 +445,7 @@ class AssetBasicDetailsViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Asset.objects.select_related("category", "vendor").prefetch_related("tags").all()
     serializer_class = AssetBasicDetailsSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
 
 class AssetTechSpecsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -459,7 +460,7 @@ class AssetTechSpecsViewSet(viewsets.ReadOnlyModelViewSet):
         .all()
     )
     serializer_class = AssetTechSpecsSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
 
 class AssetImageViewSet(viewsets.ModelViewSet):
@@ -470,7 +471,7 @@ class AssetImageViewSet(viewsets.ModelViewSet):
 
     queryset = AssetImage.objects.select_related("asset").all()
     serializer_class = AssetImageSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
     def get_queryset(self):
         """
@@ -496,7 +497,7 @@ class CalendarAlertViewSet(viewsets.ModelViewSet):
 
     queryset = CalendarAlert.objects.select_related("asset", "assigned_to").all()
     serializer_class = CalendarAlertSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [StrictDjangoModelPermissions]
 
     def get_serializer_class(self):
         """
