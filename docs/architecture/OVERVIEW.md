@@ -4,7 +4,7 @@
 
 ## Executive summary
 
-You want a SaaS ITSM where companies (tenants) sign up centrally, then each tenant is assigned a subdomain and a **dedicated runtime (docker session)** and **dedicated database** to ensure isolation and scalability. The shared system handles onboarding, billing, and global features. After signup we provision a tenant-specific container(s) and DB, wire subdomain DNS and TLS, and redirect the tenant admin to their subdomain to log in and invite users.
+NetSentinel is a SaaS ITSM where companies (tenants) sign up centrally, then each tenant is assigned a subdomain and a **dedicated runtime (docker session)** and **dedicated database** to ensure isolation and scalability. The shared system handles onboarding, billing, and global features. After signup we provision a tenant-specific container(s) and DB, wire subdomain DNS and TLS, and redirect the tenant admin to their subdomain to log in and invite users.
 
 Key goals: **tenant isolation**, **scalability**, **operational automation**, **cost effectiveness**, **manageability**.
 
@@ -29,11 +29,11 @@ Core components:
    * Creates tenant DB (logical database or new instance).
    * Creates per-tenant secrets (DB credentials) in Secrets Manager/Kubernetes secret.
    * Deploys tenant container(s) (Django API + Next.js frontend) in an isolated namespace (K8s) or separate ECS service/task.
-   * Configures ingress route `techhoseki.netsentinel.com` and requests TLS certificate (cert-manager/Let's Encrypt).
+   * Configures ingress route `{tenant-slug}.netsentinel.com` and requests TLS certificate (cert-manager/Let's Encrypt).
    * Configures DNS via ExternalDNS/Cloud DNS APIs.
    * Runs initial DB migrations and seed admin user.
 5. Provisioner returns success; redirect admin to the tenant subdomain for login.
-6. Tenant users sign in at `techhoseki.netsentinel.com` — the tenant container handles auth locally against that tenant DB (or a shared auth service if you prefer SSO across tenants).
+6. Tenant users sign in at `{tenant-slug}.netsentinel.com` — the tenant container handles auth locally against that tenant DB (or a shared auth service if preferred SSO across tenants).
 
 ---
 
