@@ -165,3 +165,59 @@ When a production Compose file and environment exist:
 ---
 
 ## Troubleshooting
+
+### Useful commands
+
+Run these from `data-plane/` unless noted otherwise.
+
+| Goal | Command |
+|------|---------|
+| Service state and exit codes | `docker compose -f docker-compose.stag.yml ps -a` |
+| Follow logs (all services) | `docker compose -f docker-compose.stag.yml logs -f --tail=200` |
+| Follow logs (one service) | `docker compose -f docker-compose.stag.yml logs -f backend` (swap `backend` for `frontend`, `nginx`, `postgres`, `certbot`) |
+| Validate nginx config inside the container | `docker compose -f docker-compose.stag.yml exec nginx nginx -t` |
+| To get inside a container | `docker compose -f docker-compose.stag.yml exec backend sh` |
+| Inspect env and mounts | `docker compose -f docker-compose.stag.yml config` and `docker inspect netsentinel-backend` |
+| Recreate one service after `.env` changes | `docker compose -f docker-compose.stag.yml up -d --no-deps --force-recreate backend` (swap service name as needed) |
+
+After editing nginx files on the host, reload only if `nginx -t` succeeds:
+
+```bash
+docker compose -f docker-compose.stag.yml exec nginx nginx -t && \
+  docker compose -f docker-compose.stag.yml exec nginx nginx -s reload
+```
+
+### Common issues
+
+**`docker compose` fails with “port is already allocated” (80 or 443)**  
+Another process or stack is bound to that port. On Linux, `sudo ss -tlnp | grep -E ':80|:443'` shows the listener. Stop the conflicting service.
+
+**Containers show `unhealthy` or keep restarting**  
+Inspect logs for the failing service.
+
+- **Backend** (common): `FATAL: password authentication failed` or similar when `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` in `.env` no longer match the cluster inside the persistent `postgres_data` volume. Compose only applies those variables on **first** database init; afterward the volume keeps the old roles and passwords. The **Postgres** service often still reports **healthy** because its healthcheck uses `pg_isready` (no app password check), while the backend keeps failing and may be marked unhealthy. Fix: put the Postgres-related vars back to what was used at first boot, or remove the volume and re-create the stack (**data loss** on that host). Also check migrations, missing Django env vars, and tracebacks near the top of backend logs.
+
+- **Frontend**: build failures, missing env at build/runtime, or startup errors in the first log lines.
+
+**Browser or TLS works, but nothing from the public internet (or Let’s Encrypt fails)**  
+Host or cloud **firewall / security group** must allow inbound **TCP 80** and **TCP 443** to this machine. On Ubuntu, `sudo ufw status` shows whether `80/tcp` and `443/tcp` are allowed.
+
+**Site loads but API calls fail, or browser shows CORS / CSRF errors**  
+Confirm `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, and `CSRF_TRUSTED_ORIGINS` include the **public** hostname and scheme (e.g. `https://staging.example.com`) as the browser uses them. `NEXT_PUBLIC_API_URL` must match how nginx exposes the API (path and origin).
+
+**502 / 504 from nginx**  
+Usually means nginx cannot reach `backend` or `frontend`. Check both are running: `docker compose -f docker-compose.stag.yml ps`. Check upstream errors: `docker compose -f docker-compose.stag.yml logs nginx backend frontend`.
+
+**Let’s Encrypt / `obtain-ssl-cert.sh` fails**  
+DNS for the domain must resolve to this host before ACME runs. Port **80** must reach this machine (no CDN or proxy blocking the HTTP-01 challenge unless you use DNS validation instead). Firewalls and security groups must allow inbound HTTP from the internet for issuance.
+
+**`nginx -t` fails after enabling HTTPS**  
+Typo in `server_name`, wrong certificate paths, or leftover `YOUR_DOMAIN` placeholders in `nginx/conf.d.stag/includes/netsentinel-ssl.conf`. Fix the files on the host, then run `nginx -t` again before reload.
+
+**“Wrong directory” or Compose cannot find `.env`**  
+Commands must be run from the directory that contains `docker-compose.stag.yml` and `.env` (the `data-plane` root). `env_file: .env` is relative to that compose file.
+
+**Build step is slow or fails during `up --build`**  
+First builds download base images and dependencies. Retry after a clean network. If a step fails, scroll the build output for the first error (often Python or Node in the Dockerfile layer). Ensure enough disk space on the host for image layers.
+
+For image build and registry problems, see [DOCKER_HUB_DEPLOYMENT.md](DOCKER_HUB_DEPLOYMENT.md) troubleshooting there.
