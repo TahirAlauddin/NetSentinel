@@ -39,6 +39,12 @@ This document describes **staging** deployment on a server using **Docker Compos
    cd NetSentinel/data-plane
    ```
 
+   Note: Cloning the repository requires SSH access to the repository. If deploying on a fresh VM, that doesn't already have cloning permissions. Use the following steps to generate an SSH key and add it to your GitHub repository:
+   1. Generate an SSH key on the VM: `ssh-keygen -t ed25519 -C "your_email@example.com"`
+   2. Copy the public key: `cat ~/.ssh/id_ed25519.pub`
+   3. Add the public key to the repository: Goto the repository settings, go to the "Deploy Keys" section, and click "Add Deploy Key". Paste the public key into the "Key" field and click "Add Key". 
+
+
 2. Create `.env` at the **data-plane root** from the example (Compose `env_file: .env`):
 
    ```bash
