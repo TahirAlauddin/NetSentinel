@@ -139,53 +139,6 @@ To update your images on Docker Hub:
 
 This will build new images with version `1.1.0` and update the `latest` tag.
 
-## SSL certificate (Let's Encrypt)
-
-On a fresh VM (or after certificate expiry), use HTTP first, then obtain the cert and switch to HTTPS.
-
-### 1. Use HTTP-only config (staging only)
-
-When using `docker-compose.stag.yml`, ensure `nginx/conf.d.stag/site.conf` includes the HTTP config (default):
-
-```nginx
-include /etc/nginx/conf.d/includes/netsentinel-http.conf;
-```
-
-### 2. Start the stack and obtain the certificate
-
-From the `data-plane` directory (Linux/WSL):
-
-```bash
-cd data-plane
-chmod +x scripts/obtain-ssl-cert.sh
-./scripts/obtain-ssl-cert.sh YOUR_EMAIL YOUR_DOMAIN
-```
-
-Example:
-
-```bash
-./scripts/obtain-ssl-cert.sh admin@example.com staging.netsentinel.io
-```
-
-Prerequisites: your domain must point to this server (A record), and ports 80 (and 443 if already using HTTPS) must be open.
-
-### 3. Switch nginx to HTTPS
-
-- Edit `nginx/conf.d.stag/site.conf` and set:
-  ```nginx
-  include /etc/nginx/conf.d/includes/netsentinel-ssl.conf;
-  ```
-- Edit `nginx/conf.d.stag/includes/netsentinel-ssl.conf` and replace every `YOUR_DOMAIN` with your actual domain (e.g. `staging.netsentinel.io`).
-
-### 4. Reload nginx
-
-```bash
-docker compose -f docker-compose.stag.yml exec nginx nginx -t
-docker compose -f docker-compose.stag.yml exec nginx nginx -s reload
-```
-
-To switch back to HTTP-only (e.g. no cert), set `nginx/conf.d.stag/site.conf` back to `netsentinel-http.conf` and reload nginx.
-
 ## Troubleshooting
 
 ### Build Fails

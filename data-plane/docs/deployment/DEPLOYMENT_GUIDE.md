@@ -55,7 +55,56 @@ This document describes **staging** deployment on a server using **Docker Compos
 
    Compose injects **`SERVER_API_URL`** into the frontend image build (default `http://backend:8000/api/v1` for server-side requests). Override in `.env` only when the deployment layout differs.
 
-4. **TLS:** Let’s Encrypt and nginx are integrated in `docker-compose.stag.yml`. Initial issuance, HTTP-only bootstrap, and cutover to HTTPS are documented under **SSL certificate** in [DOCKER_HUB_DEPLOYMENT.md](DOCKER_HUB_DEPLOYMENT.md); the same `docker-compose.stag.yml` command patterns apply.
+4. **TLS:** Let’s Encrypt and nginx are integrated in `docker-compose.stag.yml`. For initial issuance, HTTP-only bootstrap, and cutover to HTTPS, see **SSL certificate (Let's Encrypt)** below.
+
+---
+
+## SSL certificate (Let's Encrypt)
+
+On a fresh VM (or after certificate expiry), use HTTP first, then obtain the cert and switch to HTTPS.
+
+### 1. Use HTTP-only config (staging only)
+
+When using `docker-compose.stag.yml`, ensure `nginx/conf.d.stag/site.conf` includes the HTTP config (default):
+
+```nginx
+include /etc/nginx/conf.d/includes/netsentinel-http.conf;
+```
+
+### 2. Start the stack and obtain the certificate
+
+From the `data-plane` directory (Linux/WSL):
+
+```bash
+cd data-plane
+chmod +x scripts/obtain-ssl-cert.sh
+./scripts/obtain-ssl-cert.sh YOUR_EMAIL YOUR_DOMAIN
+```
+
+Example:
+
+```bash
+./scripts/obtain-ssl-cert.sh admin@example.com staging.netsentinel.io
+```
+
+Prerequisites: your domain must point to this server (A record), and ports 80 (and 443 because you're gonna switch to HTTPS later) must be open.
+
+### 3. Switch nginx to HTTPS
+
+- Edit `nginx/conf.d.stag/site.conf` and set:
+  ```nginx
+  include /etc/nginx/conf.d/includes/netsentinel-ssl.conf;
+  ```
+- Edit `nginx/conf.d.stag/includes/netsentinel-ssl.conf` and replace every `YOUR_DOMAIN` with your actual domain (e.g. `staging.netsentinel.io`).
+
+### 4. Reload nginx
+
+```bash
+docker compose -f docker-compose.stag.yml exec nginx nginx -t
+docker compose -f docker-compose.stag.yml exec nginx nginx -s reload
+```
+
+To switch back to HTTP-only (e.g. no cert), set `nginx/conf.d.stag/site.conf` back to `netsentinel-http.conf` and reload nginx.
 
 ---
 
@@ -72,7 +121,7 @@ docker compose -f docker-compose.stag.yml up -d --build
 
 ### Migrations and static assets
 
-Manual `migrate` / `collectstatic` steps are unnecessary for routine deployments. The backend entrypoint (`docker-entrypoint.sh`) waits for PostgreSQL, applies migrations, runs configured seed commands, runs `collectstatic`, then starts Gunicorn.
+The backend entrypoint (`docker-entrypoint.sh`) waits for PostgreSQL, applies migrations, runs configured seed commands, runs `collectstatic`, then starts Gunicorn.
 
 ---
 
@@ -111,3 +160,8 @@ When a production Compose file and environment exist:
 - Isolate secrets and DNS names from staging.
 - Maintain `DEBUG=False`; scope `ALLOWED_HOSTS`, CORS, and CSRF to production domains; align TLS with organizational policy.
 - Record the compose filename (e.g. `docker-compose.prod.yml`) and any behavioral differences from staging in this section.
+
+
+---
+
+## Troubleshooting
