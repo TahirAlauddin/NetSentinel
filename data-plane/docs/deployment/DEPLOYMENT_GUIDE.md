@@ -112,6 +112,27 @@ docker compose -f docker-compose.stag.yml exec nginx nginx -s reload
 
 To switch back to HTTP-only (e.g. no cert), set `nginx/conf.d.stag/site.conf` back to `netsentinel-http.conf` and reload nginx.
 
+### 5. Renewing the certificate
+
+The **certbot** service renews automatically every 12 hours while the stack is up. Keep DNS pointed at this host and port **80** open for the HTTP-01 challenge (`netsentinel-ssl.conf` already serves `/.well-known/acme-challenge/`).
+
+Reload nginx after renewal so it picks up the new cert:
+
+```bash
+docker compose -f docker-compose.stag.yml exec nginx nginx -s reload
+```
+
+Check expiry, test, or renew manually:
+
+```bash
+docker compose -f docker-compose.stag.yml exec certbot certbot certificates
+docker compose -f docker-compose.stag.yml exec certbot certbot renew --dry-run
+docker compose -f docker-compose.stag.yml exec certbot certbot renew
+docker compose -f docker-compose.stag.yml exec nginx nginx -s reload
+```
+
+If the cert has already expired, re-run `./scripts/obtain-ssl-cert.sh` (steps 2–4 above).
+
 ---
 
 ## Deploy and update staging
