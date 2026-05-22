@@ -68,8 +68,8 @@ class ProblemAPI:
         selectSuppressionData : list[str] | "extend"
             Include suppression details.
         limit : int
-        sortfield : str | list[str]
-            Supported: ``"eventid"``, ``"severity"``, ``"clock"``.
+        sortfield : str
+            Sort field.  In Zabbix 8+ only ``"eventid"`` is supported.
         sortorder : "ASC" | "DESC"
 
         Returns

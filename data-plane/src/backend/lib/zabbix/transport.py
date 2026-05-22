@@ -143,6 +143,11 @@ class ZabbixTransport:
             "id": self._next_id(),
         }
 
+        # apiinfo.version and user.login reject requests that carry Authorization.
+        saved_auth: Optional[str] = None
+        if not require_auth:
+            saved_auth = self._session.headers.pop("Authorization", None)
+
         try:
             response = self._session.post(
                 self._endpoint,
@@ -167,6 +172,9 @@ class ZabbixTransport:
             raise ZabbixConnectionError(
                 f"Unexpected request error for '{method}': {exc}"
             ) from exc
+        finally:
+            if not require_auth and saved_auth is not None:
+                self._session.headers["Authorization"] = saved_auth
 
         try:
             body = response.json()
