@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "contracts",  # Contract management (carrier contracts, NRC/MRC, dates)
     "phone_management",  # Phone management app (individual numbers and blocks)
     "notifications",  # Notification channels (Slack, Discord, etc.)
+    "monitoring",  # Monitoring app (hosts, items, triggers, problems, etc.)
 ]
 
 MIDDLEWARE = [
@@ -336,6 +337,11 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "False").lower() == "true"
 EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False").lower() == "true"
+
+# Zabbix (monitoring data source — no local DB for hosts/items/problems)
+ZABBIX_URL = os.environ.get("ZABBIX_URL", "")
+ZABBIX_TOKEN = os.environ.get("ZABBIX_TOKEN", "")
+ZABBIX_SSL_VERIFY = os.environ.get("ZABBIX_SSL_VERIFY", "True").lower() == "true"
 
 # Company profile shown in frontend Settings -> Overview
 COMPANY_PROFILE = {
