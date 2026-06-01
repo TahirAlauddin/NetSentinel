@@ -9,9 +9,17 @@ interface SubmenuProps {
   onClose: () => void
   onMouseEnter?: () => void
   top?: number
+  sidebarWidth?: number
 }
 
-export function Submenu({ columns, isVisible, onClose, onMouseEnter, top = 0 }: SubmenuProps) {
+export function Submenu({
+  columns,
+  isVisible,
+  onClose,
+  onMouseEnter,
+  top = 0,
+  sidebarWidth = 256,
+}: SubmenuProps) {
   if (!isVisible) return null
 
   // If there's only one category, spread items horizontally
@@ -33,8 +41,9 @@ export function Submenu({ columns, isVisible, onClose, onMouseEnter, top = 0 }: 
         
         // relatedTarget can be Window, HTMLElement, or null
         if (relatedTarget instanceof HTMLElement) {
-          const isMovingToSidebar = relatedTarget.closest('nav') !== null || 
-                                   relatedTarget.closest('.top-0.h-screen') !== null
+          const isMovingToSidebar =
+            relatedTarget.closest('nav') !== null ||
+            relatedTarget.closest('[data-sidebar]') !== null
           
           // Close if not moving to sidebar
           if (!isMovingToSidebar) {
@@ -46,7 +55,8 @@ export function Submenu({ columns, isVisible, onClose, onMouseEnter, top = 0 }: 
         }
       }}
       style={{
-        left: window.innerWidth >= 1024 ? '256px' : '1rem', // Desktop: sidebar width, Mobile: margin
+        left:
+          window.innerWidth >= 1024 ? `${sidebarWidth}px` : "1rem",
         top: `${top}px`,
       }}
     >
