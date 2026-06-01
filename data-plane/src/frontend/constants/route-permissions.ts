@@ -57,6 +57,19 @@ export const ROUTE_PERMISSIONS: Record<string, string> = {
   "/ipam/search": "ipam.view_subnet",
   "/ipam/documentation": "ipam.view_subnet",
 
+  // Monitoring
+  "/monitoring": "monitoring.view_host",
+  "/monitoring/dashboard": "monitoring.view_host",
+  "/monitoring/dashboard/widgets/add": "monitoring.add_host",
+  "/monitoring/hosts": "monitoring.view_host",
+  "/monitoring/hosts/add": "monitoring.add_host",
+  "/monitoring/host-groups": "monitoring.view_host",
+  "/monitoring/templates": "monitoring.view_host",
+  "/monitoring/triggers": "monitoring.view_host",
+  "/monitoring/problems": "monitoring.view_host",
+  "/monitoring/events": "monitoring.view_host",
+  "/monitoring/actions": "monitoring.view_host",
+
   // Settings
   "/settings": "users.view_user",
   "/settings/locations": "users.view_user",
