@@ -4,10 +4,13 @@ import { NavigationItem } from "../../types/navigation"
 import { brandConfig } from "../../constants/navigation"
 import { Submenu } from "../submenu"
 import { useRef, useEffect, useState } from "react"
+import { cn } from "@/lib/utils"
+import { useSidebarOptional } from "@/contexts/sidebar-context"
 
 interface NavigationItemProps {
   item: NavigationItem
   isExpanded: boolean
+  collapsed?: boolean
   itemRef: (el: HTMLElement | null) => void
   onToggleSubmenu: (itemLabel: string) => void
   onCloseSubmenu: () => void
@@ -19,6 +22,7 @@ interface NavigationItemProps {
 export function NavigationItemComponent({
   item,
   isExpanded,
+  collapsed = false,
   itemRef,
   onToggleSubmenu,
   onCloseSubmenu,
@@ -26,6 +30,7 @@ export function NavigationItemComponent({
   onItemLeave,
   onSubmenuEnter,
 }: NavigationItemProps) {
+  const sidebar = useSidebarOptional()
   const Icon = item.icon
   const hasSubmenu = item.hasSubmenu || false
   const [submenuTop, setSubmenuTop] = useState(0)
@@ -52,7 +57,7 @@ export function NavigationItemComponent({
         }
       }}
       onMouseEnter={() => {
-        if (hasSubmenu && onItemHover) {
+        if (hasSubmenu && onItemHover && (collapsed || window.innerWidth >= 1024)) {
           onItemHover(item.label)
         }
       }}
@@ -65,8 +70,9 @@ export function NavigationItemComponent({
           if (relatedTarget instanceof HTMLElement) {
             // Check if the mouse is moving to a submenu element or staying in sidebar
             const isMovingToSubmenu = relatedTarget.closest('[role="menu"]') !== null
-            const isMovingToSidebar = relatedTarget.closest('nav') !== null || 
-                                     relatedTarget.closest('.top-0.h-screen') !== null
+            const isMovingToSidebar =
+              relatedTarget.closest('nav') !== null ||
+              relatedTarget.closest('[data-sidebar]') !== null
             
             // Only close if not moving to submenu or sidebar
             if (!isMovingToSubmenu && !isMovingToSidebar) {
@@ -82,21 +88,29 @@ export function NavigationItemComponent({
       <div className="flex items-center">
         <Link
           href={item.href}
-          className="relative flex items-center gap-3 px-4 py-3 hover:bg-white/10 focus-visible:bg-white/10 outline-none flex-1"
+          title={collapsed ? item.label : undefined}
+          className={cn(
+            "relative flex items-center hover:bg-white/10 focus-visible:bg-white/10 outline-none flex-1",
+            collapsed
+              ? "justify-center px-2 py-3"
+              : "gap-3 px-4 py-3"
+          )}
         >
-          {/* Active indicator bar */}
           {item.active && (
-            <span 
-              aria-hidden 
-              className={`absolute left-0 top-0 h-full w-1 ${brandConfig.activeBarColor}`} 
+            <span
+              aria-hidden
+              className={cn(
+                "absolute top-0 h-full w-1",
+                brandConfig.activeBarColor,
+                collapsed ? "left-0" : "left-0"
+              )}
             />
           )}
-          <Icon className="w-4 h-4 text-white/90" />
-          <span className="text-sm">{item.label}</span>
+          <Icon className="w-4 h-4 shrink-0 text-white/90" />
+          {!collapsed && <span className="text-sm truncate">{item.label}</span>}
         </Link>
-        
-        {/* Submenu toggle button - only visible on mobile/tablet */}
-        {hasSubmenu && (
+
+        {hasSubmenu && !collapsed && (
           <button
             className="lg:hidden px-2 py-3 hover:bg-white/10 focus-visible:bg-white/10 outline-none"
             aria-label={`Toggle ${item.label} submenu`}
@@ -120,6 +134,7 @@ export function NavigationItemComponent({
           onClose={onCloseSubmenu}
           onMouseEnter={onSubmenuEnter}
           top={submenuTop}
+          sidebarWidth={sidebar?.sidebarWidth}
         />
       )}
     </li>

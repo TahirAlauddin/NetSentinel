@@ -362,7 +362,7 @@ export interface ActionOperation {
   message_subject: string;
   message_body: string;
   media_type: number | null;
-  media_type_detail: MediaType | null;
+  media_type_detail: { id: number; name: string } | null;
   command_type: string;
   command: string;
   execute_on: string;
@@ -388,14 +388,6 @@ export interface Action {
   updated_at: string;
 }
 
-// ─── Media Types ──────────────────────────────────────────────────────────────
-
-export type MediaTypeKind = "email" | "sms" | "script" | "webhook";
-export type MediaTypeStatus = "enabled" | "disabled";
-
-export interface MediaType {
-  id: number;
-}
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 
