@@ -29,9 +29,8 @@ export const CONDITION_TYPES = [
 ] as const;
 
 export const TRIGGER_SOURCES = [
-  { value: "all", label: "All triggers" },
-  { value: "host", label: "Host triggers" },
-  { value: "template", label: "Template triggers" },
+  { value: "host", label: "Host" },
+  { value: "template", label: "Template" },
 ] as const;
 
 export const TRIGGER_VALUE_OPTIONS = [

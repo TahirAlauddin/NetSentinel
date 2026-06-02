@@ -396,14 +396,15 @@ export interface Action {
 }
 
 /** Local form row ids (client-only until saved). */
-export type ActionConditionTriggerSource = "all" | "host" | "template";
+export type ActionConditionTriggerSource = "host" | "template";
 
 export interface ActionFormConditionDraft {
   key: string;
   condition_type: string;
   operator: string;
   trigger_source: ActionConditionTriggerSource;
-  trigger_ids: number[];
+  host_id: number | null;
+  trigger_id: number | null;
   value: string;
   value2: string;
   formula_id: string;

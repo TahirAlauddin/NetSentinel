@@ -26,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { ActionFormConditionDraft, Trigger } from "@/types/monitoring";
+import type { ActionFormConditionDraft, Host, Trigger } from "@/types/monitoring";
 import { MonitoringApiClient } from "@/lib/api-client/monitoring";
 import {
   CONDITION_OPERATORS,
@@ -45,15 +45,28 @@ interface ConditionsTableProps {
 }
 
 export function ConditionsTable({ conditions, evalType, onChange }: ConditionsTableProps) {
-  const [triggers, setTriggers] = useState<Trigger[]>([]);
-  const [loadingTriggers, setLoadingTriggers] = useState(true);
+  const [hosts, setHosts] = useState<Host[]>([]);
+  const [loadingHosts, setLoadingHosts] = useState(true);
+  const [triggersByHost, setTriggersByHost] = useState<Record<number, Trigger[]>>({});
+  const [loadingTriggerHostIds, setLoadingTriggerHostIds] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
-    api.getTriggers().then((res) => {
-      setTriggers(Array.isArray(res.data) ? res.data : []);
-      setLoadingTriggers(false);
+    api.getHosts().then((res) => {
+      setHosts(Array.isArray(res.data) ? res.data : []);
+      setLoadingHosts(false);
     });
   }, []);
+
+  const loadTriggersForHost = async (hostId: number) => {
+    if (triggersByHost[hostId] || loadingTriggerHostIds[hostId]) return;
+    setLoadingTriggerHostIds((prev) => ({ ...prev, [hostId]: true }));
+    const res = await api.getTriggers({ host: hostId });
+    setTriggersByHost((prev) => ({
+      ...prev,
+      [hostId]: Array.isArray(res.data) ? res.data : [],
+    }));
+    setLoadingTriggerHostIds((prev) => ({ ...prev, [hostId]: false }));
+  };
 
   const update = (key: string, patch: Partial<ActionFormConditionDraft>) =>
     onChange(conditions.map((c) => (c.key === key ? { ...c, ...patch } : c)));
@@ -62,13 +75,8 @@ export function ConditionsTable({ conditions, evalType, onChange }: ConditionsTa
 
   const add = () => onChange([...conditions, emptyCondition()]);
 
-  const toggleTrigger = (key: string, triggerId: number, checked: boolean) => {
-    const row = conditions.find((c) => c.key === key);
-    if (!row) return;
-    const ids = checked
-      ? [...row.trigger_ids, triggerId]
-      : row.trigger_ids.filter((id) => id !== triggerId);
-    update(key, { trigger_ids: ids });
+  const selectTrigger = (key: string, triggerId: number | null) => {
+    update(key, { trigger_id: triggerId });
   };
 
   return (
@@ -77,7 +85,8 @@ export function ConditionsTable({ conditions, evalType, onChange }: ConditionsTa
         <div>
           <CardTitle className="text-base">Conditions</CardTitle>
           <CardDescription>
-            Filter by type, operator, trigger source, and specific triggers.
+            Filter by type, operator, trigger source (host or template), and one trigger per
+            condition.
           </CardDescription>
         </div>
         <Button type="button" variant="outline" size="sm" onClick={add}>
@@ -103,7 +112,9 @@ export function ConditionsTable({ conditions, evalType, onChange }: ConditionsTa
             </TableHeader>
             <TableBody>
               {conditions.map((c) => {
-                const available = filterTriggersBySource(triggers, c.trigger_source);
+                const hostTriggers = c.host_id ? (triggersByHost[c.host_id] ?? []) : [];
+                const available = filterTriggersBySource(hostTriggers, c.trigger_source);
+                const loadingTriggers = c.host_id ? Boolean(loadingTriggerHostIds[c.host_id]) : false;
                 return (
                   <TableRow key={c.key}>
                     {evalType === "and_or" && (
@@ -150,34 +161,46 @@ export function ConditionsTable({ conditions, evalType, onChange }: ConditionsTa
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <Select
-                        value={c.trigger_source}
-                        onValueChange={(v) =>
-                          update(c.key, {
-                            trigger_source: v as ActionFormConditionDraft["trigger_source"],
-                            trigger_ids: [],
-                          })
-                        }
-                      >
-                        <SelectTrigger className="h-8 min-w-[140px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {TRIGGER_SOURCES.map((s) => (
-                            <SelectItem key={s.value} value={s.value}>
-                              {s.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {c.condition_type === "trigger" ? (
+                        <Select
+                          value={c.trigger_source}
+                          onValueChange={(v) =>
+                            update(c.key, {
+                              trigger_source: v as ActionFormConditionDraft["trigger_source"],
+                              trigger_id: null,
+                            })
+                          }
+                        >
+                          <SelectTrigger className="h-8 min-w-[120px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TRIGGER_SOURCES.map((s) => (
+                              <SelectItem key={s.value} value={s.value}>
+                                {s.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell className="min-w-[200px]">
                       <ConditionTriggersCell
                         condition={c}
+                        hosts={hosts}
+                        loadingHosts={loadingHosts}
                         loadingTriggers={loadingTriggers}
                         available={available}
-                        allTriggers={triggers}
-                        onToggleTrigger={(id, checked) => toggleTrigger(c.key, id, checked)}
+                        allTriggers={hostTriggers}
+                        onHostChange={(hostId) => {
+                          update(c.key, { host_id: hostId, trigger_id: null });
+                          if (hostId) {
+                            void loadTriggersForHost(hostId);
+                          }
+                        }}
+                        onSelectTrigger={(id) => selectTrigger(c.key, id)}
                         onValueChange={(value) => update(c.key, { value })}
                       />
                     </TableCell>

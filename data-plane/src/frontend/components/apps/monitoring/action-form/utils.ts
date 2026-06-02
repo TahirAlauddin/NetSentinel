@@ -19,8 +19,9 @@ export function emptyCondition(): ActionFormConditionDraft {
     key: newKey(),
     condition_type: "trigger",
     operator: "equals",
-    trigger_source: "all",
-    trigger_ids: [],
+    trigger_source: "host",
+    host_id: null,
+    trigger_id: null,
     value: "",
     value2: "",
     formula_id: "A",
@@ -79,16 +80,19 @@ export function conditionFromApi(
   const raw =
     (c.trigger_source as ActionFormConditionDraft["trigger_source"]) ||
     (c.value2 as ActionFormConditionDraft["trigger_source"]) ||
-    "all";
+    "host";
   const triggerSource: ActionFormConditionDraft["trigger_source"] =
-    ["all", "host", "template"].includes(raw) ? raw : "all";
+    raw === "template" ? "template" : "host";
+
+  const parsedIds = parseTriggerIds(c.value, c.trigger_ids);
 
   return {
     key: newKey(),
     condition_type: c.condition_type,
     operator: c.operator,
     trigger_source: triggerSource,
-    trigger_ids: parseTriggerIds(c.value, c.trigger_ids),
+    host_id: null,
+    trigger_id: parsedIds[0] ?? null,
     value: c.condition_type === "trigger" ? "" : c.value,
     value2: c.value2 ?? "",
     formula_id: c.formula_id || "A",
@@ -165,8 +169,8 @@ export function buildPayload(values: ActionFormValues): Record<string, unknown> 
       condition_type: c.condition_type,
       operator: c.operator,
       trigger_source: c.trigger_source,
-      trigger_ids: c.trigger_ids,
-      value: c.condition_type === "trigger" ? c.trigger_ids.join(",") : c.value,
+      trigger_ids: c.trigger_id != null ? [c.trigger_id] : [],
+      value: c.condition_type === "trigger" && c.trigger_id != null ? String(c.trigger_id) : c.value,
       value2: c.trigger_source,
       formula_id: c.formula_id,
     })),
@@ -182,7 +186,8 @@ export function filterTriggersBySource(
   triggers: Trigger[],
   source: ActionFormConditionDraft["trigger_source"]
 ): Trigger[] {
-  if (source === "host") return triggers.filter((t) => t.host != null);
-  if (source === "template") return triggers.filter((t) => t.template != null);
-  return triggers;
+  if (source === "template") {
+    return triggers.filter((t) => t.template != null);
+  }
+  return triggers.filter((t) => t.template == null);
 }
