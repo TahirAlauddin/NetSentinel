@@ -350,6 +350,9 @@ export interface ActionCondition {
   value: string;
   value2: string;
   formula_id: string;
+  trigger_source?: string;
+  trigger_ids?: number[];
+  triggers_detail?: Array<{ id: number; name: string }>;
 }
 
 export interface ActionOperation {
@@ -378,14 +381,63 @@ export interface Action {
   status_display: string;
   eval_type: string;
   formula: string;
+  esc_period?: string;
   pause_suppressed: boolean;
+  pause_symptoms?: boolean;
   notify_if_canceled: boolean;
   conditions: ActionCondition[];
   operations: ActionOperation[];
+  recovery_operations?: ActionOperation[];
+  update_operations?: ActionOperation[];
   condition_count: number;
   operation_count: number;
   created_at: string;
   updated_at: string;
+}
+
+/** Local form row ids (client-only until saved). */
+export type ActionConditionTriggerSource = "all" | "host" | "template";
+
+export interface ActionFormConditionDraft {
+  key: string;
+  condition_type: string;
+  operator: string;
+  trigger_source: ActionConditionTriggerSource;
+  trigger_ids: number[];
+  value: string;
+  value2: string;
+  formula_id: string;
+}
+
+export interface ActionFormOperationDraft {
+  key: string;
+  operation_type: string;
+  op_step_from: number;
+  op_step_to: number;
+  op_step_duration: string;
+  default_msg: boolean;
+  message_subject: string;
+  message_body: string;
+  media_type: string;
+  command_type: string;
+  command: string;
+  execute_on: string;
+}
+
+export interface ActionFormValues {
+  name: string;
+  eventsource: ActionEventSource;
+  status: ActionStatus;
+  eval_type: string;
+  formula: string;
+  esc_period: string;
+  pause_suppressed: boolean;
+  pause_symptoms: boolean;
+  notify_if_canceled: boolean;
+  conditions: ActionFormConditionDraft[];
+  operations: ActionFormOperationDraft[];
+  recovery_operations: ActionFormOperationDraft[];
+  update_operations: ActionFormOperationDraft[];
 }
 
 
