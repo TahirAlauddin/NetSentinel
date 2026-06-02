@@ -27,6 +27,7 @@ from typing import Optional
 
 import requests
 
+from .action import ActionAPI
 from .apiinfo import APIInfoAPI
 from .events import EventAPI
 from .exceptions import ZabbixAuthError
@@ -34,7 +35,10 @@ from .history import HistoryAPI
 from .hostgroups import HostGroupAPI
 from .hosts import HostAPI
 from .items import ItemAPI
+from .maintenance import MaintenanceAPI
+from .mediatype import MediaTypeAPI
 from .problems import ProblemAPI
+from .proxy import ProxyAPI
 from .templates import TemplateAPI
 from .transport import ZabbixTransport
 from .triggers import TriggerAPI
@@ -140,6 +144,10 @@ class ZabbixClient:
         self.templates = TemplateAPI(self._transport)
         self.users = UserAPI(self._transport)
         self.apiinfo = APIInfoAPI(self._transport)
+        self.proxies = ProxyAPI(self._transport)
+        self.maintenance = MaintenanceAPI(self._transport)
+        self.actions = ActionAPI(self._transport)
+        self.mediatypes = MediaTypeAPI(self._transport)
 
         if token:
             self._transport.set_token(token)
