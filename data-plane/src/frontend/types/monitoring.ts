@@ -35,6 +35,22 @@ export interface Proxy {
   updated_at: string;
 }
 
+// ─── Template Groups ──────────────────────────────────────────────────────────
+
+export interface TemplateGroup {
+  id: number;
+  name: string;
+  description: string;
+  template_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TemplateGroupFormData {
+  name: string;
+  description?: string;
+}
+
 // ─── Templates ────────────────────────────────────────────────────────────────
 
 export interface TemplateTag {
@@ -47,8 +63,8 @@ export interface Template {
   id: number;
   name: string;
   description: string;
-  host_groups: number[];
-  host_groups_detail: HostGroup[];
+  template_groups: number[];
+  template_groups_detail: TemplateGroup[];
   linked_templates: number[];
   linked_templates_detail: { id: number; name: string }[];
   tags: TemplateTag[];
@@ -61,7 +77,7 @@ export interface Template {
 export interface TemplateFormData {
   name: string;
   description?: string;
-  host_groups?: number[];
+  template_groups?: number[];
   linked_templates?: number[];
 }
 

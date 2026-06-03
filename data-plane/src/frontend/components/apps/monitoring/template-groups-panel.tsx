@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  ChevronDown,
-  Pencil,
-  Trash2,
-  Plus,
-  FolderOpen,
-} from "lucide-react";
+import { ChevronDown, Pencil, Trash2, Plus, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,81 +13,59 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { HostGroup } from "@/types/monitoring";
+import type { TemplateGroup } from "@/types/monitoring";
 import { MonitoringApiClient } from "@/lib/api-client/monitoring";
 
 const api = new MonitoringApiClient();
 
-interface HostGroupsPanelProps {
-  groups: HostGroup[];
+interface TemplateGroupsPanelProps {
+  groups: TemplateGroup[];
   loading?: boolean;
   selectedGroupId: string | null;
   onSelectGroup: (groupId: string | null) => void;
   onRefresh: () => void;
-  /** Panel heading (default: Host Groups). */
-  title?: string;
-  /** Singular label for the count column (default: host). */
-  itemLabel?: string;
-  /** Override per-group count; defaults to `host_count`. */
-  getItemCount?: (group: HostGroup) => number;
-  /** Dialog titles when creating/editing groups. */
-  createDialogTitle?: string;
-  editDialogTitle?: string;
-  emptyMessage?: string;
-  deleteConfirmMessage?: string;
 }
 
-export function HostGroupsPanel({
+export function TemplateGroupsPanel({
   groups,
   loading = false,
   selectedGroupId,
   onSelectGroup,
   onRefresh,
-  title = "Host Groups",
-  itemLabel = "host",
-  getItemCount = (g) => g.host_count,
-  createDialogTitle = "Create Host Group",
-  editDialogTitle = "Edit Host Group",
-  emptyMessage = "No host groups yet.",
-  deleteConfirmMessage = "Delete this host group?",
-}: HostGroupsPanelProps) {
+}: TemplateGroupsPanelProps) {
   const [open, setOpen] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<HostGroup | null>(null);
+  const [editing, setEditing] = useState<TemplateGroup | null>(null);
   const [formName, setFormName] = useState("");
-  const [formDesc, setFormDesc] = useState("");
   const [saving, setSaving] = useState(false);
 
   const openCreate = () => {
     setEditing(null);
     setFormName("");
-    setFormDesc("");
     setDialogOpen(true);
   };
 
-  const openEdit = (g: HostGroup, e: React.MouseEvent) => {
+  const openEdit = (g: TemplateGroup, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditing(g);
     setFormName(g.name);
-    setFormDesc(g.description);
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
     if (!formName.trim()) return;
     setSaving(true);
-    const payload = { name: formName.trim(), description: formDesc };
+    const payload = { name: formName.trim() };
     const res = editing
-      ? await api.updateHostGroup(editing.id, payload)
-      : await api.createHostGroup(payload);
+      ? await api.updateTemplateGroup(editing.id, payload)
+      : await api.createTemplateGroup(payload);
     setSaving(false);
     if (res.error) {
       toast.error(res.error);
     } else {
-      toast.success(editing ? "Group updated." : "Group created.");
+      toast.success(editing ? "Template group updated." : "Template group created.");
       setDialogOpen(false);
       onRefresh();
     }
@@ -101,12 +73,12 @@ export function HostGroupsPanel({
 
   const handleDelete = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(deleteConfirmMessage)) return;
-    const res = await api.deleteHostGroup(id);
+    if (!confirm("Delete this template group? Templates must belong to at least one group.")) return;
+    const res = await api.deleteTemplateGroup(id);
     if (res.error) {
       toast.error(res.error);
     } else {
-      toast.success("Group deleted.");
+      toast.success("Template group deleted.");
       if (selectedGroupId === id.toString()) {
         onSelectGroup(null);
       }
@@ -135,9 +107,9 @@ export function HostGroupsPanel({
                 !open && "-rotate-90"
               )}
             />
-            <FolderOpen className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            <Layers className="h-4 w-4 text-violet-600 dark:text-violet-400" />
             <span>
-              {title}
+              Template Groups
               {!loading && (
                 <span className="ml-1.5 font-normal text-muted-foreground">
                   ({groups.length})
@@ -166,20 +138,19 @@ export function HostGroupsPanel({
                     key={i}
                     className="flex items-center gap-4 px-4 py-3 animate-pulse"
                   >
-                    <div className="h-4 w-28 rounded bg-muted" />
+                    <div className="h-4 w-40 rounded bg-muted" />
                     <div className="h-4 w-16 rounded bg-muted ml-auto" />
                   </div>
                 ))}
               </div>
             ) : groups.length === 0 ? (
               <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                {emptyMessage}
+                No template groups yet.
               </div>
             ) : (
               <ul className="divide-y">
                 {groups.map((g) => {
                   const isSelected = selectedGroupId === g.id.toString();
-                  const count = getItemCount(g);
                   return (
                     <li key={g.id}>
                       <div
@@ -187,7 +158,7 @@ export function HostGroupsPanel({
                         tabIndex={0}
                         className={cn(
                           "flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-muted/50",
-                          isSelected && "bg-orange-50/80 dark:bg-orange-950/20"
+                          isSelected && "bg-violet-50/80 dark:bg-violet-950/20"
                         )}
                         onClick={() => toggleGroupFilter(g.id)}
                         onKeyDown={(e) => {
@@ -200,14 +171,13 @@ export function HostGroupsPanel({
                         <span
                           className={cn(
                             "flex-1 font-medium truncate",
-                            isSelected && "text-orange-700 dark:text-orange-400"
+                            isSelected && "text-violet-700 dark:text-violet-400"
                           )}
                         >
                           {g.name}
                         </span>
                         <span className="shrink-0 text-muted-foreground tabular-nums">
-                          {count} {itemLabel}
-                          {count !== 1 ? "s" : ""}
+                          {g.template_count} template{g.template_count !== 1 ? "s" : ""}
                         </span>
                         <span className="flex shrink-0 items-center gap-0.5">
                           <Button
@@ -254,7 +224,7 @@ export function HostGroupsPanel({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editing ? editDialogTitle : createDialogTitle}
+              {editing ? "Edit Template Group" : "Create Template Group"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -263,16 +233,11 @@ export function HostGroupsPanel({
               <Input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder="e.g. Production"
+                placeholder="e.g. Templates/Databases"
               />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Description</Label>
-              <Textarea
-                value={formDesc}
-                onChange={(e) => setFormDesc(e.target.value)}
-                rows={3}
-              />
+              <p className="text-xs text-muted-foreground">
+                Use slashes for hierarchy, e.g. Templates/Applications or Templates/Cloud.
+              </p>
             </div>
           </div>
           <DialogFooter>

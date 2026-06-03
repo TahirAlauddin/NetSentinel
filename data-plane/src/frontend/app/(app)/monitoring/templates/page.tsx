@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, FileCode2, MoreHorizontal } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, FileCode2, MoreHorizontal, RefreshCw, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,16 +32,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { MonitoringHeader } from "@/components/apps/monitoring/monitoring-header";
-import type { Template, HostGroup } from "@/types/monitoring";
+import { TemplateGroupsPanel } from "@/components/apps/monitoring/template-groups-panel";
+import type { Template, TemplateGroup } from "@/types/monitoring";
 import { MonitoringApiClient } from "@/lib/api-client/monitoring";
 
 const api = new MonitoringApiClient();
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [hostGroups, setHostGroups] = useState<HostGroup[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [templateGroups, setTemplateGroups] = useState<TemplateGroup[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(true);
+  const [loadingGroups, setLoadingGroups] = useState(true);
   const [search, setSearch] = useState("");
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Template | null>(null);
   const [formName, setFormName] = useState("");
@@ -51,24 +53,60 @@ export default function TemplatesPage() {
   const [saving, setSaving] = useState(false);
 
   const [refreshKey, setRefreshKey] = useState(0);
-  const load = useCallback(() => setRefreshKey((k) => k + 1), []);
+  const loadData = useCallback(() => {
+    setLoadingTemplates(true);
+    setLoadingGroups(true);
+    setRefreshKey((k) => k + 1);
+  }, []);
 
   useEffect(() => {
-    Promise.all([
-      api.getTemplates(search ? { search } : undefined),
-      api.getHostGroups(),
-    ]).then(([tRes, gRes]) => {
+    let isMounted = true;
+    const fetchTemplates = async () => {
+      const params: Record<string, unknown> = {};
+      if (search) params.search = search;
+      if (selectedGroupId) params.template_group = selectedGroupId;
+
+      const tRes = await api.getTemplates(params);
+      if (!isMounted) return;
+
       if (tRes.data) setTemplates(Array.isArray(tRes.data) ? tRes.data : []);
-      if (gRes.data) setHostGroups(Array.isArray(gRes.data) ? gRes.data : []);
-      setLoading(false);
-    });
-  }, [search, refreshKey]);
+      setLoadingTemplates(false);
+    };
+
+    void fetchTemplates();
+    return () => {
+      isMounted = false;
+    };
+  }, [search, selectedGroupId, refreshKey]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchGroups = async () => {
+      const gRes = await api.getTemplateGroups();
+      if (!isMounted) return;
+
+      if (gRes.data) setTemplateGroups(Array.isArray(gRes.data) ? gRes.data : []);
+      setLoadingGroups(false);
+    };
+
+    void fetchGroups();
+    return () => {
+      isMounted = false;
+    };
+  }, [refreshKey]);
+
+  const selectedGroupName =
+    selectedGroupId != null
+      ? templateGroups.find((g) => g.id.toString() === selectedGroupId)?.name
+      : null;
+
+  const hasFilters = Boolean(search || selectedGroupId);
 
   const openCreate = () => {
     setEditing(null);
     setFormName("");
     setFormDesc("");
-    setSelectedGroups([]);
+    setSelectedGroups(selectedGroupId ? [Number(selectedGroupId)] : []);
     setDialogOpen(true);
   };
 
@@ -76,7 +114,7 @@ export default function TemplatesPage() {
     setEditing(t);
     setFormName(t.name);
     setFormDesc(t.description);
-    setSelectedGroups(t.host_groups);
+    setSelectedGroups(t.template_groups);
     setDialogOpen(true);
   };
 
@@ -88,7 +126,7 @@ export default function TemplatesPage() {
   const handleSave = async () => {
     if (!formName.trim()) return;
     setSaving(true);
-    const payload = { name: formName.trim(), description: formDesc, host_groups: selectedGroups };
+    const payload = { name: formName.trim(), description: formDesc, template_groups: selectedGroups };
     const res = editing
       ? await api.updateTemplate(editing.id, payload)
       : await api.createTemplate(payload);
@@ -98,7 +136,7 @@ export default function TemplatesPage() {
     } else {
       toast.success(editing ? "Template updated." : "Template created.");
       setDialogOpen(false);
-      load();
+      loadData();
     }
   };
 
@@ -109,42 +147,116 @@ export default function TemplatesPage() {
       toast.error(res.error);
     } else {
       toast.success("Template deleted.");
-      load();
+      loadData();
     }
   };
 
+  const handleSearchChange = (value: string) => {
+    setLoadingTemplates(true);
+    setSearch(value);
+  };
+
+  const handleGroupSelect = (groupId: string | null) => {
+    setLoadingTemplates(true);
+    setSelectedGroupId(groupId);
+  };
+
+  const clearFilters = () => {
+    setLoadingTemplates(true);
+    setSearch("");
+    setSelectedGroupId(null);
+  };
+
+  const groupPickerGroups = useMemo(() => {
+    if (!selectedGroupId) return templateGroups;
+    const selectedId = Number(selectedGroupId);
+    const selected = templateGroups.find((g) => g.id === selectedId);
+    const rest = templateGroups.filter((g) => g.id !== selectedId);
+    return selected ? [selected, ...rest] : templateGroups;
+  }, [templateGroups, selectedGroupId]);
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-5">
       <MonitoringHeader currentPage="Templates" />
 
-      <div className="flex items-center justify-between gap-3">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            className="pl-9 w-56"
-            placeholder="Search templates…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <TemplateGroupsPanel
+        groups={templateGroups}
+        loading={loadingGroups}
+        selectedGroupId={selectedGroupId}
+        onSelectGroup={handleGroupSelect}
+        onRefresh={loadData}
+      />
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              className="pl-9 h-9 w-56"
+              placeholder="Search templates…"
+              value={search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+            />
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            onClick={loadData}
+            title="Refresh"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${loadingTemplates || loadingGroups ? "animate-spin" : ""}`}
+            />
+          </Button>
+          {hasFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 text-xs text-muted-foreground"
+              onClick={clearFilters}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5 mr-1.5" />
+              Clear filters
+            </Button>
+          )}
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="h-4 w-4 mr-1.5" /> Create Template
-        </Button>
+        <div className="flex items-center gap-3 shrink-0">
+          {!loadingTemplates && (
+            <span className="text-sm text-muted-foreground tabular-nums">
+              {templates.length} template{templates.length !== 1 ? "s" : ""}
+              {selectedGroupName ? ` in ${selectedGroupName}` : ""}
+            </span>
+          )}
+          <Button size="sm" onClick={openCreate}>
+            <Plus className="h-4 w-4 mr-1.5" /> Create Template
+          </Button>
+        </div>
       </div>
 
       <Card>
         <CardContent className="p-0">
-          {loading ? (
-            <div className="p-8 text-center text-muted-foreground text-sm animate-pulse">
-              Loading templates…
+          {loadingTemplates ? (
+            <div className="divide-y">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 px-4 py-3 animate-pulse">
+                  <div className="h-4 w-32 rounded bg-muted" />
+                  <div className="h-4 w-24 rounded bg-muted" />
+                  <div className="h-4 w-16 rounded bg-muted ml-auto" />
+                </div>
+              ))}
             </div>
           ) : templates.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
               <FileCode2 className="h-12 w-12 opacity-30" />
-              <p className="text-sm">No templates yet.</p>
-              <Button size="sm" onClick={openCreate}>
-                <Plus className="h-4 w-4 mr-1" /> Create First Template
-              </Button>
+              <p className="text-sm">
+                {hasFilters ? "No templates match your filters." : "No templates yet."}
+              </p>
+              {!hasFilters && (
+                <Button size="sm" onClick={openCreate}>
+                  <Plus className="h-4 w-4 mr-1" /> Create First Template
+                </Button>
+              )}
             </div>
           ) : (
             <Table>
@@ -163,7 +275,7 @@ export default function TemplatesPage() {
                     <TableCell className="font-medium">{t.name}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {t.host_groups_detail.slice(0, 3).map((g) => (
+                        {t.template_groups_detail.slice(0, 3).map((g) => (
                           <Badge key={g.id} variant="outline" className="text-xs">
                             {g.name}
                           </Badge>
@@ -228,9 +340,12 @@ export default function TemplatesPage() {
               <Textarea value={formDesc} onChange={(e) => setFormDesc(e.target.value)} rows={2} />
             </div>
             <div className="space-y-1.5">
-              <Label>Host Groups</Label>
+              <Label>Template groups *</Label>
+              <p className="text-xs text-muted-foreground">
+                Zabbix requires at least one group per template.
+              </p>
               <div className="flex flex-wrap gap-2">
-                {hostGroups.map((g) => (
+                {groupPickerGroups.map((g) => (
                   <button
                     key={g.id}
                     type="button"
@@ -244,6 +359,11 @@ export default function TemplatesPage() {
                     {g.name}
                   </button>
                 ))}
+                {templateGroups.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    No template groups yet. Create one using the panel above.
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -251,7 +371,10 @@ export default function TemplatesPage() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving || !formName.trim()}>
+            <Button
+              onClick={handleSave}
+              disabled={saving || !formName.trim() || selectedGroups.length === 0}
+            >
               {saving ? "Saving…" : editing ? "Update" : "Create"}
             </Button>
           </DialogFooter>

@@ -20,6 +20,8 @@ import type {
   Proxy,
   Template,
   TemplateFormData,
+  TemplateGroup,
+  TemplateGroupFormData,
   Trigger,
   TriggerFormData,
   DashboardWidget,
@@ -146,6 +148,36 @@ export class MonitoringApiClient extends BaseApiClient {
 
   async deleteProxy(id: number): Promise<BaseApiResponse<void>> {
     return this.delete<void>(`${this.base}proxies/${id}/`);
+  }
+
+  // ─── Template Groups ─────────────────────────────────────────────────────
+
+  async getTemplateGroups(
+    params?: Record<string, unknown>
+  ): Promise<BaseApiResponse<TemplateGroup[]>> {
+    const qs = this.buildQueryString(params);
+    return this.get<TemplateGroup[]>(`${this.base}template-groups/${qs}`);
+  }
+
+  async getTemplateGroup(id: number): Promise<BaseApiResponse<TemplateGroup>> {
+    return this.get<TemplateGroup>(`${this.base}template-groups/${id}/`);
+  }
+
+  async createTemplateGroup(
+    data: TemplateGroupFormData
+  ): Promise<BaseApiResponse<TemplateGroup>> {
+    return this.post<TemplateGroup>(`${this.base}template-groups/`, data);
+  }
+
+  async updateTemplateGroup(
+    id: number,
+    data: Partial<TemplateGroupFormData>
+  ): Promise<BaseApiResponse<TemplateGroup>> {
+    return this.patch<TemplateGroup>(`${this.base}template-groups/${id}/`, data);
+  }
+
+  async deleteTemplateGroup(id: number): Promise<BaseApiResponse<void>> {
+    return this.delete<void>(`${this.base}template-groups/${id}/`);
   }
 
   // ─── Templates ─────────────────────────────────────────────────────────────
