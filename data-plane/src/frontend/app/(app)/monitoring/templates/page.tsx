@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { Plus, Search, Pencil, Trash2, FileCode2, MoreHorizontal, RefreshCw, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,24 +15,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { MonitoringHeader } from "@/components/apps/monitoring/monitoring-header";
 import { TemplateGroupsPanel } from "@/components/apps/monitoring/template-groups-panel";
+import { TemplateFormDialog } from "@/components/apps/monitoring/template-form-dialog";
 import type { Template, TemplateGroup } from "@/types/monitoring";
 import { MonitoringApiClient } from "@/lib/api-client/monitoring";
 
@@ -47,10 +39,6 @@ export default function TemplatesPage() {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Template | null>(null);
-  const [formName, setFormName] = useState("");
-  const [formDesc, setFormDesc] = useState("");
-  const [selectedGroups, setSelectedGroups] = useState<number[]>([]);
-  const [saving, setSaving] = useState(false);
 
   const [refreshKey, setRefreshKey] = useState(0);
   const loadData = useCallback(() => {
@@ -104,41 +92,15 @@ export default function TemplatesPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setFormName("");
-    setFormDesc("");
-    setSelectedGroups(selectedGroupId ? [Number(selectedGroupId)] : []);
     setDialogOpen(true);
   };
 
   const openEdit = (t: Template) => {
     setEditing(t);
-    setFormName(t.name);
-    setFormDesc(t.description);
-    setSelectedGroups(t.template_groups);
     setDialogOpen(true);
   };
 
-  const toggleGroup = (id: number) =>
-    setSelectedGroups((prev) =>
-      prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]
-    );
-
-  const handleSave = async () => {
-    if (!formName.trim()) return;
-    setSaving(true);
-    const payload = { name: formName.trim(), description: formDesc, template_groups: selectedGroups };
-    const res = editing
-      ? await api.updateTemplate(editing.id, payload)
-      : await api.createTemplate(payload);
-    setSaving(false);
-    if (res.error) {
-      toast.error(res.error);
-    } else {
-      toast.success(editing ? "Template updated." : "Template created.");
-      setDialogOpen(false);
-      loadData();
-    }
-  };
+  const defaultGroupIds = selectedGroupId ? [Number(selectedGroupId)] : [];
 
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this template? Items and triggers linked to this template will also be removed.")) return;
@@ -166,14 +128,6 @@ export default function TemplatesPage() {
     setSearch("");
     setSelectedGroupId(null);
   };
-
-  const groupPickerGroups = useMemo(() => {
-    if (!selectedGroupId) return templateGroups;
-    const selectedId = Number(selectedGroupId);
-    const selected = templateGroups.find((g) => g.id === selectedId);
-    const rest = templateGroups.filter((g) => g.id !== selectedId);
-    return selected ? [selected, ...rest] : templateGroups;
-  }, [templateGroups, selectedGroupId]);
 
   return (
     <div className="p-6 space-y-5">
@@ -272,7 +226,12 @@ export default function TemplatesPage() {
               <TableBody>
                 {templates.map((t) => (
                   <TableRow key={t.id} className="group">
-                    <TableCell className="font-medium">{t.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div>{t.visible_name || t.name}</div>
+                      {t.technical_name && t.technical_name !== (t.visible_name || t.name) && (
+                        <div className="text-xs text-muted-foreground font-mono">{t.technical_name}</div>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {t.template_groups_detail.slice(0, 3).map((g) => (
@@ -321,65 +280,15 @@ export default function TemplatesPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editing ? "Edit Template" : "Create Template"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>Template name *</Label>
-              <Input
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder="e.g. Linux by Zabbix agent"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Description</Label>
-              <Textarea value={formDesc} onChange={(e) => setFormDesc(e.target.value)} rows={2} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Template groups *</Label>
-              <p className="text-xs text-muted-foreground">
-                Zabbix requires at least one group per template.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {groupPickerGroups.map((g) => (
-                  <button
-                    key={g.id}
-                    type="button"
-                    onClick={() => toggleGroup(g.id)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                      selectedGroups.includes(g.id)
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background border-border text-muted-foreground hover:border-primary/50"
-                    }`}
-                  >
-                    {g.name}
-                  </button>
-                ))}
-                {templateGroups.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    No template groups yet. Create one using the panel above.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              disabled={saving || !formName.trim() || selectedGroups.length === 0}
-            >
-              {saving ? "Saving…" : editing ? "Update" : "Create"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <TemplateFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        editing={editing}
+        templateGroups={templateGroups}
+        allTemplates={templates}
+        defaultGroupIds={defaultGroupIds}
+        onSaved={loadData}
+      />
     </div>
   );
 }
