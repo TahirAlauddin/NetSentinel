@@ -39,8 +39,10 @@ from .maintenance import MaintenanceAPI
 from .mediatype import MediaTypeAPI
 from .problems import ProblemAPI
 from .proxy import ProxyAPI
+from .templategroups import TemplateGroupAPI
 from .templates import TemplateAPI
 from .transport import ZabbixTransport
+from .valuemaps import ValueMapAPI
 from .triggers import TriggerAPI
 from .users import UserAPI
 
@@ -142,6 +144,8 @@ class ZabbixClient:
         self.hostgroups = HostGroupAPI(self._transport)
         self.events = EventAPI(self._transport)
         self.templates = TemplateAPI(self._transport)
+        self.templategroups = TemplateGroupAPI(self._transport)
+        self.valuemaps = ValueMapAPI(self._transport)
         self.users = UserAPI(self._transport)
         self.apiinfo = APIInfoAPI(self._transport)
         self.proxies = ProxyAPI(self._transport)

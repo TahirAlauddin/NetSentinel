@@ -8,6 +8,7 @@ from .media_type_views import MediaTypeViewSet
 from .problem_views import ProblemViewSet
 from .proxy_views import ProxyViewSet
 from .stats_views import MonitoringStatsView
+from .template_group_views import TemplateGroupViewSet
 from .template_views import TemplateTagViewSet, TemplateViewSet
 from .trigger_views import TriggerViewSet
 
@@ -17,6 +18,7 @@ __all__ = [
     "HostTagViewSet",
     "ProxyViewSet",
     "TemplateViewSet",
+    "TemplateGroupViewSet",
     "TemplateTagViewSet",
     "ItemViewSet",
     "TriggerViewSet",

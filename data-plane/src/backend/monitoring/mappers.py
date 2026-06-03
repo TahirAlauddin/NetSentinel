@@ -68,6 +68,16 @@ def map_host_group(row: dict, host_count: int = 0) -> dict:
     }
 
 
+def map_template_group(row: dict, template_count: int = 0) -> dict:
+    return {
+        "id": zabbix_id(row.get("groupid")),
+        "name": row.get("name", ""),
+        "description": "",
+        "template_count": template_count,
+        **empty_timestamps(),
+    }
+
+
 def map_host(
     row: dict,
     *,
@@ -181,23 +191,51 @@ def map_host(
 
 
 def map_template(row: dict, *, item_count: int = 0, trigger_count: int = 0) -> dict:
-    groups = row.get("groups") or []
-    host_groups_detail = [
-        map_host_group(g) for g in groups
-    ]
+    template_groups_raw = row.get("templategroups") or row.get("templateGroups") or []
+    template_groups_detail = [map_template_group(g) for g in template_groups_raw]
     linked = row.get("parentTemplates") or []
     tags = row.get("tags") or []
+    macros_raw = row.get("macros") or []
+    valuemaps_raw = row.get("valuemaps") or []
+    technical_name = row.get("host", "")
+    visible_name = row.get("name") or technical_name
     return {
         "id": zabbix_id(row.get("templateid")),
-        "name": row.get("name") or row.get("host", ""),
+        "name": visible_name,
+        "technical_name": technical_name,
+        "visible_name": visible_name,
         "description": row.get("description") or "",
-        "host_groups": [g["id"] for g in host_groups_detail],
-        "host_groups_detail": host_groups_detail,
+        "template_groups": [g["id"] for g in template_groups_detail],
+        "template_groups_detail": template_groups_detail,
         "linked_templates": [zabbix_id(t.get("templateid")) for t in linked],
         "linked_templates_detail": [
-            {"id": zabbix_id(t.get("templateid")), "name": t.get("name", "")} for t in linked
+            {"id": zabbix_id(t.get("templateid")), "name": t.get("name") or t.get("host", "")}
+            for t in linked
         ],
         "tags": [{"id": i, "tag": t.get("tag", ""), "value": t.get("value", "")} for i, t in enumerate(tags, 1)],
+        "macros": [
+            {
+                "macro": m.get("macro", ""),
+                "value": m.get("value", ""),
+                "description": m.get("description", ""),
+            }
+            for m in macros_raw
+        ],
+        "value_maps": [
+            {
+                "id": zabbix_id(vm.get("valuemapid")),
+                "name": vm.get("name", ""),
+                "mappings": [
+                    {
+                        "type": str(mapping.get("type", "0")),
+                        "value": mapping.get("value", ""),
+                        "newvalue": mapping.get("newvalue", ""),
+                    }
+                    for mapping in (vm.get("mappings") or [])
+                ],
+            }
+            for vm in valuemaps_raw
+        ],
         "item_count": item_count,
         "trigger_count": trigger_count,
         **empty_timestamps(),

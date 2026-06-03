@@ -78,8 +78,8 @@ class TemplateAPI:
         host:
             Technical template name (unique identifier).
         groups:
-            Host groups the template belongs to,
-            e.g. ``[{"groupid": "1"}]``.
+            Template groups the template belongs to,
+            e.g. ``[{"groupid": "10"}]``.
         **params:
             Optional fields: ``name`` (visible name), ``description``,
             ``templates`` (parent templates to inherit from), ``tags``,

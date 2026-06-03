@@ -15,6 +15,7 @@ from .views import (
     MonitoringStatsView,
     ProblemViewSet,
     ProxyViewSet,
+    TemplateGroupViewSet,
     TemplateTagViewSet,
     TemplateViewSet,
     TriggerViewSet,
@@ -26,6 +27,7 @@ router.register(r"hosts", HostViewSet, basename="monitoring-host")
 router.register(r"host-tags", HostTagViewSet, basename="monitoring-host-tag")
 router.register(r"proxies", ProxyViewSet, basename="monitoring-proxy")
 router.register(r"templates", TemplateViewSet, basename="monitoring-template")
+router.register(r"template-groups", TemplateGroupViewSet, basename="monitoring-template-group")
 router.register(r"template-tags", TemplateTagViewSet, basename="monitoring-template-tag")
 router.register(r"items", ItemViewSet, basename="monitoring-item")
 router.register(r"triggers", TriggerViewSet, basename="monitoring-trigger")
