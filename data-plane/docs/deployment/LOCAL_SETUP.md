@@ -22,8 +22,8 @@ Get the data-plane running on your local machine for development or testing.
 cd data-plane/src/backend
 
 # Create and activate a virtual environment
-python -m venv .venv
-source .venv/bin/activate      # Windows: .venv\Scripts\activate
+python -m venv venv
+source venv/bin/activate      # Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt

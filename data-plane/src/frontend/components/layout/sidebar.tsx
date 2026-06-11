@@ -1,14 +1,18 @@
 "use client"
 
 import { useMemo } from "react"
+import { cn } from "@/lib/utils"
 import { BrandHeader } from "./brand-header"
 import { Navigation } from "../navigation/navigation"
 import { navigationItems } from "../../constants/navigation"
 import { SidebarProps } from "../../types/navigation"
 import { usePermissions } from "@/contexts/permissions-context"
+import { useSidebarOptional } from "@/contexts/sidebar-context"
 
 export function Sidebar({ onClose }: SidebarProps) {
   const { permissions } = usePermissions()
+  const sidebar = useSidebarOptional()
+  const isCollapsed = sidebar?.isCollapsed ?? false
 
   const filteredItems = useMemo(() => {
     return navigationItems
@@ -32,21 +36,24 @@ export function Sidebar({ onClose }: SidebarProps) {
   }, [permissions])
 
   return (
-    <div 
-      className="top-0 h-screen bg-[oklch(0.24_0_0)] text-white overflow-y-auto overflow-x-visible z-30 relative"
+    <div
+      data-sidebar
+      className={cn(
+        "top-0 h-screen bg-[oklch(0.24_0_0)] text-white overflow-y-auto overflow-x-visible z-30 relative flex flex-col",
+        isCollapsed ? "w-16" : "w-64"
+      )}
       onMouseLeave={() => {
         // When mouse leaves the entire sidebar, the Navigation component
         // will handle closing submenus via its own onMouseLeave handler
       }}
     >
-      <BrandHeader onClose={onClose} />
-      <Navigation 
-        items={filteredItems} 
-      />
-      {/* Footer help */}
-      <div className="mt-2 px-4 py-3 text-xs text-white/70 border-t border-white/10">
-        LIVE HELP
-      </div>
+      <BrandHeader onClose={onClose} collapsed={isCollapsed && !onClose} />
+      <Navigation items={filteredItems} collapsed={isCollapsed && !onClose} />
+      {!isCollapsed && (
+        <div className="mt-auto px-4 py-3 text-xs text-white/70 border-t border-white/10">
+          LIVE HELP
+        </div>
+      )}
     </div>
   )
 }

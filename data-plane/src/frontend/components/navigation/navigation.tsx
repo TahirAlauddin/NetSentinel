@@ -4,12 +4,15 @@ import { useCallback, useRef, useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { NavigationItemComponent } from "./navigation-item"
 import { NavigationItem } from "../../types/navigation"
+import { cn } from "@/lib/utils"
 
 interface NavigationProps {
   items: NavigationItem[]
+  /** Icon-only rail (desktop collapsed sidebar). */
+  collapsed?: boolean
 }
 
-export function Navigation({ items }: NavigationProps) {
+export function Navigation({ items, collapsed = false }: NavigationProps) {
   const pathname = usePathname()
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
@@ -163,23 +166,28 @@ export function Navigation({ items }: NavigationProps) {
   }, [isDesktop])
 
   return (
-    <nav 
-      className="py-2"
+    <nav
+      className="flex flex-1 flex-col pt-2 min-h-0"
       onMouseLeave={handleNavigationLeave}
     >
-      <ul className="flex flex-col">
+      <ul
+        className={cn(
+          "flex flex-col flex-1 overflow-y-auto overflow-x-hidden",
+          collapsed ? "pr-1" : "pr-3"
+        )}
+      >
         {items.map((item) => {
           const isExpanded = expandedItems.has(item.label) || hoveredItem === item.label
           const isActive = isItemActive(item)
-          
-          // Create item with dynamic active state
+
           const itemWithActive = { ...item, active: isActive }
-          
+
           return (
             <div key={item.label}>
               <NavigationItemComponent
                 item={itemWithActive}
                 isExpanded={isExpanded}
+                collapsed={collapsed}
                 itemRef={setItemRef(item.label)}
                 onToggleSubmenu={toggleSubmenu}
                 onCloseSubmenu={closeSubmenu}

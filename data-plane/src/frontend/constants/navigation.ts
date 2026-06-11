@@ -82,37 +82,26 @@ export const notificationsSettingsSubmenuLinks = [
   { label: "Preferences", href: "/notifications/preferences", requiredPermission: "notifications.view_inappnotification" },
 ];
 
-// Monitoring submenu links
+// Zabbix monitoring — top secondary bar + sidebar submenu (keep lean).
+// Full configuration nav lives in monitoring-header on each page.
 export const monitoringSubmenuLinks = [
-  { label: "SNMP", href: "/monitoring/snmp", requiredPermission: "monitoring.view_alert" },
-  { label: "Notifications", href: "/monitoring/notifications", requiredPermission: "monitoring.view_alert" },
-  { label: "Service", href: "/monitoring/service", requiredPermission: "monitoring.view_alert" },
-  { label: "Wallboard", href: "/monitoring/wallboard", requiredPermission: "monitoring.view_alert" },
-  { label: "Synthetic User", href: "/monitoring/synthetic-user", requiredPermission: "monitoring.view_alert" },
-  { label: "Sensors", href: "/monitoring/sensors", requiredPermission: "monitoring.view_alert" },
-  { label: "Alarms", href: "/monitoring/alarms", requiredPermission: "monitoring.view_alert" },
-  { label: "Syslog(Data Hub)", href: "/monitoring/syslog", requiredPermission: "monitoring.view_alert" },
-  { label: "Reports", href: "/monitoring/reports", requiredPermission: "monitoring.view_alert" },
-  { label: "Config Backup", href: "/monitoring/config-backup", requiredPermission: "monitoring.view_alert" },
-  { label: "Logs", href: "/monitoring/logs", requiredPermission: "monitoring.view_alert" },
-  { label: "SQL Query Monitoring", href: "/monitoring/sql-query", requiredPermission: "monitoring.view_alert" },
-  { label: "Website Monitoring", href: "/monitoring/website", requiredPermission: "monitoring.view_alert" },
-  { label: "Email Monitoring", href: "/monitoring/email", requiredPermission: "monitoring.view_alert" },
-  { label: "Distributed Monitoring", href: "/monitoring/distributed", requiredPermission: "monitoring.view_alert" },
+  { label: "Overview", href: "/monitoring", requiredPermission: "monitoring.view_host" },
+  { label: "Dashboard", href: "/monitoring/dashboard", requiredPermission: "monitoring.view_host" },
+  { label: "Hosts", href: "/monitoring/hosts", requiredPermission: "monitoring.view_host" },
+  { label: "Problems", href: "/monitoring/problems", requiredPermission: "monitoring.view_host" },
+  { label: "Events", href: "/monitoring/events", requiredPermission: "monitoring.view_host" },
+  // Configuration (implemented; uncomment for secondary bar when needed)
+  // { label: "Host Groups", href: "/monitoring/host-groups", requiredPermission: "monitoring.view_host" },
+  // { label: "Templates", href: "/monitoring/templates", requiredPermission: "monitoring.view_host" },
+  // { label: "Triggers", href: "/monitoring/triggers", requiredPermission: "monitoring.view_host" },
+  // { label: "Actions", href: "/monitoring/actions", requiredPermission: "monitoring.view_host" },
 ];
+
 
 export const monitoringSubmenuColumns: SubmenuColumn[] = [
   {
-    title: "Category One",
-    links: monitoringSubmenuLinks.slice(0, 6),
-  },
-  {
-    title: "Category Two",
-    links: monitoringSubmenuLinks.slice(6, 12),
-  },
-  {
-    title: "Category 3",
-    links: monitoringSubmenuLinks.slice(12),
+    title: "Monitoring",
+    links: monitoringSubmenuLinks,
   },
 ];
 

@@ -2,11 +2,13 @@
 
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
-import { Menu } from "lucide-react"
+import { Menu, ChevronsRight } from "lucide-react"
 import { NotificationBell } from "@/components/notifications/notification-bell"
+import { useSidebarOptional } from "@/contexts/sidebar-context"
 
 export function Topbar({ onMenuToggle }: { onMenuToggle: () => void }) {
   const { data: session } = useSession()
+  const sidebar = useSidebarOptional()
 
 
   const handleLogout = async () => {
@@ -21,7 +23,17 @@ export function Topbar({ onMenuToggle }: { onMenuToggle: () => void }) {
       <div className="mx-auto max-w-[1400px] px-4">
         <div className="flex items-center justify-between h-12 text-sm">
           <div className="flex items-center gap-2">
-            {/* Mobile hamburger menu */}
+            {sidebar?.isCollapsed && (
+              <button
+                type="button"
+                onClick={sidebar.toggleCollapsed}
+                className="hidden lg:flex p-2 hover:bg-white/10 rounded-md transition-colors"
+                aria-label="Expand sidebar"
+                title="Expand sidebar"
+              >
+                <ChevronsRight className="w-5 h-5" />
+              </button>
+            )}
             <button
               onClick={onMenuToggle}
               className="lg:hidden p-2 hover:bg-white/10 rounded-md transition-colors"

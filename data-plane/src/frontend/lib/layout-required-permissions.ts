@@ -8,15 +8,16 @@ export type AppLayoutKey =
   | "ipam"
   | "telecom-management"
   | "contracts"
-  | "notifications";
+  | "notifications"
+  | "monitoring";
 
 type Rule = {
   match: (pathname: string) => boolean;
   permission: string;
 };
 
-function resolveWithRules(pathname: string, rules: Rule[]): string | undefined {
-  for (const rule of rules) {
+function resolveWithRules(pathname: string, rules: Rule[] | undefined): string | undefined {
+  for (const rule of rules ?? []) {
     if (rule.match(pathname)) return rule.permission;
   }
   return undefined;
@@ -118,6 +119,21 @@ const contractsRules: Rule[] = [
   { match: (p) => p.startsWith("/contracts/edit/"), permission: "contracts.change_contract" },
 ];
 
+const monitoringRules: Rule[] = [
+  { match: (p) => p.startsWith("/monitoring/dashboard/widgets/add"), permission: "monitoring.add_host" },
+  { match: (p) => p.startsWith("/monitoring/hosts/add"), permission: "monitoring.add_host" },
+  {
+    match: (p) => p.includes("/monitoring/hosts/") && p.endsWith("/edit"),
+    permission: "monitoring.change_host",
+  },
+  { match: (p) => p.startsWith("/monitoring/host-groups"), permission: "monitoring.view_host" },
+  { match: (p) => p.startsWith("/monitoring/templates"), permission: "monitoring.view_host" },
+  { match: (p) => p.startsWith("/monitoring/triggers"), permission: "monitoring.view_host" },
+  { match: (p) => p.startsWith("/monitoring/problems"), permission: "monitoring.view_host" },
+  { match: (p) => p.startsWith("/monitoring/events"), permission: "monitoring.view_host" },
+  { match: (p) => p.startsWith("/monitoring/actions"), permission: "monitoring.view_host" },
+];
+
 export function getLayoutRequiredPermission(
   app: AppLayoutKey,
   pathname: string
@@ -130,6 +146,7 @@ export function getLayoutRequiredPermission(
     "telecom-management": telecomRules,
     contracts: contractsRules,
     notifications: [],
+    monitoring: monitoringRules,
   };
   return resolveWithRules(p, rulesByApp[app]) ?? getRequiredPermissionForPathname(p);
 }
