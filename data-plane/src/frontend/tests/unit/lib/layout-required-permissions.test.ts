@@ -47,4 +47,21 @@ describe("getLayoutRequiredPermission", () => {
       );
     });
   });
+
+  describe("monitoring", () => {
+    it("maps host add and edit", () => {
+      expect(getLayoutRequiredPermission("monitoring", "/monitoring/hosts/add")).toBe(
+        "monitoring.add_host"
+      );
+      expect(getLayoutRequiredPermission("monitoring", "/monitoring/hosts/5/edit")).toBe(
+        "monitoring.change_host"
+      );
+    });
+
+    it("falls back to route map for list routes", () => {
+      expect(getLayoutRequiredPermission("monitoring", "/monitoring/hosts")).toBe(
+        "monitoring.view_host"
+      );
+    });
+  });
 });

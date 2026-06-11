@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { monitoringSubmenuLinks } from "@/constants/navigation";
 
 /**
  * Primary IPAM Navigation Items
@@ -137,6 +138,7 @@ export function SectionalNavigation() {
   const isTelecomRoute = pathname.startsWith("/telecom-management");
   const isPhoneManagementRoute = pathname.startsWith("/phone-management");
   const isNotificationsRoute = pathname.startsWith("/notifications");
+  const isMonitoringRoute = pathname.startsWith("/monitoring");
   const isDashboardRoute = pathname.startsWith("/dashboard");
 
   // Show IPAM navigation when on IPAM routes
@@ -172,6 +174,11 @@ export function SectionalNavigation() {
   // Show Notifications navigation when on Notifications routes
   if (isNotificationsRoute) {
     return <NotificationsNavigation pathname={pathname} />;
+  }
+
+  // Show Monitoring navigation when on Monitoring routes
+  if (isMonitoringRoute) {
+    return <MonitoringNavigation pathname={pathname} />;
   }
 
   if (isDashboardRoute) {
@@ -423,6 +430,41 @@ function PhoneManagementNavigation({ pathname }: { pathname: string }) {
   return (
     <ul className="flex items-center gap-2 sm:gap-4 lg:gap-6 py-2 sm:py-3 text-xs sm:text-sm overflow-x-auto">
       {PHONE_MANAGEMENT_NAV_ITEMS.map((item) => {
+        const active = isActive(item.href);
+        return (
+          <li key={item.href} className="flex-shrink-0">
+            <Link
+              href={item.href}
+              className={cn(
+                "hover:underline whitespace-nowrap transition-colors",
+                active
+                  ? "text-primary font-semibold underline"
+                  : "text-secondary-foreground hover:text-foreground"
+              )}
+            >
+              {item.label}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/**
+ * Monitoring Navigation Component
+ */
+function MonitoringNavigation({ pathname }: { pathname: string }) {
+  const isActive = (href: string) => {
+    if (href === "/monitoring") {
+      return pathname === "/monitoring" || pathname === "/monitoring/";
+    }
+    return pathname === href || pathname.startsWith(href + "/");
+  };
+
+  return (
+    <ul className="flex items-center gap-4 sm:gap-6 lg:gap-8 py-2 sm:py-3 text-xs sm:text-sm overflow-x-auto">
+      {monitoringSubmenuLinks.map((item) => {
         const active = isActive(item.href);
         return (
           <li key={item.href} className="flex-shrink-0">
