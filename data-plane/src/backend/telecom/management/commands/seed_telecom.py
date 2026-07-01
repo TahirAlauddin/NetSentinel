@@ -4,9 +4,9 @@ Creates providers, services (business-facing), data circuits (technical), and ph
 Services and data circuits are distinct; circuits can be linked to a service.
 
 Usage:
-  python manage.py seed_telecom_data
-  python manage.py seed_telecom_data --providers 5 --circuits 20
-  python manage.py seed_telecom_data --clear
+  python manage.py seed_telecom
+  python manage.py seed_telecom --providers 5 --circuits 20
+  python manage.py seed_telecom --clear
 """
 
 import random
@@ -43,8 +43,7 @@ FAKE_SENTENCES = [
 
 
 class Command(BaseCommand):
-    help = "Seed dummy providers, services, data circuits, "
-    "and phone numbers for Telecom Expense Management"
+    help = "Seed dummy providers, services, data circuits, and phone numbers for Telecom Expense Management"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -251,7 +250,7 @@ class Command(BaseCommand):
         fiber_types = [c[0] for c in DataCircuit.FIBER_TYPE_CHOICES]
         connector_types = [c[0] for c in DataCircuit.CONNECTOR_TYPE_CHOICES]
         created = 0
-        for i in range(count):
+        for _ in range(count):
             provider = random.choice(providers)
             location = random.choice(locations) if locations else None
             service = random.choice(services) if services else None
@@ -301,7 +300,7 @@ class Command(BaseCommand):
             return 0
         created = 0
         area = 312
-        for i in range(count):
+        for _ in range(count):
             provider = random.choice(providers)
             service = random.choice(services) if services else None
             location = random.choice(locations) if locations else None
