@@ -24,24 +24,37 @@ async function processAssetFilesAndRelations(
   const relatedItems = Array.isArray(latestFormData.related_items)
     ? latestFormData.related_items
     : [];
+  const relatedItemIds = Array.from(
+    new Set(
+      relatedItems
+        .map((item) => (typeof item === "number" ? item : item?.id))
+        .filter((id): id is number => Number.isInteger(id) && id > 0)
+    )
+  );
   const attachments = Array.isArray(latestFormData.attachments)
     ? latestFormData.attachments
     : [];
   const images = Array.isArray(latestFormData.images) ? latestFormData.images : [];
+  const attachmentFiles = attachments.filter((att): att is File => att instanceof File);
+  const imageFiles = images.filter((img): img is File => img instanceof File);
 
-  const relResult = await setAssetRelations(savedAssetId, relatedItems as Asset[]);
+  const relResult = await setAssetRelations(savedAssetId, relatedItemIds);
   if (!relResult.success && relResult.error) {
     toast.error(`Failed to save related items: ${relResult.error}`);
   }
 
-  const attachResult = await uploadAssetAttachments(savedAssetId, attachments as Asset["attachments"]);
-  if (!attachResult.success && attachResult.error) {
-    toast.error(`Failed to upload attachments: ${attachResult.error}`);
+  if (attachmentFiles.length > 0) {
+    const attachResult = await uploadAssetAttachments(savedAssetId, attachmentFiles);
+    if (!attachResult.success && attachResult.error) {
+      toast.error(`Failed to upload attachments: ${attachResult.error}`);
+    }
   }
 
-  const imgResult = await uploadAssetImages(savedAssetId, images as Asset["images"]);
-  if (!imgResult.success && imgResult.error) {
-    toast.error(`Failed to upload images: ${imgResult.error}`);
+  if (imageFiles.length > 0) {
+    const imgResult = await uploadAssetImages(savedAssetId, imageFiles);
+    if (!imgResult.success && imgResult.error) {
+      toast.error(`Failed to upload images: ${imgResult.error}`);
+    }
   }
 }
 

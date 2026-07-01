@@ -408,7 +408,7 @@ export class AssetActions {
    */
   static async setRelations(
     assetId: number,
-    relatedItems: (number | { id: number })[]
+    relatedItems: number[]
   ): Promise<{ success: boolean; error?: string }> {
     if (!relatedItems || relatedItems.length === 0) {
       return { success: true };
@@ -421,9 +421,8 @@ export class AssetActions {
     }
 
     // Create relations one by one; backend will enforce duplicates
-    for (const item of relatedItems) {
-      const relatedId = typeof item === "number" ? item : item?.id;
-      if (!relatedId) {
+    for (const relatedId of relatedItems) {
+      if (!relatedId || !Number.isInteger(relatedId)) {
         continue;
       }
 
