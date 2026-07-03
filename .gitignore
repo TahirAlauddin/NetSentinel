@@ -24,3 +24,8 @@ node_modules
 
 # OpenAPI
 .openapi3.json
+
+# Virtual env
+venv/
+
+NetSentinel Resources/
