@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "phone_management",  # Phone management app (individual numbers and blocks)
     "notifications",  # Notification channels (Slack, Discord, etc.)
     "monitoring",  # Monitoring app (hosts, items, triggers, problems, etc.)
+    "remediation",  # Autonomous incident response agent (ReAct loop, remediation execution)
 ]
 
 MIDDLEWARE = [
@@ -342,6 +343,13 @@ EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False").lower() == "true"
 ZABBIX_URL = os.environ.get("ZABBIX_URL", "")
 ZABBIX_TOKEN = os.environ.get("ZABBIX_TOKEN", "")
 ZABBIX_SSL_VERIFY = os.environ.get("ZABBIX_SSL_VERIFY", "True").lower() == "true"
+
+# Incident response agent (remediation app)
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+AGENT_MODEL = os.environ.get("AGENT_MODEL", "claude-opus-4-8")
+AGENT_POLL_INTERVAL = int(os.environ.get("AGENT_POLL_INTERVAL", "30"))
+AGENT_DRY_RUN = os.environ.get("AGENT_DRY_RUN", "False").lower() == "true"
+AGENT_SERVICE_ACCOUNT_USERNAME = os.environ.get("AGENT_SERVICE_ACCOUNT_USERNAME", "")
 
 # Company profile shown in frontend Settings -> Overview
 COMPANY_PROFILE = {

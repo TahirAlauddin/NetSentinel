@@ -1,0 +1,132 @@
+"""
+Tests for the remediation app's DRF API — in particular the RBAC gate on
+RemediationAction.approve, since that's the one endpoint that can trigger a
+real Zabbix script execution.
+"""
+
+import pytest
+from django.contrib.auth.models import Group
+from rest_framework import status
+
+from remediation.models import Incident, RemediationAction
+from users.models import ExtendedGroup, PermissionBundle
+
+
+def _grant_execute_remediation(user):
+    """Attach the execute_remediation PermissionBundle (seeded by remediation's
+    post_migrate signal — see remediation/apps.py) to a fresh group and add the
+    user to it."""
+    bundle = PermissionBundle.objects.get(code="execute_remediation")
+    group = Group.objects.create(name=f"execute-remediation-{user.pk}")
+    ext = ExtendedGroup.objects.create(group=group)
+    ext.bundles.add(bundle)
+    user.groups.add(group)
+
+
+@pytest.fixture
+def incident(db):
+    return Incident.objects.create(
+        zabbix_event_id="1001",
+        zabbix_host_id="10084",
+        host_name="web-server",
+        trigger_name="High CPU load",
+        severity="High",
+        status="investigating",
+    )
+
+
+@pytest.fixture
+def awaiting_action(db, incident):
+    return RemediationAction.objects.create(
+        incident=incident,
+        zabbix_script_name="restart-nginx",
+        reasoning="CPU pegged by a runaway nginx worker.",
+        confidence="medium",
+        status="awaiting_approval",
+    )
+
+
+@pytest.mark.api
+@pytest.mark.django_db
+class TestIncidentViewSet:
+    def test_list_requires_authentication(self, api_client):
+        response = api_client.get("/api/v1/remediation/incidents/")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_list_authenticated(self, authenticated_api_client, incident):
+        response = authenticated_api_client.get("/api/v1/remediation/incidents/")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 1
+        assert response.data["results"][0]["host_name"] == "web-server"
+
+    def test_retrieve_includes_steps_and_actions(
+        self, authenticated_api_client, incident, awaiting_action
+    ):
+        response = authenticated_api_client.get(f"/api/v1/remediation/incidents/{incident.id}/")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["actions"][0]["zabbix_script_name"] == "restart-nginx"
+
+
+@pytest.mark.api
+@pytest.mark.django_db
+class TestRemediationActionApprove:
+    def test_approve_requires_authentication(self, api_client, awaiting_action):
+        response = api_client.post(f"/api/v1/remediation/actions/{awaiting_action.id}/approve/")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_approve_denied_without_bundle(self, authenticated_api_client, awaiting_action):
+        response = authenticated_api_client.post(
+            f"/api/v1/remediation/actions/{awaiting_action.id}/approve/"
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        awaiting_action.refresh_from_db()
+        assert awaiting_action.status == "awaiting_approval"
+
+    def test_approve_rejects_non_awaiting_action(
+        self, authenticated_api_client, user, awaiting_action
+    ):
+        _grant_execute_remediation(user)
+        awaiting_action.status = "executed"
+        awaiting_action.save(update_fields=["status"])
+
+        response = authenticated_api_client.post(
+            f"/api/v1/remediation/actions/{awaiting_action.id}/approve/"
+        )
+        assert response.status_code == status.HTTP_409_CONFLICT
+
+    def test_approve_executes_and_updates_status(
+        self, authenticated_api_client, user, awaiting_action, mocker
+    ):
+        _grant_execute_remediation(user)
+        mocker.patch(
+            "remediation.views.execute_remediation_script",
+            return_value={"ok": True, "raw": {"response": "success"}},
+        )
+
+        response = authenticated_api_client.post(
+            f"/api/v1/remediation/actions/{awaiting_action.id}/approve/"
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        awaiting_action.refresh_from_db()
+        assert awaiting_action.status == "executed"
+        assert awaiting_action.approved_by_id == user.id
+        assert awaiting_action.incident.status == "remediated"
+
+    def test_approve_marks_failed_when_execution_fails(
+        self, authenticated_api_client, user, awaiting_action, mocker
+    ):
+        _grant_execute_remediation(user)
+        mocker.patch(
+            "remediation.views.execute_remediation_script",
+            return_value={"ok": False, "error": "Zabbix is not configured."},
+        )
+
+        response = authenticated_api_client.post(
+            f"/api/v1/remediation/actions/{awaiting_action.id}/approve/"
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        awaiting_action.refresh_from_db()
+        assert awaiting_action.status == "failed"
+        assert awaiting_action.incident.status == "escalated"
