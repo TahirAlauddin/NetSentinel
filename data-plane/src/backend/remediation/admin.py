@@ -1,7 +1,14 @@
-from django.contrib import admin
+from __future__ import annotations
+
+from django.contrib import admin, messages
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render
+from django.urls import path, reverse
 from django.utils import timezone
+from django.utils.html import format_html
 
 from .models import AgentStep, Incident, RemediationAction, RemediationScriptPolicy, ZabbixHostLink
+from .services.agent_loop import ApprovalError, approve_and_execute
 
 
 @admin.register(RemediationScriptPolicy)
@@ -38,11 +45,36 @@ class AgentStepInline(admin.TabularInline):
     can_delete = False
 
 
+def _approve_button(obj: RemediationAction) -> str:
+    """Shared by the standalone RemediationActionAdmin list and the inline under
+    IncidentAdmin — a link to the GET confirmation page, never a direct-mutating
+    link (the actual approval only ever happens via that page's POST)."""
+    if obj.status != "awaiting_approval":
+        return "—"
+    url = reverse("admin:remediation_remediationaction_approve", args=[obj.pk])
+    return format_html('<a class="button" href="{}">Approve…</a>', url)
+
+
 class RemediationActionInline(admin.TabularInline):
     model = RemediationAction
     extra = 0
-    readonly_fields = ("zabbix_script_name", "confidence", "status", "dry_run", "created_at")
+    fields = (
+        "zabbix_script_name",
+        "confidence",
+        "status",
+        "dry_run",
+        "script_source",
+        "generated_script_command",
+        "guardrail_violations",
+        "created_at",
+        "approve_button",
+    )
+    readonly_fields = fields
     can_delete = False
+
+    @admin.display(description="Approve")
+    def approve_button(self, obj):
+        return _approve_button(obj)
 
 
 @admin.register(Incident)
@@ -60,3 +92,104 @@ class IncidentAdmin(admin.ModelAdmin):
     list_filter = ("status", "severity", "confidence")
     search_fields = ("host_name", "trigger_name", "zabbix_event_id")
     inlines = [AgentStepInline, RemediationActionInline]
+
+
+@admin.register(RemediationAction)
+class RemediationActionAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "incident",
+        "zabbix_script_name",
+        "script_source",
+        "confidence",
+        "status",
+        "created_at",
+        "approve_button",
+    )
+    list_filter = ("status", "script_source", "confidence", "dry_run")
+    search_fields = ("zabbix_script_name", "incident__host_name", "incident__trigger_name")
+    readonly_fields = (
+        "incident",
+        "zabbix_script_name",
+        "reasoning",
+        "confidence",
+        "script_source",
+        "generated_script_command",
+        "guardrail_violations",
+        "dry_run",
+        "approved_by",
+        "execution_result",
+        "created_at",
+        "executed_at",
+    )
+
+    def has_add_permission(self, request):
+        # Actions only ever come from the agent loop — never hand-created in admin.
+        return False
+
+    def get_urls(self):
+        custom = [
+            path(
+                "<int:pk>/approve/",
+                self.admin_site.admin_view(self.approve_view),
+                name="remediation_remediationaction_approve",
+            ),
+        ]
+        return custom + super().get_urls()
+
+    @admin.display(description="Approve")
+    def approve_button(self, obj):
+        return _approve_button(obj)
+
+    def approve_view(self, request, pk):
+        """
+        GET renders a confirmation page (see approve_confirmation.html) — never
+        mutates anything, so a stray link click or prefetch can't accidentally
+        trigger a real remediation. POST (from that page's form, CSRF-protected
+        like every other admin form) is the only path that actually calls
+        approve_and_execute.
+        """
+        remediation_action = get_object_or_404(RemediationAction, pk=pk)
+        change_url = reverse("admin:remediation_remediationaction_change", args=[pk])
+
+        if not request.user.has_perm("remediation.execute_remediationaction"):
+            self.message_user(
+                request,
+                "You don't have permission to execute remediation actions.",
+                level=messages.ERROR,
+            )
+            return HttpResponseRedirect(change_url)
+
+        if request.method == "POST":
+            try:
+                approve_and_execute(remediation_action, request.user)
+            except ApprovalError as exc:
+                self.message_user(request, exc.detail, level=messages.ERROR)
+            else:
+                remediation_action.refresh_from_db()
+                ok = remediation_action.status == "executed"
+                self.message_user(
+                    request,
+                    f"{remediation_action.zabbix_script_name}: "
+                    f"{remediation_action.get_status_display()}",
+                    level=messages.SUCCESS if ok else messages.WARNING,
+                )
+            return HttpResponseRedirect(change_url)
+
+        if remediation_action.status != "awaiting_approval":
+            self.message_user(
+                request,
+                f"Action is '{remediation_action.status}', not awaiting approval.",
+                level=messages.WARNING,
+            )
+            return HttpResponseRedirect(change_url)
+
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Approve remediation action",
+            "action": remediation_action,
+            "opts": self.model._meta,
+        }
+        return render(
+            request, "admin/remediation/remediationaction/approve_confirmation.html", context
+        )
