@@ -1,8 +1,10 @@
 """
-Tool functions for the incident response ReAct loop, decorated with @beta_tool
-(Anthropic Python SDK Tool Runner — see shared/tool-use-concepts.md). Each function
-is called automatically by client.beta.messages.tool_runner(); its return value
-(a string) is sent back to the model as the tool_result.
+Tool functions for the incident response ReAct loop, called manually from the
+function-calling loop in agent_loop.py (OpenAI's Chat Completions API has no
+auto-executing tool runner the way Anthropic's SDK does, so agent_loop.py
+dispatches each tool_call itself via TOOL_FUNCTIONS/TOOL_SCHEMAS below). Each
+function's return value (a string) is sent back to the model as the tool
+result.
 
 Reuses monitoring.zabbix_client.get_zabbix_client() (the shared lib/zabbix client)
 rather than a new hand-rolled RPC client — unlike testlab/agent/agent.py.
@@ -10,15 +12,17 @@ rather than a new hand-rolled RPC client — unlike testlab/agent/agent.py.
 
 from __future__ import annotations
 
+import logging
 import time
 
-from anthropic import beta_tool
 from django.db.models import Q
 
 from monitoring.zabbix_client import get_zabbix_client
 
 from ..models import RemediationScriptPolicy, ZabbixHostLink
 from . import context
+
+logger = logging.getLogger(__name__)
 
 SEVERITY_LABELS = {
     "0": "Not classified",
@@ -31,11 +35,11 @@ SEVERITY_LABELS = {
 
 
 def _log_result(tool_name: str, tool_input: dict, result: str) -> str:
+    logger.debug("tool=%s input=%s -> %s", tool_name, tool_input, result)
     context.log_step("tool_result", tool_name=tool_name, tool_input=tool_input, tool_output=result)
     return result
 
 
-@beta_tool
 def get_problem_detail(event_id: str) -> str:
     """Get full detail for the Zabbix problem that triggered this incident, including
     the trigger expression, host, and recent history for the underlying item.
@@ -96,7 +100,6 @@ def get_problem_detail(event_id: str) -> str:
         )
 
 
-@beta_tool
 def get_host_recent_problems(host_id: str, hours: int = 24) -> str:
     """List other problems on the same Zabbix host in the recent time window, to help
     spot correlated failures (e.g. disk full causing both a service crash and a
@@ -134,7 +137,6 @@ def get_host_recent_problems(host_id: str, hours: int = 24) -> str:
         return _log_result("get_host_recent_problems", tool_input, f"Error querying Zabbix: {exc}")
 
 
-@beta_tool
 def get_asset_context(zabbix_host_id: str) -> str:
     """Look up the NetSentinel asset/device linked to this Zabbix host (asset tag,
     location, department, device type, vendor/model), from the cached host↔asset
@@ -173,7 +175,6 @@ def get_asset_context(zabbix_host_id: str) -> str:
     return _log_result("get_asset_context", tool_input, "\n".join(lines))
 
 
-@beta_tool
 def search_past_incidents(query: str) -> str:
     """Search NetSentinel's history of incidents this agent has previously
     investigated and remediated, for guidance relevant to this problem (e.g. how a
@@ -210,11 +211,15 @@ def search_past_incidents(query: str) -> str:
     return _log_result("search_past_incidents", tool_input, "\n".join(results))
 
 
-@beta_tool
 def list_remediation_scripts(host_id: str) -> str:
     """List remediation scripts registered in Zabbix for this host, with each
-    script's risk classification from NetSentinel's policy registry. Only scripts
-    listed here are valid choices for propose_remediation.
+    script's risk classification from NetSentinel's policy registry.
+
+    If none of these fit the problem, you are not limited to this list: call
+    propose_remediation with a new script_name and a script_command to author
+    a remediation yourself. Authored commands are always held for human
+    approval (they cannot auto-execute, however confident you are), so prefer
+    a listed script when one genuinely applies.
 
     Args:
         host_id: The Zabbix host ID (hostid).
@@ -248,22 +253,241 @@ def list_remediation_scripts(host_id: str) -> str:
         return _log_result("list_remediation_scripts", tool_input, f"Error querying Zabbix: {exc}")
 
 
-@beta_tool
-def propose_remediation(script_name: str, reasoning: str, confidence: str) -> str:
+def propose_remediation(
+    script_name: str, reasoning: str, confidence: str, script_command: str = ""
+) -> str:
     """Finalize your diagnosis and remediation decision. Call this exactly once, as
     your last action, after you've gathered enough context to decide. Use
     script_name="none" if no remediation script is appropriate (e.g. this needs
     human judgment).
 
+    If no script from list_remediation_scripts fits the problem, you may author
+    one instead: give it a new, descriptive script_name and pass its shell
+    command in script_command. Authored scripts are scanned for destructive
+    patterns and ALWAYS require human approval before they touch anything —
+    never assume yours will auto-execute, regardless of confidence. Prefer a
+    listed script whenever one genuinely applies; only author a new one when
+    the existing scripts truly don't cover the situation. Keep authored
+    commands narrowly scoped to this one host and this one fix — no bulk
+    operations, no destructive filesystem/database/network commands, no
+    power-state changes.
+
     Args:
-        script_name: Exact name of the script to run (must be one from
-            list_remediation_scripts), or "none".
+        script_name: Exact name of an existing script (must be one from
+            list_remediation_scripts), a new descriptive name if you're
+            authoring one via script_command, or "none".
         reasoning: One or two sentences explaining the root-cause hypothesis and why
             this action (or no action) is appropriate.
         confidence: Your confidence in this decision — "high", "medium", or "low".
             Only use "high" when you're confident the root cause and fix are correct.
+        script_command: The shell command to run, only when script_name is not
+            one of the existing registered scripts. Leave empty when choosing
+            an existing script or when script_name="none".
     """
-    tool_input = {"script_name": script_name, "reasoning": reasoning, "confidence": confidence}
+    tool_input = {
+        "script_name": script_name,
+        "reasoning": reasoning,
+        "confidence": confidence,
+        "script_command": script_command,
+    }
+    if script_command:
+        logger.info(
+            "Agent authored a new remediation script '%s' (confidence=%s): %s",
+            script_name,
+            confidence,
+            script_command,
+        )
     return _log_result(
         "propose_remediation", tool_input, "Decision recorded. Investigation complete."
     )
+
+
+# ---------------------------------------------------------------------------
+# OpenAI function-calling wiring
+#
+# agent_loop.py drives the tool loop itself (OpenAI's Chat Completions API
+# doesn't auto-execute tools the way Anthropic's SDK tool_runner does): it
+# passes TOOL_SCHEMAS to the model, reads back tool_calls, and looks each one
+# up in TOOL_FUNCTIONS to invoke it with the model-supplied arguments.
+# ---------------------------------------------------------------------------
+
+TOOL_FUNCTIONS = {
+    "get_problem_detail": get_problem_detail,
+    "get_host_recent_problems": get_host_recent_problems,
+    "get_asset_context": get_asset_context,
+    "search_past_incidents": search_past_incidents,
+    "list_remediation_scripts": list_remediation_scripts,
+    "propose_remediation": propose_remediation,
+}
+
+TOOL_SCHEMAS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_problem_detail",
+            "description": (
+                "Get full detail for the Zabbix problem that triggered this incident, "
+                "including the trigger expression, host, and recent history for the "
+                "underlying item."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "event_id": {
+                        "type": "string",
+                        "description": "The Zabbix event ID (eventid) for this problem.",
+                    },
+                },
+                "required": ["event_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_host_recent_problems",
+            "description": (
+                "List other problems on the same Zabbix host in the recent time window, "
+                "to help spot correlated failures (e.g. disk full causing both a service "
+                "crash and a connectivity alert)."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "host_id": {"type": "string", "description": "The Zabbix host ID (hostid)."},
+                    "hours": {
+                        "type": "integer",
+                        "description": "How many hours back to look. Defaults to 24.",
+                    },
+                },
+                "required": ["host_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_asset_context",
+            "description": (
+                "Look up the NetSentinel asset/device linked to this Zabbix host (asset "
+                "tag, location, department, device type, vendor/model), from the cached "
+                "host↔asset correlation maintained by the sync_zabbix_host_links job."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "zabbix_host_id": {
+                        "type": "string",
+                        "description": "The Zabbix host ID (hostid).",
+                    },
+                },
+                "required": ["zabbix_host_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "search_past_incidents",
+            "description": (
+                "Search NetSentinel's history of incidents this agent has previously "
+                "investigated and remediated, for guidance relevant to this problem "
+                "(e.g. how a similar alert was resolved before)."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": (
+                            "Free-text search — trigger name, symptom, or host name "
+                            "works well."
+                        ),
+                    },
+                },
+                "required": ["query"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_remediation_scripts",
+            "description": (
+                "List remediation scripts registered in Zabbix for this host, with each "
+                "script's risk classification from NetSentinel's policy registry. If none "
+                "of these fit the problem, you are not limited to this list: call "
+                "propose_remediation with a new script_name and a script_command to "
+                "author a remediation yourself. Authored commands are always held for "
+                "human approval (they cannot auto-execute, however confident you are), "
+                "so prefer a listed script when one genuinely applies."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "host_id": {"type": "string", "description": "The Zabbix host ID (hostid)."},
+                },
+                "required": ["host_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "propose_remediation",
+            "description": (
+                "Finalize your diagnosis and remediation decision. Call this exactly "
+                "once, as your last action, after you've gathered enough context to "
+                "decide. Use script_name=\"none\" if no remediation script is "
+                "appropriate (e.g. this needs human judgment). If no script from "
+                "list_remediation_scripts fits the problem, you may author one instead: "
+                "give it a new, descriptive script_name and pass its shell command in "
+                "script_command. Authored scripts are scanned for destructive patterns "
+                "and ALWAYS require human approval before they touch anything — never "
+                "assume yours will auto-execute, regardless of confidence. Prefer a "
+                "listed script whenever one genuinely applies; only author a new one "
+                "when the existing scripts truly don't cover the situation. Keep "
+                "authored commands narrowly scoped to this one host and this one fix — "
+                "no bulk operations, no destructive filesystem/database/network "
+                "commands, no power-state changes."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "script_name": {
+                        "type": "string",
+                        "description": (
+                            "Exact name of an existing script (must be one from "
+                            "list_remediation_scripts), a new descriptive name if you're "
+                            "authoring one via script_command, or \"none\"."
+                        ),
+                    },
+                    "reasoning": {
+                        "type": "string",
+                        "description": (
+                            "One or two sentences explaining the root-cause hypothesis "
+                            "and why this action (or no action) is appropriate."
+                        ),
+                    },
+                    "confidence": {
+                        "type": "string",
+                        "enum": ["high", "medium", "low"],
+                        "description": (
+                            "Your confidence in this decision. Only use 'high' when "
+                            "you're confident the root cause and fix are correct."
+                        ),
+                    },
+                    "script_command": {
+                        "type": "string",
+                        "description": (
+                            "The shell command to run, only when script_name is not one "
+                            "of the existing registered scripts. Leave empty when "
+                            "choosing an existing script or when script_name='none'."
+                        ),
+                    },
+                },
+                "required": ["script_name", "reasoning", "confidence"],
+            },
+        },
+    },
+]
