@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from django.utils import timezone
+import logging
+
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -15,7 +16,9 @@ from .serializers import (
     RemediationActionSerializer,
     RemediationScriptPolicySerializer,
 )
-from .services.agent_loop import execute_remediation_script
+from .services.agent_loop import ApprovalError, approve_and_execute
+
+logger = logging.getLogger(__name__)
 
 
 class IncidentViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
@@ -51,26 +54,13 @@ class RemediationActionViewSet(
     @action(detail=True, methods=["post"], permission_classes=[CanExecuteRemediation])
     def approve(self, request, pk=None):
         remediation_action = self.get_object()
-        if remediation_action.status != "awaiting_approval":
-            return Response(
-                {"detail": f"Action is '{remediation_action.status}', not awaiting approval."},
-                status=status.HTTP_409_CONFLICT,
-            )
-
-        incident = remediation_action.incident
-        result = execute_remediation_script(
-            incident.zabbix_host_id, remediation_action.zabbix_script_name
-        )
-        remediation_action.status = "executed" if result.get("ok") else "failed"
-        remediation_action.execution_result = result
-        remediation_action.approved_by = request.user
-        remediation_action.executed_at = timezone.now()
-        remediation_action.save(
-            update_fields=["status", "execution_result", "approved_by", "executed_at"]
-        )
-
-        incident.status = "remediated" if result.get("ok") else "escalated"
-        incident.save(update_fields=["status", "updated_at"])
+        try:
+            approve_and_execute(remediation_action, request.user)
+        except ApprovalError as exc:
+            payload = {"detail": exc.detail}
+            if exc.violations:
+                payload["violations"] = exc.violations
+            return Response(payload, status=status.HTTP_409_CONFLICT)
 
         serializer = self.get_serializer(remediation_action)
         return Response(serializer.data)

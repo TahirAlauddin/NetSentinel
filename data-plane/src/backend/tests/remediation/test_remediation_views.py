@@ -46,6 +46,19 @@ def awaiting_action(db, incident):
     )
 
 
+@pytest.fixture
+def awaiting_generated_action(db, incident):
+    return RemediationAction.objects.create(
+        incident=incident,
+        zabbix_script_name="web-clear-stale-sessions",
+        reasoning="No registered script clears the session cache; wrote a scoped one.",
+        confidence="medium",
+        status="awaiting_approval",
+        script_source="generated",
+        generated_script_command="docker exec host-web-server rm -f /tmp/sessions/*.lock",
+    )
+
+
 @pytest.mark.api
 @pytest.mark.django_db
 class TestIncidentViewSet:
@@ -99,7 +112,7 @@ class TestRemediationActionApprove:
     ):
         _grant_execute_remediation(user)
         mocker.patch(
-            "remediation.views.execute_remediation_script",
+            "remediation.services.agent_loop.execute_remediation_script",
             return_value={"ok": True, "raw": {"response": "success"}},
         )
 
@@ -118,7 +131,7 @@ class TestRemediationActionApprove:
     ):
         _grant_execute_remediation(user)
         mocker.patch(
-            "remediation.views.execute_remediation_script",
+            "remediation.services.agent_loop.execute_remediation_script",
             return_value={"ok": False, "error": "Zabbix is not configured."},
         )
 
@@ -130,3 +143,54 @@ class TestRemediationActionApprove:
         awaiting_action.refresh_from_db()
         assert awaiting_action.status == "failed"
         assert awaiting_action.incident.status == "escalated"
+
+
+@pytest.mark.api
+@pytest.mark.django_db
+class TestRemediationActionApproveGenerated:
+    """Approving an agent-authored (script_source='generated') action must go
+    through execute_generated_remediation_script, not the registered-script path,
+    and must never bypass a guardrail block."""
+
+    def test_approve_executes_generated_script(
+        self, authenticated_api_client, user, awaiting_generated_action, mocker
+    ):
+        _grant_execute_remediation(user)
+        mock_exec = mocker.patch(
+            "remediation.services.agent_loop.execute_generated_remediation_script",
+            return_value={"ok": True, "raw": {"response": "success"}, "scriptid": "999"},
+        )
+        mock_registered = mocker.patch(
+            "remediation.services.agent_loop.execute_remediation_script"
+        )
+
+        response = authenticated_api_client.post(
+            f"/api/v1/remediation/actions/{awaiting_generated_action.id}/approve/"
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_exec.assert_called_once_with(awaiting_generated_action)
+        mock_registered.assert_not_called()
+        awaiting_generated_action.refresh_from_db()
+        assert awaiting_generated_action.status == "executed"
+        assert awaiting_generated_action.approved_by_id == user.id
+        assert awaiting_generated_action.incident.status == "remediated"
+
+    def test_approve_refuses_when_guardrails_flagged(
+        self, authenticated_api_client, user, awaiting_generated_action, mocker
+    ):
+        _grant_execute_remediation(user)
+        awaiting_generated_action.guardrail_violations = ["host power-state change"]
+        awaiting_generated_action.save(update_fields=["guardrail_violations"])
+        mock_exec = mocker.patch(
+            "remediation.services.agent_loop.execute_generated_remediation_script"
+        )
+
+        response = authenticated_api_client.post(
+            f"/api/v1/remediation/actions/{awaiting_generated_action.id}/approve/"
+        )
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        mock_exec.assert_not_called()
+        awaiting_generated_action.refresh_from_db()
+        assert awaiting_generated_action.status == "awaiting_approval"

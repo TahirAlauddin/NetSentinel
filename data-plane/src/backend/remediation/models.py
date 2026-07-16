@@ -180,12 +180,34 @@ class RemediationAction(models.Model):
     ]
     CONFIDENCE_CHOICES = Incident.CONFIDENCE_CHOICES
 
+    SCRIPT_SOURCE_CHOICES = [
+        ("registered", "Registered in Zabbix"),
+        ("generated", "Authored by the agent"),
+    ]
+
     incident = models.ForeignKey(Incident, on_delete=models.CASCADE, related_name="actions")
     zabbix_script_name = models.CharField(max_length=255, blank=True, null=True)
     reasoning = models.TextField(blank=True)
     confidence = models.CharField(max_length=10, choices=CONFIDENCE_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="proposed")
     dry_run = models.BooleanField(default=False)
+    script_source = models.CharField(
+        max_length=10,
+        choices=SCRIPT_SOURCE_CHOICES,
+        default="registered",
+        help_text="Whether this ran a pre-registered Zabbix script or one the agent wrote itself.",
+    )
+    generated_script_command = models.TextField(
+        blank=True,
+        help_text="Command text the agent authored, when no registered script fit. Empty for "
+        "script_source='registered'.",
+    )
+    guardrail_violations = models.JSONField(
+        blank=True,
+        null=True,
+        help_text="Static guardrail findings against generated_script_command. Empty/null means "
+        "it passed the scan — approval is still required regardless.",
+    )
     approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
