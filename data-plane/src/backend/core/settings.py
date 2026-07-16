@@ -53,7 +53,6 @@ for host in docker_hosts:
 
 ALLOWED_HOSTS = allowed_hosts_list
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -345,11 +344,39 @@ ZABBIX_TOKEN = os.environ.get("ZABBIX_TOKEN", "")
 ZABBIX_SSL_VERIFY = os.environ.get("ZABBIX_SSL_VERIFY", "True").lower() == "true"
 
 # Incident response agent (remediation app)
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-AGENT_MODEL = os.environ.get("AGENT_MODEL", "claude-opus-4-8")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+AGENT_MODEL = os.environ.get("AGENT_MODEL", "gpt-4o")
 AGENT_POLL_INTERVAL = int(os.environ.get("AGENT_POLL_INTERVAL", "30"))
 AGENT_DRY_RUN = os.environ.get("AGENT_DRY_RUN", "False").lower() == "true"
 AGENT_SERVICE_ACCOUNT_USERNAME = os.environ.get("AGENT_SERVICE_ACCOUNT_USERNAME", "")
+
+# Verbose by default: every tool call/result, guardrail verdict, and remediation
+# decision the agent makes is worth being able to see without a debugger attached.
+# Override with AGENT_LOG_LEVEL=WARNING etc. to quiet it down.
+AGENT_LOG_LEVEL = os.environ.get("AGENT_LOG_LEVEL", "INFO").upper()
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "remediation": {
+            "format": "%(asctime)s %(levelname)s %(name)s: %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+    },
+    "handlers": {
+        "remediation_console": {
+            "class": "logging.StreamHandler",
+            "formatter": "remediation",
+        },
+    },
+    "loggers": {
+        "remediation": {
+            "handlers": ["remediation_console"],
+            "level": AGENT_LOG_LEVEL,
+            "propagate": False,
+        },
+    },
+}
 
 # Company profile shown in frontend Settings -> Overview
 COMPANY_PROFILE = {
