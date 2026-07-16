@@ -18,8 +18,17 @@ _step_counter: "contextvars.ContextVar" = contextvars.ContextVar("remediation_st
 
 
 def start_incident_context(incident) -> None:
+    """
+    Resumes the step counter from this incident's existing AgentStep history
+    (0 if it has none yet) rather than always starting at 0 — required for
+    force-retrying an incident that already has steps, since (incident,
+    step_number) is a unique constraint.
+    """
+    from .. import models  # local import to avoid a module-load-time app-registry dependency
+
     _current_incident.set(incident)
-    _step_counter.set([0])
+    last_step = models.AgentStep.objects.filter(incident=incident).order_by("-step_number").first()
+    _step_counter.set([last_step.step_number if last_step else 0])
 
 
 def log_step(

@@ -1,27 +1,33 @@
 """
-Anthropic client factory for the incident response agent.
+OpenAI client factory for the incident response agent.
 
-Uses the official `anthropic` SDK (not raw HTTP / OpenAI, unlike the testlab
-prototype at testlab/agent/agent.py). Model defaults to Claude Opus 4.8 — this is a
-background/service workload, not an interactive chat UI, so AGENT_MODEL can be
-overridden (e.g. to a cheaper Sonnet-tier model) via settings/env if cost matters
-more than best-available reasoning; the default should not be silently downgraded.
+Uses the official `openai` SDK's Chat Completions API with manual function
+calling — unlike the testlab prototype at testlab/agent/agent.py (a single
+one-shot completion with response_format=json_object), this agent runs a
+multi-turn tool loop (see agent_loop.py), so it drives chat.completions.create
+directly rather than a higher-level single-response helper.
+
+Model defaults to a full-tier model, not the cheap "-mini" variant the testlab
+prototype uses for cost — this is a background/service workload making real
+remediation decisions, so AGENT_MODEL can be overridden via settings/env if
+cost matters more than best-available reasoning, but the default should not be
+silently downgraded.
 """
 
 from __future__ import annotations
 
-import anthropic
+import openai
 from django.conf import settings
 
 
-def get_client() -> anthropic.Anthropic:
+def get_client() -> openai.OpenAI:
     """
-    Build an Anthropic client. Reads ANTHROPIC_API_KEY from settings, which mirrors
+    Build an OpenAI client. Reads OPENAI_API_KEY from settings, which mirrors
     the SDK's own environment-variable resolution — no custom auth handling here.
     """
-    api_key = getattr(settings, "ANTHROPIC_API_KEY", "") or None
-    return anthropic.Anthropic(api_key=api_key) if api_key else anthropic.Anthropic()
+    api_key = getattr(settings, "OPENAI_API_KEY", "") or None
+    return openai.OpenAI(api_key=api_key) if api_key else openai.OpenAI()
 
 
 def get_model() -> str:
-    return getattr(settings, "AGENT_MODEL", "claude-opus-4-8")
+    return getattr(settings, "AGENT_MODEL", "gpt-4o")
