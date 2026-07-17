@@ -1,0 +1,17 @@
+[Unit]
+Description=nginx web server (testlab)
+After=network.target
+
+[Service]
+Type=forking
+PIDFile=/run/nginx.pid
+ExecStartPre=/usr/sbin/nginx -t -q
+ExecStart=/usr/sbin/nginx
+ExecReload=/usr/sbin/nginx -s reload
+ExecStop=/usr/sbin/nginx -s quit
+# No auto-restart: a stopped/killed nginx must stay down until the
+# remediation agent (or a human) explicitly restarts it.
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

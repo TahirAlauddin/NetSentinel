@@ -1,0 +1,17 @@
+[Unit]
+Description=Redis in-memory data store (testlab)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/redis-server /etc/redis/redis.conf
+User=redis
+Group=redis
+RuntimeDirectory=redis
+RuntimeDirectoryMode=2755
+# No auto-restart: a stopped/killed redis must stay down until the
+# remediation agent (or a human) explicitly restarts it.
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
