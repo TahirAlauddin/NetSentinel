@@ -5,7 +5,7 @@
 # Spins up a Zabbix monitoring stack + 5 simulated "hosts" (Docker containers).
 # Fault injection: ./scripts/inject.sh <fault>
 # AI agent       : cd agent && python agent.py
-# Zabbix UI      : http://localhost:8090  (admin / zabbix)
+# Zabbix UI      : http://localhost:8080  (admin / zabbix)
 
 services:
 
@@ -50,67 +50,55 @@ services:
       ZBX_SERVER_HOST: zabbix-server
       PHP_TZ: Asia/Karachi
     ports:
-      - "8090:8080"
+      - "8080:8080"
     depends_on: [zabbix-server]
     networks: [monitoring]
     restart: unless-stopped
 
   # ── Host 1: web-server ──────────────────────────────────────────────────────
-  # nginx serving a static page.
+  # nginx serving a static page, with the Zabbix agent co-located as a second
+  # systemd service in the SAME container/OS instance (real host semantics —
+  # see hosts/web-server/Dockerfile) so `systemctl restart nginx` runs
+  # directly, no docker exec needed.
   # Faults: web-down, web-disk-full
 
   web-server:
-    image: nginx:alpine
+    build: ./hosts/web-server
     container_name: host-web-server
+    privileged: true  # required to run systemd as PID 1 inside the container
+    tmpfs:
+      - /run
+      - /run/lock
     volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
       - ./hosts/web-server/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./hosts/web-server/html:/usr/share/nginx/html:ro
-      - web-logs:/var/log/nginx
-    ports:
-      - "8080:80"
+    stop_signal: SIGRTMIN+3
     networks: [hosts]
     restart: unless-stopped
-
-  zabbix-agent-web:
-    image: zabbix/zabbix-agent2:alpine-7.4-latest
-    container_name: agent-web-server
-    hostname: agent-web-server
-    environment:
-      ZBX_HOSTNAME: web-server
-      ZBX_SERVER_HOST: zabbix-server
-      ZBX_PASSIVE_ALLOW: "true"
-    volumes:
-      - web-logs:/var/log/nginx:ro
-      - ./hosts/web-server/zabbix_agent.conf:/etc/zabbix/zabbix_agent2.conf:ro
-    pid: "service:web-server"
-    networks: [hosts]
-    depends_on: [web-server, zabbix-server]
-    restart: unless-stopped
+    depends_on: [zabbix-server]
 
   # ── Host 2: app-server ──────────────────────────────────────────────────────
-  # FastAPI app with leak / CPU-spike / crash endpoints.
+  # FastAPI app with leak / CPU-spike / crash endpoints, Zabbix agent
+  # co-located the same way as web-server above.
   # Faults: app-memory-leak, app-cpu-spike, app-crash-loop
 
   app-server:
     build: ./hosts/app-server
     container_name: host-app-server
+    privileged: true
+    tmpfs:
+      - /run
+      - /run/lock
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    stop_signal: SIGRTMIN+3
     ports:
-      - "8000:8000"
+      - "80:8000"
     networks: [hosts]
     mem_limit: 512m
     restart: unless-stopped
-
-  zabbix-agent-app:
-    image: zabbix/zabbix-agent2:alpine-7.4-latest
-    container_name: agent-app-server
-    hostname: agent-app-server
-    environment:
-      ZBX_HOSTNAME: app-server
-      ZBX_SERVER_HOST: zabbix-server
-    pid: "service:app-server"
-    networks: [hosts]
-    depends_on: [app-server, zabbix-server]
-    restart: unless-stopped
+    depends_on: [zabbix-server]
 
   # ── Host 3: db-server ───────────────────────────────────────────────────────
   # PostgreSQL with a low connection limit.
@@ -145,51 +133,41 @@ services:
     restart: unless-stopped
 
   # ── Host 4: cache-server ────────────────────────────────────────────────────
-  # Redis with a very low maxmemory.
+  # Redis with a very low maxmemory, Zabbix agent co-located the same way as
+  # web-server above.
   # Faults: cache-eviction-storm, cache-down
 
   cache-server:
-    image: redis:7-alpine
+    build: ./hosts/cache-server
     container_name: host-cache-server
-    command: redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru --loglevel verbose
+    privileged: true
+    tmpfs:
+      - /run
+      - /run/lock
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    stop_signal: SIGRTMIN+3
     networks: [hosts]
     restart: unless-stopped
-
-  zabbix-agent-cache:
-    image: zabbix/zabbix-agent2:alpine-7.4-latest
-    container_name: agent-cache-server
-    hostname: agent-cache-server
-    environment:
-      ZBX_HOSTNAME: cache-server
-      ZBX_SERVER_HOST: zabbix-server
-    pid: "service:cache-server"
-    networks: [hosts]
-    depends_on: [cache-server, zabbix-server]
-    restart: unless-stopped
+    depends_on: [zabbix-server]
 
   # ── Host 5: worker-server ───────────────────────────────────────────────────
-  # Celery worker backed by Redis.
+  # Celery worker backed by Redis, Zabbix agent co-located the same way as
+  # web-server above.
   # Faults: worker-queue-backup
 
   worker-server:
     build: ./hosts/worker-server
     container_name: host-worker-server
-    environment:
-      REDIS_URL: redis://cache-server:6379/0
-    depends_on: [cache-server]
+    privileged: true
+    tmpfs:
+      - /run
+      - /run/lock
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    stop_signal: SIGRTMIN+3
+    depends_on: [cache-server, zabbix-server]
     networks: [hosts]
-    restart: unless-stopped
-
-  zabbix-agent-worker:
-    image: zabbix/zabbix-agent2:alpine-7.4-latest
-    container_name: agent-worker-server
-    hostname: agent-worker-server
-    environment:
-      ZBX_HOSTNAME: worker-server
-      ZBX_SERVER_HOST: zabbix-server
-    pid: "service:worker-server"
-    networks: [hosts]
-    depends_on: [worker-server, zabbix-server]
     restart: unless-stopped
 
 networks:
@@ -198,5 +176,4 @@ networks:
 
 volumes:
   zabbix-db-data:
-  web-logs:
   db-data:

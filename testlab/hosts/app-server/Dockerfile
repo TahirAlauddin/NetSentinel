@@ -1,5 +1,40 @@
-FROM python:3.12-slim
+# Debian + real systemd as PID 1, so this container behaves like an actual
+# Linux host: uvicorn runs as a systemd-managed service (uvicorn.service),
+# and the Zabbix agent (also systemd-managed) lives in the SAME OS instance,
+# so it can call `systemctl restart uvicorn` directly — no docker exec, no
+# separate agent container. See ../../docker-compose.yml for the
+# privileged/cgroup config systemd-in-Docker requires.
+FROM debian:12-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        systemd systemd-sysv python3 python3-venv curl gnupg ca-certificates \
+    && curl -fsSL -o /tmp/zabbix-release.deb \
+        https://repo.zabbix.com/zabbix/7.4/release/debian/pool/main/z/zabbix-release/zabbix-release_latest_7.4+debian12_all.deb \
+    && dpkg -i /tmp/zabbix-release.deb \
+    && apt-get update && apt-get install -y --no-install-recommends zabbix-agent2 \
+    && apt-get purge -y curl gnupg && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/* /tmp/zabbix-release.deb \
+    && systemctl mask systemd-udevd.service systemd-udevd-kernel.socket \
+        systemd-udevd-control.socket getty.target systemd-remount-fs.service \
+        dev-hugepages.mount sys-fs-fuse-connections.mount systemd-random-seed.service \
+        systemd-journal-flush.service \
+    && mkdir -p /etc/systemd/system/zabbix-agent2.service.d \
+    && printf '[Service]\nUser=root\nGroup=root\n' \
+        > /etc/systemd/system/zabbix-agent2.service.d/override.conf
+    # zabbix-agent2's packaged unit runs as the unprivileged "zabbix" user, which
+    # can't get polkit authorization to call systemctl on system units (no
+    # dbus/policykit installed here) — remediation commands need root to reach
+    # systemd's private socket directly. Test environment only.
+
 WORKDIR /app
-RUN pip install --no-cache-dir fastapi uvicorn
+RUN python3 -m venv /app/venv && /app/venv/bin/pip install --no-cache-dir fastapi uvicorn
 COPY main.py .
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+
+COPY uvicorn.service /etc/systemd/system/uvicorn.service
+COPY zabbix_agent.conf /etc/zabbix/zabbix_agent2.conf
+RUN systemctl enable uvicorn.service zabbix-agent2.service
+
+STOPSIGNAL SIGRTMIN+3
+CMD ["/lib/systemd/systemd"]
