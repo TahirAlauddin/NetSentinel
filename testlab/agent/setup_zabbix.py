@@ -419,6 +419,25 @@ def main() -> None:
         priority=4,  # High
     )
 
+    # evicted_keys (from `redis-cli INFO stats`) is a lifetime counter, not a
+    # point-in-time gauge, so a last()-above-threshold trigger would fire once
+    # during a storm and then never clear on its own. change() instead compares
+    # consecutive polls, giving a proxy for eviction *rate* — which is exactly
+    # what the cache-flush remediation script's description ("Redis eviction
+    # rate is very high") and the cache-eviction-storm fault (scripts/inject.sh)
+    # already assume exists.
+    ensure_item(
+        session, token, "cache-server", cache_hostid, cache_interfaceid,
+        key="system.run[/usr/local/bin/check_evictions.sh]",
+        name="cache-server redis evicted keys (cumulative)",
+    )
+    ensure_trigger(
+        session, token,
+        description="cache-server redis eviction rate high",
+        expression="change(/cache-server/system.run[/usr/local/bin/check_evictions.sh])>50",
+        priority=3,  # Average
+    )
+
     print("\n── Done ─────────────────────────────────────────")
     print("Script IDs (save these or let agent.py discover them at startup):")
     for name, sid in script_ids.items():

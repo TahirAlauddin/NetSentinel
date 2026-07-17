@@ -28,6 +28,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY redis.conf /etc/redis/redis.conf
 COPY redis-server.service /etc/systemd/system/redis-server.service
 COPY zabbix_agent.conf /etc/zabbix/zabbix_agent2.conf
+COPY check_evictions.sh /usr/local/bin/check_evictions.sh
+RUN chmod +x /usr/local/bin/check_evictions.sh
 RUN systemctl enable redis-server.service zabbix-agent2.service
 
 STOPSIGNAL SIGRTMIN+3
