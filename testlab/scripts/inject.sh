@@ -16,10 +16,10 @@ case $FAULT in
   # ── web-server ──────────────────────────────────────────────────────────────
 
   web-down)
-    echo "[FAULT] Stopping nginx → triggers 'web-server process down' alert"
-    docker stop host-web-server
+    echo "[FAULT] Stopping the nginx process (container stays up) → triggers 'web-server process down' alert"
+    docker exec host-web-server nginx -s stop
     echo "  Expected AI action : web-restart-nginx"
-    echo "  Manual resolve     : docker start host-web-server"
+    echo "  Manual resolve     : docker exec host-web-server nginx"
     ;;
 
   web-disk-full)
@@ -39,21 +39,21 @@ case $FAULT in
     done
     wait
     echo "  Expected AI action : app-restart"
-    echo "  Manual resolve     : docker restart host-app-server"
+    echo "  Manual resolve     : docker exec host-app-server systemctl restart uvicorn"
     ;;
 
   app-cpu-spike)
     echo "[FAULT] CPU spike on app-server for 120s → triggers 'CPU >90%' alert"
     curl -sf "http://localhost:8000/cpu-spike?seconds=120" &
     echo "  Expected AI action : app-restart"
-    echo "  Manual resolve     : docker restart host-app-server"
+    echo "  Manual resolve     : docker exec host-app-server systemctl restart uvicorn"
     ;;
 
   app-crash-loop)
-    echo "[FAULT] Killing app-server container → triggers 'process down' alert"
-    docker kill host-app-server
+    echo "[FAULT] Stopping the uvicorn service (container stays up) → triggers 'process down' alert"
+    docker exec host-app-server systemctl stop uvicorn
     echo "  Expected AI action : app-restart"
-    echo "  Manual resolve     : docker start host-app-server"
+    echo "  Manual resolve     : docker exec host-app-server systemctl start uvicorn"
     ;;
 
   # ── db-server ───────────────────────────────────────────────────────────────
@@ -89,10 +89,12 @@ case $FAULT in
     ;;
 
   cache-down)
-    echo "[FAULT] Stopping Redis → triggers cache-server unreachable + worker queue backup"
-    docker stop host-cache-server
+    echo "[FAULT] Stopping the redis-server process (container stays up) → triggers cache-server process-down + worker queue backup"
+    # SHUTDOWN closes the connection without replying, so redis-cli can exit
+    # non-zero even on success — don't let `set -e` treat that as a failure.
+    docker exec host-cache-server redis-cli SHUTDOWN NOSAVE || true
     echo "  Expected AI action : cache-restart"
-    echo "  Manual resolve     : docker start host-cache-server"
+    echo "  Manual resolve     : docker exec host-cache-server systemctl start redis-server"
     ;;
 
   # ── worker-server ────────────────────────────────────────────────────────────
@@ -104,7 +106,7 @@ case $FAULT in
       curl -sf "http://localhost:8000/slow?delay=30" &
     done
     echo "  Expected AI action : worker-restart"
-    echo "  Manual resolve     : docker restart host-worker-server"
+    echo "  Manual resolve     : docker exec host-worker-server systemctl restart celery-worker"
     ;;
 
   # ── help ─────────────────────────────────────────────────────────────────────

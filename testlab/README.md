@@ -85,16 +85,18 @@ Watch the agent terminal — within the next poll interval it will detect the al
 
 | Command | Host | What it does | Expected AI action |
 |---|---|---|---|
-| `web-down` | web-server | Stop nginx | `web-restart-nginx` |
+| `web-down` | web-server | Stop the nginx process (container stays up) | `web-restart-nginx` |
 | `web-disk-full` | web-server | Fill log disk with 400 MB | `web-clear-disk` |
 | `app-memory-leak` | app-server | Leak 400 MB of RAM | `app-restart` |
 | `app-cpu-spike` | app-server | Peg all CPUs for 120 s | `app-restart` |
-| `app-crash-loop` | app-server | Kill app-server container | `app-restart` |
+| `app-crash-loop` | app-server | Kill the uvicorn process (container stays up) | `app-restart` |
 | `db-connection-exhaustion` | db-server | Open 17 idle connections | `db-kill-idle-connections` |
 | `db-long-query` | db-server | Run a 60-second query | `db-cancel-long-queries` |
 | `cache-eviction-storm` | cache-server | Flood Redis past maxmemory | `cache-flush` |
-| `cache-down` | cache-server | Stop Redis | `cache-restart` |
+| `cache-down` | cache-server | Stop the redis-server process (container stays up) | `cache-restart` |
 | `worker-queue-backup` | worker-server | Flood task queue | `worker-restart` |
+
+Each simulated host's container is meant to model a real physical machine: it must stay running no matter what, the same way a real host survives one of its services crashing. `web-down`, `app-crash-loop`, and `cache-down` stop only the service *process* inside the container (see each host's `entrypoint.sh`, which backgrounds the real service under a `tail -f /dev/null` PID 1) — never the container itself. That matters because each host's Zabbix agent runs in its own sidecar container sharing that host's PID namespace (`pid: service:<name>` in docker-compose.yml); stopping the whole container would take the agent down with it, which isn't how a real host/agent relationship behaves and would mask what the AI agent is actually being tested on.
 
 ---
 
@@ -107,14 +109,22 @@ testlab/
 │
 ├── hosts/                      One folder per simulated host
 │   ├── web-server/
+│   │   ├── Dockerfile
+│   │   ├── entrypoint.sh       Backgrounds nginx, keeps container up if it dies
 │   │   ├── nginx.conf
 │   │   ├── html/index.html
 │   │   └── zabbix_agent.conf
 │   ├── app-server/
 │   │   ├── Dockerfile
+│   │   ├── entrypoint.sh       Backgrounds uvicorn, keeps container up if it dies
+│   │   ├── start-app.sh / stop-app.sh
 │   │   └── main.py             FastAPI with leak/cpu/crash endpoints
 │   ├── db-server/
 │   │   └── init.sql
+│   ├── cache-server/
+│   │   ├── Dockerfile
+│   │   ├── entrypoint.sh       Backgrounds redis-server, keeps container up if it dies
+│   │   └── start-redis.sh
 │   └── worker-server/
 │       ├── Dockerfile
 │       └── worker.py           Celery worker

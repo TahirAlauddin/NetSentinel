@@ -44,13 +44,18 @@ ENDPOINT = f"{ZABBIX_URL}/api_jsonrpc.php"
 # Template that ships with Zabbix and covers Linux metrics
 LINUX_TEMPLATE_NAME = "Linux by Zabbix agent"
 
-# Hosts to register — name must match ZBX_HOSTNAME env var in docker-compose
+# Hosts to register — name must match Hostname= in each host's
+# zabbix_agent.conf (or ZBX_HOSTNAME env var for db-server's separate agent
+# container). web/app/cache/worker-server run their Zabbix agent co-located
+# in the same container as the service itself (see their Dockerfiles), so
+# their agent_dns is just the host's own compose service name; db-server
+# still has a separate sidecar agent container.
 HOSTS = [
-    {"name": "web-server",    "agent_dns": "agent-web-server"},
-    {"name": "app-server",    "agent_dns": "agent-app-server"},
+    {"name": "web-server",    "agent_dns": "web-server"},
+    {"name": "app-server",    "agent_dns": "app-server"},
     {"name": "db-server",     "agent_dns": "agent-db-server"},
-    {"name": "cache-server",  "agent_dns": "agent-cache-server"},
-    {"name": "worker-server", "agent_dns": "agent-worker-server"},
+    {"name": "cache-server",  "agent_dns": "cache-server"},
+    {"name": "worker-server", "agent_dns": "worker-server"},
 ]
 
 _id = 0
@@ -118,10 +123,27 @@ def get_template_id(session: requests.Session, token: str, name: str) -> str | N
 
 
 def ensure_host(session: requests.Session, token: str, host: dict, groupid: str, templateid: str | None) -> str:
-    existing = _rpc(session, "host.get", {"filter": {"host": [host["name"]]}, "output": ["hostid"]}, token)
+    """Create the host if it doesn't exist yet, or fix its agent interface DNS if
+    it's drifted from *host* (e.g. re-running this after moving the Zabbix agent
+    into the host's own container must actually repoint it, not leave it stuck
+    pointing at a now-gone sidecar agent container)."""
+    existing = _rpc(
+        session, "host.get",
+        {"filter": {"host": [host["name"]]}, "output": ["hostid"], "selectInterfaces": ["interfaceid", "dns"]},
+        token,
+    )
     if existing:
         hid = existing[0]["hostid"]
-        print(f"  · Host '{host['name']}' already exists (id={hid})")
+        interfaces = existing[0].get("interfaces") or []
+        current_dns = interfaces[0].get("dns") if interfaces else None
+        if interfaces and current_dns != host["agent_dns"]:
+            _rpc(
+                session, "hostinterface.update",
+                {"interfaceid": interfaces[0]["interfaceid"], "dns": host["agent_dns"]}, token,
+            )
+            print(f"  ↻ Updated host '{host['name']}' interface DNS: {current_dns!r} → {host['agent_dns']!r} (id={hid})")
+        else:
+            print(f"  · Host '{host['name']}' already exists (id={hid})")
         return hid
 
     params: dict = {
@@ -148,16 +170,24 @@ def ensure_host(session: requests.Session, token: str, host: dict, groupid: str,
 
 
 def ensure_script(session: requests.Session, token: str, script: dict) -> str:
-    """Create a Zabbix Script if it doesn't exist yet, or update it if the command changed."""
+    """Create a Zabbix Script if it doesn't exist yet, or update it if the command
+    or execute_on changed — re-running this after editing playbook.py must actually
+    fix a stale script, not leave an old command/execute_on silently in place."""
     existing = _rpc(
         session, "script.get",
-        {"filter": {"name": [script["name"]]}, "output": ["scriptid", "command"]}, token,
+        {"filter": {"name": [script["name"]]}, "output": ["scriptid", "command", "execute_on"]}, token,
     )
     if existing:
         sid = existing[0]["scriptid"]
+        wanted_execute_on = str(script.get("execute_on", 0))
+        changes = {}
         if existing[0]["command"] != script["command"]:
-            _rpc(session, "script.update", {"scriptid": sid, "command": script["command"]}, token)
-            print(f"  ↻ Updated script '{script['name']}' command (id={sid})")
+            changes["command"] = script["command"]
+        if existing[0]["execute_on"] != wanted_execute_on:
+            changes["execute_on"] = wanted_execute_on
+        if changes:
+            _rpc(session, "script.update", {"scriptid": sid, **changes}, token)
+            print(f"  ↻ Updated script '{script['name']}' {list(changes)} (id={sid})")
         else:
             print(f"  · Script '{script['name']}' already exists (id={sid})")
         return sid
@@ -166,7 +196,11 @@ def ensure_script(session: requests.Session, token: str, script: dict) -> str:
         "name": script["name"],
         "command": script["command"],
         "type": 0,          # Script (shell)
-        "execute_on": 1,    # Zabbix server (has docker.sock)
+        # 0 = Zabbix agent (runs directly on the target host — the normal
+        # case now that each host's agent is co-located with its service);
+        # 1 = Zabbix server (has docker.sock — only needed for db-server,
+        # which still uses a separate agent container).
+        "execute_on": script.get("execute_on", 0),
         "scope": 2,         # Manual host action — callable via script.execute
         "description": script["description"],
     }
@@ -257,6 +291,57 @@ def main() -> None:
         script_ids[script["name"]] = sid
 
     print("\n── Custom items & triggers ──────────────────────")
+
+    # web-server, app-server and cache-server each run their service as a
+    # backgrounded process under a `tail -f /dev/null` PID 1 (see
+    # hosts/*/entrypoint.sh) so that stopping the service for a fault-injection
+    # test — or because it crashed — doesn't take the whole container (and its
+    # co-located Zabbix agent, sharing the container's PID namespace via
+    # `pid: service:<name>`) down with it. That means the standard "Zabbix
+    # agent is not available" trigger no longer fires when the service itself
+    # dies — the agent's still there. proc.num[] items give us a real
+    # process-level signal instead, the same way proc.mem[uvicorn] already
+    # does for the memory-leak trigger below.
+
+    web_hostid = host_ids["web-server"]
+    web_host = _rpc(session, "host.get", {
+        "hostids": [web_hostid],
+        "output": ["hostid"],
+        "selectInterfaces": ["interfaceid"],
+    }, token)[0]
+    web_interfaceid = web_host["interfaces"][0]["interfaceid"]
+
+    ensure_item(
+        session, token, "web-server", web_hostid, web_interfaceid,
+        key="proc.num[nginx]",
+        name="web-server nginx process count",
+    )
+    ensure_trigger(
+        session, token,
+        description="web-server nginx process is not running",
+        expression="last(/web-server/proc.num[nginx])=0",
+        priority=4,  # High
+    )
+
+    # /var/log/nginx isn't a separate volume (see docker-compose.yml), so it
+    # lives on the container's root overlay filesystem, which Docker backs
+    # with the *host's* real disk — vfs.fs.size[...,pused] there reports
+    # usage of the whole host disk (e.g. 1TB), so dumping a 400MB fill.log
+    # barely moves it (~2-3%) and can never cross a realistic 85% threshold.
+    # vfs.dir.size[] instead sums the actual bytes under the log directory,
+    # so it reflects the injected fault directly regardless of host disk size.
+    ensure_item(
+        session, token, "web-server", web_hostid, web_interfaceid,
+        key="vfs.dir.size[/var/log/nginx]",
+        name="web-server nginx log directory size",
+    )
+    ensure_trigger(
+        session, token,
+        description="web-server nginx log volume oversized (>300MB)",
+        expression="last(/web-server/vfs.dir.size[/var/log/nginx])>300M",
+        priority=3,  # Average
+    )
+
     db_hostid = host_ids["db-server"]
     db_host = _rpc(session, "host.get", {
         "hostids": [db_hostid],
@@ -301,6 +386,37 @@ def main() -> None:
         description="app-server memory leak (uvicorn RSS > 300MB)",
         expression="last(/app-server/proc.mem[uvicorn])>300M",
         priority=3,  # Average
+    )
+    ensure_item(
+        session, token, "app-server", app_hostid, app_interfaceid,
+        key="proc.num[uvicorn]",
+        name="app-server uvicorn process count",
+    )
+    ensure_trigger(
+        session, token,
+        description="app-server uvicorn process is not running",
+        expression="last(/app-server/proc.num[uvicorn])=0",
+        priority=4,  # High
+    )
+
+    cache_hostid = host_ids["cache-server"]
+    cache_host = _rpc(session, "host.get", {
+        "hostids": [cache_hostid],
+        "output": ["hostid"],
+        "selectInterfaces": ["interfaceid"],
+    }, token)[0]
+    cache_interfaceid = cache_host["interfaces"][0]["interfaceid"]
+
+    ensure_item(
+        session, token, "cache-server", cache_hostid, cache_interfaceid,
+        key="proc.num[redis-server]",
+        name="cache-server redis process count",
+    )
+    ensure_trigger(
+        session, token,
+        description="cache-server redis process is not running",
+        expression="last(/cache-server/proc.num[redis-server])=0",
+        priority=4,  # High
     )
 
     print("\n── Done ─────────────────────────────────────────")

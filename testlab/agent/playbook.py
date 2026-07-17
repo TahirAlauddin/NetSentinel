@@ -10,8 +10,14 @@ Fields
 name        : unique script name (must match what's registered in Zabbix)
 host        : which testlab host this applies to (matches ZBX_HOSTNAME)
 description : plain-English explanation the AI uses to choose this script
-command     : the shell command that Zabbix server runs (Docker CLI)
-              executed on the Zabbix *server* which has /var/run/docker.sock
+command     : the shell command that runs the fix
+execute_on  : 0 (default) = Zabbix agent — runs directly on the target host,
+              via its co-located agent, same as it would on a real machine.
+              1 = Zabbix server, which reaches a host only via `docker exec
+              host-<name> ...` (it has docker.sock, not a shell on the host
+              itself) — only needed for db-server, which still runs its
+              Zabbix agent in a separate sidecar container rather than
+              co-located with the service.
 """
 
 from __future__ import annotations
@@ -22,10 +28,12 @@ SCRIPTS: list[dict] = [
         "name": "web-restart-nginx",
         "host": "web-server",
         "description": (
-            "Restart the nginx container. "
-            "Use when nginx process is down, not responding, or returning 5xx errors."
+            "Restart the nginx service. nginx runs as a systemd service on this "
+            "host (see hosts/web-server/nginx.service) — the container itself stays "
+            "up regardless. Use when nginx process is down, not responding, or "
+            "returning 5xx errors."
         ),
-        "command": "docker restart host-web-server",
+        "command": "systemctl restart nginx",
     },
     {
         "name": "web-clear-disk",
@@ -34,16 +42,16 @@ SCRIPTS: list[dict] = [
             "Delete oversized log files that are filling the nginx log volume. "
             "Use when disk usage on web-server is above 85%."
         ),
-        "command": "docker exec host-web-server sh -c 'rm -f /var/log/nginx/fill.log && df -h /var/log/nginx'",
+        "command": "rm -f /var/log/nginx/fill.log && df -h /var/log/nginx",
     },
     {
         "name": "web-reload-nginx",
         "host": "web-server",
         "description": (
-            "Send SIGHUP to nginx to gracefully reload config without dropping connections. "
+            "Reload nginx config without dropping connections. "
             "Use for minor config issues or when a restart would be too disruptive."
         ),
-        "command": "docker exec host-web-server nginx -s reload",
+        "command": "systemctl reload nginx",
     },
 
     # ── app-server ──────────────────────────────────────────────────────────
@@ -51,16 +59,22 @@ SCRIPTS: list[dict] = [
         "name": "app-restart",
         "host": "app-server",
         "description": (
-            "Restart the FastAPI app container. "
-            "Use when the process has crashed, is OOM-killed, or memory usage exceeds 85%."
+            "Restart the uvicorn service. uvicorn runs as a systemd service on this "
+            "host (see hosts/app-server/uvicorn.service) — the container itself "
+            "stays up regardless. Use when the process has crashed, is OOM-killed, "
+            "or memory usage exceeds 85%."
         ),
-        "command": "docker restart host-app-server",
+        "command": "systemctl restart uvicorn",
     },
 
     # ── db-server ───────────────────────────────────────────────────────────
+    # db-server keeps a separate Zabbix agent sidecar (see docker-compose.yml)
+    # rather than co-locating one in the postgres:16-alpine image, so its
+    # scripts still run on the Zabbix server via docker exec.
     {
         "name": "db-kill-idle-connections",
         "host": "db-server",
+        "execute_on": 1,
         "description": (
             "Terminate all idle PostgreSQL connections to free up the connection pool. "
             "Use when active connection count approaches max_connections (20 in testlab)."
@@ -75,6 +89,7 @@ SCRIPTS: list[dict] = [
     {
         "name": "db-cancel-long-queries",
         "host": "db-server",
+        "execute_on": 1,
         "description": (
             "Cancel any query running longer than 30 seconds. "
             "Use when Zabbix reports slow queries or pg_stat_activity shows stuck sessions."
@@ -90,6 +105,7 @@ SCRIPTS: list[dict] = [
     {
         "name": "db-restart",
         "host": "db-server",
+        "execute_on": 1,
         "description": (
             "Restart the PostgreSQL container as a last resort. "
             "Use only when the server is completely unresponsive."
@@ -105,16 +121,19 @@ SCRIPTS: list[dict] = [
             "Flush the Redis database (FLUSHDB) to clear memory pressure. "
             "Use when Redis eviction rate is very high or maxmemory is reached."
         ),
-        "command": "docker exec host-cache-server redis-cli FLUSHDB",
+        "command": "redis-cli FLUSHDB",
     },
     {
         "name": "cache-restart",
         "host": "cache-server",
         "description": (
-            "Restart the Redis container. "
-            "Use when Redis is completely unreachable or the worker queue is backed up due to cache being down."
+            "Restart the redis-server service. redis-server runs as a systemd "
+            "service on this host (see hosts/cache-server/redis-server.service) — "
+            "the container itself stays up regardless. Use when Redis is "
+            "completely unreachable or the worker queue is backed up due to cache "
+            "being down."
         ),
-        "command": "docker restart host-cache-server",
+        "command": "systemctl restart redis-server",
     },
 
     # ── worker-server ────────────────────────────────────────────────────────
@@ -122,10 +141,12 @@ SCRIPTS: list[dict] = [
         "name": "worker-restart",
         "host": "worker-server",
         "description": (
-            "Restart the Celery worker container. "
-            "Use when the worker process has crashed, is stuck, or the task queue depth is excessive."
+            "Restart the Celery worker service. It runs as a systemd service on "
+            "this host (see hosts/worker-server/celery-worker.service) — the "
+            "container itself stays up regardless. Use when the worker process "
+            "has crashed, is stuck, or the task queue depth is excessive."
         ),
-        "command": "docker restart host-worker-server",
+        "command": "systemctl restart celery-worker",
     },
 ]
 
