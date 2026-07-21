@@ -13,10 +13,12 @@ from __future__ import annotations
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import timedelta
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import connections
+from django.utils import timezone
 
 from monitoring.zabbix_client import get_zabbix_client
 from remediation.models import Incident
@@ -136,18 +138,47 @@ class Command(BaseCommand):
             logger.warning("Failed to poll Zabbix problems: %s", exc)
             return
 
-        known_ids = set(
-            Incident.objects.filter(
+        existing_by_event_id = {
+            incident.zabbix_event_id: incident
+            for incident in Incident.objects.filter(
                 zabbix_event_id__in=[p["eventid"] for p in problems]
-            ).values_list("zabbix_event_id", flat=True)
-        )
-        new_problems = [p for p in problems if p["eventid"] not in known_ids]
+            )
+        }
+        timeout = timedelta(seconds=getattr(settings, "AGENT_INCIDENT_RETRY_TIMEOUT", 1800))
+        now = timezone.now()
+
+        new_problems = []
+        stale_problems = []
+        for problem in problems:
+            incident = existing_by_event_id.get(problem["eventid"])
+            if incident is None:
+                new_problems.append(problem)
+                continue
+            if incident.human_intervened_at:
+                # A human owns this one now — the poller must never touch it
+                # again, new problem or not, until they resolve it themselves.
+                continue
+            if incident.status in Incident.TERMINAL_STATUSES:
+                continue
+            # Still open (investigating/escalated). We deliberately don't retry
+            # immediately: an "escalated" incident is often mid-flight async work
+            # (e.g. sitting in awaiting_approval), not abandoned. Only re-dispatch
+            # once it's sat untouched longer than a reasonable timeframe.
+            if now - incident.updated_at >= timeout:
+                stale_problems.append(problem)
+
+        already_tracked = len(problems) - len(new_problems) - len(stale_problems)
         logger.info(
-            "Poll result: %d active problem(s) in Zabbix, %d already tracked, %d new",
-            len(problems), len(problems) - len(new_problems), len(new_problems),
+            "Poll result: %d active problem(s) in Zabbix, %d already tracked, %d new, "
+            "%d stale (retrying)",
+            len(problems), already_tracked, len(new_problems), len(stale_problems),
         )
         if new_problems:
             self.stdout.write(f"Found {len(new_problems)} new problem(s).")
+        if stale_problems:
+            self.stdout.write(
+                f"Re-running agent on {len(stale_problems)} stale unresolved problem(s)."
+            )
 
         for problem in new_problems:
             logger.info(
@@ -155,6 +186,14 @@ class Command(BaseCommand):
                 problem["eventid"], problem.get("name", "N/A"),
             )
             executor.submit(_run_and_cleanup, problem["eventid"])
+
+        for problem in stale_problems:
+            logger.info(
+                "Event %s (%s) exceeded the %ds retry timeout still unresolved; "
+                "re-dispatching to the agent loop",
+                problem["eventid"], problem.get("name", "N/A"), timeout.total_seconds(),
+            )
+            executor.submit(_run_and_cleanup, problem["eventid"], force=True)
 
     def _retry_events(self, event_ids: list[str]) -> None:
         for event_id in event_ids:

@@ -8,7 +8,12 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from .models import AgentStep, Incident, RemediationAction, RemediationScriptPolicy, ZabbixHostLink
-from .services.agent_loop import ApprovalError, approve_and_execute
+from .services.agent_loop import (
+    ApprovalError,
+    InterventionError,
+    approve_and_execute,
+    intervene as intervene_incident,
+)
 
 
 @admin.register(RemediationScriptPolicy)
@@ -85,13 +90,33 @@ class IncidentAdmin(admin.ModelAdmin):
         "severity",
         "status",
         "confidence",
+        "human_intervened_at",
         "resolved_asset",
         "resolved_device",
         "created_at",
     )
     list_filter = ("status", "severity", "confidence")
     search_fields = ("host_name", "trigger_name", "zabbix_event_id")
+    readonly_fields = ("human_intervened_at", "human_intervened_by", "human_intervention_note")
     inlines = [AgentStepInline, RemediationActionInline]
+    actions = ["take_over"]
+
+    @admin.action(
+        description="Take over: stop the agent and remove from active tracking"
+    )
+    def take_over(self, request, queryset):
+        taken_over = 0
+        for incident in queryset:
+            try:
+                intervene_incident(incident, request.user)
+            except InterventionError as exc:
+                self.message_user(request, f"{incident}: {exc.detail}", level=messages.WARNING)
+            else:
+                taken_over += 1
+        if taken_over:
+            self.message_user(
+                request, f"Took over {taken_over} incident(s).", level=messages.SUCCESS
+            )
 
 
 @admin.register(RemediationAction)

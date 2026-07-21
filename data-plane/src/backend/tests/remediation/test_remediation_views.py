@@ -6,6 +6,7 @@ real Zabbix script execution.
 
 import pytest
 from django.contrib.auth.models import Group
+from django.utils import timezone
 from rest_framework import status
 
 from remediation.models import Incident, RemediationAction
@@ -126,6 +127,23 @@ class TestRemediationActionApprove:
         assert awaiting_action.approved_by_id == user.id
         assert awaiting_action.incident.status == "remediated"
 
+    def test_approve_refuses_after_human_intervention(
+        self, authenticated_api_client, user, awaiting_action
+    ):
+        _grant_execute_remediation(user)
+        incident = awaiting_action.incident
+        incident.human_intervened_at = timezone.now()
+        incident.status = "dismissed"
+        incident.save(update_fields=["human_intervened_at", "status"])
+
+        response = authenticated_api_client.post(
+            f"/api/v1/remediation/actions/{awaiting_action.id}/approve/"
+        )
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        awaiting_action.refresh_from_db()
+        assert awaiting_action.status == "awaiting_approval"
+
     def test_approve_marks_failed_when_execution_fails(
         self, authenticated_api_client, user, awaiting_action, mocker
     ):
@@ -194,3 +212,54 @@ class TestRemediationActionApproveGenerated:
         mock_exec.assert_not_called()
         awaiting_generated_action.refresh_from_db()
         assert awaiting_generated_action.status == "awaiting_approval"
+
+
+@pytest.mark.api
+@pytest.mark.django_db
+class TestIncidentIntervene:
+    def test_intervene_requires_authentication(self, api_client, incident):
+        response = api_client.post(f"/api/v1/remediation/incidents/{incident.id}/intervene/")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_intervene_denied_without_bundle(self, authenticated_api_client, incident):
+        response = authenticated_api_client.post(
+            f"/api/v1/remediation/incidents/{incident.id}/intervene/"
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        incident.refresh_from_db()
+        assert incident.human_intervened_at is None
+
+    def test_intervene_takes_over_and_cancels_pending_action(
+        self, authenticated_api_client, user, incident, awaiting_action
+    ):
+        _grant_execute_remediation(user)
+
+        response = authenticated_api_client.post(
+            f"/api/v1/remediation/incidents/{incident.id}/intervene/",
+            {"note": "I'll handle this one myself."},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        incident.refresh_from_db()
+        assert incident.status == "dismissed"
+        assert incident.human_intervened_at is not None
+        assert incident.human_intervened_by_id == user.id
+        assert incident.human_intervention_note == "I'll handle this one myself."
+
+        awaiting_action.refresh_from_db()
+        assert awaiting_action.status == "skipped"
+
+    def test_intervene_rejects_already_terminal_incident(
+        self, authenticated_api_client, user, incident
+    ):
+        _grant_execute_remediation(user)
+        incident.status = "remediated"
+        incident.save(update_fields=["status"])
+
+        response = authenticated_api_client.post(
+            f"/api/v1/remediation/incidents/{incident.id}/intervene/"
+        )
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        incident.refresh_from_db()
+        assert incident.human_intervened_at is None

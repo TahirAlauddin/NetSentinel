@@ -350,6 +350,13 @@ AGENT_POLL_INTERVAL = int(os.environ.get("AGENT_POLL_INTERVAL", "30"))
 AGENT_DRY_RUN = os.environ.get("AGENT_DRY_RUN", "False").lower() == "true"
 AGENT_SERVICE_ACCOUNT_USERNAME = os.environ.get("AGENT_SERVICE_ACCOUNT_USERNAME", "")
 
+# How long an Incident may sit unresolved (status still "investigating" or
+# "escalated" — i.e. no human has taken it over and it hasn't reached a terminal
+# status) before run_incident_agent's poller treats it as stalled and re-dispatches
+# the agent loop. Kept generous by default since a still-open incident is often
+# genuinely mid-flight (e.g. awaiting human approval) rather than abandoned.
+AGENT_INCIDENT_RETRY_TIMEOUT = int(os.environ.get("AGENT_INCIDENT_RETRY_TIMEOUT", str(30 * 60)))
+
 # Verbose by default: every tool call/result, guardrail verdict, and remediation
 # decision the agent makes is worth being able to see without a debugger attached.
 # Override with AGENT_LOG_LEVEL=WARNING etc. to quiet it down.

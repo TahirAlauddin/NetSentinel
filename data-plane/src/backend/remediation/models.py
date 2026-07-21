@@ -96,6 +96,11 @@ class Incident(models.Model):
         ("low", "Low"),
     ]
 
+    # Statuses that mean "nothing left for the agent to do here" — run_incident_agent's
+    # poller leaves incidents in these states alone (no retry, no re-dispatch), and
+    # run_agent_loop's human-takeover check gates on them too.
+    TERMINAL_STATUSES = {"remediated", "resolved", "dismissed"}
+
     zabbix_event_id = models.CharField(max_length=64, unique=True)
     zabbix_host_id = models.CharField(max_length=64)
     host_name = models.CharField(max_length=255)
@@ -122,6 +127,22 @@ class Incident(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     resolved_at = models.DateTimeField(blank=True, null=True)
+
+    human_intervened_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Set when a human takes over — halts the agent loop (checked "
+        "cooperatively between ReAct turns) and stops run_incident_agent's poller "
+        "from ever retrying this incident again.",
+    )
+    human_intervened_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="intervened_incidents",
+    )
+    human_intervention_note = models.TextField(blank=True)
 
     class Meta:
         verbose_name = "Incident"

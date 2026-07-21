@@ -16,7 +16,12 @@ from .serializers import (
     RemediationActionSerializer,
     RemediationScriptPolicySerializer,
 )
-from .services.agent_loop import ApprovalError, approve_and_execute
+from .services.agent_loop import (
+    ApprovalError,
+    InterventionError,
+    approve_and_execute,
+    intervene as intervene_incident,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +31,24 @@ class IncidentViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
     permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
-        if self.action == "retrieve":
+        if self.action in ("retrieve", "intervene"):
             return IncidentDetailSerializer
         return IncidentListSerializer
+
+    @action(detail=True, methods=["post"], permission_classes=[CanExecuteRemediation])
+    def intervene(self, request, pk=None):
+        """Human takeover: stop the agent working this incident and hand it to
+        the requesting user. Gated by the same permission as approving a
+        remediation action — same trust boundary, someone who can execute a fix
+        can also decide to handle one themselves."""
+        incident = self.get_object()
+        try:
+            intervene_incident(incident, request.user, request.data.get("note", ""))
+        except InterventionError as exc:
+            return Response({"detail": exc.detail}, status=status.HTTP_409_CONFLICT)
+
+        serializer = self.get_serializer(incident)
+        return Response(serializer.data)
 
 
 class AgentStepViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):

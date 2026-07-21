@@ -19,7 +19,7 @@ from django.utils import timezone
 from monitoring.zabbix_client import get_zabbix_client
 from notifications.services import send_notification
 
-from ..models import Incident, RemediationAction, RemediationScriptPolicy
+from ..models import AgentStep, Incident, RemediationAction, RemediationScriptPolicy
 from . import context, guardrails
 from .agent_tools import SEVERITY_LABELS, TOOL_FUNCTIONS, TOOL_SCHEMAS
 from .llm_client import get_client, get_model
@@ -112,10 +112,18 @@ def run_agent_loop(event_id: str, force: bool = False) -> None:
         incident.status = "investigating"
         incident.confidence = None
         incident.resolved_at = None
+        # force=True is an explicit "start fresh" override — including any prior
+        # human takeover, so a deliberate --retry can hand a stuck incident back
+        # to the agent even after a human intervened on it.
+        incident.human_intervened_at = None
+        incident.human_intervened_by = None
+        incident.human_intervention_note = ""
         incident.save(
             update_fields=[
                 "zabbix_host_id", "host_name", "trigger_name", "severity",
-                "status", "confidence", "resolved_at", "updated_at",
+                "status", "confidence", "resolved_at",
+                "human_intervened_at", "human_intervened_by", "human_intervention_note",
+                "updated_at",
             ]
         )
     else:
@@ -141,6 +149,7 @@ def run_agent_loop(event_id: str, force: bool = False) -> None:
             ),
         },
     ]
+    human_took_over = False
     try:
         openai_client = get_client()
 
@@ -149,6 +158,9 @@ def run_agent_loop(event_id: str, force: bool = False) -> None:
         # whatever tools it asked for, feed the results back, repeat until it calls
         # propose_remediation or we hit MAX_MESSAGES round trips.
         for _ in range(MAX_MESSAGES):
+            if _human_has_taken_over(incident):
+                human_took_over = True
+                break
             response = openai_client.chat.completions.create(
                 model=get_model(),
                 max_tokens=2000,
@@ -223,7 +235,11 @@ def run_agent_loop(event_id: str, force: bool = False) -> None:
             if decision is not None:
                 break
 
-        if decision is None:
+        if human_took_over:
+            logger.info(
+                "Incident %s: human intervened mid-investigation; stopping.", incident.id
+            )
+        elif decision is None:
             logger.warning(
                 "Incident %s: agent hit the %d-message limit without a decision; escalating.",
                 incident.id, MAX_MESSAGES,
@@ -234,7 +250,30 @@ def run_agent_loop(event_id: str, force: bool = False) -> None:
         logger.exception("Agent loop failed for incident %s", incident.id)
         context.log_step("final", tool_output=f"Agent loop error: {exc}")
 
+    # Re-check rather than trusting human_took_over alone — intervention may have
+    # landed during the final iteration's tool calls, after the loop's own check
+    # last passed. Either way, a human owning the incident means the agent must not
+    # touch it further, in particular must not execute/propose anything below.
+    if human_took_over or _human_has_taken_over(incident):
+        logger.info(
+            "Incident %s: a human took over before the agent finished; not finalizing.",
+            incident.id,
+        )
+        context.log_step(
+            "final", tool_output="Halted: a human took over this incident before the agent finished."
+        )
+        return
+
     _finalize_incident(incident, decision)
+
+
+def _human_has_taken_over(incident: Incident) -> bool:
+    """Cheap DB check for cooperative cancellation: the intervene endpoint/admin
+    action runs in a different thread/process than the agent loop, so this is the
+    only way the loop can notice a human has taken over mid-run."""
+    return Incident.objects.filter(
+        pk=incident.pk, human_intervened_at__isnull=False
+    ).exists()
 
 
 def execute_remediation_script(host_id: str, script_name: str) -> dict:
@@ -347,6 +386,11 @@ def approve_and_execute(action: RemediationAction, user) -> RemediationAction:
         # Shouldn't normally reach awaiting_approval with violations present, but
         # refuse defensively rather than trust an approver clicking through.
         raise ApprovalError("Blocked by guardrails.", violations=action.guardrail_violations)
+    if action.incident.human_intervened_at:
+        # A human already took ownership of the incident (possibly a different
+        # person, or a stale browser tab) — that supersedes an agent-proposed
+        # action rather than stacking with it.
+        raise ApprovalError("A human has already taken over this incident.")
 
     incident = action.incident
     logger.info(
@@ -368,6 +412,56 @@ def approve_and_execute(action: RemediationAction, user) -> RemediationAction:
     incident.save(update_fields=["status", "updated_at"])
 
     return action
+
+
+class InterventionError(Exception):
+    """Raised by intervene() when the incident isn't eligible for takeover."""
+
+    def __init__(self, detail: str) -> None:
+        super().__init__(detail)
+        self.detail = detail
+
+
+def intervene(incident: Incident, user, note: str = "") -> Incident:
+    """
+    Human takeover: shared by the DRF endpoint (views.IncidentViewSet.intervene)
+    and the Django admin action, same reasoning as approve_and_execute above.
+
+    Marks the incident so run_agent_loop notices and stops (see
+    _human_has_taken_over) if it's currently mid-run, and so run_incident_agent's
+    poller never dispatches or retries it again (Incident.TERMINAL_STATUSES).
+    Any remediation actions still sitting proposed/awaiting approval are
+    superseded — the human is handling this now, not approving the agent's plan.
+    """
+    if incident.status in Incident.TERMINAL_STATUSES:
+        raise InterventionError(
+            f"Incident is already '{incident.status}'; nothing to take over."
+        )
+
+    logger.info("User %s taking over incident %s", user, incident.id)
+    incident.human_intervened_at = timezone.now()
+    incident.human_intervened_by = user
+    incident.human_intervention_note = note
+    incident.status = "dismissed"
+    incident.resolved_at = timezone.now()
+    incident.save(
+        update_fields=[
+            "human_intervened_at", "human_intervened_by", "human_intervention_note",
+            "status", "resolved_at", "updated_at",
+        ]
+    )
+    incident.actions.filter(status__in=["proposed", "awaiting_approval"]).update(status="skipped")
+
+    last_step = incident.steps.order_by("-step_number").first()
+    AgentStep.objects.create(
+        incident=incident,
+        step_number=(last_step.step_number if last_step else 0) + 1,
+        role="final",
+        tool_output=(
+            f"Human intervention by {user}: {note}" if note else f"Human intervention by {user}."
+        ),
+    )
+    return incident
 
 
 def _finalize_incident(incident: Incident, decision: Optional[dict]) -> None:

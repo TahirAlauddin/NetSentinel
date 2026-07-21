@@ -131,3 +131,35 @@ class TestRemediationActionAdminApprove:
 
         assert response.status_code == 302
         mock_exec.assert_not_called()
+
+
+@pytest.mark.django_db
+class TestIncidentAdminTakeOver:
+    def test_take_over_action_dismisses_and_cancels_pending_action(
+        self, admin_client, incident, awaiting_action
+    ):
+        changelist_url = reverse("admin:remediation_incident_changelist")
+
+        response = admin_client.post(
+            changelist_url, {"action": "take_over", "_selected_action": [incident.pk]}
+        )
+
+        assert response.status_code == 302
+        incident.refresh_from_db()
+        assert incident.status == "dismissed"
+        assert incident.human_intervened_at is not None
+        awaiting_action.refresh_from_db()
+        assert awaiting_action.status == "skipped"
+
+    def test_take_over_action_warns_on_already_terminal_incident(self, admin_client, incident):
+        incident.status = "remediated"
+        incident.save(update_fields=["status"])
+        changelist_url = reverse("admin:remediation_incident_changelist")
+
+        response = admin_client.post(
+            changelist_url, {"action": "take_over", "_selected_action": [incident.pk]}
+        )
+
+        assert response.status_code == 302
+        incident.refresh_from_db()
+        assert incident.human_intervened_at is None

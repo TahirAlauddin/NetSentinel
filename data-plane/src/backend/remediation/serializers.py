@@ -56,12 +56,16 @@ class IncidentListSerializer(serializers.ModelSerializer):
             "resolved_device",
             "created_at",
             "resolved_at",
+            "human_intervened_at",
         ]
 
 
 class IncidentDetailSerializer(serializers.ModelSerializer):
     steps = AgentStepSerializer(many=True, read_only=True)
     actions = RemediationActionSerializer(many=True, read_only=True)
+    human_intervened_by_username = serializers.CharField(
+        source="human_intervened_by.username", read_only=True
+    )
 
     class Meta:
         model = Incident
@@ -79,6 +83,10 @@ class IncidentDetailSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "resolved_at",
+            "human_intervened_at",
+            "human_intervened_by",
+            "human_intervened_by_username",
+            "human_intervention_note",
             "steps",
             "actions",
         ]
