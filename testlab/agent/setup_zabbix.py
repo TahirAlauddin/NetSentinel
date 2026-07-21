@@ -277,6 +277,32 @@ def main() -> None:
         priority=3,  # Average
     )
 
+    # app-server's "Linux by Zabbix agent" memory item (vm.memory.size[pavailable])
+    # reads /proc/meminfo on the *host* VM, not the container's own 512m mem_limit
+    # cgroup, so /leak never moves it. proc.mem[] instead sums RSS of matching
+    # processes read via /proc/<pid>/status, which the sidecar can see directly
+    # thanks to `pid: service:app-server` in docker-compose.yml — accurate
+    # regardless of cgroup limits.
+    app_hostid = host_ids["app-server"]
+    app_host = _rpc(session, "host.get", {
+        "hostids": [app_hostid],
+        "output": ["hostid"],
+        "selectInterfaces": ["interfaceid"],
+    }, token)[0]
+    app_interfaceid = app_host["interfaces"][0]["interfaceid"]
+
+    ensure_item(
+        session, token, "app-server", app_hostid, app_interfaceid,
+        key="proc.mem[uvicorn]",
+        name="app-server uvicorn process RSS",
+    )
+    ensure_trigger(
+        session, token,
+        description="app-server memory leak (uvicorn RSS > 300MB)",
+        expression="last(/app-server/proc.mem[uvicorn])>300M",
+        priority=3,  # Average
+    )
+
     print("\n── Done ─────────────────────────────────────────")
     print("Script IDs (save these or let agent.py discover them at startup):")
     for name, sid in script_ids.items():

@@ -35,10 +35,9 @@ if "%FAULT%"=="web-disk-full" (
 
 if "%FAULT%"=="app-memory-leak" (
     echo [FAULT] Triggering memory leak on app-server ^→ triggers 'memory ^>80%%' alert
-    echo   Calling /leak?mb=10 forty times ...
+    echo   Firing /leak?mb=10 forty times concurrently ...
     for /l %%i in (1,1,40) do (
-        curl -sf "http://localhost:8000/leak?mb=10" > nul
-        timeout /t 1 /nobreak > nul
+        start /b curl -sf "http://localhost:8000/leak?mb=10" > nul
     )
     echo   Expected AI action : app-restart
     echo   Manual resolve     : docker restart host-app-server
@@ -54,9 +53,10 @@ if "%FAULT%"=="app-cpu-spike" (
 )
 
 if "%FAULT%"=="app-crash-loop" (
-    echo [FAULT] Crashing app-server process ^→ triggers 'process down' alert
-    curl -sf "http://localhost:8000/crash"
+    echo [FAULT] Killing app-server container → triggers 'process down' alert
+    docker kill host-app-server
     echo   Expected AI action : app-restart
+    echo   Manual resolve     : docker start host-app-server
     goto end
 )
 
@@ -126,7 +126,7 @@ echo.
 echo   app-server
 echo     app-memory-leak       Leak 400 MB of RAM gradually (memory alert)
 echo     app-cpu-spike         Peg all CPUs for 120s (CPU alert)
-echo     app-crash-loop        Kill uvicorn (process-down alert)
+echo     app-crash-loop        Kill container (process-down alert)
 echo.
 echo   db-server
 echo     db-connection-exhaustion  Open 17 idle connections (connection alert)

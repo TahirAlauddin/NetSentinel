@@ -89,7 +89,7 @@ Watch the agent terminal — within the next poll interval it will detect the al
 | `web-disk-full` | web-server | Fill log disk with 400 MB | `web-clear-disk` |
 | `app-memory-leak` | app-server | Leak 400 MB of RAM | `app-restart` |
 | `app-cpu-spike` | app-server | Peg all CPUs for 120 s | `app-restart` |
-| `app-crash-loop` | app-server | Kill uvicorn process | `app-restart` |
+| `app-crash-loop` | app-server | Kill app-server container | `app-restart` |
 | `db-connection-exhaustion` | db-server | Open 17 idle connections | `db-kill-idle-connections` |
 | `db-long-query` | db-server | Run a 60-second query | `db-cancel-long-queries` |
 | `cache-eviction-storm` | cache-server | Flood Redis past maxmemory | `cache-flush` |

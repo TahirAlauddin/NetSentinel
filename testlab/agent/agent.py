@@ -13,25 +13,11 @@ Usage
     pip install -r requirements.txt
     cp ../.env.example .env   # fill in ZABBIX_URL, ZABBIX_USER/PASSWORD, OPENAI_API_KEY
     python agent.py
-
-Environment variables
----------------------
-ZABBIX_URL          http://localhost:8090
-ZABBIX_USER         Admin
-ZABBIX_PASSWORD     zabbix
-OPENAI_API_KEY      sk-...
-OPENAI_MODEL        gpt-4o-mini          (default)
-POLL_INTERVAL       30                   seconds between Zabbix polls
-DRY_RUN             0                    set to 1 to log decisions without executing
 """
 
 from __future__ import annotations
 
-import json
-import logging
-import os
-import sys
-import time
+import json, logging, os, sys, time
 from datetime import datetime, timezone
 
 import requests
@@ -44,7 +30,7 @@ import playbook
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
+    format="-- %(message)s",
     datefmt="%H:%M:%S",
 )
 log = logging.getLogger("agent")

@@ -33,11 +33,11 @@ case $FAULT in
 
   app-memory-leak)
     echo "[FAULT] Triggering memory leak on app-server → triggers 'memory >80%' alert"
-    echo "  Calling /leak?mb=10 forty times …"
+    echo "  Firing /leak?mb=10 forty times concurrently …"
     for i in $(seq 1 40); do
-      curl -sf "http://localhost:8000/leak?mb=10" > /dev/null
-      sleep 1
+      curl -sf "http://localhost:8000/leak?mb=10" > /dev/null &
     done
+    wait
     echo "  Expected AI action : app-restart"
     echo "  Manual resolve     : docker restart host-app-server"
     ;;
@@ -50,9 +50,10 @@ case $FAULT in
     ;;
 
   app-crash-loop)
-    echo "[FAULT] Crashing app-server process → triggers 'process down' alert"
-    curl -sf "http://localhost:8000/crash" || true
+    echo "[FAULT] Killing app-server container → triggers 'process down' alert"
+    docker kill host-app-server
     echo "  Expected AI action : app-restart"
+    echo "  Manual resolve     : docker start host-app-server"
     ;;
 
   # ── db-server ───────────────────────────────────────────────────────────────
@@ -121,7 +122,7 @@ case $FAULT in
     echo "  app-server"
     echo "    app-memory-leak       Leak 400 MB of RAM gradually (memory alert)"
     echo "    app-cpu-spike         Peg all CPUs for 120s (CPU alert)"
-    echo "    app-crash-loop        Kill uvicorn (process-down alert)"
+    echo "    app-crash-loop        Kill container (process-down alert)"
     echo ""
     echo "  db-server"
     echo "    db-connection-exhaustion  Open 17 idle connections (connection alert)"

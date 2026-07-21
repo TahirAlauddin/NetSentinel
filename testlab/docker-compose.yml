@@ -24,7 +24,7 @@ services:
     restart: unless-stopped
 
   zabbix-server:
-    image: zabbix/zabbix-server-pgsql:alpine-7.4-latest
+    build: ./zabbix-server
     container_name: zabbix-server
     environment:
       DB_SERVER_HOST: zabbix-db
