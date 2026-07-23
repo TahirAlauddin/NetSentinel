@@ -438,6 +438,40 @@ def main() -> None:
         priority=3,  # Average
     )
 
+    worker_hostid = host_ids["worker-server"]
+    worker_host = _rpc(session, "host.get", {
+        "hostids": [worker_hostid],
+        "output": ["hostid"],
+        "selectInterfaces": ["interfaceid"],
+    }, token)[0]
+    worker_interfaceid = worker_host["interfaces"][0]["interfaceid"]
+
+    # Unlike evicted_keys above, Celery's queue length (LLEN on the broker's
+    # "celery" list key) is a point-in-time gauge, not a cumulative counter —
+    # last()-above-threshold is the right comparison here, not change(). This
+    # also sidesteps the flapping change() has: a gauge trigger stays in
+    # PROBLEM for as long as the backlog persists (many poll cycles), instead
+    # of firing for exactly one 30s window and auto-resolving before the
+    # incident agent's own ~30s poll is guaranteed to catch it.
+    #
+    # NOTE: as of this writing, scripts/inject.sh|bat's "worker-queue-backup"
+    # fault floods app-server's /slow HTTP endpoint — it never actually calls
+    # worker.slow_task.delay(), so nothing lands in this Celery queue yet.
+    # This item/trigger is real and will fire once something actually
+    # publishes to the "celery" queue; the fault script needs a follow-up fix
+    # to be a working end-to-end demo.
+    ensure_item(
+        session, token, "worker-server", worker_hostid, worker_interfaceid,
+        key="system.run[/usr/local/bin/check_queue_depth.sh]",
+        name="worker-server Celery queue depth (pending tasks)",
+    )
+    ensure_trigger(
+        session, token,
+        description="worker-server task queue depth high",
+        expression="last(/worker-server/system.run[/usr/local/bin/check_queue_depth.sh])>=10",
+        priority=3,  # Average
+    )
+
     print("\n── Done ─────────────────────────────────────────")
     print("Script IDs (save these or let agent.py discover them at startup):")
     for name, sid in script_ids.items():

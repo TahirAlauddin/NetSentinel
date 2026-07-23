@@ -493,6 +493,7 @@ def intervene(incident: Incident, user, note: str = "") -> Incident:
             f"Human intervention by {user}: {note}" if note else f"Human intervention by {user}."
         ),
     )
+    _notify(incident, None, note or "Taken over by a human; the agent stood down.")
     return incident
 
 
@@ -652,9 +653,17 @@ def _notify(incident: Incident, action: Optional[RemediationAction], reasoning: 
         lines.append(f"Action: {action.zabbix_script_name}{source} ({action.get_status_display()})")
         if action.guardrail_violations:
             lines.append(f"Guardrails: blocked — {', '.join(action.guardrail_violations)}")
+    elif incident.human_intervened_at:
+        who = incident.human_intervened_by or "a user"
+        lines.append(f"Action: none — taken over by {who}, agent stood down")
     else:
         lines.append("Action: none proposed — escalated for human review")
     lines.append(f"Reasoning: {reasoning}")
 
-    alert_type = "success" if incident.status == "remediated" else "warning"
+    if incident.status == "remediated":
+        alert_type = "success"
+    elif incident.status == "dismissed":
+        alert_type = "info"
+    else:
+        alert_type = "warning"
     send_notification(title, "\n".join(lines), alert_type=alert_type)

@@ -102,9 +102,9 @@ if "%FAULT%"=="cache-down" (
 
 if "%FAULT%"=="worker-queue-backup" (
     echo [FAULT] Flooding task queue with slow tasks ^→ triggers queue depth alert
-    start /b curl -sf "http://localhost:8000/slow?delay=60"
+    start /b curl -sf "http://localhost/slow?delay=60"
     for /l %%i in (1,1,50) do (
-        start /b curl -sf "http://localhost:8000/slow?delay=30"
+        start /b curl -sf "http://localhost/slow?delay=30"
     )
     echo   Expected AI action : worker-restart
     echo   Manual resolve     : docker exec host-worker-server systemctl restart celery-worker

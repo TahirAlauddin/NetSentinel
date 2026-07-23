@@ -249,6 +249,24 @@ class TestIncidentIntervene:
         awaiting_action.refresh_from_db()
         assert awaiting_action.status == "skipped"
 
+    def test_intervene_sends_a_notification(
+        self, authenticated_api_client, user, incident, mocker
+    ):
+        _grant_execute_remediation(user)
+        mock_notify = mocker.patch("remediation.services.agent_loop.send_notification")
+
+        response = authenticated_api_client.post(
+            f"/api/v1/remediation/incidents/{incident.id}/intervene/",
+            {"note": "handling this one manually"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_notify.assert_called_once()
+        (title, message), kwargs = mock_notify.call_args
+        assert incident.host_name in title
+        assert "handling this one manually" in message
+        assert kwargs["alert_type"] == "info"
+
     def test_intervene_rejects_already_terminal_incident(
         self, authenticated_api_client, user, incident
     ):

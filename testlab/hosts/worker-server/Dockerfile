@@ -32,6 +32,8 @@ COPY worker.py .
 
 COPY celery-worker.service /etc/systemd/system/celery-worker.service
 COPY zabbix_agent.conf /etc/zabbix/zabbix_agent2.conf
+COPY check_queue_depth.sh /usr/local/bin/check_queue_depth.sh
+RUN chmod +x /usr/local/bin/check_queue_depth.sh
 RUN systemctl enable celery-worker.service zabbix-agent2.service
 
 STOPSIGNAL SIGRTMIN+3
