@@ -363,6 +363,38 @@ def execute_generated_remediation_script(action: RemediationAction) -> dict:
         return {"ok": False, "error": str(exc)}
 
 
+def _lookup_and_scan_registered_script(host_id: str, script_name: str) -> tuple[Optional[str], list]:
+    """
+    For a script the agent picked from list_remediation_scripts that has no
+    RemediationScriptPolicy yet: pull its actual command text from Zabbix and
+    run it through the same static guardrail scan agent-authored scripts get
+    (see guardrails.check_script). Lets a never-before-seen but genuinely
+    low-risk script (e.g. a plain service restart) get classified and
+    auto-execute on first use instead of always blocking on a human
+    pre-registering every script by hand — see _finalize_incident.
+
+    Returns (command_text_or_None, violations) — a None command means the
+    script couldn't be found/fetched, in which case violations explains why
+    and the caller must not auto-execute.
+    """
+    try:
+        client = get_zabbix_client()
+        scripts = client.scripts.get(
+            hostids=[host_id], output="extend", filter={"name": script_name}
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "Could not fetch script '%s' from Zabbix for risk scan: %s", script_name, exc
+        )
+        return None, [f"could not fetch script from Zabbix: {exc}"]
+
+    if not scripts:
+        return None, [f"script '{script_name}' not found in Zabbix for host {host_id}"]
+
+    command = scripts[0].get("command", "")
+    return command, guardrails.check_script(command)
+
+
 class ApprovalError(Exception):
     """Raised by approve_and_execute when an action isn't eligible to run right now."""
 
@@ -513,9 +545,44 @@ def _finalize_incident(incident: Incident, decision: Optional[dict]) -> None:
                 action.save(update_fields=["status"])
             incident.status = "escalated"
         else:
-            can_auto_execute = bool(
-                policy and policy.auto_execute_allowed and incident.confidence == "high"
-            )
+            violations: Optional[list] = None
+            if policy is None:
+                # A script registered in Zabbix (the agent picked it from
+                # list_remediation_scripts) but never classified in
+                # NetSentinel's policy registry. Rather than blocking every
+                # never-before-seen script on a human pre-registering it,
+                # scan its actual command text and classify it now: a clean
+                # scan is remembered as low-risk/auto-executable, a flagged
+                # one as high-risk/no-auto-execute — either way it still
+                # needs confidence=='high' below, same as any other policy.
+                command_text, violations = _lookup_and_scan_registered_script(
+                    incident.zabbix_host_id, script_name
+                )
+                policy, _ = RemediationScriptPolicy.objects.get_or_create(
+                    zabbix_script_name=script_name,
+                    defaults={
+                        "risk_level": "low" if not violations else "high",
+                        "auto_execute_allowed": not violations,
+                        "description": (
+                            "Auto-classified from a static guardrail scan of its Zabbix "
+                            f"command text, first seen on incident {incident.id}."
+                            + (f" Flagged: {', '.join(violations)}." if violations else "")
+                        ),
+                    },
+                )
+                if violations:
+                    logger.warning(
+                        "Incident %s: newly-seen script '%s' failed the guardrail scan: %s",
+                        incident.id, script_name, violations,
+                    )
+                else:
+                    logger.info(
+                        "Incident %s: newly-seen script '%s' passed the guardrail scan; "
+                        "classified low-risk/auto-executable.",
+                        incident.id, script_name,
+                    )
+
+            can_auto_execute = bool(policy.auto_execute_allowed and incident.confidence == "high")
             dry_run = bool(getattr(settings, "AGENT_DRY_RUN", False))
 
             action = RemediationAction.objects.create(
@@ -525,6 +592,7 @@ def _finalize_incident(incident: Incident, decision: Optional[dict]) -> None:
                 confidence=incident.confidence,
                 status="proposed",
                 dry_run=dry_run,
+                guardrail_violations=violations or None,
             )
 
             if can_auto_execute and not dry_run:
@@ -549,8 +617,9 @@ def _finalize_incident(incident: Incident, decision: Optional[dict]) -> None:
                 incident.status = "escalated"
             else:
                 logger.info(
-                    "Incident %s: '%s' requires human approval (registered=%s, confidence=%s)",
-                    incident.id, script_name, policy is not None, incident.confidence,
+                    "Incident %s: '%s' requires human approval (auto_execute_allowed=%s, "
+                    "confidence=%s)",
+                    incident.id, script_name, policy.auto_execute_allowed, incident.confidence,
                 )
                 action.status = "awaiting_approval"
                 action.save(update_fields=["status"])
