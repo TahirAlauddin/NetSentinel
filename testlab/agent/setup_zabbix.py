@@ -453,13 +453,6 @@ def main() -> None:
     # PROBLEM for as long as the backlog persists (many poll cycles), instead
     # of firing for exactly one 30s window and auto-resolving before the
     # incident agent's own ~30s poll is guaranteed to catch it.
-    #
-    # NOTE: as of this writing, scripts/inject.sh|bat's "worker-queue-backup"
-    # fault floods app-server's /slow HTTP endpoint — it never actually calls
-    # worker.slow_task.delay(), so nothing lands in this Celery queue yet.
-    # This item/trigger is real and will fire once something actually
-    # publishes to the "celery" queue; the fault script needs a follow-up fix
-    # to be a working end-to-end demo.
     ensure_item(
         session, token, "worker-server", worker_hostid, worker_interfaceid,
         key="system.run[/usr/local/bin/check_queue_depth.sh]",

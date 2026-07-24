@@ -29,7 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # systemd's private socket directly. Test environment only.
 
 WORKDIR /app
-RUN python3 -m venv /app/venv && /app/venv/bin/pip install --no-cache-dir fastapi uvicorn
+RUN python3 -m venv /app/venv && /app/venv/bin/pip install --no-cache-dir fastapi uvicorn celery redis
 COPY main.py .
 
 COPY uvicorn.service /etc/systemd/system/uvicorn.service
