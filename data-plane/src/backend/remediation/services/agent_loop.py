@@ -65,14 +65,48 @@ def run_agent_loop(event_id: str, force: bool = False) -> None:
         logger.error("Zabbix not reachable, cannot investigate event %s: %s", event_id, exc)
         return
 
+    fetched = _fetch_problem_context(client, event_id)
+    if fetched is None:
+        return
+    problem, trigger, host_id, host_name, severity = fetched
+
+    incident = _get_or_create_incident(event_id, host_id, host_name, trigger, severity, force)
+    if incident is None:
+        return
+    context.start_incident_context(incident)
+
+    messages = _build_initial_messages(event_id, host_id, host_name, trigger, severity)
+    decision, human_took_over = _run_react_loop(incident, messages)
+
+    # Re-check rather than trusting human_took_over alone — intervention may have
+    # landed during the final iteration's tool calls, after the loop's own check
+    # last passed. Either way, a human owning the incident means the agent must not
+    # touch it further, in particular must not execute/propose anything below.
+    if human_took_over or _human_has_taken_over(incident):
+        logger.info(
+            "Incident %s: a human took over before the agent finished; not finalizing.",
+            incident.id,
+        )
+        context.log_step(
+            "final",
+            tool_output="Halted: a human took over this incident before the agent finished.",
+        )
+        return
+
+    _finalize_incident(incident, decision)
+
+
+def _fetch_problem_context(client, event_id: str):
+    """Fetch the problem + its trigger/host from Zabbix. Returns None (having
+    already logged why) if the problem can't be fetched or is no longer active."""
     try:
         problems = client.problems.get(eventids=[event_id], output="extend")
     except Exception as exc:  # noqa: BLE001
         logger.error("Could not fetch problem %s from Zabbix: %s", event_id, exc)
-        return
+        return None
     if not problems:
         logger.warning("Problem %s is no longer active in Zabbix; skipping.", event_id)
-        return
+        return None
 
     problem = problems[0]
     trigger_id = problem.get("objectid")
@@ -86,7 +120,14 @@ def run_agent_loop(event_id: str, force: bool = False) -> None:
     host_id = hosts[0].get("hostid") if hosts else str(problem.get("hostid", ""))
     host_name = hosts[0].get("name") if hosts else "unknown host"
     severity = SEVERITY_LABELS.get(str(problem.get("severity", 0)), "Unknown")
+    return problem, trigger, host_id, host_name, severity
 
+
+def _get_or_create_incident(
+    event_id: str, host_id: str, host_name: str, trigger: dict, severity: str, force: bool
+) -> Optional[Incident]:
+    """Returns None (having already logged why) when there's an existing,
+    non-forced Incident to skip as a duplicate run."""
     incident, created = Incident.objects.get_or_create(
         zabbix_event_id=event_id,
         defaults={
@@ -100,10 +141,12 @@ def run_agent_loop(event_id: str, force: bool = False) -> None:
     if not created:
         if not force:
             logger.info("Event %s already has an Incident; skipping duplicate run.", event_id)
-            return
+            return None
         logger.info(
             "Incident %s for event %s already exists (status=%s) — force re-running.",
-            incident.id, event_id, incident.status,
+            incident.id,
+            event_id,
+            incident.status,
         )
         incident.zabbix_host_id = host_id
         incident.host_name = host_name
@@ -120,21 +163,35 @@ def run_agent_loop(event_id: str, force: bool = False) -> None:
         incident.human_intervention_note = ""
         incident.save(
             update_fields=[
-                "zabbix_host_id", "host_name", "trigger_name", "severity",
-                "status", "confidence", "resolved_at",
-                "human_intervened_at", "human_intervened_by", "human_intervention_note",
+                "zabbix_host_id",
+                "host_name",
+                "trigger_name",
+                "severity",
+                "status",
+                "confidence",
+                "resolved_at",
+                "human_intervened_at",
+                "human_intervened_by",
+                "human_intervention_note",
                 "updated_at",
             ]
         )
     else:
         logger.info(
             "Incident %s created for event %s (host=%s, trigger=%r, severity=%s)",
-            incident.id, event_id, host_name, trigger.get("description", "N/A"), severity,
+            incident.id,
+            event_id,
+            host_name,
+            trigger.get("description", "N/A"),
+            severity,
         )
-    context.start_incident_context(incident)
+    return incident
 
-    decision: Optional[dict] = None
-    messages: list[dict] = [
+
+def _build_initial_messages(
+    event_id: str, host_id: str, host_name: str, trigger: dict, severity: str
+) -> list[dict]:
+    return [
         {"role": "system", "content": SYSTEM_PROMPT},
         {
             "role": "user",
@@ -149,6 +206,12 @@ def run_agent_loop(event_id: str, force: bool = False) -> None:
             ),
         },
     ]
+
+
+def _run_react_loop(incident: Incident, messages: list[dict]) -> tuple[Optional[dict], bool]:
+    """Runs the ReAct round-trip loop until propose_remediation is called, a human
+    takes over, or MAX_MESSAGES is hit. Returns (decision, human_took_over)."""
+    decision: Optional[dict] = None
     human_took_over = False
     try:
         openai_client = get_client()
@@ -161,119 +224,112 @@ def run_agent_loop(event_id: str, force: bool = False) -> None:
             if _human_has_taken_over(incident):
                 human_took_over = True
                 break
-            response = openai_client.chat.completions.create(
-                model=get_model(),
-                max_tokens=2000,
-                messages=messages,
-                tools=TOOL_SCHEMAS,
-                tool_choice="auto",
-            )
-            assistant_message = response.choices[0].message
-            tool_calls = assistant_message.tool_calls or []
-
-            if assistant_message.content:
-                context.log_step("thinking", tool_output=assistant_message.content)
-
-            messages.append(
-                {
-                    "role": "assistant",
-                    "content": assistant_message.content,
-                    "tool_calls": [
-                        {
-                            "id": tc.id,
-                            "type": "function",
-                            "function": {
-                                "name": tc.function.name,
-                                "arguments": tc.function.arguments,
-                            },
-                        }
-                        for tc in tool_calls
-                    ]
-                    or None,
-                }
-            )
-
-            if not tool_calls:
-                # Plain text with no tool call — nudge once rather than stalling;
-                # if it still won't call a tool, the round-trip cap below escalates.
-                messages.append(
-                    {
-                        "role": "user",
-                        "content": "Continue investigating with the tools available, or "
-                        "call propose_remediation if you're ready to decide.",
-                    }
-                )
-                continue
-
-            for tool_call in tool_calls:
-                tool_name = tool_call.function.name
-                try:
-                    tool_input = json.loads(tool_call.function.arguments or "{}")
-                except json.JSONDecodeError:
-                    tool_input = {}
-
-                logger.debug(
-                    "Incident %s: tool_call %s(%s)", incident.id, tool_name, tool_input
-                )
-                context.log_step("tool_call", tool_name=tool_name, tool_input=tool_input)
-
-                fn = TOOL_FUNCTIONS.get(tool_name)
-                try:
-                    tool_result = fn(**tool_input) if fn else f"Unknown tool '{tool_name}'"
-                except Exception as exc:  # noqa: BLE001 - bad/malformed args from the model
-                    logger.warning(
-                        "Incident %s: tool '%s' raised %s", incident.id, tool_name, exc
-                    )
-                    tool_result = f"Error calling tool '{tool_name}': {exc}"
-
-                messages.append(
-                    {"role": "tool", "tool_call_id": tool_call.id, "content": tool_result}
-                )
-                if tool_name == "propose_remediation":
-                    decision = tool_input
-
+            decision = _agent_step(openai_client, incident, messages)
             if decision is not None:
                 break
 
-        if human_took_over:
-            logger.info(
-                "Incident %s: human intervened mid-investigation; stopping.", incident.id
-            )
-        elif decision is None:
-            logger.warning(
-                "Incident %s: agent hit the %d-message limit without a decision; escalating.",
-                incident.id, MAX_MESSAGES,
-            )
-        else:
-            logger.info("Incident %s: agent decided %s", incident.id, decision)
+        _log_react_outcome(incident, human_took_over, decision)
     except Exception as exc:  # noqa: BLE001
         logger.exception("Agent loop failed for incident %s", incident.id)
         context.log_step("final", tool_output=f"Agent loop error: {exc}")
 
-    # Re-check rather than trusting human_took_over alone — intervention may have
-    # landed during the final iteration's tool calls, after the loop's own check
-    # last passed. Either way, a human owning the incident means the agent must not
-    # touch it further, in particular must not execute/propose anything below.
-    if human_took_over or _human_has_taken_over(incident):
-        logger.info(
-            "Incident %s: a human took over before the agent finished; not finalizing.",
-            incident.id,
-        )
-        context.log_step(
-            "final", tool_output="Halted: a human took over this incident before the agent finished."
-        )
-        return
+    return decision, human_took_over
 
-    _finalize_incident(incident, decision)
+
+def _agent_step(openai_client, incident: Incident, messages: list[dict]) -> Optional[dict]:
+    """Runs one model round-trip; returns the propose_remediation decision if the
+    model called it this round, else None."""
+    response = openai_client.chat.completions.create(
+        model=get_model(),
+        max_tokens=2000,
+        messages=messages,
+        tools=TOOL_SCHEMAS,
+        tool_choice="auto",
+    )
+    assistant_message = response.choices[0].message
+    tool_calls = assistant_message.tool_calls or []
+
+    if assistant_message.content:
+        context.log_step("thinking", tool_output=assistant_message.content)
+
+    messages.append(
+        {
+            "role": "assistant",
+            "content": assistant_message.content,
+            "tool_calls": [
+                {
+                    "id": tc.id,
+                    "type": "function",
+                    "function": {
+                        "name": tc.function.name,
+                        "arguments": tc.function.arguments,
+                    },
+                }
+                for tc in tool_calls
+            ]
+            or None,
+        }
+    )
+
+    if not tool_calls:
+        # Plain text with no tool call — nudge once rather than stalling;
+        # if it still won't call a tool, the round-trip cap below escalates.
+        messages.append(
+            {
+                "role": "user",
+                "content": "Continue investigating with the tools available, or "
+                "call propose_remediation if you're ready to decide.",
+            }
+        )
+        return None
+
+    return _process_tool_calls(incident, tool_calls, messages)
+
+
+def _process_tool_calls(incident: Incident, tool_calls, messages: list[dict]) -> Optional[dict]:
+    decision: Optional[dict] = None
+    for tool_call in tool_calls:
+        tool_name = tool_call.function.name
+        try:
+            tool_input = json.loads(tool_call.function.arguments or "{}")
+        except json.JSONDecodeError:
+            tool_input = {}
+
+        logger.debug("Incident %s: tool_call %s(%s)", incident.id, tool_name, tool_input)
+        context.log_step("tool_call", tool_name=tool_name, tool_input=tool_input)
+
+        fn = TOOL_FUNCTIONS.get(tool_name)
+        try:
+            tool_result = fn(**tool_input) if fn else f"Unknown tool '{tool_name}'"
+        except Exception as exc:  # noqa: BLE001 - bad/malformed args from the model
+            logger.warning("Incident %s: tool '%s' raised %s", incident.id, tool_name, exc)
+            tool_result = f"Error calling tool '{tool_name}': {exc}"
+
+        messages.append({"role": "tool", "tool_call_id": tool_call.id, "content": tool_result})
+        if tool_name == "propose_remediation":
+            decision = tool_input
+
+    return decision
+
+
+def _log_react_outcome(incident: Incident, human_took_over: bool, decision: Optional[dict]) -> None:
+    if human_took_over:
+        logger.info("Incident %s: human intervened mid-investigation; stopping.", incident.id)
+    elif decision is None:
+        logger.warning(
+            "Incident %s: agent hit the %d-message limit without a decision; escalating.",
+            incident.id,
+            MAX_MESSAGES,
+        )
+    else:
+        logger.info("Incident %s: agent decided %s", incident.id, decision)
 
 
 def _human_has_taken_over(incident: Incident) -> bool:
     """Cheap DB check for cooperative cancellation: the intervene endpoint/admin
     action runs in a different thread/process than the agent loop, so this is the
     only way the loop can notice a human has taken over mid-run."""
-    return Incident.objects.filter(
-        pk=incident.pk, human_intervened_at__isnull=False
-    ).exists()
+    return Incident.objects.filter(pk=incident.pk, human_intervened_at__isnull=False).exists()
 
 
 def execute_remediation_script(host_id: str, script_name: str) -> dict:
@@ -312,14 +368,17 @@ def execute_generated_remediation_script(action: RemediationAction) -> dict:
     if violations:
         logger.error(
             "Refusing to execute generated script for incident %s: guardrail violations %s",
-            incident.id, violations,
+            incident.id,
+            violations,
         )
         return {"ok": False, "error": "Blocked by guardrails", "violations": violations}
 
     host_id = incident.zabbix_host_id
     logger.info(
         "Registering and executing agent-authored script '%s' for incident %s on host %s",
-        action.zabbix_script_name, incident.id, host_id,
+        action.zabbix_script_name,
+        incident.id,
+        host_id,
     )
     try:
         client = get_zabbix_client()
@@ -341,7 +400,10 @@ def execute_generated_remediation_script(action: RemediationAction) -> dict:
         ok = bool(result.get("response"))
         logger.info(
             "Agent-authored script '%s' (scriptid=%s) on host %s finished, ok=%s",
-            action.zabbix_script_name, scriptid, host_id, ok,
+            action.zabbix_script_name,
+            scriptid,
+            host_id,
+            ok,
         )
 
         RemediationScriptPolicy.objects.get_or_create(
@@ -363,7 +425,9 @@ def execute_generated_remediation_script(action: RemediationAction) -> dict:
         return {"ok": False, "error": str(exc)}
 
 
-def _lookup_and_scan_registered_script(host_id: str, script_name: str) -> tuple[Optional[str], list]:
+def _lookup_and_scan_registered_script(
+    host_id: str, script_name: str
+) -> tuple[Optional[str], list]:
     """
     For a script the agent picked from list_remediation_scripts that has no
     RemediationScriptPolicy yet: pull its actual command text from Zabbix and
@@ -427,7 +491,10 @@ def approve_and_execute(action: RemediationAction, user) -> RemediationAction:
     incident = action.incident
     logger.info(
         "User %s approving action %s (%s) for incident %s",
-        user, action.id, action.zabbix_script_name, incident.id,
+        user,
+        action.id,
+        action.zabbix_script_name,
+        incident.id,
     )
     if action.script_source == "generated":
         result = execute_generated_remediation_script(action)
@@ -466,9 +533,7 @@ def intervene(incident: Incident, user, note: str = "") -> Incident:
     superseded — the human is handling this now, not approving the agent's plan.
     """
     if incident.status in Incident.TERMINAL_STATUSES:
-        raise InterventionError(
-            f"Incident is already '{incident.status}'; nothing to take over."
-        )
+        raise InterventionError(f"Incident is already '{incident.status}'; nothing to take over.")
 
     logger.info("User %s taking over incident %s", user, incident.id)
     incident.human_intervened_at = timezone.now()
@@ -478,8 +543,12 @@ def intervene(incident: Incident, user, note: str = "") -> Incident:
     incident.resolved_at = timezone.now()
     incident.save(
         update_fields=[
-            "human_intervened_at", "human_intervened_by", "human_intervention_note",
-            "status", "resolved_at", "updated_at",
+            "human_intervened_at",
+            "human_intervened_by",
+            "human_intervention_note",
+            "status",
+            "resolved_at",
+            "updated_at",
         ]
     )
     incident.actions.filter(status__in=["proposed", "awaiting_approval"]).update(status="skipped")
@@ -531,7 +600,9 @@ def _finalize_incident(incident: Incident, decision: Optional[dict]) -> None:
             if violations:
                 logger.warning(
                     "Incident %s: agent-authored script '%s' blocked by guardrails: %s",
-                    incident.id, script_name, violations,
+                    incident.id,
+                    script_name,
+                    violations,
                 )
                 action.status = "failed"
                 action.execution_result = {"blocked_by_guardrails": violations}
@@ -540,7 +611,8 @@ def _finalize_incident(incident: Incident, decision: Optional[dict]) -> None:
                 logger.info(
                     "Incident %s: agent-authored script '%s' passed guardrail scan; "
                     "awaiting human approval before it can run.",
-                    incident.id, script_name,
+                    incident.id,
+                    script_name,
                 )
                 action.status = "awaiting_approval"
                 action.save(update_fields=["status"])
@@ -574,13 +646,16 @@ def _finalize_incident(incident: Incident, decision: Optional[dict]) -> None:
                 if violations:
                     logger.warning(
                         "Incident %s: newly-seen script '%s' failed the guardrail scan: %s",
-                        incident.id, script_name, violations,
+                        incident.id,
+                        script_name,
+                        violations,
                     )
                 else:
                     logger.info(
                         "Incident %s: newly-seen script '%s' passed the guardrail scan; "
                         "classified low-risk/auto-executable.",
-                        incident.id, script_name,
+                        incident.id,
+                        script_name,
                     )
 
             can_auto_execute = bool(policy.auto_execute_allowed and incident.confidence == "high")
@@ -599,7 +674,8 @@ def _finalize_incident(incident: Incident, decision: Optional[dict]) -> None:
             if can_auto_execute and not dry_run:
                 logger.info(
                     "Incident %s: auto-executing '%s' (policy allows, confidence=high)",
-                    incident.id, script_name,
+                    incident.id,
+                    script_name,
                 )
                 result = execute_remediation_script(incident.zabbix_host_id, script_name)
                 action.status = "executed" if result.get("ok") else "failed"
@@ -610,7 +686,8 @@ def _finalize_incident(incident: Incident, decision: Optional[dict]) -> None:
             elif can_auto_execute and dry_run:
                 logger.info(
                     "Incident %s: dry-run mode, skipping auto-execution of '%s'",
-                    incident.id, script_name,
+                    incident.id,
+                    script_name,
                 )
                 action.status = "skipped"
                 action.execution_result = {"dry_run": True}
@@ -620,13 +697,18 @@ def _finalize_incident(incident: Incident, decision: Optional[dict]) -> None:
                 logger.info(
                     "Incident %s: '%s' requires human approval (auto_execute_allowed=%s, "
                     "confidence=%s)",
-                    incident.id, script_name, policy.auto_execute_allowed, incident.confidence,
+                    incident.id,
+                    script_name,
+                    policy.auto_execute_allowed,
+                    incident.confidence,
                 )
                 action.status = "awaiting_approval"
                 action.save(update_fields=["status"])
                 incident.status = "escalated"
     else:
-        logger.info("Incident %s: no remediation proposed; escalating for human review.", incident.id)
+        logger.info(
+            "Incident %s: no remediation proposed; escalating for human review.", incident.id
+        )
         incident.status = "escalated"
 
     incident.resolved_at = timezone.now()

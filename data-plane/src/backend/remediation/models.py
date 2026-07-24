@@ -107,9 +107,7 @@ class Incident(models.Model):
     trigger_name = models.CharField(max_length=500)
     severity = models.CharField(max_length=20)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="investigating")
-    confidence = models.CharField(
-        max_length=10, choices=CONFIDENCE_CHOICES, blank=True, null=True
-    )
+    confidence = models.CharField(max_length=10, choices=CONFIDENCE_CHOICES, blank=True, null=True)
     resolved_asset = models.ForeignKey(
         "assets.Asset",
         on_delete=models.SET_NULL,

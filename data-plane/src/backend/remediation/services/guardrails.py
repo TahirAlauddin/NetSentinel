@@ -26,8 +26,14 @@ MAX_COMMAND_LENGTH = 2000
 # full command text. Keep patterns specific enough to avoid flagging normal
 # restart/reload/clear-log style remediations.
 _DESTRUCTIVE_PATTERNS: list[tuple[str, str]] = [
-    (r"rm\s+(-\w+\s+)*-[a-z]*r[a-z]*f[a-z]*(\s+-\w+)*\s+/(\s|$)", "recursive force-delete of the root filesystem"),
-    (r"rm\s+(-\w+\s+)*-[a-z]*f[a-z]*r[a-z]*(\s+-\w+)*\s+/(\s|$)", "recursive force-delete of the root filesystem"),
+    (
+        r"rm\s+(-\w+\s+)*-[a-z]*r[a-z]*f[a-z]*(\s+-\w+)*\s+/(\s|$)",
+        "recursive force-delete of the root filesystem",
+    ),
+    (
+        r"rm\s+(-\w+\s+)*-[a-z]*f[a-z]*r[a-z]*(\s+-\w+)*\s+/(\s|$)",
+        "recursive force-delete of the root filesystem",
+    ),
     (r"rm\s+-rf\s+/\*", "recursive force-delete of the root filesystem"),
     (r"\bmkfs(\.\w+)?\b", "filesystem creation — destroys existing data on the target device"),
     (r"\bdd\s+if=", "raw block-device write"),
@@ -43,7 +49,10 @@ _DESTRUCTIVE_PATTERNS: list[tuple[str, str]] = [
     (r"\bdelete\s+from\s+\w+\s*;?\s*$", "unfiltered DELETE with no WHERE clause"),
     (r"\bchmod\s+(-\w+\s+)*777\b", "world-writable permission change"),
     (r"\bchown\s+-R\b[^\n]*\broot\b", "recursive ownership change to root"),
-    (r"(curl|wget)[^\n|]*\|\s*(sudo\s+)?(sh|bash|python\d?)\b", "remote script piped directly into a shell"),
+    (
+        r"(curl|wget)[^\n|]*\|\s*(sudo\s+)?(sh|bash|python\d?)\b",
+        "remote script piped directly into a shell",
+    ),
     (r"\bdocker\s+(rm|kill|stop)\s+-?f?\s*\$\(\s*docker\s+ps", "bulk container kill/removal"),
     (r"\bcat\s+/etc/shadow\b", "credential file exposure"),
     (r"\buserdel\b|\bdeluser\b", "account deletion"),

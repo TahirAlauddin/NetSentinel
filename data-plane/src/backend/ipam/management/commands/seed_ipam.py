@@ -14,19 +14,19 @@ from django.core.management.base import BaseCommand
 
 from infrastructure.models import Location
 from ipam.models import (
+    VLAN,
+    VRF,
     Customer,
-    DNSRecord,
-    DNSZone,
     Device,
     DeviceType,
+    DNSRecord,
+    DNSZone,
     IPAddress,
     IPPool,
     IPTag,
     PhoneNumberRange,
     Subnet,
     SubnetGroup,
-    VLAN,
-    VRF,
 )
 
 GROUP_NAMES = ["Corporate", "Branch", "DataCenter", "Guest", "Voice", "Management"]
@@ -52,7 +52,9 @@ class Command(BaseCommand):
             help="Number of IP addresses to create per subnet.",
         )
         parser.add_argument("--clear", action="store_true", help="Delete IPAM data before seeding.")
-        parser.add_argument("--no-input", action="store_true", help="Do not prompt when using --clear.")
+        parser.add_argument(
+            "--no-input", action="store_true", help="Do not prompt when using --clear."
+        )
 
     def handle(self, *args, **options):
         locations = list(Location.objects.all())
@@ -136,7 +138,9 @@ class Command(BaseCommand):
     def _seed_groups(self):
         groups = []
         for name in GROUP_NAMES:
-            group, _ = SubnetGroup.objects.get_or_create(name=name, defaults={"description": f"{name} subnets"})
+            group, _ = SubnetGroup.objects.get_or_create(
+                name=name, defaults={"description": f"{name} subnets"}
+            )
             groups.append(group)
         return groups
 

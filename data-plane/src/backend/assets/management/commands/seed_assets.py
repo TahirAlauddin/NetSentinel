@@ -97,7 +97,9 @@ class Command(BaseCommand):
         parser.add_argument("--count", type=int, default=45, help="Number of assets to create.")
         parser.add_argument("--relations", type=int, default=15, help="Number of asset relations.")
         parser.add_argument("--alerts", type=int, default=20, help="Number of calendar alerts.")
-        parser.add_argument("--clear", action="store_true", help="Delete existing assets before seed.")
+        parser.add_argument(
+            "--clear", action="store_true", help="Delete existing assets before seed."
+        )
         parser.add_argument("--no-input", action="store_true", help="Do not prompt with --clear.")
 
     def handle(self, *args, **options):
@@ -117,10 +119,14 @@ class Command(BaseCommand):
         vendors = list(Vendor.objects.all())
 
         if not categories:
-            self.stdout.write(self.style.ERROR("No asset categories found; run seed_asset_categories."))
+            self.stdout.write(
+                self.style.ERROR("No asset categories found; run seed_asset_categories.")
+            )
             return
         if not vendors:
-            self.stdout.write(self.style.ERROR("No vendors found; run seed_vendors or add vendors first."))
+            self.stdout.write(
+                self.style.ERROR("No vendors found; run seed_vendors or add vendors first.")
+            )
             return
 
         created_assets = self._create_assets(
@@ -227,14 +233,19 @@ class Command(BaseCommand):
                 ),
                 manufacturer=vendor.name,
                 mac_address=self._random_mac() if random.random() > 0.25 else None,
-                ip_address=f"10.{random.randint(10, 99)}.{random.randint(0, 254)}.{random.randint(10, 240)}"
-                if random.random() > 0.30
-                else None,
-                system_uuid=f"{random.randint(10000000, 99999999)}-ABCD-{random.randint(1000, 9999)}",
+                ip_address=(
+                    f"10.{random.randint(10, 99)}.{random.randint(0, 254)}."
+                    f"{random.randint(10, 240)}"
+                    if random.random() > 0.30
+                    else None
+                ),
+                system_uuid=(
+                    f"{random.randint(10000000, 99999999)}-ABCD-{random.randint(1000, 9999)}"
+                ),
                 in_current_state_since=now - timedelta(days=random.randint(1, 720)),
-                expected_checkin_date=now + timedelta(days=random.randint(10, 120))
-                if random.random() > 0.7
-                else None,
+                expected_checkin_date=(
+                    now + timedelta(days=random.randint(10, 120)) if random.random() > 0.7 else None
+                ),
                 used_by=random.choice(users) if users and random.random() > 0.45 else None,
                 managed_by=random.choice(users) if users and random.random() > 0.50 else None,
                 custom_lifecycle=random.choice(lifecycles),
@@ -252,7 +263,9 @@ class Command(BaseCommand):
             )
 
             if departments:
-                asset.departments.set(random.sample(departments, k=random.randint(1, min(2, len(departments)))))
+                asset.departments.set(
+                    random.sample(departments, k=random.randint(1, min(2, len(departments))))
+                )
             if tags:
                 asset.tags.set(random.sample(tags, k=random.randint(1, min(3, len(tags)))))
 
@@ -266,11 +279,15 @@ class Command(BaseCommand):
         if category_name in COMPUTER_CATEGORIES:
             ComputerDetails.objects.create(
                 asset=asset,
-                cpu=random.choice(["Intel Core i7", "Intel Xeon Silver", "AMD Ryzen 7", "Apple M2 Pro"]),
+                cpu=random.choice(
+                    ["Intel Core i7", "Intel Xeon Silver", "AMD Ryzen 7", "Apple M2 Pro"]
+                ),
                 ram=random.choice(["8GB DDR4", "16GB DDR5", "32GB DDR5", "64GB ECC"]),
                 storage=random.choice(["512GB NVMe", "1TB NVMe", "2TB SSD", "4TB RAID"]),
                 gpu=random.choice(["Intel Iris Xe", "NVIDIA T1000", "RTX 4060", "Integrated"]),
-                os=random.choice(["Windows 11 Pro", "Ubuntu 24.04", "macOS Sonoma", "Windows Server 2022"]),
+                os=random.choice(
+                    ["Windows 11 Pro", "Ubuntu 24.04", "macOS Sonoma", "Windows Server 2022"]
+                ),
                 processor=random.choice(["i7-13700", "Xeon Silver 4310", "Ryzen 7 7840", "M2 Pro"]),
                 memory=random.choice(["16GB", "32GB", "64GB"]),
                 hard_drive=random.choice(["512GB SSD", "1TB SSD", "2TB NVMe"]),

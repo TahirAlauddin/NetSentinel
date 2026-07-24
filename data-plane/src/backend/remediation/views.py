@@ -16,12 +16,8 @@ from .serializers import (
     RemediationActionSerializer,
     RemediationScriptPolicySerializer,
 )
-from .services.agent_loop import (
-    ApprovalError,
-    InterventionError,
-    approve_and_execute,
-    intervene as intervene_incident,
-)
+from .services.agent_loop import ApprovalError, InterventionError, approve_and_execute
+from .services.agent_loop import intervene as intervene_incident
 
 logger = logging.getLogger(__name__)
 

@@ -88,6 +88,27 @@ def _template_write_payload(data: dict) -> dict:
     return payload
 
 
+def _template_update_params(data: dict) -> dict:
+    params: dict = {}
+    if "name" in data or "technical_name" in data:
+        params["host"] = (data.get("name") or data.get("technical_name") or "").strip()
+    if "visible_name" in data:
+        params["name"] = data["visible_name"]
+    elif "name" in data and "technical_name" not in data:
+        params["name"] = data["name"]
+    if "description" in data:
+        params["description"] = data["description"]
+    if "template_groups" in data:
+        params["groups"] = [{"groupid": str(g)} for g in data["template_groups"]]
+    if "linked_templates" in data:
+        params["templates"] = [{"templateid": str(t)} for t in data["linked_templates"]]
+    if "tags" in data:
+        params["tags"] = _normalize_tags(data["tags"])
+    if "macros" in data:
+        params["macros"] = _normalize_macros(data["macros"])
+    return params
+
+
 def _create_value_maps(zabbix, template_id: str, value_maps: list | None) -> None:
     if not value_maps:
         return
@@ -152,24 +173,7 @@ class TemplateViewSet(ZabbixViewMixin, viewsets.ViewSet):
     def update(self, request, pk=None):
         zabbix = self.get_zabbix()
         data = request.data
-        params: dict = {}
-
-        if "name" in data or "technical_name" in data:
-            params["host"] = (data.get("name") or data.get("technical_name") or "").strip()
-        if "visible_name" in data:
-            params["name"] = data["visible_name"]
-        elif "name" in data and "technical_name" not in data:
-            params["name"] = data["name"]
-        if "description" in data:
-            params["description"] = data["description"]
-        if "template_groups" in data:
-            params["groups"] = [{"groupid": str(g)} for g in data["template_groups"]]
-        if "linked_templates" in data:
-            params["templates"] = [{"templateid": str(t)} for t in data["linked_templates"]]
-        if "tags" in data:
-            params["tags"] = _normalize_tags(data["tags"])
-        if "macros" in data:
-            params["macros"] = _normalize_macros(data["macros"])
+        params = _template_update_params(data)
 
         if params:
             zabbix.templates.update(str(pk), **params)

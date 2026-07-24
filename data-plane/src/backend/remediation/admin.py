@@ -8,12 +8,8 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from .models import AgentStep, Incident, RemediationAction, RemediationScriptPolicy, ZabbixHostLink
-from .services.agent_loop import (
-    ApprovalError,
-    InterventionError,
-    approve_and_execute,
-    intervene as intervene_incident,
-)
+from .services.agent_loop import ApprovalError, InterventionError, approve_and_execute
+from .services.agent_loop import intervene as intervene_incident
 
 
 @admin.register(RemediationScriptPolicy)
@@ -46,7 +42,14 @@ class ZabbixHostLinkAdmin(admin.ModelAdmin):
 class AgentStepInline(admin.TabularInline):
     model = AgentStep
     extra = 0
-    readonly_fields = ("step_number", "role", "tool_name", "tool_input", "tool_output", "created_at")
+    readonly_fields = (
+        "step_number",
+        "role",
+        "tool_name",
+        "tool_input",
+        "tool_output",
+        "created_at",
+    )
     can_delete = False
 
 
@@ -101,9 +104,7 @@ class IncidentAdmin(admin.ModelAdmin):
     inlines = [AgentStepInline, RemediationActionInline]
     actions = ["take_over"]
 
-    @admin.action(
-        description="Take over: stop the agent and remove from active tracking"
-    )
+    @admin.action(description="Take over: stop the agent and remove from active tracking")
     def take_over(self, request, queryset):
         taken_over = 0
         for incident in queryset:

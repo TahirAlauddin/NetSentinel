@@ -50,9 +50,7 @@ def get_problem_detail(event_id: str) -> str:
     tool_input = {"event_id": event_id}
     try:
         client = get_zabbix_client()
-        problems = client.problems.get(
-            eventids=[event_id], output="extend", selectTags="extend"
-        )
+        problems = client.problems.get(eventids=[event_id], output="extend", selectTags="extend")
         if not problems:
             return _log_result(
                 "get_problem_detail", tool_input, f"No Zabbix problem found for event {event_id}."
@@ -95,9 +93,7 @@ def get_problem_detail(event_id: str) -> str:
 
         return _log_result("get_problem_detail", tool_input, "\n".join(lines))
     except Exception as exc:  # noqa: BLE001
-        return _log_result(
-            "get_problem_detail", tool_input, f"Error querying Zabbix: {exc}"
-        )
+        return _log_result("get_problem_detail", tool_input, f"Error querying Zabbix: {exc}")
 
 
 def get_host_recent_problems(host_id: str, hours: int = 24) -> str:
@@ -244,9 +240,13 @@ def list_remediation_scripts(host_id: str) -> str:
             name = s.get("name", "")
             policy = policies.get(name)
             if policy:
-                risk = f"risk={policy.risk_level}, auto_execute_allowed={policy.auto_execute_allowed}"
+                risk = (
+                    f"risk={policy.risk_level}, auto_execute_allowed={policy.auto_execute_allowed}"
+                )
             else:
-                risk = "unclassified in NetSentinel policy — treat as high risk, do not auto-execute"
+                risk = (
+                    "unclassified in NetSentinel policy — treat as high risk, do not auto-execute"
+                )
             lines.append(f"- {name}: {risk}")
         return _log_result("list_remediation_scripts", tool_input, "\n".join(lines))
     except Exception as exc:  # noqa: BLE001
@@ -400,8 +400,7 @@ TOOL_SCHEMAS = [
                     "query": {
                         "type": "string",
                         "description": (
-                            "Free-text search — trigger name, symptom, or host name "
-                            "works well."
+                            "Free-text search — trigger name, symptom, or host name " "works well."
                         ),
                     },
                 },
@@ -438,7 +437,7 @@ TOOL_SCHEMAS = [
             "description": (
                 "Finalize your diagnosis and remediation decision. Call this exactly "
                 "once, as your last action, after you've gathered enough context to "
-                "decide. Use script_name=\"none\" if no remediation script is "
+                'decide. Use script_name="none" if no remediation script is '
                 "appropriate (e.g. this needs human judgment). If no script from "
                 "list_remediation_scripts fits the problem, you may author one instead: "
                 "give it a new, descriptive script_name and pass its shell command in "
@@ -459,7 +458,7 @@ TOOL_SCHEMAS = [
                         "description": (
                             "Exact name of an existing script (must be one from "
                             "list_remediation_scripts), a new descriptive name if you're "
-                            "authoring one via script_command, or \"none\"."
+                            'authoring one via script_command, or "none".'
                         ),
                     },
                     "reasoning": {

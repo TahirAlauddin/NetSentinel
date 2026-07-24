@@ -14,11 +14,7 @@ from typing import Any, Optional
 
 import requests
 
-from .exceptions import (
-    ZabbixAPIError,
-    ZabbixConnectionError,
-    ZabbixNotAuthenticatedError,
-)
+from .exceptions import ZabbixAPIError, ZabbixConnectionError, ZabbixNotAuthenticatedError
 
 _JSONRPC_VERSION = "2.0"
 _CONTENT_TYPE = "application/json-rpc"
@@ -147,7 +143,20 @@ class ZabbixTransport:
         saved_auth: Optional[str] = None
         if not require_auth:
             saved_auth = self._session.headers.pop("Authorization", None)
+        try:
+            response = self._send(method, payload)
+        finally:
+            if not require_auth and saved_auth is not None:
+                self._session.headers["Authorization"] = saved_auth
 
+        return self._parse_result(method, response)
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _send(self, method: str, payload: dict) -> requests.Response:
+        """POST *payload* and map transport-level failures to ZabbixConnectionError."""
         try:
             response = self._session.post(
                 self._endpoint,
@@ -156,6 +165,7 @@ class ZabbixTransport:
                 verify=self._ssl_verify,
             )
             response.raise_for_status()
+            return response
         except requests.exceptions.ConnectionError as exc:
             raise ZabbixConnectionError(
                 f"Cannot connect to Zabbix at '{self._endpoint}': {exc}"
@@ -169,13 +179,10 @@ class ZabbixTransport:
                 f"Zabbix returned HTTP {exc.response.status_code} for '{method}'."
             ) from exc
         except requests.exceptions.RequestException as exc:
-            raise ZabbixConnectionError(
-                f"Unexpected request error for '{method}': {exc}"
-            ) from exc
-        finally:
-            if not require_auth and saved_auth is not None:
-                self._session.headers["Authorization"] = saved_auth
+            raise ZabbixConnectionError(f"Unexpected request error for '{method}': {exc}") from exc
 
+    def _parse_result(self, method: str, response: requests.Response) -> Any:
+        """Parse the JSON-RPC body and raise ZabbixAPIError on an ``error`` field."""
         try:
             body = response.json()
         except ValueError as exc:
@@ -192,10 +199,6 @@ class ZabbixTransport:
             )
 
         return body.get("result")
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
 
     def _next_id(self) -> int:
         with self._id_lock:

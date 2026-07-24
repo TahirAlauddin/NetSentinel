@@ -35,7 +35,9 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--count", type=int, default=20, help="Number of contracts to create.")
         parser.add_argument("--clear", action="store_true", help="Delete existing contracts first.")
-        parser.add_argument("--no-input", action="store_true", help="Do not prompt when using --clear.")
+        parser.add_argument(
+            "--no-input", action="store_true", help="Do not prompt when using --clear."
+        )
 
     def handle(self, *args, **options):
         call_command("seed_contract_categories")
@@ -86,7 +88,8 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Done. Created {created} contracts (requested {count}). Total: {Contract.objects.count()}"
+                f"Done. Created {created} contracts (requested {count}). "
+                f"Total: {Contract.objects.count()}"
             )
         )
 

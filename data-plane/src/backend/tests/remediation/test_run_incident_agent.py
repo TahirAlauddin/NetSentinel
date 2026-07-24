@@ -63,8 +63,12 @@ class TestPollOnceDispatch:
 
     def test_open_incident_within_timeout_is_left_alone(self, stub_zabbix_problems):
         Incident.objects.create(
-            zabbix_event_id="9002", zabbix_host_id="1", host_name="h",
-            trigger_name="t", severity="High", status="escalated",
+            zabbix_event_id="9002",
+            zabbix_host_id="1",
+            host_name="h",
+            trigger_name="t",
+            severity="High",
+            status="escalated",
         )
         stub_zabbix_problems([{"eventid": "9002", "name": "x"}])
         executor = _FakeExecutor()
@@ -76,8 +80,12 @@ class TestPollOnceDispatch:
     def test_open_incident_past_timeout_is_retried(self, stub_zabbix_problems, settings):
         settings.AGENT_INCIDENT_RETRY_TIMEOUT = 60
         incident = Incident.objects.create(
-            zabbix_event_id="9003", zabbix_host_id="1", host_name="h",
-            trigger_name="t", severity="High", status="escalated",
+            zabbix_event_id="9003",
+            zabbix_host_id="1",
+            host_name="h",
+            trigger_name="t",
+            severity="High",
+            status="escalated",
         )
         _backdate(incident, 120)
         stub_zabbix_problems([{"eventid": "9003", "name": "x"}])
@@ -99,8 +107,12 @@ class TestPollOnceDispatch:
         default 'investigating' status indefinitely."""
         settings.AGENT_INCIDENT_RETRY_TIMEOUT = 60
         incident = Incident.objects.create(
-            zabbix_event_id="9006", zabbix_host_id="1", host_name="h",
-            trigger_name="t", severity="High", status="investigating",
+            zabbix_event_id="9006",
+            zabbix_host_id="1",
+            host_name="h",
+            trigger_name="t",
+            severity="High",
+            status="investigating",
         )
         _backdate(incident, 120)
         stub_zabbix_problems([{"eventid": "9006", "name": "x"}])
@@ -115,8 +127,12 @@ class TestPollOnceDispatch:
     ):
         settings.AGENT_INCIDENT_RETRY_TIMEOUT = 60
         incident = Incident.objects.create(
-            zabbix_event_id="9004", zabbix_host_id="1", host_name="h",
-            trigger_name="t", severity="High", status="remediated",
+            zabbix_event_id="9004",
+            zabbix_host_id="1",
+            host_name="h",
+            trigger_name="t",
+            severity="High",
+            status="remediated",
         )
         _backdate(incident, 3600)
         stub_zabbix_problems([{"eventid": "9004", "name": "x"}])
@@ -131,8 +147,12 @@ class TestPollOnceDispatch:
     ):
         settings.AGENT_INCIDENT_RETRY_TIMEOUT = 60
         incident = Incident.objects.create(
-            zabbix_event_id="9005", zabbix_host_id="1", host_name="h",
-            trigger_name="t", severity="High", status="escalated",
+            zabbix_event_id="9005",
+            zabbix_host_id="1",
+            host_name="h",
+            trigger_name="t",
+            severity="High",
+            status="escalated",
             human_intervened_at=timezone.now(),
         )
         _backdate(incident, 3600)

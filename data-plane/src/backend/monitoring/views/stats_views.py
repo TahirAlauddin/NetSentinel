@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 
-from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ..constants import API_SEVERITY, SEVERITY_TO_API
@@ -27,6 +26,44 @@ class MonitoringStatsView(ZabbixViewMixin, APIView):
             selectInterfaces=["available"],
             filter={"flags": "0"},
         )
+        problems = zabbix.problems.get(output=["eventid", "severity", "acknowledged"])
+
+        templates = zabbix.templates.get(countOutput=True)
+        template_count = int(templates) if isinstance(templates, str) else len(templates or [])
+
+        items = zabbix.items.get(countOutput=True, monitored_hosts=1)
+        item_count = int(items) if isinstance(items, str) else len(items or [])
+
+        triggers = zabbix.triggers.get(output=["triggerid", "status", "value"], limit=10000)
+        trigger_total = len(triggers)
+        trigger_enabled = sum(1 for t in triggers if str(t.get("status")) == "0")
+        trigger_in_problem = sum(1 for t in triggers if str(t.get("value")) == "1")
+
+        host_groups = zabbix.hostgroups.get(countOutput=True)
+        host_group_count = (
+            int(host_groups) if isinstance(host_groups, str) else len(host_groups or [])
+        )
+
+        maintenance_rows = zabbix.maintenance.get(
+            output=["maintenanceid", "active_since", "active_till"]
+        )
+
+        return {
+            "hosts": self._host_stats(hosts),
+            "problems": self._problem_stats(problems),
+            "templates": template_count,
+            "items": item_count,
+            "triggers": {
+                "total": trigger_total,
+                "enabled": trigger_enabled,
+                "in_problem": trigger_in_problem,
+            },
+            "host_groups": host_group_count,
+            "active_maintenance": self._count_active_maintenance(maintenance_rows, now),
+        }
+
+    @staticmethod
+    def _host_stats(hosts):
         total_hosts = len(hosts)
         monitored = sum(1 for h in hosts if str(h.get("status")) == "0")
         available = 0
@@ -48,8 +85,17 @@ class MonitoringStatsView(ZabbixViewMixin, APIView):
                 available += 1
             else:
                 unknown += 1
+        return {
+            "total": total_hosts,
+            "monitored": monitored,
+            "not_monitored": total_hosts - monitored,
+            "available": available,
+            "unavailable": unavailable,
+            "unknown": unknown,
+        }
 
-        problems = zabbix.problems.get(output=["eventid", "severity", "acknowledged"])
+    @staticmethod
+    def _problem_stats(problems):
         active_problems = len(problems)
         unacknowledged = sum(1 for p in problems if str(p.get("acknowledged")) == "0")
 
@@ -59,23 +105,16 @@ class MonitoringStatsView(ZabbixViewMixin, APIView):
             sev_key = SEVERITY_TO_API.get(sev_int, ("not_classified", ""))[0]
             problems_by_severity[sev_key] = problems_by_severity.get(sev_key, 0) + 1
 
-        templates = zabbix.templates.get(countOutput=True)
-        template_count = int(templates) if isinstance(templates, str) else len(templates or [])
+        return {
+            "total_active": active_problems,
+            "unacknowledged": unacknowledged,
+            "by_severity": problems_by_severity,
+        }
 
-        items = zabbix.items.get(countOutput=True, monitored_hosts=1)
-        item_count = int(items) if isinstance(items, str) else len(items or [])
-
-        triggers = zabbix.triggers.get(output=["triggerid", "status", "value"], limit=10000)
-        trigger_total = len(triggers)
-        trigger_enabled = sum(1 for t in triggers if str(t.get("status")) == "0")
-        trigger_in_problem = sum(1 for t in triggers if str(t.get("value")) == "1")
-
-        host_groups = zabbix.hostgroups.get(countOutput=True)
-        host_group_count = int(host_groups) if isinstance(host_groups, str) else len(host_groups or [])
-
-        maintenance_rows = zabbix.maintenance.get(output=["maintenanceid", "active_since", "active_till"])
+    @staticmethod
+    def _count_active_maintenance(rows, now):
         active_maintenance = 0
-        for row in maintenance_rows:
+        for row in rows:
             try:
                 since = int(row.get("active_since", 0))
                 till = int(row.get("active_till", 0))
@@ -83,28 +122,4 @@ class MonitoringStatsView(ZabbixViewMixin, APIView):
                     active_maintenance += 1
             except (TypeError, ValueError):
                 continue
-
-        return {
-            "hosts": {
-                "total": total_hosts,
-                "monitored": monitored,
-                "not_monitored": total_hosts - monitored,
-                "available": available,
-                "unavailable": unavailable,
-                "unknown": unknown,
-            },
-            "problems": {
-                "total_active": active_problems,
-                "unacknowledged": unacknowledged,
-                "by_severity": problems_by_severity,
-            },
-            "templates": template_count,
-            "items": item_count,
-            "triggers": {
-                "total": trigger_total,
-                "enabled": trigger_enabled,
-                "in_problem": trigger_in_problem,
-            },
-            "host_groups": host_group_count,
-            "active_maintenance": active_maintenance,
-        }
+        return active_maintenance

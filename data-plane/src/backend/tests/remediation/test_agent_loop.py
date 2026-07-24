@@ -18,7 +18,9 @@ from remediation.services import agent_loop
 
 def _completion(tool_calls=(), content=None):
     return SimpleNamespace(
-        choices=[SimpleNamespace(message=SimpleNamespace(content=content, tool_calls=list(tool_calls)))]
+        choices=[
+            SimpleNamespace(message=SimpleNamespace(content=content, tool_calls=list(tool_calls)))
+        ]
     )
 
 

@@ -24,7 +24,9 @@ from remediation.services import agent_loop
 
 def _completion(tool_calls=(), content=None):
     return SimpleNamespace(
-        choices=[SimpleNamespace(message=SimpleNamespace(content=content, tool_calls=list(tool_calls)))]
+        choices=[
+            SimpleNamespace(message=SimpleNamespace(content=content, tool_calls=list(tool_calls)))
+        ]
     )
 
 
@@ -110,9 +112,7 @@ class TestUnclassifiedRegisteredScriptAutoRisk:
         client.scripts.get.return_value = [{"scriptid": "56", "command": "rm -rf /"}]
         incident = _make_incident("6002")
         mock_llm = mocker.patch("remediation.services.agent_loop.get_client")
-        mock_llm.return_value.chat.completions.create.return_value = _propose(
-            "wipe-cache", "high"
-        )
+        mock_llm.return_value.chat.completions.create.return_value = _propose("wipe-cache", "high")
 
         agent_loop.run_agent_loop("6002", force=True)
 

@@ -3,13 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from ..constants import API_INVENTORY_MODE
-from ..mappers import (
-    host_status_to_zabbix,
-    map_host,
-    map_item,
-    map_problem,
-    map_trigger,
-)
+from ..mappers import host_status_to_zabbix, map_host, map_item, map_problem, map_trigger
 from ..services import build_host_problem_counts, fetch_hosts_with_filters
 from .mixins import ZabbixViewMixin, zabbix_action
 
@@ -208,7 +202,11 @@ class HostTagViewSet(ZabbixViewMixin, viewsets.ViewSet):
         tags = list(rows[0].get("tags") or [])
         tags.append({"tag": request.data.get("tag", ""), "value": request.data.get("value", "")})
         zabbix.hosts.update(str(host_id), tags=tags)
-        return {"id": len(tags), "tag": request.data.get("tag", ""), "value": request.data.get("value", "")}
+        return {
+            "id": len(tags),
+            "tag": request.data.get("tag", ""),
+            "value": request.data.get("value", ""),
+        }
 
     @zabbix_action
     def destroy(self, request, pk=None):

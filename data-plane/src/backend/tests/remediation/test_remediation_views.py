@@ -178,9 +178,7 @@ class TestRemediationActionApproveGenerated:
             "remediation.services.agent_loop.execute_generated_remediation_script",
             return_value={"ok": True, "raw": {"response": "success"}, "scriptid": "999"},
         )
-        mock_registered = mocker.patch(
-            "remediation.services.agent_loop.execute_remediation_script"
-        )
+        mock_registered = mocker.patch("remediation.services.agent_loop.execute_remediation_script")
 
         response = authenticated_api_client.post(
             f"/api/v1/remediation/actions/{awaiting_generated_action.id}/approve/"
@@ -249,9 +247,7 @@ class TestIncidentIntervene:
         awaiting_action.refresh_from_db()
         assert awaiting_action.status == "skipped"
 
-    def test_intervene_sends_a_notification(
-        self, authenticated_api_client, user, incident, mocker
-    ):
+    def test_intervene_sends_a_notification(self, authenticated_api_client, user, incident, mocker):
         _grant_execute_remediation(user)
         mock_notify = mocker.patch("remediation.services.agent_loop.send_notification")
 

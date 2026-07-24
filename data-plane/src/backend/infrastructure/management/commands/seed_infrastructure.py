@@ -243,7 +243,10 @@ class Command(BaseCommand):
                     defaults={
                         "name": f"{random.choice(FIRST_NAMES)} {random.choice(LAST_NAMES)}",
                         "email": f"{contact_type}.{circuit.id}@example.com",
-                        "phone": f"+1-877-{200 + (circuit.id % 700):03d}-{1000 + (circuit.id % 8999):04d}",
+                        "phone": (
+                            f"+1-877-{200 + (circuit.id % 700):03d}"
+                            f"-{1000 + (circuit.id % 8999):04d}"
+                        ),
                     },
                 )
 

@@ -7,20 +7,12 @@ from datetime import datetime, timezone
 from .constants import (
     ACTION_SOURCE_TO_API,
     ACTION_STATUS_TO_API,
-    API_ACTION_SOURCE,
-    API_ACTION_STATUS,
     API_HOST_STATUS,
-    HOST_STATUS_MONITORED,
-    API_INVENTORY_MODE,
-    API_ITEM_STATUS,
-    API_MAINTENANCE_TYPE,
-    API_MEDIA_TYPE,
-    API_PROXY_MODE,
     API_SEVERITY,
-    API_TRIGGER_STATUS,
     AVAILABILITY_TO_API,
     EVENT_SOURCE_TO_API,
     EVENT_VALUE_TO_API,
+    HOST_STATUS_MONITORED,
     HOST_STATUS_TO_API,
     INVENTORY_MODE_TO_API,
     ITEM_STATUS_TO_API,
@@ -35,7 +27,6 @@ from .constants import (
     VALUE_TYPE_TO_API,
     VALUE_TYPE_TO_ZABBIX,
     ZABBIX_ITEM_TYPE,
-    ZABBIX_VALUE_TYPE,
     empty_timestamps,
     iso_timestamp,
     zabbix_id,
@@ -88,7 +79,9 @@ def map_host(
     status_key, status_label = _choice(HOST_STATUS_TO_API, row.get("status", 0))
 
     interfaces = row.get("interfaces") or []
-    main_iface = next((i for i in interfaces if str(i.get("main")) == "1"), interfaces[0] if interfaces else {})
+    main_iface = next(
+        (i for i in interfaces if str(i.get("main")) == "1"), interfaces[0] if interfaces else {}
+    )
     use_dns = str(main_iface.get("useip", "1")) == "0"
     ip_address = main_iface.get("ip") or None
     dns_name = main_iface.get("dns") or ""
@@ -106,7 +99,13 @@ def map_host(
 
     groups = row.get("parentGroups") or row.get("groups") or []
     host_groups_detail = [
-        {"id": zabbix_id(g.get("groupid")), "name": g.get("name", ""), "description": "", "host_count": 0, **empty_timestamps()}
+        {
+            "id": zabbix_id(g.get("groupid")),
+            "name": g.get("name", ""),
+            "description": "",
+            "host_count": 0,
+            **empty_timestamps(),
+        }
         for g in groups
     ]
     templates_raw = row.get("parentTemplates") or row.get("templates") or []
@@ -212,7 +211,10 @@ def map_template(row: dict, *, item_count: int = 0, trigger_count: int = 0) -> d
             {"id": zabbix_id(t.get("templateid")), "name": t.get("name") or t.get("host", "")}
             for t in linked
         ],
-        "tags": [{"id": i, "tag": t.get("tag", ""), "value": t.get("value", "")} for i, t in enumerate(tags, 1)],
+        "tags": [
+            {"id": i, "tag": t.get("tag", ""), "value": t.get("value", "")}
+            for i, t in enumerate(tags, 1)
+        ],
         "macros": [
             {
                 "macro": m.get("macro", ""),
@@ -258,7 +260,9 @@ def map_item(row: dict) -> dict:
         "host": host_id,
         "host_name": hosts[0].get("name") if hosts else None,
         "template": template_id,
-        "template_name": (templates[0].get("name") or templates[0].get("host")) if templates else None,
+        "template_name": (
+            (templates[0].get("name") or templates[0].get("host")) if templates else None
+        ),
         "name": row.get("name", ""),
         "key": row.get("key_", ""),
         "item_type": type_key,
@@ -300,7 +304,9 @@ def map_trigger(row: dict) -> dict:
         "host": host_id,
         "host_name": hosts[0].get("name") or hosts[0].get("host") if hosts else None,
         "template": template_id,
-        "template_name": (templates[0].get("name") or templates[0].get("host")) if templates else None,
+        "template_name": (
+            (templates[0].get("name") or templates[0].get("host")) if templates else None
+        ),
         "name": row.get("description", ""),
         "expression": row.get("expression", ""),
         "recovery_expression": row.get("recovery_expression") or "",
@@ -323,7 +329,9 @@ def map_trigger(row: dict) -> dict:
     }
 
 
-def map_problem(row: dict, *, host_name: str | None = None, trigger_name: str | None = None) -> dict:
+def map_problem(
+    row: dict, *, host_name: str | None = None, trigger_name: str | None = None
+) -> dict:
     sev_key, sev_label = _choice(SEVERITY_TO_API, row.get("severity", 3))
     acknowledged = str(row.get("acknowledged", "0")) == "1"
     r_clock = row.get("r_clock")
@@ -333,7 +341,11 @@ def map_problem(row: dict, *, host_name: str | None = None, trigger_name: str | 
 
     duration_secs = 0
     if row.get("clock"):
-        end = int(r_clock) if is_resolved and r_clock else int(datetime.now(tz=timezone.utc).timestamp())
+        end = (
+            int(r_clock)
+            if is_resolved and r_clock
+            else int(datetime.now(tz=timezone.utc).timestamp())
+        )
         duration_secs = end - int(row["clock"])
 
     tags = row.get("tags") or []
@@ -376,7 +388,9 @@ def map_event(row: dict) -> dict:
         "id": zabbix_id(row.get("eventid")),
         "host": zabbix_id(hosts[0].get("hostid")) if hosts else None,
         "host_name": hosts[0].get("name") or hosts[0].get("host") if hosts else None,
-        "trigger": zabbix_id(triggers[0].get("triggerid")) if triggers else zabbix_id(row.get("objectid")),
+        "trigger": (
+            zabbix_id(triggers[0].get("triggerid")) if triggers else zabbix_id(row.get("objectid"))
+        ),
         "trigger_name": triggers[0].get("description") if triggers else None,
         "problem": zabbix_id(row.get("eventid")),
         "source": src_key,
@@ -388,12 +402,18 @@ def map_event(row: dict) -> dict:
         "severity_display": sev_label,
         "clock": iso_timestamp(row.get("clock")),
         "acknowledged": str(row.get("acknowledged", "0")) == "1",
-        "r_eventid": zabbix_id(row.get("r_eventid")) if row.get("r_eventid") and str(row.get("r_eventid")) != "0" else None,
+        "r_eventid": (
+            zabbix_id(row.get("r_eventid"))
+            if row.get("r_eventid") and str(row.get("r_eventid")) != "0"
+            else None
+        ),
         "action_results": [],
     }
 
 
-def map_maintenance(row: dict, *, hosts_detail: list | None = None, groups_detail: list | None = None) -> dict:
+def map_maintenance(
+    row: dict, *, hosts_detail: list | None = None, groups_detail: list | None = None
+) -> dict:
     mt_key, mt_label = _choice(MAINTENANCE_TYPE_TO_API, row.get("maintenance_type", 0))
     active_since = iso_timestamp(row.get("active_since"))
     active_till = iso_timestamp(row.get("active_till"))
@@ -438,34 +458,41 @@ def map_action(row: dict) -> dict:
     st_key, st_label = _choice(ACTION_STATUS_TO_API, row.get("status", 0))
 
     conditions = []
-    for idx, cond in enumerate(row.get("filter", {}).get("conditions", []) if isinstance(row.get("filter"), dict) else [], 1):
-        conditions.append({
-            "id": idx,
-            "condition_type": str(cond.get("conditiontype", "")),
-            "operator": str(cond.get("operator", "")),
-            "value": cond.get("value", ""),
-            "value2": cond.get("value2", ""),
-            "formula_id": cond.get("formulaid", ""),
-        })
+    for idx, cond in enumerate(
+        row.get("filter", {}).get("conditions", []) if isinstance(row.get("filter"), dict) else [],
+        1,
+    ):
+        conditions.append(
+            {
+                "id": idx,
+                "condition_type": str(cond.get("conditiontype", "")),
+                "operator": str(cond.get("operator", "")),
+                "value": cond.get("value", ""),
+                "value2": cond.get("value2", ""),
+                "formula_id": cond.get("formulaid", ""),
+            }
+        )
 
     operations = []
     for idx, op in enumerate(row.get("operations") or [], 1):
-        operations.append({
-            "id": idx,
-            "operation_type": "send_message",
-            "op_step_from": int(op.get("esc_step_from", 1)),
-            "op_step_to": int(op.get("esc_step_to", 1)),
-            "op_step_duration": 0,
-            "default_msg": True,
-            "message_subject": "",
-            "message_body": op.get("default_msg", ""),
-            "media_type": zabbix_id(op.get("mediatypeid")) if op.get("mediatypeid") else None,
-            "media_type_detail": None,
-            "command_type": "",
-            "command": op.get("command", ""),
-            "execute_on": "zabbix_agent",
-            "run_script_on_zabbix_agent": False,
-        })
+        operations.append(
+            {
+                "id": idx,
+                "operation_type": "send_message",
+                "op_step_from": int(op.get("esc_step_from", 1)),
+                "op_step_to": int(op.get("esc_step_to", 1)),
+                "op_step_duration": 0,
+                "default_msg": True,
+                "message_subject": "",
+                "message_body": op.get("default_msg", ""),
+                "media_type": zabbix_id(op.get("mediatypeid")) if op.get("mediatypeid") else None,
+                "media_type_detail": None,
+                "command_type": "",
+                "command": op.get("command", ""),
+                "execute_on": "zabbix_agent",
+                "run_script_on_zabbix_agent": False,
+            }
+        )
 
     return {
         "id": zabbix_id(row.get("actionid")),

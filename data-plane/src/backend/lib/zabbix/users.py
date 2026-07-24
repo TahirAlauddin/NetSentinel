@@ -154,7 +154,5 @@ class UserAPI:
         list[str]
             IDs of the updated users.
         """
-        result = self._t.request(
-            "user.update", {"userid": userid, "medias": medias}
-        )
+        result = self._t.request("user.update", {"userid": userid, "medias": medias})
         return result.get("userids", [])

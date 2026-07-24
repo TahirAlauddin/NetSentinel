@@ -41,7 +41,9 @@ class Command(BaseCommand):
         call_command("seed_vendors")
 
         self.stdout.write("Seeding realistic assets...")
-        call_command("seed_assets", count=50, relations=20, alerts=24, clear=clear, no_input=no_input)
+        call_command(
+            "seed_assets", count=50, relations=20, alerts=24, clear=clear, no_input=no_input
+        )
 
         self.stdout.write("Seeding contracts...")
         call_command("seed_contract", count=24, clear=clear, no_input=no_input)

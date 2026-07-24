@@ -43,7 +43,10 @@ FAKE_SENTENCES = [
 
 
 class Command(BaseCommand):
-    help = "Seed dummy providers, services, data circuits, and phone numbers for Telecom Expense Management"
+    help = (
+        "Seed dummy providers, services, data circuits, and phone numbers "
+        "for Telecom Expense Management"
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(

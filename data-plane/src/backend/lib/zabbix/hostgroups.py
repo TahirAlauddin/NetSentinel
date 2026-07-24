@@ -114,9 +114,7 @@ class HostGroupAPI:
         list[str]
             IDs of the updated groups.
         """
-        result = self._t.request(
-            "hostgroup.update", {"groupid": groupid, "name": name, **params}
-        )
+        result = self._t.request("hostgroup.update", {"groupid": groupid, "name": name, **params})
         return result.get("groupids", [])
 
     def delete(self, *groupids: str) -> list[str]:

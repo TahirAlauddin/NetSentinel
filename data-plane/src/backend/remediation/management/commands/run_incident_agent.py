@@ -147,6 +147,32 @@ class Command(BaseCommand):
         timeout = timedelta(seconds=getattr(settings, "AGENT_INCIDENT_RETRY_TIMEOUT", 1800))
         now = timezone.now()
 
+        new_problems, stale_problems = self._classify_problems(
+            problems, existing_by_event_id, timeout, now
+        )
+
+        already_tracked = len(problems) - len(new_problems) - len(stale_problems)
+        logger.info(
+            "Poll result: %d active problem(s) in Zabbix, %d already tracked, %d new, "
+            "%d stale (retrying)",
+            len(problems),
+            already_tracked,
+            len(new_problems),
+            len(stale_problems),
+        )
+        if new_problems:
+            self.stdout.write(f"Found {len(new_problems)} new problem(s).")
+        if stale_problems:
+            self.stdout.write(
+                f"Re-running agent on {len(stale_problems)} stale unresolved problem(s)."
+            )
+
+        self._dispatch(executor, new_problems, stale_problems, timeout)
+
+    @staticmethod
+    def _classify_problems(
+        problems: list[dict], existing_by_event_id: dict, timeout: timedelta, now
+    ) -> tuple[list[dict], list[dict]]:
         new_problems = []
         stale_problems = []
         for problem in problems:
@@ -166,24 +192,20 @@ class Command(BaseCommand):
             # once it's sat untouched longer than a reasonable timeframe.
             if now - incident.updated_at >= timeout:
                 stale_problems.append(problem)
+        return new_problems, stale_problems
 
-        already_tracked = len(problems) - len(new_problems) - len(stale_problems)
-        logger.info(
-            "Poll result: %d active problem(s) in Zabbix, %d already tracked, %d new, "
-            "%d stale (retrying)",
-            len(problems), already_tracked, len(new_problems), len(stale_problems),
-        )
-        if new_problems:
-            self.stdout.write(f"Found {len(new_problems)} new problem(s).")
-        if stale_problems:
-            self.stdout.write(
-                f"Re-running agent on {len(stale_problems)} stale unresolved problem(s)."
-            )
-
+    @staticmethod
+    def _dispatch(
+        executor: ThreadPoolExecutor,
+        new_problems: list[dict],
+        stale_problems: list[dict],
+        timeout: timedelta,
+    ) -> None:
         for problem in new_problems:
             logger.info(
                 "Dispatching event %s (%s) to the agent loop",
-                problem["eventid"], problem.get("name", "N/A"),
+                problem["eventid"],
+                problem.get("name", "N/A"),
             )
             executor.submit(_run_and_cleanup, problem["eventid"])
 
@@ -191,7 +213,9 @@ class Command(BaseCommand):
             logger.info(
                 "Event %s (%s) exceeded the %ds retry timeout still unresolved; "
                 "re-dispatching to the agent loop",
-                problem["eventid"], problem.get("name", "N/A"), timeout.total_seconds(),
+                problem["eventid"],
+                problem.get("name", "N/A"),
+                timeout.total_seconds(),
             )
             executor.submit(_run_and_cleanup, problem["eventid"], force=True)
 

@@ -43,9 +43,9 @@ from .scripts import ScriptAPI
 from .templategroups import TemplateGroupAPI
 from .templates import TemplateAPI
 from .transport import ZabbixTransport
-from .valuemaps import ValueMapAPI
 from .triggers import TriggerAPI
 from .users import UserAPI
+from .valuemaps import ValueMapAPI
 
 
 class ZabbixClient:
