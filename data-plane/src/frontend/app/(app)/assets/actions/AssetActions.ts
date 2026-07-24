@@ -133,6 +133,20 @@ export class AssetActions {
         ? initialData.count
         : dedupedById.size;
 
+    await AssetActions.fetchRemainingPages(queryString, dedupedById, totalCount);
+
+    return Array.from(dedupedById.values());
+  }
+
+  /**
+   * Fetches page 2+ of a paginated /assets/ listing into dedupedById, stopping once
+   * totalCount is reached, a page errors, or a page comes back empty.
+   */
+  private static async fetchRemainingPages(
+    queryString: string,
+    dedupedById: Map<number, Asset>,
+    totalCount: number
+  ): Promise<void> {
     let page = 2;
     while (dedupedById.size < totalCount) {
       const pageEndpoint = `/assets/?${queryString ? `${queryString}&` : ""}page=${page}`;
@@ -165,8 +179,6 @@ export class AssetActions {
       }
       page += 1;
     }
-
-    return Array.from(dedupedById.values());
   }
 
   /**

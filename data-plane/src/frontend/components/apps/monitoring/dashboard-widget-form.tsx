@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -70,7 +70,7 @@ export function DashboardWidgetForm() {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     formState: { errors },
   } = useForm<WidgetFormValues>({
@@ -86,8 +86,9 @@ export function DashboardWidgetForm() {
     },
   });
 
-  const hostId = watch("host_id");
-  const chartType = watch("chart_type");
+  const hostId = useWatch({ control, name: "host_id" });
+  const chartType = useWatch({ control, name: "chart_type" });
+  const itemId = useWatch({ control, name: "item_id" });
 
   useEffect(() => {
     (async () => {
@@ -259,7 +260,7 @@ export function DashboardWidgetForm() {
           <div className="space-y-1.5">
             <Label>Item</Label>
             <Select
-              value={watch("item_id") || undefined}
+              value={itemId || undefined}
               onValueChange={(v) => setValue("item_id", v)}
               disabled={!hostId || itemsLoading}
             >

@@ -11,12 +11,8 @@ import {
   FolderOpen,
   FileCode2,
   BarChart2,
-  Zap,
   AlertTriangle,
-  Calendar,
   Play,
-  Mail,
-  Radio,
   Activity,
   ChevronRight,
 } from "lucide-react";
@@ -104,6 +100,8 @@ export function MonitoringHeader({
   breadcrumbs,
 }: MonitoringHeaderProps) {
   const pathname = usePathname();
+  // getPageIcon only selects among the stable, module-level icon components in
+  // SECTION_ICONS (or Activity) — it never defines a new component.
   const PageIcon = getPageIcon(pathname);
   const finalCrumbs =
     breadcrumbs?.length ? breadcrumbs : generateBreadcrumbs(pathname);
@@ -146,6 +144,8 @@ export function MonitoringHeader({
       {/* Page title with icon badge */}
       <div className="flex items-center gap-2.5">
         <span className="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-orange-100 dark:bg-orange-950/40 shrink-0">
+          {/* eslint-disable-next-line react-hooks/static-components -- PageIcon is
+              picked from a fixed set of module-level icons, not created here */}
           <PageIcon className="h-4.5 w-4.5 text-orange-600 dark:text-orange-400" />
         </span>
         <h1 className="text-2xl font-semibold tracking-tight">{currentPage}</h1>
