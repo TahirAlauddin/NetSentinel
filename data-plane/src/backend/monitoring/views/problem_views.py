@@ -45,7 +45,10 @@ class ProblemViewSet(ZabbixViewMixin, viewsets.ViewSet):
         for row in rows:
             hostid = row.get("hostid")
             if search and search.lower() not in (row.get("name") or "").lower():
-                if hostid not in host_names or search.lower() not in host_names.get(hostid, "").lower():
+                if (
+                    hostid not in host_names
+                    or search.lower() not in host_names.get(hostid, "").lower()
+                ):
                     continue
             mapped.append(
                 map_problem(

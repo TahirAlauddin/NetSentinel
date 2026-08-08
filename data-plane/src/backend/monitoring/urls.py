@@ -33,10 +33,16 @@ router.register(r"items", ItemViewSet, basename="monitoring-item")
 router.register(r"triggers", TriggerViewSet, basename="monitoring-trigger")
 router.register(r"problems", ProblemViewSet, basename="monitoring-problem")
 router.register(r"events", EventViewSet, basename="monitoring-event")
-router.register(r"maintenance-windows", MaintenanceWindowViewSet, basename="monitoring-maintenance-window")
+router.register(
+    r"maintenance-windows", MaintenanceWindowViewSet, basename="monitoring-maintenance-window"
+)
 router.register(r"actions", ActionViewSet, basename="monitoring-action")
-router.register(r"action-conditions", ActionConditionViewSet, basename="monitoring-action-condition")
-router.register(r"action-operations", ActionOperationViewSet, basename="monitoring-action-operation")
+router.register(
+    r"action-conditions", ActionConditionViewSet, basename="monitoring-action-condition"
+)
+router.register(
+    r"action-operations", ActionOperationViewSet, basename="monitoring-action-operation"
+)
 router.register(r"media-types", MediaTypeViewSet, basename="monitoring-media-type")
 
 urlpatterns = [

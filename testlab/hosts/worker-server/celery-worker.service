@@ -1,0 +1,14 @@
+[Unit]
+Description=Celery worker (testlab)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/app
+ExecStart=/app/venv/bin/celery -A worker worker --loglevel=info --concurrency=2
+# No auto-restart: a stuck/killed worker must stay down until the
+# remediation agent (or a human) explicitly restarts it.
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

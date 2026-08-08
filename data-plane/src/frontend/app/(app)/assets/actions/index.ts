@@ -73,7 +73,7 @@ export async function uploadAssetAttachments(
 
 export async function setAssetRelations(
   assetId: number,
-  relatedItems: (number | { id: number })[]
+  relatedItems: number[]
 ): Promise<{ success: boolean; error?: string }> {
   return AssetActions.setRelations(assetId, relatedItems);
 }

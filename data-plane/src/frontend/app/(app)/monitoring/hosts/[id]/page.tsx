@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Pencil, Trash2, Power, PowerOff, AlertTriangle, BarChart2, Zap } from "lucide-react";
@@ -28,7 +28,7 @@ export default function HostDetailPage() {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadHost = async () => {
+  const loadHost = useCallback(async () => {
     const [hostRes, itemsRes, triggersRes, problemsRes] = await Promise.all([
       api.getHost(id),
       api.getHostItems(id),
@@ -40,11 +40,14 @@ export default function HostDetailPage() {
     if (triggersRes.data) setTriggers(Array.isArray(triggersRes.data) ? triggersRes.data : []);
     if (problemsRes.data) setProblems(Array.isArray(problemsRes.data) ? problemsRes.data : []);
     setLoading(false);
-  };
+  }, [id]);
 
   useEffect(() => {
+    // Fetching this page's data when the route id changes — the standard
+    // "sync with an external system" (the API) effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadHost();
-  }, [id]);
+  }, [loadHost]);
 
   const handleDelete = async () => {
     if (!confirm("Delete this host? This action cannot be undone.")) return;

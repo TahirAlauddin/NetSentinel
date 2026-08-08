@@ -27,8 +27,11 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    // Reading localStorage (a browser-only external system) to hydrate initial
+    // state after mount — the classic "sync from an external system" effect.
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (stored === "true") setIsCollapsed(true);
     } catch {
       /* ignore */

@@ -5,9 +5,9 @@ Requires at least one Location (e.g. from infrastructure). Optionally uses exist
 for assigned_user on managed numbers.
 
 Usage:
-  python manage.py seed_phone_management_data
-  python manage.py seed_phone_management_data --blocks 5 --numbers 30
-  python manage.py seed_phone_management_data --clear
+  python manage.py seed_phone_management
+  python manage.py seed_phone_management --blocks 5 --numbers 30
+  python manage.py seed_phone_management --clear
 """
 
 import random
@@ -170,7 +170,7 @@ class Command(BaseCommand):
     def _create_numbers(self, locations, users, count):
         created = 0
         area = 312
-        # Avoid overlapping with block ranges (600+) by using 200–599 for exchange
+        # Avoid overlapping with block ranges (600+) by using 200-599 for exchange
         used_numbers = set()
         for i in range(count):
             location = random.choice(locations)

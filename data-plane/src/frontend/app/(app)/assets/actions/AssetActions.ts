@@ -102,15 +102,83 @@ export class AssetActions {
     const queryString = AssetActionUtils.buildQueryString(params);
     const endpoint = `/assets/${queryString ? `?${queryString}` : ""}`;
 
-    const response = await serverApi.get<Asset[] | { results: Asset[] }>(endpoint);
+    const response = await serverApi.get<
+      Asset[] | { count?: number; next?: string | null; previous?: string | null; results: Asset[] }
+    >(endpoint);
 
     if (response.error) {
       console.error("[AssetActions.list] Error:", response.error);
       throw new Error(response.error);
     }
 
-    const extractedData = AssetActionUtils.extractArrayData(response.data);
-    return extractedData;
+    const initialData = response.data;
+    if (!initialData) {
+      return [];
+    }
+
+    // Non-paginated response: return as-is.
+    if (Array.isArray(initialData)) {
+      return initialData;
+    }
+
+    // Paginated response: fetch all pages so dashboards/lists reflect total records.
+    // Use ID-based deduping because page boundaries can overlap when backend ordering is not fully stable.
+    const dedupedById = new Map<number, Asset>();
+    const seedItems = Array.isArray(initialData.results) ? initialData.results : [];
+    for (const asset of seedItems) {
+      if (asset?.id) dedupedById.set(asset.id, asset);
+    }
+    const totalCount =
+      typeof initialData.count === "number" && Number.isFinite(initialData.count)
+        ? initialData.count
+        : dedupedById.size;
+
+    await AssetActions.fetchRemainingPages(queryString, dedupedById, totalCount);
+
+    return Array.from(dedupedById.values());
+  }
+
+  /**
+   * Fetches page 2+ of a paginated /assets/ listing into dedupedById, stopping once
+   * totalCount is reached, a page errors, or a page comes back empty.
+   */
+  private static async fetchRemainingPages(
+    queryString: string,
+    dedupedById: Map<number, Asset>,
+    totalCount: number
+  ): Promise<void> {
+    let page = 2;
+    while (dedupedById.size < totalCount) {
+      const pageEndpoint = `/assets/?${queryString ? `${queryString}&` : ""}page=${page}`;
+      const pageResponse = await serverApi.get<
+        Asset[] | { count?: number; next?: string | null; previous?: string | null; results: Asset[] }
+      >(pageEndpoint);
+
+      if (pageResponse.error) {
+        console.error("[AssetActions.list] Error loading page:", page, pageResponse.error);
+        break;
+      }
+
+      const pageData = pageResponse.data;
+      if (!pageData) {
+        break;
+      }
+
+      const pageItems = Array.isArray(pageData)
+        ? pageData
+        : Array.isArray(pageData.results)
+          ? pageData.results
+          : [];
+
+      if (pageItems.length === 0) {
+        break;
+      }
+
+      for (const asset of pageItems) {
+        if (asset?.id) dedupedById.set(asset.id, asset);
+      }
+      page += 1;
+    }
   }
 
   /**
@@ -408,7 +476,7 @@ export class AssetActions {
    */
   static async setRelations(
     assetId: number,
-    relatedItems: (number | { id: number })[]
+    relatedItems: number[]
   ): Promise<{ success: boolean; error?: string }> {
     if (!relatedItems || relatedItems.length === 0) {
       return { success: true };
@@ -421,9 +489,8 @@ export class AssetActions {
     }
 
     // Create relations one by one; backend will enforce duplicates
-    for (const item of relatedItems) {
-      const relatedId = typeof item === "number" ? item : item?.id;
-      if (!relatedId) {
+    for (const relatedId of relatedItems) {
+      if (!relatedId || !Number.isInteger(relatedId)) {
         continue;
       }
 

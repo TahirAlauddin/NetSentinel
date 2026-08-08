@@ -164,6 +164,7 @@ class AssetViewSet(viewsets.ModelViewSet):
             "phone_details",
             "peripheral_details",
         )
+        .order_by("id")
         .all()
     )
     permission_classes = [StrictDjangoModelPermissions]

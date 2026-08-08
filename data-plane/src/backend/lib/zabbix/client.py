@@ -39,12 +39,13 @@ from .maintenance import MaintenanceAPI
 from .mediatype import MediaTypeAPI
 from .problems import ProblemAPI
 from .proxy import ProxyAPI
+from .scripts import ScriptAPI
 from .templategroups import TemplateGroupAPI
 from .templates import TemplateAPI
 from .transport import ZabbixTransport
-from .valuemaps import ValueMapAPI
 from .triggers import TriggerAPI
 from .users import UserAPI
+from .valuemaps import ValueMapAPI
 
 
 class ZabbixClient:
@@ -89,6 +90,7 @@ class ZabbixClient:
     templates : TemplateAPI
     users : UserAPI
     apiinfo : APIInfoAPI
+    scripts : ScriptAPI
 
     Examples
     --------
@@ -152,6 +154,7 @@ class ZabbixClient:
         self.maintenance = MaintenanceAPI(self._transport)
         self.actions = ActionAPI(self._transport)
         self.mediatypes = MediaTypeAPI(self._transport)
+        self.scripts = ScriptAPI(self._transport)
 
         if token:
             self._transport.set_token(token)

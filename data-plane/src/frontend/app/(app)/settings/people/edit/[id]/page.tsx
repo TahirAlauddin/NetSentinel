@@ -15,8 +15,7 @@ export default function EditPersonPage() {
 
   const personId = validateId(params.id);
 
-  // TODO:> Fix this
-  const [loading, setLoading] = useState(personId !== null);
+  const [loading] = useState(personId !== null);
   // This route is kept for backward compatibility only.
   // It now redirects to the merged details page at `/settings/people/[id]`.
 

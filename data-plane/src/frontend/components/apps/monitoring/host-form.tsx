@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -79,7 +79,7 @@ export function HostForm({ host, isEdit = false }: HostFormProps) {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     formState: { errors },
   } = useForm<HostFormValues>({
@@ -107,8 +107,8 @@ export function HostForm({ host, isEdit = false }: HostFormProps) {
     },
   });
 
-  const useDns = watch("use_dns");
-  const snmpVersion = watch("snmp_version");
+  const useDns = useWatch({ control, name: "use_dns" });
+  const snmpVersion = useWatch({ control, name: "snmp_version" });
 
   useEffect(() => {
     (async () => {

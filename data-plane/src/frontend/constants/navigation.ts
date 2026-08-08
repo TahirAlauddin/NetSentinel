@@ -1,16 +1,12 @@
 import {
   Gauge,
   LayoutDashboard,
-  Map,
   Boxes,
   FileText,
-  Building2,
   CreditCard,
   Activity,
   Bell,
-  Server,
   Phone,
-  Pi as Api,
   LifeBuoy,
   Settings,
   Network,
@@ -182,7 +178,6 @@ export const ipamToolsSubmenuLinks = [
  ******************************************************************************************************************/
 export const navigationItems: NavigationItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  { label: "Site Surveys", icon: Map, href: "/site-surveys" },
   {
     label: "Assets",
     icon: Boxes,
@@ -213,7 +208,6 @@ export const navigationItems: NavigationItem[] = [
       },
     ],
   },
-  { label: "Vendors/SaaS", icon: Building2, href: "/vendors-saas" },
   {
     label: "Telecom Expense Management",
     icon: CreditCard,
@@ -259,7 +253,6 @@ export const navigationItems: NavigationItem[] = [
       },
     ],
   },
-  { label: "VM Management", icon: Server, href: "#" },
   {
     label: "Phone Management",
     icon: Phone,
@@ -273,7 +266,6 @@ export const navigationItems: NavigationItem[] = [
       },
     ],
   },
-  { label: "API Management", icon: Api, href: "#" },
   {
     label: "IPAM",
     icon: Network,

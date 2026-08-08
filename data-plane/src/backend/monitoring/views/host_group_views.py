@@ -15,10 +15,7 @@ class HostGroupViewSet(ZabbixViewMixin, viewsets.ViewSet):
         if search:
             params["search"] = {"name": search}
         rows = zabbix.hostgroups.get(**params)
-        return [
-            map_host_group(row, host_count=len(row.get("hosts") or []))
-            for row in rows
-        ]
+        return [map_host_group(row, host_count=len(row.get("hosts") or [])) for row in rows]
 
     @zabbix_action
     def retrieve(self, request, pk=None):

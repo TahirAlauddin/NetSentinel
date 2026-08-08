@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { IpamHeader } from "@/components/apps/ipam/ipam-header";
 import { IpamNavTabs } from "@/components/apps/ipam/ipam-nav-tabs";
@@ -28,7 +28,7 @@ export default function DevicesPage() {
     section?: string;
   }>({});
 
-  const loadDevices = async (filterParams?: typeof filters) => {
+  const loadDevices = useCallback(async (filterParams?: typeof filters) => {
     try {
       setLoading(true);
       setError(null);
@@ -47,7 +47,7 @@ export default function DevicesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   const loadDeviceTypes = async () => {
     try {
@@ -92,10 +92,17 @@ export default function DevicesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleFilterChange = (newFilters: typeof filters) => {
-    setFilters(newFilters);
+  const handleFilterChange = useCallback((newFilters: typeof filters) => {
+    setFilters((prev) => {
+      const same =
+        prev.deviceType === newFilters.deviceType &&
+        prev.location === newFilters.location &&
+        prev.rack === newFilters.rack &&
+        prev.section === newFilters.section;
+      return same ? prev : newFilters;
+    });
     loadDevices(newFilters);
-  };
+  }, [loadDevices]);
 
   const handleEdit = (device: Device) => {
     router.push(`/ipam/devices/edit/${device.id}`);
@@ -137,22 +144,20 @@ export default function DevicesPage() {
         </div>
       )}
 
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="text-muted-foreground">Loading devices...</div>
-        </div>
-      ) : (
-        <DeviceTable
-          devices={devices}
-          onEdit={can("ipam.change_device") ? handleEdit : undefined}
-          onDelete={can("ipam.delete_device") ? handleDelete : undefined}
-          onAdd={can("ipam.add_device") ? handleAdd : undefined}
-          deviceTypes={deviceTypes}
-          locations={locations}
-          racks={racks}
-          onFilterChange={handleFilterChange}
-        />
+      {loading && (
+        <div className="text-sm text-muted-foreground px-1">Loading devices...</div>
       )}
+
+      <DeviceTable
+        devices={devices}
+        onEdit={can("ipam.change_device") ? handleEdit : undefined}
+        onDelete={can("ipam.delete_device") ? handleDelete : undefined}
+        onAdd={can("ipam.add_device") ? handleAdd : undefined}
+        deviceTypes={deviceTypes}
+        locations={locations}
+        racks={racks}
+        onFilterChange={handleFilterChange}
+      />
     </div>
   );
 }

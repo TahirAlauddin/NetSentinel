@@ -18,8 +18,7 @@ class TemplateGroupViewSet(ZabbixViewMixin, viewsets.ViewSet):
             params["search"] = {"name": search}
         rows = zabbix.templategroups.get(**params)
         return [
-            map_template_group(row, template_count=len(row.get("templates") or []))
-            for row in rows
+            map_template_group(row, template_count=len(row.get("templates") or [])) for row in rows
         ]
 
     @zabbix_action

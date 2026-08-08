@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit2, Trash2, Server } from "lucide-react";
 import { Device } from "@/types/ipam";
@@ -40,21 +40,28 @@ export function DeviceTable({
   racks = [],
   onFilterChange,
 }: DeviceTableProps) {
+  const ALL_FILTER_VALUE = "__all__";
   const [filterDeviceType, setFilterDeviceType] = useState("");
   const [filterLocation, setFilterLocation] = useState("");
   const [filterRack, setFilterRack] = useState("");
   const [filterSection, setFilterSection] = useState("");
 
-  useEffect(() => {
-    if (onFilterChange) {
-      onFilterChange({
-        deviceType: filterDeviceType ? parseInt(filterDeviceType) : undefined,
-        location: filterLocation ? parseInt(filterLocation) : undefined,
-        rack: filterRack ? parseInt(filterRack) : undefined,
-        section: filterSection || undefined,
-      });
-    }
-  }, [filterDeviceType, filterLocation, filterRack, filterSection, onFilterChange]);
+  const emitFilterChange = (next: {
+    deviceType: string;
+    location: string;
+    rack: string;
+    section: string;
+  }) => {
+    if (!onFilterChange) return;
+    onFilterChange({
+      deviceType: next.deviceType ? parseInt(next.deviceType, 10) : undefined,
+      location: next.location ? parseInt(next.location, 10) : undefined,
+      rack: next.rack ? parseInt(next.rack, 10) : undefined,
+      section: next.section || undefined,
+    });
+  };
+
+  const normalizeSelectValue = (value: string) => (value === ALL_FILTER_VALUE ? "" : value);
 
   const columns: ListColumn<Device>[] = useMemo(
     () => [
@@ -139,12 +146,24 @@ export function DeviceTable({
     onFilterChange && (deviceTypes.length > 0 || locations.length > 0 || racks.length > 0) ? (
       <div className="flex items-center gap-4 flex-wrap">
         <span className="text-sm font-medium">Filter by:</span>
-        <Select value={filterDeviceType} onValueChange={setFilterDeviceType}>
+        <Select
+          value={filterDeviceType}
+          onValueChange={(value) => {
+            const normalized = normalizeSelectValue(value);
+            setFilterDeviceType(normalized);
+            emitFilterChange({
+              deviceType: normalized,
+              location: filterLocation,
+              rack: filterRack,
+              section: filterSection,
+            });
+          }}
+        >
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Device type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Types</SelectItem>
+            <SelectItem value={ALL_FILTER_VALUE}>All Types</SelectItem>
             {deviceTypes.map((type) => (
               <SelectItem key={type.id} value={type.id.toString()}>
                 {type.name}
@@ -152,12 +171,24 @@ export function DeviceTable({
             ))}
           </SelectContent>
         </Select>
-        <Select value={filterLocation} onValueChange={setFilterLocation}>
+        <Select
+          value={filterLocation}
+          onValueChange={(value) => {
+            const normalized = normalizeSelectValue(value);
+            setFilterLocation(normalized);
+            emitFilterChange({
+              deviceType: filterDeviceType,
+              location: normalized,
+              rack: filterRack,
+              section: filterSection,
+            });
+          }}
+        >
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Location" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Locations</SelectItem>
+            <SelectItem value={ALL_FILTER_VALUE}>All Locations</SelectItem>
             {locations.map((loc) => (
               <SelectItem key={loc.id} value={loc.id.toString()}>
                 {loc.name}
@@ -165,12 +196,24 @@ export function DeviceTable({
             ))}
           </SelectContent>
         </Select>
-        <Select value={filterRack} onValueChange={setFilterRack}>
+        <Select
+          value={filterRack}
+          onValueChange={(value) => {
+            const normalized = normalizeSelectValue(value);
+            setFilterRack(normalized);
+            emitFilterChange({
+              deviceType: filterDeviceType,
+              location: filterLocation,
+              rack: normalized,
+              section: filterSection,
+            });
+          }}
+        >
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Rack" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Racks</SelectItem>
+            <SelectItem value={ALL_FILTER_VALUE}>All Racks</SelectItem>
             {racks.map((rack) => (
               <SelectItem key={rack.id} value={rack.id.toString()}>
                 {rack.name}
@@ -178,12 +221,24 @@ export function DeviceTable({
             ))}
           </SelectContent>
         </Select>
-        <Select value={filterSection} onValueChange={setFilterSection}>
+        <Select
+          value={filterSection}
+          onValueChange={(value) => {
+            const normalized = normalizeSelectValue(value);
+            setFilterSection(normalized);
+            emitFilterChange({
+              deviceType: filterDeviceType,
+              location: filterLocation,
+              rack: filterRack,
+              section: normalized,
+            });
+          }}
+        >
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Section" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Sections</SelectItem>
+            <SelectItem value={ALL_FILTER_VALUE}>All Sections</SelectItem>
             <SelectItem value="servers">Servers</SelectItem>
             <SelectItem value="ipv6">IPv6 Section</SelectItem>
           </SelectContent>

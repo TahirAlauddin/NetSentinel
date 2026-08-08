@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,74 +14,22 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type {
-  Template,
-  TemplateFormData,
-  TemplateGroup,
-  TemplateMacro,
-  TemplateValueMap,
-  ValueMapMapping,
-} from "@/types/monitoring";
+import type { Template, TemplateFormData, TemplateGroup } from "@/types/monitoring";
 import { MonitoringApiClient } from "@/lib/api-client/monitoring";
+import {
+  emptyTag,
+  macrosFromTemplate,
+  tagsFromTemplate,
+  valueMapsFromTemplate,
+  type MacroDraft,
+  type TagDraft,
+  type ValueMapDraft,
+} from "./template-form-dialog-helpers";
+import { TemplateTagsTab } from "./template-tags-tab";
+import { TemplateMacrosTab } from "./template-macros-tab";
+import { TemplateValueMapsTab } from "./template-value-maps-tab";
 
 const api = new MonitoringApiClient();
-
-type TagDraft = { key: string; tag: string; value: string };
-type MacroDraft = { key: string } & TemplateMacro;
-type MappingDraft = { key: string } & ValueMapMapping;
-type ValueMapDraft = { key: string } & TemplateValueMap;
-
-function newKey() {
-  return Math.random().toString(36).slice(2);
-}
-
-function emptyTag(): TagDraft {
-  return { key: newKey(), tag: "", value: "" };
-}
-
-function emptyMacro(): MacroDraft {
-  return { key: newKey(), macro: "", value: "", description: "" };
-}
-
-function emptyMapping(): MappingDraft {
-  return { key: newKey(), type: "0", value: "", newvalue: "" };
-}
-
-function emptyValueMap(): ValueMapDraft {
-  return { key: newKey(), name: "", mappings: [emptyMapping()] };
-}
-
-function tagsFromTemplate(t: Template | null): TagDraft[] {
-  if (!t?.tags?.length) return [emptyTag()];
-  return t.tags.map((tag) => ({ key: newKey(), tag: tag.tag, value: tag.value }));
-}
-
-function macrosFromTemplate(t: Template | null): MacroDraft[] {
-  if (!t?.macros?.length) return [];
-  return t.macros.map((m) => ({
-    key: newKey(),
-    macro: m.macro,
-    value: m.value,
-    description: m.description ?? "",
-  }));
-}
-
-function valueMapsFromTemplate(t: Template | null): ValueMapDraft[] {
-  if (!t?.value_maps?.length) return [];
-  return t.value_maps.map((vm) => ({
-    key: newKey(),
-    id: vm.id,
-    name: vm.name,
-    mappings: vm.mappings.length
-      ? vm.mappings.map((m) => ({
-          key: newKey(),
-          type: m.type || "0",
-          value: m.value ?? "",
-          newvalue: m.newvalue,
-        }))
-      : [emptyMapping()],
-  }));
-}
 
 interface TemplateFormDialogProps {
   open: boolean;
@@ -132,6 +79,9 @@ export function TemplateFormDialog({
     };
 
     if (!editing) {
+      // Resetting local form state to match the dialog's open/editing props is
+      // exactly the "sync with an external system" case effects are for.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDetail(null);
       resetFrom(null);
       return;

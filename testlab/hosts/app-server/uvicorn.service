@@ -1,0 +1,14 @@
+[Unit]
+Description=Uvicorn FastAPI app server (testlab)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/app
+ExecStart=/app/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
+# No auto-restart: a crashed uvicorn must stay down until the remediation
+# agent (or a human) explicitly restarts it — that's the point of the demo.
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

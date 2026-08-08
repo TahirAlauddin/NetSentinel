@@ -74,6 +74,7 @@ urlpatterns = [
     path("api/v1/phone-management/", include("phone_management.urls")),
     path("api/v1/notifications/", include("notifications.urls")),
     path("api/v1/monitoring/", include("monitoring.urls")),
+    path("api/v1/remediation/", include("remediation.urls")),
     path("api/v1/core/company-profile/", company_profile_view, name="company-profile"),
     # Djoser endpoints for authentication and user management
     path("api/v1/auth/", include("djoser.urls")),

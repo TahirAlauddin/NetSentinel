@@ -25,3 +25,28 @@ export function extractIpamArrayData<T>(data: unknown): T[] {
   return [];
 }
 
+/**
+ * Extract total count from API response payload.
+ * Supports paginated ({ count, results }) and plain array responses.
+ */
+export function extractIpamCount(data: unknown): number {
+  if (!data) {
+    return 0;
+  }
+
+  if (typeof data === "object" && data !== null && "count" in data) {
+    const rawCount = (data as { count?: unknown }).count;
+    if (typeof rawCount === "number" && Number.isFinite(rawCount)) {
+      return rawCount;
+    }
+    if (typeof rawCount === "string") {
+      const parsed = Number(rawCount);
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+  }
+
+  return extractIpamArrayData<unknown>(data).length;
+}
+

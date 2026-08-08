@@ -17,9 +17,7 @@ class MaintenanceAPI:
         return result.get("maintenanceids", [])
 
     def update(self, maintenanceid: str, **params: Any) -> list[str]:
-        result = self._t.request(
-            "maintenance.update", {"maintenanceid": maintenanceid, **params}
-        )
+        result = self._t.request("maintenance.update", {"maintenanceid": maintenanceid, **params})
         return result.get("maintenanceids", [])
 
     def delete(self, *maintenanceids: str) -> list[str]:
